@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Architecture Dashboard</title>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        .group {
+            display: inline-block;
+            border: 1px solid lightgrey;
+            border-radius: 6px;
+            margin: 8px 18px 8px 8px;
+            padding: 5px;
+            background-color: #f8f8f8;
+        }
+
+        .group-title {
+            font-size: 90%;
+            margin-left: 11px;
+            margin-top: 4px;
+            color: darkgrey;
+        }
+
+        .app {
+            margin: 10px;
+            padding-top: 10px;
+            border: solid lightgrey 1px;
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+            display: inline-block;
+            height: 320px;
+            width: 220px;
+            object-fit: cover;
+            text-align: center;
+            vertical-align: top;
+            border-radius: 12px;
+            background-color: white;
+        }
+
+        .name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 12px;
+            color: #5009DC;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .source {
+            font-size: 11px;
+            color: grey;
+            margin: 3px;
+        }
+
+        .description {
+            font-size: 14px;
+            color: grey;
+            margin: 3px;
+            line-height: 21px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .icon {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-top: 26px;
+            margin-bottom: 20px;
+            filter: grayscale(100%);
+        }
+
+        body {
+            margin: 40px;
+            text-align: center;
+        }
+
+        ::placeholder {
+            color: lightgrey;
+            opacity: 1;
+        }
+
+        :-ms-input-placeholder {
+            color: lightgrey;
+        }
+
+        ::-ms-input-placeholder {
+            color: lightgrey;
+        }
+
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 0;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+    <script>
+        function openTab(evt, cityName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(cityName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+</head>
+<body>
+<div style="margin-top: 10px"><img src="icons/architecture.png" style="height: 124px"></div>
+<div style="margin: 8px; margin-top: 0; font-size: 40px; color: #8c8c8c">Architecture Dashboard Examples</div>
+<div style="margin-bottom: 36px; font-size: 20px; color: #8c8c8c">Reducing Subjectivity in Architecture with Data and
+    Insights (see <a href="https://grounded-architecture.io/" target="_blank">Grounded Architecture</a>, and
+    <a href="https://grounded-architecture.io/analytics" target="_blank">Architectural Analytics</a>)
+</div>
+<div class="tab">
+    <button id="overview_tab" class="tablinks active" onclick="openTab(event, 'product')">Product</button>
+    <button id="current_tab" class="tablinks" onclick="openTab(event, 'explorers')">Explorers</button>
+</div>
+
+<div id="product" class="tabcontent" style="display: block; margin: 0; padding: 6px">
+    <div style="margin-left: 0px; margin-top: 20px; margin-bottom: 20px; color: grey">
+        <div>
+            <input id="filter" type="text" placeholder="search..."
+                   style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
+                   onkeyup="updateAll()">
+            <div id="summary" style="display: inline-block"></div>
+        </div>
+    </div>
+    <div id="product_apps"></div>
+</div>
+<div id="explorers" class="tabcontent" style="margin: 0; padding: 6px">
+    <div id="explorer_apps"></div>
+</div>
+<script>
+    function parseStartGroup(group) {
+        group = group.trim();
+        if (group.startsWith('[')) {
+            const label = group.replace(/\(.*/g, '').replace(/\[/g, '').replace(/\]/g, '').trim();
+            const href = group.replace(/.*\(/g, '').replace(/\)/g, '').trim();
+            return {label, href};
+        } else {
+            return {label: group};
+        }
+    }
+
+    function update(apps, divId) {
+        const searchFilter = document.getElementById('filter').value.trim().toLowerCase();
+        let html = '';
+        let prevGroup = null;
+        apps.filter(a => !searchFilter || (a.name).toLowerCase().includes(searchFilter)).forEach(function (app) {
+            if (searchFilter.length === 0 && app.startgroup) {
+                if (prevGroup) {
+                    html += '</div>';
+                }
+                html += '<div class="group">'
+                html += '<div content="group-title">'
+                let parsedGroup = parseStartGroup(app.startgroup);
+                prevGroup = parsedGroup.label;
+                if (parsedGroup.href) {
+                    html += '<a target="_blank" href="' + parsedGroup.href + ' style="padding-top:3px">'
+                        + parsedGroup.label
+                        + '<img src="icons/open-new-window.png" style="width:14px; margin-left: 4px; vertical-align: top">'
+                        + '</a>';
+                } else {
+                    html += parsedGroup.label;
+                }
+                html += '</div>';
+            }
+            html += '<div class="app">';
+            html += '    <a target="_blank" href="' + app.link + '">\n';
+            html += '    <div style="height: 38px">\n';
+            html += '    <div class="name">' + app.name + '</div>\n';
+            if (app.source) {
+                html += '    <div class="source">source: ' + app.source + '</div>\n';
+            } else {
+                html += '    <div class="source"></div>\n';
+            }
+            html += '    </div>\n';
+            html += '    <div><img class="icon" src="icons/' + app.icon + '"></div>\n';
+            html += '    <div class="description">' + app.description + '</div>\n';
+            html += '    </a>\n';
+            html += '    <br>\n';
+            html += '</div>';
+        });
+        if (prevGroup) {
+            html += '</div>';
+        }
+
+        document.getElementById(divId).innerHTML = html;
+    }
+
+    function updateAll() {
+        update(${product}, 'product_apps');
+        update(${explorers}, 'explorer_apps');
+    }
+
+    updateAll();
+
+    const srcRoot = sources.config.sourceCodeRoot;
+
+    function updateSources() {
+        const filter = document.getElementById('sources_filter').value.trim().toLowerCase();
+
+        function filterText(text) {
+            return filter.length === 0 || text.toLowerCase().trim().includes(filter.toLowerCase());
+        }
+
+        const sokratesAnalyes = sources.current.sokratesAnalysis
+            .filter(s => filterText(s.name + ' ' + s.frequency + ' ' + s.method + ' ' + s.files.join(' ')));
+
+        const scriptedExports = sources.current.scriptedExports
+            .filter(s => filterText(s.name + ' ' + s.frequency + ' ' + s.method + ' ' + s.files.join(' ') + ' ' + s.apps.join(' ') + s.src.join(' ')));
+
+        const manualExports = sources.current.manualExports
+            .filter(s => filterText(s.name + ' ' + s.frequency + ' ' + s.method + ' ' + s.files.join(' ') + ' ' + s.apps.join(' ') + s.src.join(' ')));
+
+        const sheets = sources.current.sheets
+            .filter(s => filterText(s.name + ' ' + s.frequency + ' ' + s.method + ' ' + s.files.join(' ') + ' ' + s.apps.join(' ') + s.src.join(' ')));
+
+        const jsonFiles = sources.current.jsonFiles
+            .filter(s => filterText(s.name + ' ' + s.frequency + ' ' + s.method + ' ' + s.files.join(' ') + ' ' + s.apps.join(' ') + s.src.join(' ')));
+
+        let html = '';
+
+
+        html += '<table style="font-size: 90%; margin-left: auto; margin-right: auto; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px;">';
+
+        if (sokratesAnalyes) {
+            html += '<tr>';
+            html += '<td colspan="10" style="text-align: left; font-size: 100%; padding-top: 42px; padding-bottom: 10px; pcolor: black;">';
+            html += '<span style="background-color: lightyellow;">Sokrates Source Code Analysis (' + sokratesAnalyes.length + ')</span>';
+            html += '</td>';
+            html += '</tr>';
+
+            sokratesAnalyes.forEach((sokratesAnalysis, index) => {
+                html += '<tr>';
+                html += '<td style="text-align: right; border-top: 1px solid grey; font-size: 80%; padding-right: 10px; color: darkgrey">' + (index + 1) + '</td>';
+                html += '<td style="text-align: right; border-top: 1px solid grey">';
+                if (sokratesAnalysis.link) {
+                    html += '<a target="_blank" href="' + sokratesAnalysis.link + '">';
+                }
+                html += sokratesAnalysis.name;
+                if (sokratesAnalysis.link) {
+                    html += '</a>';
+                }
+                html += '</td>';
+                html += '<td style="text-align: left; width: 42px; border-top: 1px solid grey; padding-left: 10px"><img src="icons/' + sokratesAnalysis.icon + '" style="height: 42px; width: 42px; object-fit: cover"></td>';
+                html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                html += '<td style="max-width: 100px; width: 100px; text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+                html += '<div style="color: black; font-size: 80%">' + sokratesAnalysis.frequency + '</div>';
+                html += sokratesAnalysis.method + '</td>';
+                html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                html += '<td style="text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+                sokratesAnalysis.files.forEach(file => {
+                    html += '<div><a target="_blank" href="' + sources.config.websiteRoot + file + '">';
+                    html += file;
+                    html += '</a></div>';
+                });
+                html += '</td>';
+                html += '<td style="text-align: left; color: lightslategrey; border-top: 1px solid grey">';
+                html += '</td>';
+                html += '<td>';
+                html += '</td>';
+                html += '</tr>';
+            });
+        }
+
+        if (scriptedExports.length > 0) {
+            html += '<tr>';
+            html += '<td colspan="10" style="text-align: left; font-size: 100%; padding-top: 42px; padding-bottom: 10px; pcolor: black;">';
+            html += '<span style="background-color: lightyellow;">Manually Executed Scripted Exports (' + scriptedExports.length + ')</span>';
+            html += '</td>';
+            html += '</tr>';
+        }
+
+        scriptedExports.forEach((scriptedExport, index) => {
+            html += '<tr>';
+            html += '<td style="text-align: right; border-top: 1px solid grey; font-size: 80%; padding-right: 10px; color: darkgrey">' + (index + 1) + '</td>';
+            html += '<td style="text-align: right; border-top: 1px solid grey">';
+            if (scriptedExport.link) {
+                html += '<a target="_blank" href="' + scriptedExport.link + '">';
+            }
+            html += scriptedExport.name;
+            if (scriptedExport.link) {
+                html += '</a>';
+            }
+            html += '</td>';
+            html += '<td style="text-align: left; width: 42px; border-top: 1px solid grey; padding-left: 10px"><img src="icons/' + scriptedExport.icon + '" style="height: 42px; width: 42px; object-fit: contain"></td>';
+            html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+            html += '<td style="max-width: 200px; width: 100px; text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+            html += '<div style="color: black; font-size: 80%">' + scriptedExport.frequency + '</div>';
+            html += scriptedExport.method + '</td>';
+            html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+            html += '<td style="text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+            scriptedExport.files.forEach(file => {
+                html += '<div><a target="_blank" href="' + srcRoot + file + '">';
+                html += file;
+                html += '</a></div>';
+            });
+            html += '</td>';
+            html += '<td style="text-align: left; color: lightslategrey; border-top: 1px solid grey">';
+            html += '<table>';
+            html += '<tr>';
+            html += '<td>';
+            scriptedExport.apps.forEach(usedByApp => {
+                html += '<table>';
+                html += '<tr>';
+                html += '<td style="text-align: center; width: 42px"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                html += '<td style="text-align: left; color: lightslategrey; width: 200px">';
+                let relAppPath = usedByApp + (usedByApp.includes('.html') ? '' : '/index.html');
+                html += '<a target="_blank" href="' + sources.config.websiteRoot + relAppPath + '">';
+                html += usedByApp;
+                html += '</a>';
+                html += '</td>';
+                html += '</tr>';
+                html += '</table>';
+            });
+            html += '</td>';
+            html += '<td>';
+            scriptedExport.src.forEach(codeLink => {
+                html += '<div>';
+                html += '&nbsp;<a target="_blank" href="' + srcRoot + codeLink + '">[src]</a>';
+                html += '</div>';
+            });
+            html += '</td>';
+            html += '</tr>';
+            html += '</table>';
+            html += '</tr>';
+        });
+
+        if (manualExports.length > 0) {
+            html += '<tr>';
+            html += '<td colspan="10" style="text-align: left; font-size: 100%; padding-top: 42px; padding-bottom: 10px; color: black;">';
+            html += '<span style="background-color: lightyellow;">Manual Exports from SaaS Tools (' + manualExports.length + ')</span>';
+            html += '</td>';
+            html += '</tr>';
+        }
+
+        manualExports.forEach((manualExport, index) => {
+            html += '<tr>';
+            html += '<td style="text-align: right; border-top: 1px solid grey; font-size: 80%; padding-right: 10px; color: darkgrey">' + (index + 1) + '</td>';
+            html += '<td style="text-align: right; border-top: 1px solid grey">';
+            if (manualExport.link) {
+                html += '<a target="_blank" href="' + manualExport.link + '">';
+            }
+            html += manualExport.name;
+            if (manualExport.link) {
+                html += '</a>';
+            }
+            html += '</td>';
+            html += '<td style="text-align: left; width: 42px; border-top: 1px solid grey; padding-left: 10px"><img src="icons/' + manualExport.icon + '" style="height: 42px; width: 42px; object-fit: cover"></td>';
+            html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+            html += '<td style="max-width: 200px; width: 100px; text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+            html += '<div style="color: black; font-size: 80%">' + manualExport.frequency + '</div>';
+            html += manualExport.method + '</td>';
+            html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+            html += '<td style="text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+            manualExport.files.forEach(file => {
+                html += '<div><a target="_blank" href="' + srcRoot + file + '">';
+                html += file;
+                html += '</a></div>';
+            });
+            html += '</td>';
+            html += '<td style="text-align: left; color: lightslategrey; border-top: 1px solid grey">';
+            html += '<table>';
+            html += '<tr>';
+            html += '<td>';
+            manualExport.apps.forEach(usedByApp => {
+                html += '<table>';
+                html += '<tr>';
+                html += '<td style="text-align: center; width: 42px"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                html += '<td style="text-align: left; color: lightslategrey; width: 200px">';
+                let relAppPath = usedByApp + (usedByApp.includes('.html') ? '' : '/index.html');
+                html += '<a target="_blank" href="' + sources.config.websiteRoot + relAppPath + '">';
+                html += usedByApp;
+                html += '</a>';
+                html += '</td>';
+                html += '</tr>';
+                html += '</table>';
+            });
+            html += '</td>';
+            html += '<td>';
+            manualExport.src.forEach(codeLink => {
+                html += '<div>';
+                html += '&nbsp;<a target="_blank" href="' + srcRoot + codeLink + '">[src]</a>';
+                html += '</div>';
+            });
+            html += '</td>';
+            html += '</tr>';
+            html += '</table>';
+            html += '</tr>';
+        });
+
+        if (sheets.length > 0) {
+            html += '<tr>';
+            html += '<td colspan="10" style="text-align: left; font-size: 100%; padding-top: 42px; padding-bottom: 10px; pcolor: black;">';
+            html += '<span style="background-color: lightyellow;">Structured & Scripted Google Sheets: scripted JSON export, version controlled, update notifications (' + sheets.length + ')</span>';
+            html += '</td>';
+            html += '</tr>';
+            sheets.forEach((sheet, index) => {
+                html += '<tr>';
+                html += '<td style="text-align: right; border-top: 1px solid grey; font-size: 80%; padding-right: 10px; color: darkgrey">' + (index + 1) + '</td>';
+                html += '<td style="text-align: right; border-top: 1px solid grey">';
+                if (sheet.sheetLink) {
+                    html += '<a target="_blank" href="' + sheet.sheetLink + '">';
+                }
+                html += sheet.name;
+                if (sheet.sheetLink) {
+                    html += '</a>';
+                }
+                html += '</td>';
+                html += '<td style="text-align: left; width: 42px; border-top: 1px solid grey; padding-left: 10px"><img src="icons/google_sheets.png" style="height: 42px; width: 42px; object-fit: contain"></td>';
+                html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                html += '<td style="max-width: 200px; width: 100px; text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+                html += '<div style="color: black; font-size: 80%">' + sheet.frequency + '</div>';
+                html += sheet.sheetExport + '</td>';
+                html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                html += '<td style="text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+                sheet.files.forEach(file => {
+                    html += '<div><a target="_blank" href="' + srcRoot + file + '">';
+                    html += file;
+                    html += '</a></div>';
+                });
+                html += '</td>';
+                html += '<td style="text-align: left; color: lightslategrey; border-top: 1px solid grey">';
+                html += '<table>';
+                html += '<tr>';
+                html += '<td>';
+                sheet.apps.forEach(usedByApp => {
+                    html += '<table>';
+                    html += '<tr>';
+                    html += '<td style="text-align: center; width: 42px"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                    html += '<td style="text-align: left; color: lightslategrey; width: 200px">';
+                    let relAppPath = usedByApp + (usedByApp.includes('.html') ? '' : '/index.html');
+                    html += '<a target="_blank" href="' + sources.config.websiteRoot + relAppPath + '">';
+                    html += usedByApp;
+                    html += '</a>';
+                    html += '</td>';
+                    html += '</tr>';
+                    html += '</table>';
+                });
+                html += '</td>';
+                html += '<td>';
+                sheet.src.forEach(codeLink => {
+                    html += '<div>';
+                    html += '&nbsp;<a target="_blank" href="' + srcRoot + codeLink + '">[src]</a>';
+                    html += '</div>';
+                });
+                html += '</td>';
+                html += '</tr>';
+                html += '</table>';
+                html += '</tr>';
+            });
+        }
+
+        if (jsonFiles.length > 0) {
+            html += '<tr>';
+            html += '<td colspan="10" style="text-align: left; font-size: 100%; padding-top: 42px; padding-bottom: 10px; pcolor: black;">';
+            html += '<span style="background-color: lightyellow;">Direct edit of JSON files in GitHub (' + jsonFiles.length + ')</span>';
+            html += '</td>';
+            html += '</tr>';
+            jsonFiles.forEach((jsonFile, index) => {
+                html += '<tr>';
+                html += '<td style="text-align: right; border-top: 1px solid grey; font-size: 80%; padding-right: 10px; color: darkgrey">' + (index + 1) + '</td>';
+                html += '<td style="text-align: right; border-top: 1px solid grey">';
+                html += '</td>';
+                html += '<td style="text-align: left; width: 42px; border-top: 1px solid grey; padding-left: 10px"></td>';
+                html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"></td>';
+                html += '<td style="max-width: 200px; width: 100px; text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+                html += '<div style="color: black; font-size: 80%">' + jsonFile.frequency + '</div>Edit JSON</td>';
+                html += '<td style="text-align: center; width: 42px; border-top: 1px solid grey"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                html += '<td style="text-align: left; font-size: 100%; color: lightslategrey; border-top: 1px solid grey">';
+                jsonFile.files.forEach(file => {
+                    html += '<div><a target="_blank" href="' + srcRoot + file + '">';
+                    html += file;
+                    html += '</a></div>';
+                });
+                html += '</td>';
+                html += '<td style="text-align: left; color: lightslategrey; border-top: 1px solid grey">';
+                html += '<table>';
+                html += '<tr>';
+                html += '<td>';
+                jsonFile.apps.forEach(usedByApp => {
+                    html += '<table>';
+                    html += '<tr>';
+                    html += '<td style="text-align: center; width: 42px"><img src="icons/arrow-right.png" style="height: 20px"></td>';
+                    html += '<td style="text-align: left; color: lightslategrey; width: 200px">';
+                    let relAppPath = usedByApp + (usedByApp.includes('.html') ? '' : '/index.html');
+                    html += '<a target="_blank" href="' + sources.config.websiteRoot + relAppPath + '">';
+                    html += usedByApp;
+                    html += '</a>';
+                    html += '</td>';
+                    html += '</tr>';
+                    html += '</table>';
+                });
+                html += '</td>';
+                html += '<td>';
+                jsonFile.src.forEach(codeLink => {
+                    html += '<div>';
+                    html += '&nbsp;<a target="_blank" href="' + srcRoot + codeLink + '">[src]</a>';
+                    html += '</div>';
+                });
+                html += '</td>';
+                html += '</tr>';
+                html += '</table>';
+                html += '</tr>';
+            });
+        }
+
+        html += '</table>';
+
+        document.getElementById('sources_table').innerHTML = html;
+    }
+
+    updateSources();
+</script>
+</body>
+</html>

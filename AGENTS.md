@@ -91,7 +91,7 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 ## Editing Guidance
 
 - If the user asks to change strategic content, start in `_config/product-domains/**`.
-- If the user asks to change presentation or navigation, start in `_templates/product/**`.
+- If the user asks to change presentation or navigation, start in `_templates/**`.
 - If the user asks to regenerate the website, run the Python generators from `docs/product/`.
 - Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first.
 - Some product modeling files appear to be evolving from `products.json` to `delivery.json`. Before regenerating product pages, verify the current generator expects the same source file names present in the domain folder.
