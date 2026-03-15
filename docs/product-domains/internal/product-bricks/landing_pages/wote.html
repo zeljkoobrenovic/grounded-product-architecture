@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Workflow telemetry</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-129891352-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'UA-129891352-1');
+    </script>
+
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 0;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+
+        .review-image {
+            box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+            width: 400px;
+            margin: 10px;
+            padding: 10px
+        }
+
+        .review-image-small {
+            box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+            width: 180px;
+            margin: 6px;
+            padding: 6px;
+        }
+
+        .tab-image {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+        }
+
+        .tab-image-selected {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+            border-bottom: 4px solid blue;
+        }
+
+        .group {
+            margin-top: 2px;
+            margin-bottom: 40px;
+            padding: 20px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            overflow: hidden;
+            border: 1px solid lightgrey;
+        }
+
+        .repo {
+            overflow: hidden;
+            margin: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+        }
+
+        .aws {
+            overflow: hidden;
+            margin: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+        }
+
+
+        .person {
+            text-align: center;
+            padding: 6px;
+            margin: 4px;
+            display: inline-block;
+            font-size: 11px;
+            width: 110px;
+            overflow: hidden;
+            white-space: nowrap;
+            vertical-align: top;
+        }
+
+        .docs {
+            text-align: center;
+            padding: 6px;
+            margin: 4px;
+            display: inline-block;
+            font-size: 11px;
+            width: 110px;
+            overflow: hidden;
+            vertical-align: top;
+        }
+
+        .team {
+            text-align: center;
+            padding: 6px;
+            margin: 8px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 13px;
+            width: 110px;
+            overflow: hidden;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            white-space: nowrap;
+            vertical-align: top;
+            border: 2px solid grey;
+            height: 140px;
+        }
+
+        .legacy-team {
+            text-align: center;
+            padding: 6px;
+            margin: 8px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 13px;
+            width: 110px;
+            overflow: hidden;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            white-space: nowrap;
+            vertical-align: top;
+            border: 2px dashed grey;
+            height: 140px;
+        }
+
+        .number {
+            display: inline-block;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+            margin: 8px;
+            width: 100px;
+        }
+
+        .dependency-icon {
+            height: 32px;
+            margin-left: 8px;
+            margin-right: 8px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+            padding: 4px;
+            border-radius: 5px;
+        }
+
+        .activity-summary {
+            margin: 14px 0;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .activity-stat {
+            display: inline-block;
+            margin-right: 18px;
+            min-width: 110px;
+        }
+
+        .activity-stat-value {
+            font-size: 30px;
+            color: #1d4ed8;
+        }
+
+        .activity-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .activity-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .activity-table th,
+        .activity-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        .activity-table th {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .activity-link {
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .activity-muted {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .activity-block {
+            margin-bottom: 8px;
+            padding-left: 10px;
+            border-left: 3px solid #d7dce1;
+        }
+
+        .activity-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 12px;
+        }
+
+        .activity-pill-highlight {
+            background-color: #dbeafe;
+            border: 1px solid #60a5fa;
+        }
+
+        .activity-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .activity-icon-round {
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <script>
+        function initTab() {
+            if (window.location.hash) {
+                tabName = window.location.hash.substring(1);
+                if (document.getElementById('tab_' + tabName)) {
+                    openTab(tabName);
+                }
+            }
+        }
+
+        function openTab(tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            history.pushState({}, "", '#' + tabName);
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById('tab_' + tabName).className += " active";
+        }
+
+        function initTab() {
+            if (window.location.hash) {
+                tabName = window.location.hash.substring(1);
+                if (document.getElementById('tab_' + tabName)) {
+                    openTab(tabName);
+                }
+            }
+        }
+
+        function openTab(tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            history.pushState({}, "", '#' + tabName);
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById('tab_' + tabName).className += " active";
+        }
+    </script>
+</head>
+<body onload="initTab()" onhashchange="initTab()">
+
+<script>
+    const config = {"domains": [{"id": "emobility", "name": "eMobility", "description": "The eMobility ecosystem, including charge point operators managing infrastructure, eMobility service providers delivering digital charging services, individual EV drivers seeking reliable and seamless charging, and corporate fleet managers optimizing cost, compliance, and large-scale EV operations."}, {"id": "nutrition", "name": "Nutrition", "description": "The full nutrition ecosystem\u2014external stakeholders like formulation, operations, quality, IT, procurement, executives, environmental and educational institutions, as well as internal product, sales, support, and leadership teams\u2014all focused on optimizing product performance, compliance, cost, scalability, and sustainability."}, {"id": "real-estate-marketplace", "name": "Real Estate Marketplace", "description": ""}, {"id": "dkv", "name": "DKV", "description": ""}, {"id": "arrive", "name": "Arrive", "description": ""}, {"id": "internal", "name": "Internal", "description": ""}, {"id": "mambu", "name": "Mambu", "description": "Banks, lenders, fintechs, credit unions, and embedded-finance providers using a composable SaaS cloud banking platform to launch and scale lending, deposits, payments, and banking experiences faster than legacy core transformation approaches allow."}]};
+    const all_bricks = [{"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "urdm", "name": "Unified revenue data model", "description": "Normalizes leads, accounts, contacts, opportunities, and territories into one source of truth."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "iaam", "name": "Identity and account matching", "description": "Deduplicates contacts and maps signals to the correct account and owner."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "rbre", "name": "Rules-based routing engine", "description": "Automatically assigns leads and opportunities according to commercial policy."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "pads", "name": "Propensity and deal scoring", "description": "Ranks opportunities by expected value, urgency, and conversion probability."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "sgwo", "name": "Stage-gated workflow orchestration", "description": "Triggers required steps, checklists, and approvals by deal type and amount."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "cfaw", "name": "Cross-functional approval workspace", "description": "Coordinates pricing, legal, security, and finance approvals in one thread."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "fasp", "name": "Forecasting and scenario planning", "description": "Generates commit, best-case, and downside views by segment and team."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "prin", "name": "Pipeline risk intelligence", "description": "Flags missing stakeholders, stalled stages, weak activity, and atypical discounting."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "otbi", "name": "Order-to-booking integration", "description": "Pushes approved commercial terms into billing, ERP, and implementation systems."}, {"domain": "Revenue & Growth Stakeholders", "group": "run-predictable-pipeline-to-revenue-execution", "type": "full-stack", "id": "shpa", "name": "Structured handoff package", "description": "Transfers scope, stakeholders, risks, and success criteria to downstream teams."}, {"domain": "Revenue & Growth Stakeholders", "group": "increase-sales-productivity-without-linear-headcount-growth", "type": "full-stack", "id": "wote", "name": "Workflow telemetry", "description": "Tracks time spent, step latency, and manual touches across the commercial process."}, {"domain": "Revenue & Growth Stakeholders", "group": "increase-sales-productivity-without-linear-headcount-growth", "type": "full-stack", "id": "acfs", "name": "AI copilot for sales execution", "description": "Produces summaries, next-step suggestions, and first-draft content inside the workflow."}, {"domain": "Revenue & Growth Stakeholders", "group": "increase-sales-productivity-without-linear-headcount-growth", "type": "full-stack", "id": "qapa", "name": "Quote and proposal automation", "description": "Creates compliant quotes and proposal packs from approved catalog and pricing rules."}, {"domain": "Revenue & Growth Stakeholders", "group": "increase-sales-productivity-without-linear-headcount-growth", "type": "full-stack", "id": "moda", "name": "Manager operating dashboard", "description": "Surfaces deal health, rep activity quality, and forecast variance at team level."}, {"domain": "Revenue & Growth Stakeholders", "group": "increase-sales-productivity-without-linear-headcount-growth", "type": "full-stack", "id": "pren", "name": "Playbook recommendation engine", "description": "Suggests coaching actions based on historical win patterns and current deal context."}, {"domain": "Revenue & Growth Stakeholders", "group": "increase-sales-productivity-without-linear-headcount-growth", "type": "full-stack", "id": "cpan", "name": "Causal performance analytics", "description": "Connects usage, behavior changes, and business outcomes with cohort-based analysis."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "imas", "name": "ICP modeling and segmentation", "description": "Analyzes historical win data and firmographics to define high-conversion segments."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "amla", "name": "Audience management layer", "description": "Creates dynamic audience cohorts across CRM, product, and web data."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "cowo", "name": "Campaign orchestration workflow", "description": "Coordinates content, channel timing, budget allocation, and approvals."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "mcas", "name": "Multi-channel attribution system", "description": "Tracks touchpoints across channels and ties them to pipeline creation."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "lsen", "name": "Lead scoring engine", "description": "Combines behavioral and firmographic signals into qualification scores."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "star", "name": "SLA tracking and routing", "description": "Ensures timely sales follow-up and monitors acceptance rates."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "rlra", "name": "Revenue-linked ROI analytics", "description": "Connects campaign spend to closed-won revenue and payback period."}, {"domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "type": "full-stack", "id": "exfr", "name": "Experimentation framework", "description": "Enables A/B testing and incremental lift measurement across channels."}, {"domain": "Revenue & Growth Stakeholders", "group": "build-and-sustain-brand-equity", "type": "full-stack", "id": "mghu", "name": "Messaging governance hub", "description": "Centralizes brand guidelines, messaging pillars, and content approvals."}, {"domain": "Revenue & Growth Stakeholders", "group": "build-and-sustain-brand-equity", "type": "full-stack", "id": "bsan", "name": "Brand sentiment analytics", "description": "Aggregates social, web, and campaign engagement data into brand health indicators."}, {"domain": "Revenue & Growth Stakeholders", "group": "build-and-sustain-brand-equity", "type": "full-stack", "id": "btra", "name": "Brand-to-revenue attribution", "description": "Links long-term engagement signals to revenue lift and pricing resilience."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "ocin", "name": "Omnichannel case intake", "description": "Brings all support channels into a single queue and customer record."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "aata", "name": "AI-assisted triage and classification", "description": "Predicts intent, priority, language, and probable resolver group."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "ucti", "name": "Unified customer timeline", "description": "Aggregates account events, transactions, support history, and product telemetry."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "ease", "name": "Entitlement and SLA engine", "description": "Applies support terms, escalation thresholds, and response commitments automatically."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "kars", "name": "Knowledge and runbook system", "description": "Suggests relevant articles, diagnostics, and resolution steps based on case context."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "cfsw", "name": "Cross-functional swarm workspace", "description": "Creates structured collaboration with owners, SLAs, and status tracking for escalations."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "reau", "name": "Resolution automation", "description": "Executes standard actions such as password resets, refunds, credits, and access changes."}, {"domain": "Service & Operations Stakeholders", "group": "resolve-customer-issues-quickly-and-correctly", "type": "full-stack", "id": "rcca", "name": "Root cause capture", "description": "Structures issue taxonomy and post-resolution learning for analytics and prevention."}, {"domain": "Service & Operations Stakeholders", "group": "reduce-service-cost-while-improving-retention-signals", "type": "full-stack", "id": "ipan", "name": "Issue pattern analytics", "description": "Clusters case themes and quantifies impact by product, segment, and channel."}, {"domain": "Service & Operations Stakeholders", "group": "reduce-service-cost-while-improving-retention-signals", "type": "full-stack", "id": "sspa", "name": "Self-service portal and bot orchestration", "description": "Resolves common requests without agent intervention while preserving escalation paths."}, {"domain": "Service & Operations Stakeholders", "group": "reduce-service-cost-while-improving-retention-signals", "type": "full-stack", "id": "pawa", "name": "Policy-aware workflow automation", "description": "Automates refunds, entitlement checks, and account updates within approved thresholds."}, {"domain": "Service & Operations Stakeholders", "group": "reduce-service-cost-while-improving-retention-signals", "type": "full-stack", "id": "clir", "name": "Closed-loop insight routing", "description": "Creates prioritized feedback items and owner accountability across functions."}, {"domain": "Service & Operations Stakeholders", "group": "reduce-service-cost-while-improving-retention-signals", "type": "full-stack", "id": "rrsc", "name": "Retention risk scoring", "description": "Combines service burden with product and account signals to flag churn risk."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "enforce-policy-while-keeping-the-business-moving", "type": "full-stack", "id": "raem", "name": "Role and entitlement model", "description": "Applies separation-of-duties, delegated authority, and least-privilege standards."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "enforce-policy-while-keeping-the-business-moving", "type": "full-stack", "id": "caor", "name": "Contextual approval orchestration", "description": "Routes transactions to Finance, Legal, Security, or Compliance only when policy requires it."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "enforce-policy-while-keeping-the-business-moving", "type": "full-stack", "id": "exma", "name": "Exception management", "description": "Documents deviations, compensating controls, owners, and expiry dates."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "enforce-policy-while-keeping-the-business-moving", "type": "full-stack", "id": "cele", "name": "Control evidence ledger", "description": "Stores timestamps, approvers, versions, supporting files, and decision rationale."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "enforce-policy-while-keeping-the-business-moving", "type": "full-stack", "id": "daci", "name": "Document and clause intelligence", "description": "Extracts key obligations, terms, and missing artifacts from contracts and policies."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "enforce-policy-while-keeping-the-business-moving", "type": "full-stack", "id": "rmda", "name": "Risk monitoring dashboard", "description": "Aggregates exposures, overdue actions, and trends by function, geography, and process."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "enforce-policy-while-keeping-the-business-moving", "type": "full-stack", "id": "rwma", "name": "Remediation workflow management", "description": "Tracks corrective actions, owners, due dates, and evidence of closure."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "close-the-books-and-prove-control-effectiveness-with-less-manual-effort", "type": "full-stack", "id": "cscd", "name": "Cross-system control data pipeline", "description": "Combines ERP, HRIS, CRM, ticketing, and contract records for reconciliation and testing."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "close-the-books-and-prove-control-effectiveness-with-less-manual-effort", "type": "full-stack", "id": "acte", "name": "Automated controls testing", "description": "Runs repeatable tests and flags failures or anomalies for review."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "close-the-books-and-prove-control-effectiveness-with-less-manual-effort", "type": "full-stack", "id": "ande", "name": "Anomaly detection", "description": "Finds unusual transactions, patterns, or combinations that merit investigation."}, {"domain": "Control, Risk & Trust Stakeholders", "group": "close-the-books-and-prove-control-effectiveness-with-less-manual-effort", "type": "full-stack", "id": "apge", "name": "Audit pack generator", "description": "Compiles evidence, control results, approvals, and exceptions into review-ready outputs."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "spse", "name": "Shared platform services", "description": "Offers reusable primitives so product teams avoid rebuilding common capabilities."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "aaeg", "name": "API and event gateway", "description": "Standardizes service contracts, discovery, authentication, and event routing."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "idpo", "name": "Internal developer portal", "description": "Provides service catalogs, templates, runbooks, and environment automation."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "wtli", "name": "Workflow template library", "description": "Accelerates common internal process design with approved reusable patterns."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "efan", "name": "Engineering flow analytics", "description": "Measures cycle time, deployment frequency, queue delays, and dependency impact."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "oola", "name": "Operational observability layer", "description": "Connects workflow execution, service health, and customer impact signals."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "pacg", "name": "Policy-as-code guardrails", "description": "Applies deployment, access, data, and workflow standards automatically."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "increase-delivery-throughput-while-controlling-architectural-complexity", "type": "full-stack", "id": "tere", "name": "Technical exception registry", "description": "Tracks deviations, owners, expiry, and remediation plans."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "reduce-internal-systems-fragmentation-and-support-load", "type": "full-stack", "id": "sawi", "name": "System and workflow inventory", "description": "Creates visibility into tool overlap, integration debt, and manual workarounds."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "reduce-internal-systems-fragmentation-and-support-load", "type": "full-stack", "id": "vadm", "name": "Value and dependency modeling", "description": "Quantifies savings, risk, and migration dependency for each consolidation move."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "reduce-internal-systems-fragmentation-and-support-load", "type": "full-stack", "id": "iaam", "name": "Integration adapters and migration toolkit", "description": "Accelerates migration from legacy tools while preserving continuity."}, {"domain": "Product, Technology & Enablement Stakeholders", "group": "reduce-internal-systems-fragmentation-and-support-load", "type": "full-stack", "id": "uewo", "name": "Unified employee workspace", "description": "Gives end users a consistent action layer across departments and use cases."}, {"domain": "Executive & Capital Stakeholders", "group": "run-the-enterprise-with-one-operating-truth", "type": "full-stack", "id": "emla", "name": "Enterprise metric layer", "description": "Creates one canonical definition and lineage for executive KPIs."}, {"domain": "Executive & Capital Stakeholders", "group": "run-the-enterprise-with-one-operating-truth", "type": "full-stack", "id": "cdsm", "name": "Cross-domain semantic model", "description": "Links revenue, support, finance, product, and risk data into consistent dimensions."}, {"domain": "Executive & Capital Stakeholders", "group": "run-the-enterprise-with-one-operating-truth", "type": "full-stack", "id": "ecto", "name": "Executive control tower", "description": "Provides live dashboards and drill-through across company-level KPIs and risk indicators."}, {"domain": "Executive & Capital Stakeholders", "group": "run-the-enterprise-with-one-operating-truth", "type": "full-stack", "id": "spen", "name": "Scenario planning engine", "description": "Models the effect of hiring, pricing, tooling, market, and process changes on outcomes."}, {"domain": "Executive & Capital Stakeholders", "group": "run-the-enterprise-with-one-operating-truth", "type": "full-stack", "id": "sior", "name": "Strategic initiative orchestration", "description": "Links goals, workstreams, owners, dependencies, and KPI movement."}, {"domain": "Executive & Capital Stakeholders", "group": "run-the-enterprise-with-one-operating-truth", "type": "full-stack", "id": "eaer", "name": "Exception and escalation routing", "description": "Escalates material deviations, threshold breaches, and unresolved blockers to the right leaders."}, {"domain": "Executive & Capital Stakeholders", "group": "increase-enterprise-value-through-operating-leverage", "type": "full-stack", "id": "evde", "name": "Enterprise value decomposition", "description": "Breaks value into revenue, margin, productivity, and risk components tied to workflows."}, {"domain": "Executive & Capital Stakeholders", "group": "increase-enterprise-value-through-operating-leverage", "type": "full-stack", "id": "pcam", "name": "Portfolio capital allocation model", "description": "Ranks investments by expected economic impact, dependencies, and time-to-value."}, {"domain": "Executive & Capital Stakeholders", "group": "increase-enterprise-value-through-operating-leverage", "type": "full-stack", "id": "edal", "name": "Enterprise data asset layer", "description": "Compounds learning from all workflows into reusable models and benchmarks."}, {"domain": "Executive & Capital Stakeholders", "group": "increase-enterprise-value-through-operating-leverage", "type": "full-stack", "id": "eaef", "name": "Extension and ecosystem framework", "description": "Allows future monetization and faster expansion across partners, subsidiaries, or acquired entities."}];
+    const brick = {"domain": "Revenue & Growth Stakeholders", "group": "increase-sales-productivity-without-linear-headcount-growth", "type": "full-stack", "id": "wote", "name": "Workflow telemetry", "description": "Tracks time spent, step latency, and manual touches across the commercial process."};
+    const initiatives = {"items": []};
+    const releases = {"items": []};
+</script>
+<div id="Header"></div>
+
+<div style="margin: 20px;">
+    <div class="tab">
+        <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Home</button>
+        <button class="tablinks" id="tab_InitiativesTab" onclick="openTab('InitiativesTab')">Initiatives</button>
+        <button class="tablinks" id="tab_ReleasesTab" onclick="openTab('ReleasesTab')">Releases</button>
+    </div>
+
+    <div id="HomeTab" class="tabcontent" style="display: block; padding: 10px">
+        <div id="Home"></div>
+    </div>
+    <div id="InitiativesTab" class="tabcontent" style="padding: 10px;">
+        <div id="Initiatives"></div>
+    </div>
+    <div id="ReleasesTab" class="tabcontent" style="padding: 10px;">
+        <div id="Releases"></div>
+    </div>
+</div>
+
+<script>
+</script>
+
+<script>
+    function isFalse(value) {
+        return !value || (value + '').toLowerCase().trim() === 'false' || (value + '').toLowerCase().trim() === 'no';
+    }
+
+    function isTrue(value) {
+        return !isFalse(value);
+    }
+
+</script>
+
+<script>
+    let div = document.createElement('div');
+    document.body.appendChild(div);
+
+    let html = '';
+    function addNavigation() {
+        html += '<div style="margin: 20px 20px 10px 20px; font-size: 85%; color: black">';
+        let prev_domain = all_bricks[0].domain;
+        all_bricks.filter(c => c.domain && c.domain.toLowerCase().trim() !== 'on ice').forEach(cap => {
+            if (prev_domain.toLowerCase() !== cap.domain.toLowerCase()) {
+                prev_domain = cap.domain;
+                html += '<div style="margin-top: 5px; margin-left: 4px; vertical-align: top; display: inline-block; border-left: 2px solid lightgrey; height: 30px;">&nbsp;</div>';
+            }
+            html += '<a href="' + cap.id + '.html">';
+            const tabClass = cap.id === brick.id ? 'tab-image-selected' : 'tab-image';
+            html += '<img src="../icons/' + cap.id + '.png" class="' + tabClass + '" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            html += '</a>';
+        });
+        html += '</div>';
+    }
+
+    addNavigation();
+
+    html += '<div style="margin: 20px">';
+
+    function addHeader() {
+        html += '<table>';
+        html += '<tr>';
+        html += '<td>';
+        html += '<div>';
+        html += '<img src="../icons/' + brick.id + '.png" style="width: 110px" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+        html += '</div>';
+        html += '</td>';
+        html += '<td style="vertical-align: top">';
+        html += '<div style="margin-left: 20px; font-size: 90%; color: grey; vertical-align: top">';
+        html += brick.domain;
+        html += ' / <span style="color: blue; font-weight: bold;">' + brick.id.toUpperCase() + '</span>';
+        html += '</div>';
+        html += '<div style="font-size: 50px; margin-left: 20px">';
+        html += brick.name;
+        html += '</div>';
+        html += '<div style="font-size: 16px; margin-left: 20px; color: grey; margin-top: 3px">';
+        html += brick.description ? brick.description : '';
+        html += '</div>';
+        html += '</td>';
+        html += '</tr>';
+        html += '</table>';
+    }
+
+    addHeader();
+
+    function addDocs() {
+        html += '<div  class="" style="margin-top: 32px">';
+
+        function addGroup(docs, icon) {
+            if (docs) {
+                docs.split('\n').forEach(doc => {
+                    const elements = doc.trim().split(',');
+                    const label = elements.length > 0 ? elements[0].trim() : '';
+                    const link = elements.length > 1 ? elements[1].trim() : '';
+                    if (label && link) {
+                        html += '<a target="_blank" href="' + link + '">';
+                        html += '<div class="docs">';
+                        html += '<div>';
+                        if (label.startsWith('Security ')) icon = 'security.png';
+                        html += '<img src="../icons/' + icon + '" ' + 'style="width: 54px;">';
+                        html += '</div>';
+                        html += '<div style="font-size: 110%">' + label.replace(/_/g, ' ') + '</div>';
+                        html += '</div>';
+                        html += '</a>';
+                    }
+                });
+            }
+        }
+
+        html += '</div>';
+    }
+
+    document.getElementById('Header').innerHTML = html;
+    html = '';
+
+    document.getElementById('Home').innerHTML = html;
+    html = '';
+</script>
+
+<script>
+    function escapeActivityHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function formatActivityDate(dateValue) {
+        if (!dateValue) return 'No date';
+        const date = new Date(dateValue + 'T00:00:00');
+        if (isNaN(date.getTime())) return dateValue;
+        return date.toLocaleDateString('en-GB', {year: 'numeric', month: 'short', day: 'numeric'});
+    }
+
+    function renderActivityKpis(items) {
+        let html = '';
+        items.forEach(item => {
+            html += '<div><b>' + escapeActivityHtml(item.kpi) + '</b>';
+            if (item.unit) {
+                html += ' <span class="activity-muted">(' + escapeActivityHtml(item.unit) + ')</span>';
+            }
+            if (item.expectedImpact) {
+                html += ': ' + escapeActivityHtml(item.expectedImpact);
+            }
+            if (item.description) {
+                html += '<div class="activity-muted">' + escapeActivityHtml(item.description) + '</div>';
+            }
+            html += '</div>';
+        });
+        return html;
+    }
+
+    function renderActivityImpactCell(item) {
+        let html = '';
+        (item.customerImpact || []).forEach(impact => {
+            html += '<div class="activity-block">';
+            html += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">';
+            html += '<img class="activity-icon activity-icon-round" src="../../customers/icons/' + escapeActivityHtml(impact.customer.icon) + '" onerror="this.onerror=null;this.src=\'../../customers/icons/customer.png\'">';
+            html += '<div><div style="font-weight:bold;">' + escapeActivityHtml(impact.customer.name) + ' <span class="activity-muted">(' + escapeActivityHtml(impact.customerId) + ')</span></div></div>';
+            html += '</div>';
+            html += renderActivityKpis(impact.customerKPIs || []);
+            html += renderActivityKpis(impact.businessKPIs || []);
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No customer impact listed</span>';
+    }
+
+    function renderActivityBrickCell(item, currentBrickId) {
+        let html = '';
+        (item.productBricks || []).forEach(brick => {
+            const isCurrent = String(brick.brickId) === String(currentBrickId);
+            html += '<div class="activity-pill' + (isCurrent ? ' activity-pill-highlight' : '') + '">';
+            html += '<img class="activity-icon" src="../icons/' + escapeActivityHtml(brick.brick.icon) + '" onerror="this.onerror=null;this.src=\'../icons/logo.png\'">';
+            html += '<div><div><b style="color:' + (isCurrent ? '#1d4ed8' : '#111827') + '">' + escapeActivityHtml(brick.brick.name) + '</b> <span class="activity-muted">(#' + escapeActivityHtml(brick.brickId) + ')</span></div><div class="activity-muted">' + escapeActivityHtml(brick.change) + '</div></div>';
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No product bricks listed</span>';
+    }
+
+    function renderActivityChannelCell(item) {
+        let html = '';
+        (item.deliveryChannels || []).forEach(channel => {
+            html += '<div class="activity-pill">';
+            html += '<img class="activity-icon" src="../../products/icons/' + escapeActivityHtml(channel.channel.icon) + '" onerror="this.onerror=null;this.src=\'../../products/icons/product.png\'">';
+            html += '<div><div><b>' + escapeActivityHtml(channel.channel.name) + '</b> <span class="activity-muted">(' + escapeActivityHtml(channel.channelId) + ')</span></div><div class="activity-muted">' + escapeActivityHtml(channel.change) + '</div></div>';
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No delivery channels listed</span>';
+    }
+
+    function renderActivityTable(data, kind, currentBrickId) {
+        const items = (data && data.items) ? data.items : [];
+        let html = '';
+        html += '<div class="activity-summary">';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.length + '</div><div class="activity-stat-label">' + kind + '</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.filter(item => (item.customerImpact || []).length > 0).length + '</div><div class="activity-stat-label">With customer impact</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.filter(item => (item.deliveryChannels || []).length > 0).length + '</div><div class="activity-stat-label">With channels</div></div>';
+        html += '</div>';
+
+        if (!items.length) {
+            html += '<div class="group" style="margin-top:0">No related ' + kind.toLowerCase() + ' found for this product brick.</div>';
+            document.getElementById(kind).innerHTML = html;
+            return;
+        }
+
+        html += '<table class="activity-table">';
+        html += '<tr><th>Date</th><th>Description</th><th>Customer Impact</th><th>Product Bricks</th><th>Delivery Channels</th></tr>';
+        items.forEach(item => {
+            html += '<tr>';
+            html += '<td style="white-space:nowrap">' + escapeActivityHtml(formatActivityDate(item.date)) + '</td>';
+            html += '<td><a class="activity-link" target="_blank" rel="noopener noreferrer" href="../../' + kind.toLowerCase() + '/landing_pages/' + item.landingPageIndex + '.html">' + escapeActivityHtml(item.description || kind) + '</a></td>';
+            html += '<td>' + renderActivityImpactCell(item) + '</td>';
+            html += '<td>' + renderActivityBrickCell(item, currentBrickId) + '</td>';
+            html += '<td>' + renderActivityChannelCell(item) + '</td>';
+            html += '</tr>';
+        });
+        html += '</table>';
+        document.getElementById(kind).innerHTML = html;
+    }
+
+    renderActivityTable(initiatives, 'Initiatives', brick.id);
+    renderActivityTable(releases, 'Releases', brick.id);
+</script>
+
+<div style="margin: 30px; font-size: 80%; color: grey">
+    <p>data sources:</p>
+    <div style="color: grey" id="DataSources">
+    </div>
+</div>
+
+<script>
+
+    function addDataSourceLinks() {
+        const linkOf = (href, label) => '<li><a target="_blank" href="' + href + '">' + label + '</a></li>';
+
+        let html = '';
+
+        html += linkOf(config.sheets.details, 'main bricks sheet (basic data per brick)');
+        html += linkOf(config.sheets.targets, 'bricks\' release targets (including OKR targets)');
+        html += linkOf(config.sheets.documents, 'bricks\' decision & discussion documents');
+        html += linkOf(config.sheets.dependencies, 'target synergies and dependencies sheet');
+        html += linkOf(config.sheets.roadmap, 'roadmap');
+
+        return html;
+    }
+    document.getElementById('DataSources').innerHTML = addDataSourceLinks();
+</script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Operator rule engine</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-129891352-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'UA-129891352-1');
+    </script>
+
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 0;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+
+        .review-image {
+            box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+            width: 400px;
+            margin: 10px;
+            padding: 10px
+        }
+
+        .review-image-small {
+            box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+            width: 180px;
+            margin: 6px;
+            padding: 6px;
+        }
+
+        .tab-image {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+        }
+
+        .tab-image-selected {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+            border-bottom: 4px solid blue;
+        }
+
+        .group {
+            margin-top: 2px;
+            margin-bottom: 40px;
+            padding: 20px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            overflow: hidden;
+            border: 1px solid lightgrey;
+        }
+
+        .repo {
+            overflow: hidden;
+            margin: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+        }
+
+        .aws {
+            overflow: hidden;
+            margin: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+        }
+
+
+        .person {
+            text-align: center;
+            padding: 6px;
+            margin: 4px;
+            display: inline-block;
+            font-size: 11px;
+            width: 110px;
+            overflow: hidden;
+            white-space: nowrap;
+            vertical-align: top;
+        }
+
+        .docs {
+            text-align: center;
+            padding: 6px;
+            margin: 4px;
+            display: inline-block;
+            font-size: 11px;
+            width: 110px;
+            overflow: hidden;
+            vertical-align: top;
+        }
+
+        .team {
+            text-align: center;
+            padding: 6px;
+            margin: 8px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 13px;
+            width: 110px;
+            overflow: hidden;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            white-space: nowrap;
+            vertical-align: top;
+            border: 2px solid grey;
+            height: 140px;
+        }
+
+        .legacy-team {
+            text-align: center;
+            padding: 6px;
+            margin: 8px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 13px;
+            width: 110px;
+            overflow: hidden;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            white-space: nowrap;
+            vertical-align: top;
+            border: 2px dashed grey;
+            height: 140px;
+        }
+
+        .number {
+            display: inline-block;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+            margin: 8px;
+            width: 100px;
+        }
+
+        .dependency-icon {
+            height: 32px;
+            margin-left: 8px;
+            margin-right: 8px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+            padding: 4px;
+            border-radius: 5px;
+        }
+
+        .activity-summary {
+            margin: 14px 0;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .activity-stat {
+            display: inline-block;
+            margin-right: 18px;
+            min-width: 110px;
+        }
+
+        .activity-stat-value {
+            font-size: 30px;
+            color: #1d4ed8;
+        }
+
+        .activity-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .activity-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .activity-table th,
+        .activity-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        .activity-table th {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .activity-link {
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .activity-muted {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .activity-block {
+            margin-bottom: 8px;
+            padding-left: 10px;
+            border-left: 3px solid #d7dce1;
+        }
+
+        .activity-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 12px;
+        }
+
+        .activity-pill-highlight {
+            background-color: #dbeafe;
+            border: 1px solid #60a5fa;
+        }
+
+        .activity-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .activity-icon-round {
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <script>
+        function initTab() {
+            if (window.location.hash) {
+                tabName = window.location.hash.substring(1);
+                if (document.getElementById('tab_' + tabName)) {
+                    openTab(tabName);
+                }
+            }
+        }
+
+        function openTab(tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            history.pushState({}, "", '#' + tabName);
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById('tab_' + tabName).className += " active";
+        }
+
+        function initTab() {
+            if (window.location.hash) {
+                tabName = window.location.hash.substring(1);
+                if (document.getElementById('tab_' + tabName)) {
+                    openTab(tabName);
+                }
+            }
+        }
+
+        function openTab(tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            history.pushState({}, "", '#' + tabName);
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById('tab_' + tabName).className += " active";
+        }
+    </script>
+</head>
+<body onload="initTab()" onhashchange="initTab()">
+
+<script>
+    const config = {"domains": [{"id": "emobility", "name": "eMobility", "description": "The eMobility ecosystem, including charge point operators managing infrastructure, eMobility service providers delivering digital charging services, individual EV drivers seeking reliable and seamless charging, and corporate fleet managers optimizing cost, compliance, and large-scale EV operations."}, {"id": "nutrition", "name": "Nutrition", "description": "The full nutrition ecosystem\u2014external stakeholders like formulation, operations, quality, IT, procurement, executives, environmental and educational institutions, as well as internal product, sales, support, and leadership teams\u2014all focused on optimizing product performance, compliance, cost, scalability, and sustainability."}, {"id": "real-estate-marketplace", "name": "Real Estate Marketplace", "description": ""}, {"id": "dkv", "name": "DKV", "description": ""}, {"id": "arrive", "name": "Arrive", "description": ""}, {"id": "internal", "name": "Internal", "description": ""}, {"id": "mambu", "name": "Mambu", "description": "Banks, lenders, fintechs, credit unions, and embedded-finance providers using a composable SaaS cloud banking platform to launch and scale lending, deposits, payments, and banking experiences faster than legacy core transformation approaches allow."}]};
+    const all_bricks = [{"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "updm", "name": "Unified parking data model", "description": "Consolidates transaction, occupancy, access, and policy data into one operational view."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "inla", "name": "Integration layer", "description": "Connects legacy pay stations, enforcement systems, and existing municipal platforms."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "mppa", "name": "Mobile paid parking", "description": "Lets drivers start, stop, extend, and pay digitally."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "spst", "name": "Smart payment stations", "description": "Supports efficient on-street and off-street payment collection where physical devices are still required."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "laco", "name": "LPR access control", "description": "Automates session start and end, shortens queues, and reduces barrier friction."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "rpen", "name": "Responsive pricing engine", "description": "Tracks transaction trends and enables demand-led rate changes."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "pmco", "name": "Policy management controls", "description": "Applies rules consistently across channels and locations."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "anda", "name": "Analytics dashboards", "description": "Reveals utilization, pricing elasticity, and leakage hotspots."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "rpmo", "name": "Reserved parking module", "description": "Allows pre-booking, better occupancy shaping, and premium pricing."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "ppep", "name": "Parking plus EV payment orchestration", "description": "Combines parking and charging payment into one transaction flow."}, {"domain": "Parking Operators and Asset Owners", "group": "digitize-and-optimize-parking-operations", "type": "full-stack", "id": "okco", "name": "Operational KPI cockpit", "description": "Provides real-time oversight for management decisions and issue resolution."}, {"domain": "Parking Operators and Asset Owners", "group": "open-the-parking-market-without-losing-control", "type": "full-stack", "id": "oren", "name": "Operator rule engine", "description": "Keeps policy, pricing, and compliance standardized across providers."}, {"domain": "Parking Operators and Asset Owners", "group": "open-the-parking-market-without-losing-control", "type": "full-stack", "id": "ompa", "name": "Open Market partner APIs", "description": "Enables multiple providers to transact against the same parking inventory."}, {"domain": "Parking Operators and Asset Owners", "group": "open-the-parking-market-without-losing-control", "type": "full-stack", "id": "poto", "name": "Partner onboarding tooling", "description": "Reduces technical and commercial setup effort."}, {"domain": "Parking Operators and Asset Owners", "group": "open-the-parking-market-without-losing-control", "type": "full-stack", "id": "ctle", "name": "Central transaction ledger", "description": "Creates unified visibility and supports settlement, reporting, and audit."}, {"domain": "Parking Operators and Asset Owners", "group": "open-the-parking-market-without-losing-control", "type": "full-stack", "id": "ppan", "name": "Provider performance analytics", "description": "Shows conversion, usage mix, and economics by partner."}, {"domain": "Parking Operators and Asset Owners", "group": "open-the-parking-market-without-losing-control", "type": "full-stack", "id": "mgto", "name": "Marketplace governance tooling", "description": "Supports compliance monitoring, SLA management, and partner-level optimization."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "turn-fragmented-mobility-data-into-policy-decisions", "type": "full-stack", "id": "cmdp", "name": "City mobility data platform", "description": "Combines multimodal operational signals into a common planning layer."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "turn-fragmented-mobility-data-into-policy-decisions", "type": "full-stack", "id": "syco", "name": "System connectors", "description": "Ingests data from existing municipal and operator systems without full rip-and-replace."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "turn-fragmented-mobility-data-into-policy-decisions", "type": "full-stack", "id": "bata", "name": "Behavior and trend analytics", "description": "Shows how people actually move and where intervention is most effective."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "turn-fragmented-mobility-data-into-policy-decisions", "type": "full-stack", "id": "dmda", "name": "Decision-maker dashboards", "description": "Transforms raw data into actionable operational and policy views."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "turn-fragmented-mobility-data-into-policy-decisions", "type": "full-stack", "id": "papm", "name": "Pricing and policy management", "description": "Lets cities change rates, rules, and payment structures across channels."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "turn-fragmented-mobility-data-into-policy-decisions", "type": "full-stack", "id": "mact", "name": "Monitoring and compliance tooling", "description": "Measures intervention effectiveness and operational compliance in real time."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "turn-fragmented-mobility-data-into-policy-decisions", "type": "full-stack", "id": "omla", "name": "Outcome measurement layer", "description": "Ties operational changes back to policy and sustainability outcomes."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "create-a-unified-city-mobility-experience", "type": "full-stack", "id": "msca", "name": "MaaS service catalog", "description": "Structures all city services into a manageable digital offer."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "create-a-unified-city-mobility-experience", "type": "full-stack", "id": "main", "name": "MaaS integrations", "description": "Combines mobility providers and city services into one user journey."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "create-a-unified-city-mobility-experience", "type": "full-stack", "id": "paor", "name": "Payment orchestration", "description": "Supports booking and payment across service types."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "create-a-unified-city-mobility-experience", "type": "full-stack", "id": "jpar", "name": "Journey planning and recommendation logic", "description": "Encourages smoother, smarter travel decisions."}, {"domain": "City Authorities and Urban Mobility Planners", "group": "create-a-unified-city-mobility-experience", "type": "full-stack", "id": "maan", "name": "MaaS analytics", "description": "Measures uptake, conversion, repeat usage, and mode mix changes."}, {"domain": "Public Transport Authorities and Operators", "group": "modernize-fare-collection-without-disrupting-service", "type": "full-stack", "id": "tiat", "name": "Transit integration assessment tooling", "description": "Identifies how open payment and devices can fit existing systems."}, {"domain": "Public Transport Authorities and Operators", "group": "modernize-fare-collection-without-disrupting-service", "type": "full-stack", "id": "open", "name": "Open payment engine", "description": "Supports tap-and-go travel and best-fare calculation."}, {"domain": "Public Transport Authorities and Operators", "group": "modernize-fare-collection-without-disrupting-service", "type": "full-stack", "id": "pane", "name": "Payment acceptance network", "description": "Processes card payments from domestic and international riders."}, {"domain": "Public Transport Authorities and Operators", "group": "modernize-fare-collection-without-disrupting-service", "type": "full-stack", "id": "tiva", "name": "Ticket validators", "description": "Enables compliant validation for open payment and traditional ticketing."}, {"domain": "Public Transport Authorities and Operators", "group": "modernize-fare-collection-without-disrupting-service", "type": "full-stack", "id": "tvad", "name": "Ticket vending and driver devices", "description": "Supports issuance, payment, and operational continuity on vehicles and in stations."}, {"domain": "Public Transport Authorities and Operators", "group": "modernize-fare-collection-without-disrupting-service", "type": "full-stack", "id": "toda", "name": "Transit operations dashboards", "description": "Shows disruptions, outages, and collection performance as they happen."}, {"domain": "Public Transport Authorities and Operators", "group": "modernize-fare-collection-without-disrupting-service", "type": "full-stack", "id": "exma", "name": "Exception management", "description": "Helps teams resolve payment, validation, and equipment issues quickly."}, {"domain": "Public Transport Authorities and Operators", "group": "use-operational-data-to-improve-reliability-and-ridership", "type": "full-stack", "id": "otin", "name": "Operational telemetry ingestion", "description": "Creates a real-time picture of service and transaction performance."}, {"domain": "Public Transport Authorities and Operators", "group": "use-operational-data-to-improve-reliability-and-ridership", "type": "full-stack", "id": "aare", "name": "Alerting and reporting", "description": "Surfaces outages and negative trends before they spread."}, {"domain": "Public Transport Authorities and Operators", "group": "use-operational-data-to-improve-reliability-and-ridership", "type": "full-stack", "id": "dsda", "name": "Decision support dashboards", "description": "Lets leaders act on the metrics that matter most."}, {"domain": "Businesses and Fleet Operators", "group": "control-parking-spend-across-employees-and-vehicles", "type": "full-stack", "id": "apco", "name": "Admin policy controls", "description": "Lets admins set restrictions and permissions by user and vehicle."}, {"domain": "Businesses and Fleet Operators", "group": "control-parking-spend-across-employees-and-vehicles", "type": "full-stack", "id": "epap", "name": "Employee parking app", "description": "Makes parking easy without personal expense handling."}, {"domain": "Businesses and Fleet Operators", "group": "control-parking-spend-across-employees-and-vehicles", "type": "full-stack", "id": "cbai", "name": "Central billing and invoicing", "description": "Removes receipt chasing and simplifies accounting."}, {"domain": "Businesses and Fleet Operators", "group": "control-parking-spend-across-employees-and-vehicles", "type": "full-stack", "id": "snat", "name": "Session notes and tagging", "description": "Allocates parking costs to jobs, customers, or projects."}, {"domain": "Businesses and Fleet Operators", "group": "control-parking-spend-across-employees-and-vehicles", "type": "full-stack", "id": "eapo", "name": "Expense analytics portal", "description": "Surfaces spend patterns and opportunities to reduce waste."}, {"domain": "Businesses and Fleet Operators", "group": "manage-visitor-and-remote-parking-without-manual-administration", "type": "full-stack", "id": "rpma", "name": "Remote parking management", "description": "Allows admins to start, stop, and extend sessions from a portal."}, {"domain": "Businesses and Fleet Operators", "group": "manage-visitor-and-remote-parking-without-manual-administration", "type": "full-stack", "id": "vpwo", "name": "Visitor parking workflows", "description": "Replaces paper permits and manual ad hoc coordination."}, {"domain": "Businesses and Fleet Operators", "group": "manage-visitor-and-remote-parking-without-manual-administration", "type": "full-stack", "id": "aare", "name": "Audit and reporting", "description": "Provides transparency and simplifies reconciliation."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "integrate-once-and-transact-across-many-operator-environments", "type": "full-stack", "id": "prda", "name": "Partner rule documentation and governance", "description": "Clarifies commercial and operational requirements before build."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "integrate-once-and-transact-across-many-operator-environments", "type": "full-stack", "id": "paas", "name": "Partner APIs and SDKs", "description": "Reduces technical cost and accelerates rollout."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "integrate-once-and-transact-across-many-operator-environments", "type": "full-stack", "id": "sact", "name": "Sandbox and certification tooling", "description": "Improves quality and speeds approval."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "integrate-once-and-transact-across-many-operator-environments", "type": "full-stack", "id": "maoc", "name": "Market and operator catalog", "description": "Shows where the partner can go live and under which rules."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "integrate-once-and-transact-across-many-operator-environments", "type": "full-stack", "id": "paas", "name": "Partner analytics and settlement reporting", "description": "Makes margin and performance visible at transaction and market level."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "extend-the-value-of-mobility-inventory-with-adjacent-services", "type": "full-stack", "id": "jaaa", "name": "Journey and attach analytics", "description": "Reveals where adjacent services can lift conversion and spend."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "extend-the-value-of-mobility-inventory-with-adjacent-services", "type": "full-stack", "id": "csto", "name": "Cross-service transaction orchestration", "description": "Supports more than a single parking session in the customer flow."}, {"domain": "Ecosystem Partners and Demand-Side Integrators", "group": "extend-the-value-of-mobility-inventory-with-adjacent-services", "type": "full-stack", "id": "pran", "name": "Partner revenue analytics", "description": "Shows which bundles create sustainable growth."}];
+    const brick = {"domain": "Parking Operators and Asset Owners", "group": "open-the-parking-market-without-losing-control", "type": "full-stack", "id": "oren", "name": "Operator rule engine", "description": "Keeps policy, pricing, and compliance standardized across providers."};
+    const initiatives = {"items": []};
+    const releases = {"items": []};
+</script>
+<div id="Header"></div>
+
+<div style="margin: 20px;">
+    <div class="tab">
+        <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Home</button>
+        <button class="tablinks" id="tab_InitiativesTab" onclick="openTab('InitiativesTab')">Initiatives</button>
+        <button class="tablinks" id="tab_ReleasesTab" onclick="openTab('ReleasesTab')">Releases</button>
+    </div>
+
+    <div id="HomeTab" class="tabcontent" style="display: block; padding: 10px">
+        <div id="Home"></div>
+    </div>
+    <div id="InitiativesTab" class="tabcontent" style="padding: 10px;">
+        <div id="Initiatives"></div>
+    </div>
+    <div id="ReleasesTab" class="tabcontent" style="padding: 10px;">
+        <div id="Releases"></div>
+    </div>
+</div>
+
+<script>
+</script>
+
+<script>
+    function isFalse(value) {
+        return !value || (value + '').toLowerCase().trim() === 'false' || (value + '').toLowerCase().trim() === 'no';
+    }
+
+    function isTrue(value) {
+        return !isFalse(value);
+    }
+
+</script>
+
+<script>
+    let div = document.createElement('div');
+    document.body.appendChild(div);
+
+    let html = '';
+    function addNavigation() {
+        html += '<div style="margin: 20px 20px 10px 20px; font-size: 85%; color: black">';
+        let prev_domain = all_bricks[0].domain;
+        all_bricks.filter(c => c.domain && c.domain.toLowerCase().trim() !== 'on ice').forEach(cap => {
+            if (prev_domain.toLowerCase() !== cap.domain.toLowerCase()) {
+                prev_domain = cap.domain;
+                html += '<div style="margin-top: 5px; margin-left: 4px; vertical-align: top; display: inline-block; border-left: 2px solid lightgrey; height: 30px;">&nbsp;</div>';
+            }
+            html += '<a href="' + cap.id + '.html">';
+            const tabClass = cap.id === brick.id ? 'tab-image-selected' : 'tab-image';
+            html += '<img src="../icons/' + cap.id + '.png" class="' + tabClass + '" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            html += '</a>';
+        });
+        html += '</div>';
+    }
+
+    addNavigation();
+
+    html += '<div style="margin: 20px">';
+
+    function addHeader() {
+        html += '<table>';
+        html += '<tr>';
+        html += '<td>';
+        html += '<div>';
+        html += '<img src="../icons/' + brick.id + '.png" style="width: 110px" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+        html += '</div>';
+        html += '</td>';
+        html += '<td style="vertical-align: top">';
+        html += '<div style="margin-left: 20px; font-size: 90%; color: grey; vertical-align: top">';
+        html += brick.domain;
+        html += ' / <span style="color: blue; font-weight: bold;">' + brick.id.toUpperCase() + '</span>';
+        html += '</div>';
+        html += '<div style="font-size: 50px; margin-left: 20px">';
+        html += brick.name;
+        html += '</div>';
+        html += '<div style="font-size: 16px; margin-left: 20px; color: grey; margin-top: 3px">';
+        html += brick.description ? brick.description : '';
+        html += '</div>';
+        html += '</td>';
+        html += '</tr>';
+        html += '</table>';
+    }
+
+    addHeader();
+
+    function addDocs() {
+        html += '<div  class="" style="margin-top: 32px">';
+
+        function addGroup(docs, icon) {
+            if (docs) {
+                docs.split('\n').forEach(doc => {
+                    const elements = doc.trim().split(',');
+                    const label = elements.length > 0 ? elements[0].trim() : '';
+                    const link = elements.length > 1 ? elements[1].trim() : '';
+                    if (label && link) {
+                        html += '<a target="_blank" href="' + link + '">';
+                        html += '<div class="docs">';
+                        html += '<div>';
+                        if (label.startsWith('Security ')) icon = 'security.png';
+                        html += '<img src="../icons/' + icon + '" ' + 'style="width: 54px;">';
+                        html += '</div>';
+                        html += '<div style="font-size: 110%">' + label.replace(/_/g, ' ') + '</div>';
+                        html += '</div>';
+                        html += '</a>';
+                    }
+                });
+            }
+        }
+
+        html += '</div>';
+    }
+
+    document.getElementById('Header').innerHTML = html;
+    html = '';
+
+    document.getElementById('Home').innerHTML = html;
+    html = '';
+</script>
+
+<script>
+    function escapeActivityHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function formatActivityDate(dateValue) {
+        if (!dateValue) return 'No date';
+        const date = new Date(dateValue + 'T00:00:00');
+        if (isNaN(date.getTime())) return dateValue;
+        return date.toLocaleDateString('en-GB', {year: 'numeric', month: 'short', day: 'numeric'});
+    }
+
+    function renderActivityKpis(items) {
+        let html = '';
+        items.forEach(item => {
+            html += '<div><b>' + escapeActivityHtml(item.kpi) + '</b>';
+            if (item.unit) {
+                html += ' <span class="activity-muted">(' + escapeActivityHtml(item.unit) + ')</span>';
+            }
+            if (item.expectedImpact) {
+                html += ': ' + escapeActivityHtml(item.expectedImpact);
+            }
+            if (item.description) {
+                html += '<div class="activity-muted">' + escapeActivityHtml(item.description) + '</div>';
+            }
+            html += '</div>';
+        });
+        return html;
+    }
+
+    function renderActivityImpactCell(item) {
+        let html = '';
+        (item.customerImpact || []).forEach(impact => {
+            html += '<div class="activity-block">';
+            html += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">';
+            html += '<img class="activity-icon activity-icon-round" src="../../customers/icons/' + escapeActivityHtml(impact.customer.icon) + '" onerror="this.onerror=null;this.src=\'../../customers/icons/customer.png\'">';
+            html += '<div><div style="font-weight:bold;">' + escapeActivityHtml(impact.customer.name) + ' <span class="activity-muted">(' + escapeActivityHtml(impact.customerId) + ')</span></div></div>';
+            html += '</div>';
+            html += renderActivityKpis(impact.customerKPIs || []);
+            html += renderActivityKpis(impact.businessKPIs || []);
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No customer impact listed</span>';
+    }
+
+    function renderActivityBrickCell(item, currentBrickId) {
+        let html = '';
+        (item.productBricks || []).forEach(brick => {
+            const isCurrent = String(brick.brickId) === String(currentBrickId);
+            html += '<div class="activity-pill' + (isCurrent ? ' activity-pill-highlight' : '') + '">';
+            html += '<img class="activity-icon" src="../icons/' + escapeActivityHtml(brick.brick.icon) + '" onerror="this.onerror=null;this.src=\'../icons/logo.png\'">';
+            html += '<div><div><b style="color:' + (isCurrent ? '#1d4ed8' : '#111827') + '">' + escapeActivityHtml(brick.brick.name) + '</b> <span class="activity-muted">(#' + escapeActivityHtml(brick.brickId) + ')</span></div><div class="activity-muted">' + escapeActivityHtml(brick.change) + '</div></div>';
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No product bricks listed</span>';
+    }
+
+    function renderActivityChannelCell(item) {
+        let html = '';
+        (item.deliveryChannels || []).forEach(channel => {
+            html += '<div class="activity-pill">';
+            html += '<img class="activity-icon" src="../../products/icons/' + escapeActivityHtml(channel.channel.icon) + '" onerror="this.onerror=null;this.src=\'../../products/icons/product.png\'">';
+            html += '<div><div><b>' + escapeActivityHtml(channel.channel.name) + '</b> <span class="activity-muted">(' + escapeActivityHtml(channel.channelId) + ')</span></div><div class="activity-muted">' + escapeActivityHtml(channel.change) + '</div></div>';
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No delivery channels listed</span>';
+    }
+
+    function renderActivityTable(data, kind, currentBrickId) {
+        const items = (data && data.items) ? data.items : [];
+        let html = '';
+        html += '<div class="activity-summary">';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.length + '</div><div class="activity-stat-label">' + kind + '</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.filter(item => (item.customerImpact || []).length > 0).length + '</div><div class="activity-stat-label">With customer impact</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.filter(item => (item.deliveryChannels || []).length > 0).length + '</div><div class="activity-stat-label">With channels</div></div>';
+        html += '</div>';
+
+        if (!items.length) {
+            html += '<div class="group" style="margin-top:0">No related ' + kind.toLowerCase() + ' found for this product brick.</div>';
+            document.getElementById(kind).innerHTML = html;
+            return;
+        }
+
+        html += '<table class="activity-table">';
+        html += '<tr><th>Date</th><th>Description</th><th>Customer Impact</th><th>Product Bricks</th><th>Delivery Channels</th></tr>';
+        items.forEach(item => {
+            html += '<tr>';
+            html += '<td style="white-space:nowrap">' + escapeActivityHtml(formatActivityDate(item.date)) + '</td>';
+            html += '<td><a class="activity-link" target="_blank" rel="noopener noreferrer" href="../../' + kind.toLowerCase() + '/landing_pages/' + item.landingPageIndex + '.html">' + escapeActivityHtml(item.description || kind) + '</a></td>';
+            html += '<td>' + renderActivityImpactCell(item) + '</td>';
+            html += '<td>' + renderActivityBrickCell(item, currentBrickId) + '</td>';
+            html += '<td>' + renderActivityChannelCell(item) + '</td>';
+            html += '</tr>';
+        });
+        html += '</table>';
+        document.getElementById(kind).innerHTML = html;
+    }
+
+    renderActivityTable(initiatives, 'Initiatives', brick.id);
+    renderActivityTable(releases, 'Releases', brick.id);
+</script>
+
+<div style="margin: 30px; font-size: 80%; color: grey">
+    <p>data sources:</p>
+    <div style="color: grey" id="DataSources">
+    </div>
+</div>
+
+<script>
+
+    function addDataSourceLinks() {
+        const linkOf = (href, label) => '<li><a target="_blank" href="' + href + '">' + label + '</a></li>';
+
+        let html = '';
+
+        html += linkOf(config.sheets.details, 'main bricks sheet (basic data per brick)');
+        html += linkOf(config.sheets.targets, 'bricks\' release targets (including OKR targets)');
+        html += linkOf(config.sheets.documents, 'bricks\' decision & discussion documents');
+        html += linkOf(config.sheets.dependencies, 'target synergies and dependencies sheet');
+        html += linkOf(config.sheets.roadmap, 'roadmap');
+
+        return html;
+    }
+    document.getElementById('DataSources').innerHTML = addDataSourceLinks();
+</script>
+</body>
+</html>
