@@ -233,6 +233,7 @@ def render_list(template_root, template_name, docs_folder, domain, placeholder_n
         html_file.write(template
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
+                        .replace('${domain_description}', domain['description'])
                         .replace('${' + placeholder_name + '}', json.dumps(data)))
 
     return data['items']

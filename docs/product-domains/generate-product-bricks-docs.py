@@ -114,6 +114,7 @@ for domain in config['domains']:
         with open(docs_folder + 'index.html', 'w') as html_file:
             template = open(root_templates + 'index.html').read()
             content = template.replace('${domain_name}', domain_name)
+            content = content.replace('${domain_description}', domain['description'])
             html_file.write(content)
 
         with open(docs_folder + 'map.html', 'w') as html_file:
