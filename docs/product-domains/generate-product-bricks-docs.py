@@ -26,9 +26,150 @@ root_templates = '../../_templates/product-bricks/'
 
 config = json.load(open(domains_root + 'config.json'))
 template_config = json.load(open(root_templates + 'config.json'))
+evidence_fragments_cache = load_json_if_exists('../../_config/evidence-fragments/cache/evidence-fragments.json', [])
 
 
-def create_landing_pages(bricks, activity_data):
+def slugify(value):
+    return str(value).strip().lower().replace(' / ', '-').replace(' ', '-')
+
+
+def build_fragment_id(group_title, fragment):
+    report_link = ''
+    for link in fragment.get('links', []):
+        if link.get('label') == 'Sokrates HTML Reports':
+            report_link = link.get('url', '')
+            break
+    slug = report_link.split('/')[0] if report_link else slugify(fragment.get('title', ''))
+    return slugify(group_title) + '/' + slug
+
+
+def build_evidence_lookup(cache_groups):
+    lookup = {}
+    for group in cache_groups:
+        group_title = group.get('group', {}).get('title', '')
+        group_description = group.get('group', {}).get('description', '')
+        for fragment in group.get('fragments', []):
+            fragment_id = build_fragment_id(group_title, fragment)
+            enriched_fragment = dict(fragment)
+            enriched_fragment['id'] = fragment_id
+            enriched_fragment['evidenceGroupTitle'] = group_title
+            enriched_fragment['evidenceGroupDescription'] = group_description
+            lookup[fragment_id] = enriched_fragment
+    return lookup
+
+
+evidence_fragment_lookup = build_evidence_lookup(evidence_fragments_cache)
+
+
+def build_customer_lookup(customers):
+    lookup = {}
+    for group in customers:
+        group_name = group.get('group', '')
+        for customer in group.get('customers', []):
+            enriched = dict(customer)
+            enriched['group'] = group_name
+            lookup[customer['id']] = enriched
+    return lookup
+
+
+def build_brick_context(brick, products, customers):
+    customer_lookup = build_customer_lookup(customers)
+    linked_products = []
+    supported_jobs = []
+    supported_jobs_index = {}
+
+    brick_id = str(brick.get('id', '')).strip().lower()
+    brick_name = str(brick.get('name', '')).strip().lower()
+
+    def capability_matches(capability):
+        capability_code = str(capability.get('id', capability.get('capabilityCode', ''))).strip().lower()
+        capability_name = str(capability.get('name', capability.get('capabilityName', ''))).strip().lower()
+        return capability_code == brick_id or capability_name == brick_name
+
+    def append_supported_job(customer, primary_customer, product, job, step, capability, matched_capability):
+        item_key = (
+            customer.get('id', primary_customer.get('id', '')),
+            product.get('id', ''),
+            job.get('id', ''),
+        )
+        if item_key not in supported_jobs_index:
+            supported_jobs_index[item_key] = {
+                'customerId': customer.get('id', primary_customer.get('id', '')),
+                'customerName': customer.get('name', primary_customer.get('name', '')),
+                'customerGroup': customer.get('group', ''),
+                'customerIcon': customer.get('icon', 'customer.png'),
+                'productId': product.get('id', ''),
+                'productName': product.get('name', ''),
+                'productIcon': product.get('icon', 'product.png'),
+                'jobId': job.get('id', ''),
+                'jobName': job.get('name', ''),
+                'jobWhatItIs': job.get('what_it_is', ''),
+                'jobOutcome': job.get('outcome', ''),
+                'supportRationale': capability.get('how_it_supports', '') or matched_capability.get('whyNeeded', ''),
+                'usedInSteps': []
+            }
+            supported_jobs.append(supported_jobs_index[item_key])
+
+        supported_job = supported_jobs_index[item_key]
+        used_step = {
+            'step': step.get('step', ''),
+            'description': step.get('description', ''),
+            'howItSupports': capability.get('how_it_supports', '') or matched_capability.get('whyNeeded', '')
+        }
+        if used_step not in supported_job['usedInSteps']:
+            supported_job['usedInSteps'].append(used_step)
+
+    for product in products.get('portfolio', {}).get('products', []):
+        matched_capability = None
+        for capability in product.get('neededCapabilities', []):
+            if capability_matches(capability):
+                matched_capability = capability
+                break
+
+        if not matched_capability:
+            continue
+
+        linked_products.append({
+            'id': product.get('id', ''),
+            'name': product.get('name', ''),
+            'icon': product.get('icon', 'product.png'),
+            'type': product.get('type', ''),
+            'whyUsed': matched_capability.get('whyNeeded', '')
+        })
+
+        for primary_customer in product.get('primaryCustomers', []):
+            customer = customer_lookup.get(primary_customer.get('id', ''), {})
+            for job in customer.get('jobsToBeDone', []):
+                for step in job.get('steps', []):
+                    for capability in step.get('capabilitiesNeeded', []):
+                        if capability_matches(capability):
+                            append_supported_job(customer, primary_customer, product, job, step, capability, matched_capability)
+
+    return linked_products, supported_jobs
+
+
+def build_brick_evidence(brick_id, evidence_items):
+    matched_item = next((item for item in evidence_items if str(item.get('brick-id', '')).strip() == str(brick_id).strip()), None)
+    if not matched_item:
+        return {'brickId': brick_id, 'groups': []}
+
+    groups = []
+    for item in matched_item.get('evidence-filters', []):
+        fragments = []
+        for fragment_id in item.get('evidence-fragment-ids', []):
+            fragment = evidence_fragment_lookup.get(fragment_id)
+            if fragment:
+                fragments.append(fragment)
+        groups.append({
+            'name': item.get('group-name', ''),
+            'description': item.get('description', ''),
+            'fragments': fragments
+        })
+
+    return {'brickId': brick_id, 'groups': groups}
+
+
+def create_landing_pages(bricks, activity_data, products, customers, evidence_items):
     landing_page_template = open(root_templates + 'landing_page.html').read();
 
     capabilities_map = {}
@@ -43,6 +184,8 @@ def create_landing_pages(bricks, activity_data):
 
     for brick in bricks:
         name = brick['name']
+        linked_products, supported_jobs = build_brick_context(brick, products, customers)
+        evidence = build_brick_evidence(brick['id'], evidence_items)
 
         htmlFile = docs_folder + 'landing_pages/' + str(brick['id']) + '.html'
         with open(htmlFile, 'w') as html_file:
@@ -52,6 +195,9 @@ def create_landing_pages(bricks, activity_data):
                             .replace('${all_bricks}', json.dumps(bricks))
                             .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${brick_data}', json.dumps(brick))
+                            .replace('${evidence}', json.dumps(evidence))
+                            .replace('${linked_products}', json.dumps(linked_products))
+                            .replace('${supported_jobs}', json.dumps(supported_jobs))
                             .replace('${initiatives}', json.dumps(filter_for_brick(activity_data['initiatives'], brick['id'])))
                             .replace('${releases}', json.dumps(filter_for_brick(activity_data['releases'], brick['id']))))
 
@@ -78,6 +224,9 @@ for domain in config['domains']:
 
     data = json.load(open(product_bricks_config_path))
     activity_data = load_domain_activity(domains_root, domain_id)
+    products = load_json_if_exists(domains_root + domain_id + '/products/products.json', {'portfolio': {'products': []}})
+    customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
+    evidence_items = load_json_if_exists(root_domain + 'evidence.json', [])
 
     def get_groups(bricks_list):
         groups_map = {}
@@ -115,15 +264,10 @@ for domain in config['domains']:
             template = open(root_templates + 'index.html').read()
             content = template.replace('${domain_name}', domain_name)
             content = content.replace('${domain_description}', domain['description'])
-            html_file.write(content)
-
-        with open(docs_folder + 'map.html', 'w') as html_file:
-            template = open(root_templates + 'map.html').read()
-            content = template.replace('${bricks}', json.dumps(data))
-            content = content.replace('${domain_name}', domain_name)
+            content = content.replace('${bricks}', json.dumps(data))
             content = content.replace('${config}', json.dumps(template_config))
             html_file.write(content)
 
     process()
 
-    create_landing_pages(data, activity_data)
+    create_landing_pages(data, activity_data, products, customers, evidence_items)

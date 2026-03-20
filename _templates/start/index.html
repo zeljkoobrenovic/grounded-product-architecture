@@ -185,14 +185,30 @@
 <div style="margin-top: 10px"><img src="icons/logo.png" style="height: 124px"></div>
 <div style="margin: 8px; margin-top: 0; font-size: 40px; color: #8c8c8c">${domain_name}</div>
 <div style="margin-bottom: 36px; font-size: 20px; color: #8c8c8c">${domain_description}</div>
-<div class="tab">
-    <button id="overview_tab" class="tablinks active" onclick="openTab(event, 'apps_tab')">Product Domain</button>
-    <button id="current_tab" class="tablinks" onclick="openTab(event, 'apps')">Explorers</button>
+<div class="tab" id="tab_navigation">
 </div>
 
-<div id="apps_tab" class="tabcontent" style="margin: 0; padding: 6px; display: block">
-    <div id="apps"></div>
-</div>
+<div id="tab_content"></div>
+
+<script>
+    const apps = ${apps};
+    let tabNavigationHtml = '';
+    let tabContentHtml = '';
+    let first = true;
+    apps.forEach(tab => {
+        tabNavigationHtml += '<button class="tablinks ' + (first ? 'active' : '') + '" onclick="openTab(event, \'tab_content_' + tab.tab + '\')">' + tab.tab + '</button>';
+
+        tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;' + (first ? 'display: block;' : '') + '">' +
+            '<div id="content_' + tab.tab + '"></div>' +
+            '</div>\n';
+
+        first = false;
+    });
+
+    document.getElementById('tab_navigation').innerHTML = tabNavigationHtml;
+    document.getElementById('tab_content').innerHTML = tabContentHtml;
+</script>
+
 <script>
     function parseStartGroup(group) {
         group = group.trim();
@@ -205,103 +221,39 @@
         }
     }
 
-    const apps = [
-        {
-            "group": "strategy",
-            "apps": [
-                {
-                    "name": "Customers",
-                    "link": "../customers/index.html",
-                    "icon": "../../customers/icons/logo.png",
-                    "description": "customer model and personas",
-                    "source": "configuration file"
-                }
-            ]
-        },
-        {
-            "group": "product architecture",
-            "apps": [
-                {
-                    "name": "Product Bricks",
-                    "link": "../product-bricks/index.html",
-                    "icon": "../../product-bricks/icons/logo.png",
-                    "description": "capability map and bricks",
-                    "source": "configuration file"
-                },
-                {
-                    "name": "Products",
-                    "link": "../products/index.html",
-                    "icon": "../../products/icons/logo.png",
-                    "description": "product and interface model",
-                    "source": "configuration file"
-                }
-            ]
-        },
-        {
-            "group": "execution",
-            "apps": [
-                {
-                    "name": "Goals",
-                    "link": "../goals/index.html",
-                    "icon": "../../goals/icons/logo.png",
-                    "description": "quarterly goals and OKR links",
-                    "source": "configuration file"
-                },
-                {
-                    "name": "Rituals",
-                    "link": "../rituals/index.html",
-                    "icon": "../../rituals/icons/logo.png",
-                    "description": "meeting model and operating rituals",
-                    "source": "configuration file"
-                },
-                {
-                    "name": "Initiatives",
-                    "link": "../initiatives/index.html",
-                    "icon": "../../initiatives/icons/logo.png",
-                    "description": "initiatives over the past year",
-                    "source": "configuration file"
-                },
-                {
-                    "name": "Releases",
-                    "link": "../releases/index.html",
-                    "icon": "../../releases/icons/logo.png",
-                    "description": "releases over the past year",
-                    "source": "configuration file"
-                }
-            ]
-        }
-    ];
-
-    function update(divId) {
-        let html = '';
-        apps.forEach(group => {
-            html += '<div class="group">';
-            html += '<div class="group-title">' + group.group + '</div>';
-            group.apps.forEach(app => {
-                html += '<div class="app">';
-                html += '    <a target="_blank" href="' + app.link + '">\n';
-                html += '    <div style="height: 38px">\n';
-                html += '    <div class="name">' + app.name + '</div>\n';
-                if (app.source) {
-                    html += '    <div class="source">source: ' + app.source + '</div>\n';
-                } else {
-                    html += '    <div class="source"></div>\n';
-                }
-                html += '    </div>\n';
-                html += '    <div><img class="icon" src="icons/' + app.icon + '"></div>\n';
-                html += '    <div class="description">' + app.description + '</div>\n';
-                html += '    </a>\n';
-                html += '    <br>\n';
+    function update() {
+        apps.forEach(tab => {
+            let html = '';
+            const contentId = 'content_' + tab.tab;
+            tab.apps.forEach(group => {
+                html += '<div class="group">';
+                html += '<div class="group-title">' + group.group + '</div>';
+                group.apps.forEach(app => {
+                    html += '<div class="app">';
+                    html += '    <a target="_blank" href="' + app.link + '">\n';
+                    html += '    <div style="height: 38px">\n';
+                    html += '    <div class="name">' + app.name + '</div>\n';
+                    if (app.source) {
+                        html += '    <div class="source">source: ' + app.source + '</div>\n';
+                    } else {
+                        html += '    <div class="source"></div>\n';
+                    }
+                    html += '    </div>\n';
+                    html += '    <div><img class="icon" src="icons/' + app.icon + '"></div>\n';
+                    html += '    <div class="description">' + app.description + '</div>\n';
+                    html += '    </a>\n';
+                    html += '    <br>\n';
+                    html += '</div>';
+                });
                 html += '</div>';
             });
-            html += '</div>';
+            document.getElementById(contentId).innerHTML = html;
         });
 
-        document.getElementById(divId).innerHTML = html;
     }
 
     function updateAll() {
-        update('apps');
+        update();
     }
 
     updateAll();

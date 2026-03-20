@@ -129,6 +129,82 @@
             background-color: white;
         }
 
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 860px;
+            font-size: 13px;
+            background-color: white;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        .matrix-meeting {
+            min-width: 260px;
+        }
+
+        .matrix-role {
+            text-align: left;
+            overflow: hidden;
+            font-size: 60%;
+            padding: 0;
+            max-width: 10px;
+            vertical-align: middle
+        }
+
+        .matrix-required {
+            display: inline-block;
+            padding: 3px;
+            border-radius: 999px;
+            background-color: #eadfd8;
+            color: #6d4c41;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .matrix-optional {
+            display: inline-block;
+            padding: 3px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            color: #6b7280;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .matrix-empty {
+            color: #c4c4c4;
+        }
+
+        .matrix-shared {
+            text-align: center;
+            font-weight: bold;
+            color: #6d4c41;
+        }
+
+        .matrix-self {
+            background-color: #f7f3f0;
+        }
+
         .stat {
             display: inline-block;
             min-width: 150px;
@@ -253,6 +329,20 @@
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+    <script>
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName('tabcontent');
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = 'none';
+            }
+            const tablinks = document.getElementsByClassName('tablinks');
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(' active', '');
+            }
+            document.getElementById(tabName).style.display = 'block';
+            evt.currentTarget.className += ' active';
+        }
+    </script>
 </head>
 <body>
 <div class="domain-label">eMobility</div>
@@ -261,11 +351,14 @@
     <a class="section-link" href="../customers/index.html">Customers</a>
     <a class="section-link" href="../product-bricks/index.html">Product Bricks</a>
     <a class="section-link" href="../products/index.html">Products</a>
+    <a class="section-link" href="../teams/index.html">Teams</a>
     <a class="section-link" href="../goals/index.html">Goals</a>
     <a class="section-link active" href="../rituals/index.html">Rituals</a>
-    <a class="section-link" href="../initiatives/index.html">Initiatives</a>
     <a class="section-link" href="../releases/index.html">Releases</a>
+    <a class="section-link" href="../initiatives/index.html">Initiatives</a>
+    <a class="section-link" href="../discoveries/index.html">Discoveries</a>
 </div>
+
 
 <div class="hero">
     <table class="hero-table">
@@ -280,12 +373,27 @@
 </div>
 
 <div class="tab">
-    <button class="tablinks active">Rituals</button>
+    <button class="tablinks active" onclick="openTab(event, 'OverviewTab')">Overview</button>
+    <button class="tablinks" onclick="openTab(event, 'RitualsTab')">Rituals</button>
+    <button class="tablinks" onclick="openTab(event, 'ParticipantsTab')">Participants</button>
+    <button class="tablinks" onclick="openTab(event, 'ParticipantMatrixTab')">Participant Matrix</button>
 </div>
 
-<div class="tabcontent">
+<div id="OverviewTab" class="tabcontent" style="display: block">
     <div id="Summary" class="summary-strip"></div>
     <div id="Overview"></div>
+</div>
+
+<div id="RitualsTab" class="tabcontent" style="display: none">
+    <div id="Rituals"></div>
+</div>
+
+<div id="ParticipantsTab" class="tabcontent" style="display: none">
+    <div id="Participants"></div>
+</div>
+
+<div id="ParticipantMatrixTab" class="tabcontent" style="display: none">
+    <div id="ParticipantMatrix"></div>
 </div>
 
 <script>
@@ -317,10 +425,10 @@
         });
 
         const stats = [
-            { value: meetings.length, label: 'Meetings' },
-            { value: Object.keys(new Set(meetings.map(item => item.category || 'other'))).length, label: 'Categories' },
-            { value: Math.round(totalDuration / Math.max(meetings.length, 1)), label: 'Avg minutes' },
-            { value: cadenceCounts.weekly || 0, label: 'Weekly rituals' }
+            {value: meetings.length, label: 'Meetings'},
+            {value: Object.keys(new Set(meetings.map(item => item.category || 'other'))).length, label: 'Categories'},
+            {value: Math.round(totalDuration / Math.max(meetings.length, 1)), label: 'Avg minutes'},
+            {value: cadenceCounts.weekly || 0, label: 'Weekly rituals'}
         ];
 
         let html = '';
@@ -376,13 +484,46 @@
         });
 
         let html = '';
-        categories.forEach(category => {
-            html += '<div class="section">';
-            html += '<div class="section-title">' + escapeHtml(titleCase(category)) + '</div>';
-            html += '<div class="section-copy">' + escapeHtml(categoryIntro(category)) + '</div>';
-            html += '<div class="grid">';
-            grouped[category].forEach(meeting => {
-                html += renderMeetingCard(meeting);
+        const cadences = ['daily', 'weekly', 'biweekly', 'monthly', 'quarterly'];
+        cadences.forEach(cadence => {
+            categories.forEach(category => {
+                html += '<div class="section">';
+                html += '<div class="">';
+                console.log(cadence);
+                grouped[category].filter(m => m.cadence === cadence).forEach(meeting => {
+                    html += '<div style="">';
+                    html += '<div style="font-size: 70%; display: inline-block; max-width: 200px; width: 200px; white-space: nowrap; overflow: hidden">';
+                    html += '' + meeting.title + ' ' + meeting.cadence;
+                    html += '</div>';
+                    html += '<div style="display: inline-block; max-width: calc(100% - 240px); width: calc(100% - 240px); white-space: nowrap; overflow: hidden">';
+                    for (let quarter = 0; quarter < 1; quarter++) {
+                        html += '<div style="display: inline-block; height: 12px; width: 3px; margin-left: 1px; background-color: white;"></div>';
+                        for (let month = 0; month < 3; month++) {
+                            html += '<div style="display: inline-block; height: 12px; width: 13px; margin-left: 1px; background-color: white;"></div>';
+                            for (let week = 0; week < 4; week++) {
+                                html += '<div style="display: inline-block; height: 12px; width: 5px; margin-left: 1px; background-color: white;"></div>';
+                                for (let day = 0; day < 5; day++) {
+                                    let color = '#f0f0f0';
+                                    if (meeting.cadence === 'daily') {
+                                        color = 'blue';
+                                    } else if (meeting.cadence === 'weekly' && day === 2) {
+                                        color = 'blue';
+                                    } else if (meeting.cadence === 'biweekly' && week % 2 === 0 && day === 2) {
+                                        color = 'blue';
+                                    } else if (meeting.cadence === 'monthly' && week === 0 && day === 2) {
+                                        color = 'blue';
+                                    } else if (meeting.cadence === 'quarterly' && month === 0 && week === 0 && day === 2) {
+                                        color = 'blue';
+                                    }
+
+                                    html += '<div style="border-radius: 50%; display: inline-block; height: 10px; width: 10px; margin-left: 1px; background-color: ' + color + ';"></div>';
+                                }
+                            }
+                        }
+                    }
+                    html += '</div>';
+                    html += '</div>';
+                });
             });
             html += '</div></div>';
         });
@@ -390,8 +531,159 @@
         document.getElementById('Overview').innerHTML = html;
     }
 
+    function renderRitualList(meetings) {
+        let html = '<div class="grid">';
+        meetings.forEach(meeting => {
+            html += renderMeetingCard(meeting);
+        });
+        html += '</div>';
+        document.getElementById('Rituals').innerHTML = html;
+    }
+
+    function renderParticipantsMatrix(meetings) {
+        const roleAttendance = {};
+        const sortedMeetings = meetings.slice().sort((left, right) => {
+            const leftCount = (((left.participants && left.participants.required) || []).length + ((left.participants && left.participants.optional) || []).length);
+            const rightCount = (((right.participants && right.participants.required) || []).length + ((right.participants && right.participants.optional) || []).length);
+            if (rightCount !== leftCount) {
+                return rightCount - leftCount;
+            }
+            return String(left.title || '').localeCompare(String(right.title || ''));
+        });
+
+        sortedMeetings.forEach(meeting => {
+            ((meeting.participants && meeting.participants.required) || []).forEach(role => {
+                roleAttendance[role] = (roleAttendance[role] || 0) + 1;
+            });
+            ((meeting.participants && meeting.participants.optional) || []).forEach(role => {
+                roleAttendance[role] = (roleAttendance[role] || 0) + 1;
+            });
+        });
+
+        const roles = Object.keys(roleAttendance).sort((left, right) => {
+            if (roleAttendance[right] !== roleAttendance[left]) {
+                return roleAttendance[right] - roleAttendance[left];
+            }
+            return left.localeCompare(right);
+        });
+
+        let html = '<div class="table-wrap"><table>';
+        html += '<tr><th class="matrix-meeting">Meeting</th>';
+        roles.forEach(role => {
+            html += '<th class="matrix-role">' + escapeHtml(role) + '</th>';
+        });
+        html += '</tr>';
+
+        sortedMeetings.forEach(meeting => {
+            const required = new Set((meeting.participants && meeting.participants.required) || []);
+            const optional = new Set((meeting.participants && meeting.participants.optional) || []);
+            html += '<tr>';
+            html += '<td class="matrix-meeting"><div><b>' + escapeHtml(meeting.title || '') + '</b></div><div class="meta">' + escapeHtml(meeting.cadence || '') + ' | ' + escapeHtml(String(meeting.durationMinutes || '')) + ' min</div></td>';
+            roles.forEach(role => {
+                html += '<td class="matrix-role">';
+                if (required.has(role)) {
+                    html += '<span class="matrix-required">R</span>';
+                } else if (optional.has(role)) {
+                    html += '<span class="matrix-optional">O</span>';
+                } else {
+                    html += '<span class="matrix-empty">-</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</table></div>';
+        document.getElementById('Participants').innerHTML = html;
+    }
+
+    function renderParticipantSharedMatrix(meetings) {
+        const attendance = {};
+
+        meetings.forEach(meeting => {
+            const roles = [
+                ...((meeting.participants && meeting.participants.required) || []),
+                ...((meeting.participants && meeting.participants.optional) || [])
+            ];
+            roles.forEach(role => {
+                attendance[role] = (attendance[role] || 0) + 1;
+            });
+        });
+
+        const roles = Object.keys(attendance).sort((left, right) => {
+            if (attendance[right] !== attendance[left]) {
+                return attendance[right] - attendance[left];
+            }
+            return left.localeCompare(right);
+        });
+
+        const sharedCounts = {};
+        roles.forEach(left => {
+            sharedCounts[left] = {};
+            roles.forEach(right => {
+                sharedCounts[left][right] = 0;
+            });
+        });
+
+        meetings.forEach(meeting => {
+            const rolesInMeeting = [
+                ...((meeting.participants && meeting.participants.required) || []),
+                ...((meeting.participants && meeting.participants.optional) || [])
+            ];
+            rolesInMeeting.forEach(left => {
+                rolesInMeeting.forEach(right => {
+                    sharedCounts[left][right] += 1;
+                });
+            });
+        });
+
+        let maxShared = 0;
+        roles.forEach(left => {
+            roles.forEach(right => {
+                if (left !== right && sharedCounts[left][right] > maxShared) {
+                    maxShared = sharedCounts[left][right];
+                }
+            });
+        });
+
+        let html = '<div class="table-wrap"><table>';
+        html += '<tr><th class="matrix-meeting">Participant</th>';
+        roles.forEach(role => {
+            html += '<th class="matrix-role">' + escapeHtml(role) + '</th>';
+        });
+        html += '</tr>';
+
+        roles.forEach(left => {
+            html += '<tr>';
+            html += '<td class="matrix-meeting" style="max-width: 160px"><div><b>' + escapeHtml(left) + '</b> (' + escapeHtml(String(attendance[left])) + ')</div></td>';
+            roles.forEach(right => {
+                const count = sharedCounts[left][right];
+                const selfClass = left === right ? ' matrix-self' : '';
+                let style = '';
+                if (left !== right && count > 0 && maxShared > 0) {
+                    const opacity = 0.12 + (0.58 * (count / maxShared));
+                    style = ' style="background-color: rgba(37, 99, 235, ' + opacity.toFixed(2) + '); color: #0f172a;"';
+                }
+                html += '<td class="matrix-role matrix-shared' + selfClass + '"' + style + '>';
+                if (left === right) {
+                    html += '<span class="matrix-empty">-</span>';
+                } else {
+                    html += count ? escapeHtml(String(count)) : '<span class="matrix-empty">0</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</table></div>';
+        document.getElementById('ParticipantMatrix').innerHTML = html;
+    }
+
     renderSummary(rituals.meetings || []);
     renderOverview(rituals.meetings || []);
+    renderRitualList(rituals.meetings || []);
+    renderParticipantsMatrix(rituals.meetings || []);
+    renderParticipantSharedMatrix(rituals.meetings || []);
 </script>
 </body>
 </html>

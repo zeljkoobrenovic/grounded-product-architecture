@@ -3,6 +3,8 @@ import json
 import os
 import shutil
 
+from initiatives_support import enrich_discoveries
+
 date_string = datetime.date.today().strftime('%Y-%m-%d')
 
 domains_root = '../../_config/product-domains/'
@@ -16,6 +18,19 @@ def copy_icons(icons_path, docs_folder):
             dst = os.path.join(docs_folder, 'icons', filename)
             if os.path.isfile(src):
                 shutil.copy2(src, dst)
+
+
+def normalize_icon_name(icon_name, fallback='customer.png'):
+    value = (icon_name or fallback).strip()
+    if not value:
+        value = fallback
+    while value.endswith('.png.png'):
+        value = value[:-4]
+    while value.endswith('.svg.png'):
+        value = value[:-4]
+    if '.' in value:
+        return value
+    return value + '.png'
 
 
 def slugify(text):
@@ -62,7 +77,7 @@ def build_customers_lookup(customers):
                 'id': customer['id'],
                 'name': customer.get('name', customer['id']),
                 'group': group_name,
-                'icon': customer_icon_map.get(customer.get('icon', ''), customer.get('icon', 'customer') + '.png')
+                'icon': normalize_icon_name(customer_icon_map.get(customer.get('icon', ''), customer.get('icon', 'customer.png')))
             }
 
             pyramids = customer.get('kpiPyramids', {})
@@ -156,8 +171,9 @@ def enrich_items(data, customers_lookup, kpi_lookup, bricks_lookup, channels_loo
     items = sorted(data.get('items', []), key=lambda item: item.get('date', ''), reverse=True)
     enriched = []
 
-    for item in items:
+    for index, item in enumerate(items):
         enriched_item = dict(item)
+        enriched_item['landingPageIndex'] = index
 
         enriched_impacts = []
         for impact in item.get('customerImpact', []):
@@ -273,18 +289,66 @@ for domain in config['domains']:
     bricks_lookup = build_bricks_lookup(bricks)
     channels_lookup = build_channels_lookup(products)
 
+    initiatives_enriched = {'items': []}
+    discoveries_enriched = {'ongoing': [], 'archived': [], 'items': []}
+
     if os.path.exists(initiatives_path):
         initiatives = json.load(open(initiatives_path))
+        initiatives_enriched = enrich_items(initiatives, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup)
+
+    initiative_lookup = {
+        item.get('initiativeId', ''): {
+            'landingPageIndex': item.get('landingPageIndex'),
+            'description': item.get('description', '')
+        }
+        for item in initiatives_enriched.get('items', [])
+        if item.get('initiativeId')
+    }
+
+    ongoing_discoveries_path = domains_root + domain_id + '/discoveries/ongoing.json'
+    archived_discoveries_path = domains_root + domain_id + '/discoveries/archived.json'
+    if os.path.exists(ongoing_discoveries_path) or os.path.exists(archived_discoveries_path):
+        ongoing_discoveries = json.load(open(ongoing_discoveries_path)) if os.path.exists(ongoing_discoveries_path) else {'items': []}
+        archived_discoveries = json.load(open(archived_discoveries_path)) if os.path.exists(archived_discoveries_path) else {'items': []}
+        discoveries_enriched = enrich_discoveries(ongoing_discoveries, archived_discoveries, initiative_lookup)
+
+    discovery_lookup = {
+        item.get('id', ''): {
+            'landingPageIndex': item.get('landingPageIndex'),
+            'name': item.get('name', ''),
+            'status': item.get('status', '')
+        }
+        for item in discoveries_enriched.get('items', [])
+        if item.get('id')
+    }
+
+    for item in initiatives_enriched.get('items', []):
+        linked_discoveries = []
+        for linked in item.get('discoveryLinks', []):
+            linked_info = discovery_lookup.get(linked.get('discoveryId', ''), {})
+            linked_item = dict(linked)
+            linked_item['landingPageIndex'] = linked_info.get('landingPageIndex')
+            linked_item['discoveryName'] = linked_info.get('name', linked.get('discoveryName', linked.get('discoveryId', '')))
+            linked_item['status'] = linked_info.get('status', linked.get('status', ''))
+            linked_discoveries.append(linked_item)
+        item['discoveryLinks'] = linked_discoveries
+
+    if initiatives_enriched.get('items'):
         initiatives_docs_folder = domain_id + '/initiatives/'
         initiatives_template_root = '../../_templates/initiatives/'
-        enriched = enrich_items(initiatives, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup)
-        initiative_items = render_list(initiatives_template_root, 'initiatives.html', initiatives_docs_folder, domain, 'initiatives', enriched)
+        initiative_items = render_list(initiatives_template_root, 'initiatives.html', initiatives_docs_folder, domain, 'initiatives', initiatives_enriched)
         render_landing_pages(initiatives_template_root, initiatives_docs_folder, 'initiative', 'landing_page.html', domain, initiative_items)
+
+    if discoveries_enriched.get('items'):
+        discoveries_docs_folder = domain_id + '/discoveries/'
+        discoveries_template_root = '../../_templates/discoveries/'
+        discovery_items = render_list(discoveries_template_root, 'index.html', discoveries_docs_folder, domain, 'discoveries', discoveries_enriched)
+        render_landing_pages(discoveries_template_root, discoveries_docs_folder, 'discovery', 'landing_page.html', domain, discovery_items)
 
     if os.path.exists(releases_path):
         releases = json.load(open(releases_path))
         releases_docs_folder = domain_id + '/releases/'
         releases_template_root = '../../_templates/releases/'
         enriched = enrich_items(releases, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup)
-        release_items = render_list(releases_template_root, 'releases.html', releases_docs_folder, domain, 'releases', enriched)
+        release_items = render_list(releases_template_root, 'index.html', releases_docs_folder, domain, 'releases', enriched)
         render_landing_pages(releases_template_root, releases_docs_folder, 'release', 'landing_page.html', domain, release_items)

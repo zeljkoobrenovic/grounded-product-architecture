@@ -6,6 +6,8 @@ from initiatives_support import load_domain_activity, filter_for_product
 
 date_string = datetime.date.today().strftime('%Y-%m-%d')
 
+apps = json.load(open('../../_config/start/apps.json'))
+
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/start/'
 
@@ -33,6 +35,7 @@ def create_docs(domain_id, config, docs_folder):
         print(config['description'])
         html_file.write(template
                         .replace('${date}', date_string)
+                        .replace('${apps}', json.dumps(apps))
                         .replace('${domain_name}', config['name'])
                         .replace('${domain_description}', config['description']))
 

@@ -15,6 +15,19 @@ def load_first_existing(paths, default_value):
     return default_value
 
 
+def normalize_icon_name(icon_name, fallback='customer.png'):
+    value = (icon_name or fallback).strip()
+    if not value:
+        value = fallback
+    while value.endswith('.png.png'):
+        value = value[:-4]
+    while value.endswith('.svg.png'):
+        value = value[:-4]
+    if '.' in value:
+        return value
+    return value + '.png'
+
+
 def slugify(text):
     value = (text or '').strip().lower()
     chars = []
@@ -59,7 +72,7 @@ def build_customers_lookup(customers):
                 'id': customer['id'],
                 'name': customer.get('name', customer['id']),
                 'group': group_name,
-                'icon': customer_icon_map.get(customer.get('icon', ''), customer.get('icon', 'customer') + '.png')
+                'icon': normalize_icon_name(customer_icon_map.get(customer.get('icon', ''), customer.get('icon', 'customer.png')))
             }
 
             pyramids = customer.get('kpiPyramids', {})
@@ -228,16 +241,26 @@ def load_domain_activity(domains_root, domain_id):
         domains_root + domain_id + '/product/products.json'
     ], {'portfolio': {'products': []}})
     product_bricks = load_json_if_exists(domains_root + domain_id + '/product-bricks/product-bricks.json', [])
-    initiatives = load_json_if_exists(domains_root + domain_id + '/initiatives/initiatives.json', {'items': []})
-    releases = load_json_if_exists(domains_root + domain_id + '/initiatives/releases.json', {'items': []})
+    initiatives = load_json_if_exists(domains_root + domain_id + '/delivery/initiatives.json', {'items': []})
+    releases = load_json_if_exists(domains_root + domain_id + '/delivery/releases.json', {'items': []})
+    ongoing_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/ongoing.json', {'items': []})
+    archived_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/archived.json', {'items': []})
 
     customers_lookup, kpi_lookup = build_customers_lookup(customers)
     bricks_lookup = build_bricks_lookup(product_bricks)
     channels_lookup = build_channels_lookup(products)
+    initiatives_enriched = enrich_items(initiatives, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup)
+
+    initiative_lookup = {
+        item.get('initiativeId', ''): item
+        for item in initiatives_enriched.get('items', [])
+        if item.get('initiativeId')
+    }
 
     return {
-        'initiatives': enrich_items(initiatives, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup),
-        'releases': enrich_items(releases, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup)
+        'initiatives': initiatives_enriched,
+        'releases': enrich_items(releases, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup),
+        'discoveries': enrich_discoveries(ongoing_discoveries, archived_discoveries, initiative_lookup)
     }
 
 
@@ -262,3 +285,71 @@ def filter_for_product(items, product_id):
             )
         ]
     }
+
+
+def sort_discovery_items(items, ongoing):
+    if ongoing:
+        return sorted(items, key=lambda item: (
+            item.get('endDate', ''),
+            item.get('startDate', ''),
+            item.get('name', '')
+        ))
+    return sorted(items, key=lambda item: (
+        item.get('endDate', ''),
+        item.get('startDate', ''),
+        item.get('name', '')
+    ), reverse=True)
+
+
+def enrich_discoveries(ongoing_data, archived_data, initiative_lookup=None):
+    initiative_lookup = initiative_lookup or {}
+    enriched = {
+        'ongoing': [],
+        'archived': [],
+        'items': []
+    }
+
+    next_index = 0
+    for status_name, source, ongoing in [
+        ('ongoing', ongoing_data, True),
+        ('archived', archived_data, False)
+    ]:
+        section_items = []
+        for item in sort_discovery_items(source.get('items', []), ongoing):
+            enriched_item = dict(item)
+            enriched_item['status'] = status_name
+            enriched_item['statusLabel'] = 'Ongoing' if ongoing else 'Archived'
+            enriched_item['landingPageIndex'] = next_index
+            enriched_item['date'] = item.get('startDate', item.get('lastUpdated', ''))
+            next_index += 1
+
+            linked_initiatives = []
+            customer_impact_by_id = {}
+            product_bricks_by_id = {}
+            delivery_channels_by_id = {}
+            for linked in item.get('linkedInitiatives', []):
+                linked_item = dict(linked)
+                initiative_info = initiative_lookup.get(linked.get('initiativeId', ''), {})
+                linked_item['landingPageIndex'] = initiative_info.get('landingPageIndex')
+                linked_item['initiativeDescription'] = initiative_info.get('description', linked.get('description', ''))
+                linked_initiatives.append(linked_item)
+
+                for impact in initiative_info.get('customerImpact', []):
+                    customer_impact_by_id[impact.get('customerId', '')] = impact
+                for brick in initiative_info.get('productBricks', []):
+                    product_bricks_by_id[brick.get('brickId', '')] = brick
+                for channel in initiative_info.get('deliveryChannels', []):
+                    delivery_channels_by_id[channel.get('channelId', '')] = channel
+
+            enriched_item['linkedInitiatives'] = linked_initiatives
+            enriched_item['customerImpact'] = list(customer_impact_by_id.values())
+            enriched_item['productBricks'] = list(product_bricks_by_id.values())
+            enriched_item['deliveryChannels'] = list(delivery_channels_by_id.values())
+            enriched_item['riskFocus'] = item.get('riskFocus', [])
+            enriched_item['plannedActivities'] = item.get('plannedActivities', [])
+            section_items.append(enriched_item)
+            enriched['items'].append(enriched_item)
+
+        enriched[status_name] = section_items
+
+    return enriched

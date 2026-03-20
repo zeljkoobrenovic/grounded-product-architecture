@@ -27,7 +27,7 @@ def create_overview_docs(domain, docs_folder):
     copy_icons(domains_root + domain['id'] + '/customers/icons', docs_folder)
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
-        template = open(templates_root + 'customers.html').read()
+        template = open(templates_root + 'index.html').read()
         html_file.write(template
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
@@ -62,6 +62,7 @@ def create_landing_pages(customers, docs_folder, activity_data):
                                 .replace('${all_customers}', json.dumps(all_customers))
                                 .replace('${customer_name}', customer['name'])
                                 .replace('${customer}', json.dumps(customer))
+                                .replace('${discoveries}', json.dumps(filter_for_customer(activity_data['discoveries'], customer['id'])))
                                 .replace('${initiatives}', json.dumps(filter_for_customer(activity_data['initiatives'], customer['id'])))
                                 .replace('${releases}', json.dumps(filter_for_customer(activity_data['releases'], customer['id']))))
 

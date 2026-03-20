@@ -10,7 +10,7 @@ domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/rituals/'
 
 config = json.load(open(domains_root + 'config.json'))
-rituals = json.load(open(domains_root + 'rituals/meetings.json'))
+default_rituals = json.load(open(domains_root + 'rituals/meetings.json'))
 
 
 def copy_icons(icons_path, docs_folder):
@@ -23,7 +23,14 @@ def copy_icons(icons_path, docs_folder):
                 shutil.copy2(src, dst)
 
 
-def create_overview_docs(domain, docs_folder):
+def load_rituals_for_domain(domain_id):
+    domain_rituals_path = os.path.join(domains_root, domain_id, 'rituals', 'meetings.json')
+    if os.path.exists(domain_rituals_path):
+        return json.load(open(domain_rituals_path))
+    return default_rituals
+
+
+def create_overview_docs(domain, docs_folder, rituals):
     if os.path.exists(docs_folder):
         shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
@@ -38,7 +45,7 @@ def create_overview_docs(domain, docs_folder):
                         .replace('${rituals}', json.dumps(rituals)))
 
 
-def create_landing_pages(domain, docs_folder):
+def create_landing_pages(domain, docs_folder, rituals):
     template = open(templates_root + 'landing_page.html').read()
 
     for meeting in rituals.get('meetings', []):
@@ -53,5 +60,6 @@ def create_landing_pages(domain, docs_folder):
 
 for domain in config['domains']:
     docs_folder = domain['id'] + '/rituals/'
-    create_overview_docs(domain, docs_folder)
-    create_landing_pages(domain, docs_folder)
+    rituals = load_rituals_for_domain(domain['id'])
+    create_overview_docs(domain, docs_folder, rituals)
+    create_landing_pages(domain, docs_folder, rituals)
