@@ -302,6 +302,98 @@
         return '<span class="money">' + escapeHtml(formatMoney(range.min)) + '</span> - <span class="money">' + escapeHtml(formatMoney(range.max)) + '</span>';
     }
 
+    function levelRank(levelId) {
+        const match = String(levelId || '').toUpperCase().match(/^([A-Z]+)(\d+)$/);
+        if (!match) return -1;
+        return Number(match[2]);
+    }
+
+    function renderFamilyLevelsTable(levels, title, color) {
+        if (!levels.length) {
+            return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="section-copy">No levels defined.</div></div>';
+        }
+
+        const sortedLevels = [...levels].sort((a, b) =>
+            levelRank(b.levelId || b.id) - levelRank(a.levelId || a.id) ||
+            String(b.levelId || b.id || '').localeCompare(String(a.levelId || a.id || ''))
+        );
+
+        let html = '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div>';
+        html += '<div class="table-wrap"><table><thead><tr><th>Level</th><th>Title</th><th>Salary Range</th><th>Midpoint</th></tr></thead><tbody>';
+        sortedLevels.forEach(level => {
+            html += '<tr>';
+            html += '<td style="width: 100px">' + escapeHtml(level.levelId || '') + '</td>';
+            html += '<td style="width: 400px">' + escapeHtml(level.title || '') + '</td>';
+            html += '<td style="width: 300px">' + renderSalaryRange(level.salaryRange) + '';
+            html += '<div style="width: 100%; white-space: nowrap">';
+            const minPerc = level.salaryRange && level.salaryRange.min ? ((level.salaryRange.min / maxSalary) * 100) : 0;
+            const maxPerc = level.salaryRange && level.salaryRange.max ? ((level.salaryRange.max / maxSalary) * 100) : 0;
+            html += '<div style="height: 4px; width: ' + minPerc + '%; background-color: lightgrey; display: inline-block"></div>';
+            html += '<div style="height: 4px; width: ' + (maxPerc - minPerc) + '%; background-color: ' + color + '; display: inline-block"></div>';
+            html += '<div style="height: 4px; width: ' + (100 - maxPerc) + '%; background-color: lightgrey; display: inline-block"></div>';
+            html += '</div>';
+            html += '</td>';
+            html += '<td class="money">' + escapeHtml(formatMoney((level.salaryRange || {}).mid || 0)) + '</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+        return html;
+    }
+
+    function renderOverviewMatrix(trackPrefix, title, intro) {
+        const familyColumns = families.filter(family =>
+            (family.levels || []).some(level => String(level.levelId || '').toUpperCase().startsWith(trackPrefix))
+        );
+
+        if (!familyColumns.length) {
+            return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="section-copy">No levels defined.</div></div>';
+        }
+
+        const levelIds = Array.from(new Set(
+            familyColumns.flatMap(family =>
+                (family.levels || [])
+                    .filter(level => String(level.levelId || '').toUpperCase().startsWith(trackPrefix))
+                    .map(level => level.levelId)
+            )
+        )).sort((a, b) => levelRank(b) - levelRank(a) || String(b).localeCompare(String(a)));
+
+        let html = '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="section-copy">' + escapeHtml(intro) + '</div>';
+        html += '<div class="table-wrap"><table><thead><tr><th style="width: 120px">Level</th>';
+        familyColumns.forEach(family => {
+            html += '<th>' + escapeHtml(family.name) + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        levelIds.forEach(levelId => {
+            html += '<tr><td><strong>' + escapeHtml(levelId) + '</strong></td>';
+            familyColumns.forEach(family => {
+                const match = (family.levels || []).find(level => level.levelId === levelId);
+                html += '<td>' + (match ? escapeHtml(match.title || '') : '<span style="color:#9ca3af">-</span>') + '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div></div>';
+        return html;
+    }
+
+    function renderLevelDefinitionsTable(levels, title) {
+        if (!levels.length) {
+            return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="section-copy">No levels defined.</div></div>';
+        }
+
+        const sortedLevels = [...levels].sort((a, b) =>
+            levelRank(b.id || b.levelId) - levelRank(a.id || a.levelId) ||
+            String(b.id || b.levelId || '').localeCompare(String(a.id || a.levelId || ''))
+        );
+
+        let html = '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="table-wrap"><table><thead><tr><th>Level</th><th>Track</th><th>Scope</th><th>Impact</th><th>Autonomy</th><th>Promotion Window</th></tr></thead><tbody>';
+        sortedLevels.forEach(level => {
+            html += '<tr><td>' + escapeHtml(level.id + ' | ' + level.name) + '</td><td>' + escapeHtml(level.track || '') + '</td><td>' + escapeHtml(level.scope || '') + '</td><td>' + escapeHtml(level.impact || '') + '</td><td>' + escapeHtml(level.autonomy || '') + '</td><td>' + escapeHtml(level.typicalPromotionWindowMonths || '') + '</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+        return html;
+    }
+
     const families = architecture.jobFamilies || [];
     const productFamilies = families.filter(family => family.discipline === 'product');
     const technologyFamilies = families.filter(family => family.discipline === 'technology');
@@ -329,7 +421,7 @@
         '<div class="stat"><div class="stat-value">' + escapeHtml(String(allLevels.length)) + '</div><div class="stat-label">Level Definitions</div></div>' +
         '<div class="stat"><div class="stat-value">' + escapeHtml(architecture.metadata.currency || 'EUR') + '</div><div class="stat-label">Salary Currency</div></div>';
 
-    let overviewHtml = '<div class="tab-intro">A shared product and technology career framework for a mid-size EU company, covering tracks, levels, promotion principles, and salary bands.</div>';
+    let overviewHtml = '';
     overviewHtml += '<div class="grid">';
     overviewHtml += '<div class="section"><div class="section-title">Compensation Philosophy</div><div class="section-name">How Pay Works</div><div class="section-copy">' + escapeHtml((architecture.compensationPhilosophy || {}).payPositioning || '') + '</div>' + renderList([
         (architecture.compensationPhilosophy || {}).geographicApproach || '',
@@ -343,6 +435,10 @@
         overviewHtml += '<span class="pill">' + escapeHtml(item) + '</span>';
     });
     overviewHtml += '</div></div>';
+
+    overviewHtml += '<div class="tab-intro">A cross-family view of the job architecture, with levels on rows and job families on columns.</div>';
+    overviewHtml += renderOverviewMatrix('L', 'IC Track', 'Individual contributor roles across product and technology job families.');
+    overviewHtml += renderOverviewMatrix('M', 'Management Track', 'Management roles across product and technology job families.');
     document.getElementById('overview-tab').innerHTML = overviewHtml;
 
     let frameworkHtml = '<div class="tab-intro">The shared level language and promotion rules used across product and technology careers.</div>';
@@ -351,11 +447,14 @@
         frameworkHtml += '<div class="card" style="margin-bottom:12px"><div class="card-title">' + escapeHtml(track.name) + '</div><div class="card-copy">' + escapeHtml(track.description || '') + '</div></div>';
     });
     frameworkHtml += '</div>';
-    frameworkHtml += '<div class="section"><div class="section-title">Level Definitions</div><div class="table-wrap"><table><thead><tr><th>Level</th><th>Track</th><th>Scope</th><th>Impact</th><th>Autonomy</th><th>Promotion Window</th></tr></thead><tbody>';
-    allLevels.forEach(level => {
-        frameworkHtml += '<tr><td>' + escapeHtml(level.id + ' | ' + level.name) + '</td><td>' + escapeHtml(level.track || '') + '</td><td>' + escapeHtml(level.scope || '') + '</td><td>' + escapeHtml(level.impact || '') + '</td><td>' + escapeHtml(level.autonomy || '') + '</td><td>' + escapeHtml(level.typicalPromotionWindowMonths || '') + '</td></tr>';
-    });
-    frameworkHtml += '</tbody></table></div></div>';
+    frameworkHtml += renderLevelDefinitionsTable(
+        allLevels.filter(level => String(level.id || '').toUpperCase().startsWith('L')),
+        'IC Levels'
+    );
+    frameworkHtml += renderLevelDefinitionsTable(
+        allLevels.filter(level => String(level.id || '').toUpperCase().startsWith('M')),
+        'Management Levels'
+    );
     frameworkHtml += '<div class="grid">';
     frameworkHtml += '<div class="section"><div class="section-title">Promotion Criteria</div>' + renderList((architecture.careerFramework || {}).promotionCriteria || []) + '</div>';
     frameworkHtml += '<div class="section"><div class="section-title">Evaluation Dimensions</div>' + renderList((architecture.careerFramework || {}).evaluationDimensions || []) + '</div>';
@@ -369,6 +468,9 @@
 
         let html = '<div class="tab-intro">Representative titles and salary bands by family and level.</div>';
         familiesToRender.forEach(family => {
+            const icLevels = (family.levels || []).filter(level => String(level.levelId || '').toLowerCase().startsWith('l'));
+            const managementLevels = (family.levels || []).filter(level => String(level.levelId || '').toLowerCase().startsWith('m'));
+
             html += '<div class="family-block">';
             html += '<div class="family-header"><div class="family-title">' + escapeHtml(family.name) + '</div><div class="family-meta">' + escapeHtml(family.discipline || '') + '</div><div class="section-copy">' + escapeHtml(family.familyMission || '') + '</div></div>';
             html += '<div class="section"><div class="section-title">Core Competencies</div>';
@@ -376,22 +478,8 @@
                 html += '<span class="pill">' + escapeHtml(item) + '</span>';
             });
             html += '</div>';
-            html += '<div class="table-wrap"><table><thead><tr><th>Level</th><th>Title</th><th>Salary Range</th><th>Midpoint</th></tr></thead><tbody>';
-            (family.levels || []).forEach(level => {
-                html += '<tr><td>' + escapeHtml(level.levelId || '') + '</td><td>' + escapeHtml(level.title || '') + '</td>';
-                html += '<td>' + renderSalaryRange(level.salaryRange) + '';
-                html += '<div style="width: 100%; white-space: nowrap">';
-                const minPerc = level.salaryRange && level.salaryRange.min ? ((level.salaryRange.min / maxSalary) * 100) : 0;
-                const maxPerc = level.salaryRange && level.salaryRange.max ? ((level.salaryRange.max / maxSalary) * 100) : 0;
-                html += '<div style="height: 4px; width: ' + minPerc + '%; background-color: lightgrey; display: inline-block"></div>';
-                const color = level.levelId.toLowerCase().startsWith('m') ? 'green' : 'blue';
-                html += '<div style="height: 4px; width: ' + (maxPerc - minPerc) + '%; background-color: ' + color + '; display: inline-block"></div>';
-                html += '<div style="height: 4px; width: ' + (100 - maxPerc) + '%; background-color: lightgrey; display: inline-block"></div>';
-                html += '</div>';
-                html += '</td>';
-                html += '<td class="money">' + escapeHtml(formatMoney((level.salaryRange || {}).mid || 0)) + '</td></tr>';
-            });
-            html += '</tbody></table></div>';
+            html += renderFamilyLevelsTable(icLevels, 'IC Levels', 'blue');
+            html += renderFamilyLevelsTable(managementLevels, 'Management Levels', 'green');
             html += '</div>';
         });
         return html;
