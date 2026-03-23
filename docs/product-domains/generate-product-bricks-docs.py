@@ -148,6 +148,39 @@ def build_brick_context(brick, products, customers):
     return linked_products, supported_jobs
 
 
+def build_brick_team_context(brick, teams_payload):
+    related_teams = []
+    brick_id = str(brick.get('id', '')).strip()
+
+    for group in teams_payload.get('groups', []):
+        for team in group.get('teams', []):
+            role = None
+            for owned in team.get('ownedProductBricks', []):
+                if str(owned.get('brickId', '')).strip() == brick_id:
+                    role = 'owner'
+                    break
+            if role is None:
+                for supported in team.get('supportingProductBricks', []):
+                    if str(supported.get('brickId', '')).strip() == brick_id:
+                        role = 'supporting'
+                        break
+            if role is None:
+                continue
+
+            related_teams.append({
+                'teamId': team.get('id', ''),
+                'teamName': team.get('name', team.get('id', '')),
+                'teamType': team.get('teamType', ''),
+                'groupId': group.get('id', ''),
+                'groupName': group.get('name', ''),
+                'role': role,
+                'roleLabel': 'Owner' if role == 'owner' else 'Supporting team'
+            })
+
+    related_teams.sort(key=lambda item: (0 if item['role'] == 'owner' else 1, item['teamName'].lower()))
+    return related_teams
+
+
 def build_brick_evidence(brick_id, evidence_items):
     matched_item = next((item for item in evidence_items if str(item.get('brick-id', '')).strip() == str(brick_id).strip()), None)
     if not matched_item:
@@ -169,7 +202,7 @@ def build_brick_evidence(brick_id, evidence_items):
     return {'brickId': brick_id, 'groups': groups}
 
 
-def create_landing_pages(bricks, activity_data, products, customers, evidence_items):
+def create_landing_pages(bricks, activity_data, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'landing_page.html').read();
 
     capabilities_map = {}
@@ -185,6 +218,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
     for brick in bricks:
         name = brick['name']
         linked_products, supported_jobs = build_brick_context(brick, products, customers)
+        related_teams = build_brick_team_context(brick, teams_payload)
         evidence = build_brick_evidence(brick['id'], evidence_items)
 
         htmlFile = docs_folder + 'landing_pages/' + str(brick['id']) + '.html'
@@ -196,6 +230,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${brick_data}', json.dumps(brick))
                             .replace('${evidence}', json.dumps(evidence))
+                            .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${supported_jobs}', json.dumps(supported_jobs))
                             .replace('${initiatives}', json.dumps(filter_for_brick(activity_data['initiatives'], brick['id'])))
@@ -227,6 +262,7 @@ for domain in config['domains']:
     activity_data = load_domain_activity(domains_root, domain_id)
     products = load_json_if_exists(domains_root + domain_id + '/products/products.json', {'portfolio': {'products': []}})
     customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
+    teams_payload = load_json_if_exists(domains_root + domain_id + '/teams/teams.json', {'groups': []})
     evidence_items = load_json_if_exists(root_domain + 'evidence.json', [])
 
     def get_groups(bricks_list):
@@ -270,4 +306,4 @@ for domain in config['domains']:
 
     process()
 
-    create_landing_pages(flat_bricks, activity_data, products, customers, evidence_items)
+    create_landing_pages(flat_bricks, activity_data, products, customers, evidence_items, teams_payload)

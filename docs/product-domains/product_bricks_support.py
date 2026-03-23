@@ -67,6 +67,9 @@ def flatten_product_bricks(payload):
             'children': [],
             'internalModules': node.get('internalModules', []),
             'interfaces': node.get('interfaces', []),
+            'brickDependencies': node.get('brickDependencies', []),
+            'externalSystemsThisBrickDependsOn': node.get('externalSystemsThisBrickDependsOn', node.get('externalSystemDependencies', [])),
+            'externalSystemsDependingOnThisBrick': node.get('externalSystemsDependingOnThisBrick', []),
             'domain': domain_name,
             'group': group_name
         })
@@ -89,6 +92,9 @@ def build_bricks_lookup(product_bricks_payload):
             'group': item.get('group', ''),
             'internalModules': item.get('internalModules', []),
             'interfaces': item.get('interfaces', []),
+            'brickDependencies': item.get('brickDependencies', []),
+            'externalSystemsThisBrickDependsOn': item.get('externalSystemsThisBrickDependsOn', item.get('externalSystemDependencies', [])),
+            'externalSystemsDependingOnThisBrick': item.get('externalSystemsDependingOnThisBrick', []),
             'icon': str(item['id']) + '.png'
         }
     return lookup
@@ -136,6 +142,9 @@ def legacy_bricks_to_payload(items, title='Product Bricks', description=''):
             'description': item.get('description', ''),
             'internalModules': item.get('internalModules', []),
             'interfaces': item.get('interfaces', []),
+            'brickDependencies': item.get('brickDependencies', []),
+            'externalSystemsThisBrickDependsOn': item.get('externalSystemsThisBrickDependsOn', item.get('externalSystemDependencies', [])),
+            'externalSystemsDependingOnThisBrick': item.get('externalSystemsDependingOnThisBrick', []),
             'children': []
         })
 

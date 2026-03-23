@@ -296,7 +296,7 @@
 
         .home-section-title {
             font-size: 12px;
-            color: #6b7280;
+            color: blue;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 12px;
@@ -320,8 +320,8 @@
         }
 
         .home-link-icon {
-            width: 32px;
-            height: 32px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             object-fit: cover;
             border: 1px solid #d1d5db;
@@ -331,11 +331,11 @@
         .home-link-title {
             font-weight: bold;
             color: #1d4ed8;
+            font-size: 140%;
         }
 
         .home-link-meta {
             color: #6b7280;
-            font-size: 12px;
         }
 
         .home-link-copy {
@@ -385,6 +385,43 @@
             margin-top: 10px;
             color: #6b7280;
             font-size: 12px;
+        }
+
+        .dependency-diagram {
+            margin-top: 10px;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            overflow-x: auto;
+        }
+
+        .dependency-subsection {
+            margin-top: 18px;
+        }
+
+        .dependency-subsection-title {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .dependency-entity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dependency-entity-icon {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background-color: white;
+            padding: 2px;
         }
 
         .evidence-group {
@@ -485,6 +522,7 @@
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script>
         function initTab() {
             if (window.location.hash) {
@@ -532,6 +570,9 @@
             history.pushState({}, "", '#' + tabName);
             document.getElementById(tabName).style.display = "block";
             document.getElementById('tab_' + tabName).className += " active";
+            if (tabName === 'DependenciesTab') {
+                renderDependenciesDiagramIfNeeded();
+            }
         }
     </script>
 </head>
@@ -542,27 +583,51 @@
     const all_bricks = ${all_bricks};
     const brick = ${brick_data};
     const evidence = ${evidence};
+    const relatedTeams = ${related_teams};
     const linkedProducts = ${linked_products};
     const supportedJobs = ${supported_jobs};
     const initiatives = ${initiatives};
     const releases = ${releases};
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        flowchart: {
+            htmlLabels: false
+        }
+    });
+
+    function renderDependenciesDiagramIfNeeded() {
+        const container = document.getElementById('Dependencies');
+        if (!container || container.dataset.diagramRendered === 'true') {
+            return;
+        }
+        mermaid.run({querySelector: '#Dependencies .mermaid'}).then(() => {
+            container.dataset.diagramRendered = 'true';
+        }).catch(error => {
+            console.error('Failed to render dependency diagram', error);
+        });
+    }
 </script>
 <div id="Header"></div>
 
 <div style="margin: 20px;">
     <div class="tab">
-        <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Home</button>
-        <button class="tablinks" id="tab_UsageTab" onclick="openTab('UsageTab')">Usage</button>
+        <button class="tablinks active" id="tab_OverviewTab" onclick="openTab('OverviewTab')">Overview</button>
+        <button class="tablinks" id="tab_ModulesTab" onclick="openTab('ModulesTab')">Modules</button>
+        <button class="tablinks" id="tab_DependenciesTab" onclick="openTab('DependenciesTab')">Dependencies</button>
         <button class="tablinks" id="tab_InitiativesTab" onclick="openTab('InitiativesTab')">Initiatives</button>
         <button class="tablinks" id="tab_ReleasesTab" onclick="openTab('ReleasesTab')">Releases</button>
         <button class="tablinks" id="tab_EvidenceTab" onclick="openTab('EvidenceTab')">Evidence</button>
     </div>
 
-    <div id="HomeTab" class="tabcontent" style="display: block; padding: 10px">
-        <div id="Home"></div>
+    <div id="OverviewTab" class="tabcontent" style="display: block; padding: 10px">
+        <div id="Overview"></div>
     </div>
-    <div id="UsageTab" class="tabcontent" style="padding: 10px">
-        <div id="Usage"></div>
+    <div id="ModulesTab" class="tabcontent" style="padding: 10px">
+        <div id="Modules"></div>
+    </div>
+    <div id="DependenciesTab" class="tabcontent" style="padding: 10px">
+        <div id="Dependencies"></div>
     </div>
     <div id="EvidenceTab" class="tabcontent" style="padding: 10px;">
         <div id="Evidence"></div>
@@ -683,6 +748,20 @@
             .replaceAll("'", '&#39;');
     }
 
+    function escapeMermaidLabel(value) {
+        return (value || '')
+            .replaceAll('&', 'and')
+            .replaceAll('"', '')
+            .replaceAll("'", '')
+            .replaceAll('<', '')
+            .replaceAll('>', '')
+            .replaceAll('[', '(')
+            .replaceAll(']', ')')
+            .replaceAll('{', '(')
+            .replaceAll('}', ')')
+            .replaceAll('|', '/');
+    }
+
     function renderLinkedProducts() {
         let sectionHtml = '<div class="home-section">';
         sectionHtml += '<div class="home-section-title">Used In Products</div>';
@@ -693,7 +772,7 @@
                 sectionHtml += '<a class="home-link-card" target="_blank" rel="noopener noreferrer" href="../../products/landing_pages/' + escapeHomeHtml(product.id) + '.html">';
                 sectionHtml += '<div class="home-link-head">';
                 sectionHtml += '<img class="home-link-icon" src="../../products/icons/' + escapeHomeHtml(product.icon) + '" onerror="this.onerror=null;this.src=\'../../products/icons/product.png\'">';
-                sectionHtml += '<div><div class="home-link-title">' + escapeHomeHtml(product.name) + '</div><div class="home-link-meta">' + escapeHomeHtml(product.type || 'Product') + '</div></div>';
+                sectionHtml += '<div><div class="home-link-title">' + escapeHomeHtml('[PRODUCT] ' + product.name) + '</div><div class="home-link-meta">' + escapeHomeHtml(product.type || 'Product') + '</div></div>';
                 sectionHtml += '</div>';
                 if (product.whyUsed) {
                     sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(product.whyUsed) + '</div>';
@@ -701,6 +780,32 @@
                 sectionHtml += '</a>';
             });
         }
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function renderRelatedTeams() {
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Teams Owning Or Supporting This Brick</div>';
+        if (!relatedTeams.length) {
+            sectionHtml += '<div class="activity-muted">No owning or supporting teams are linked to this product brick.</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        relatedTeams.forEach(team => {
+            sectionHtml += '<a class="home-link-card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHomeHtml(team.teamId) + '.html">';
+            sectionHtml += '<div class="home-link-head">';
+            sectionHtml += '<img class="home-link-icon" src="../../teams/icons/logo.png" onerror="this.onerror=null;this.src=\'../../teams/icons/logo.png\'">';
+            sectionHtml += '<div>';
+            if (team.teamType) {
+                sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(team.teamType) + '</div>';
+            }
+            sectionHtml += '<div class="home-link-title">' + escapeHomeHtml('[TEAM] ' + team.teamName) + '</div><div class="home-link-meta">' + escapeHomeHtml(team.roleLabel || '') + (team.groupName ? ' | ' + escapeHomeHtml(team.groupName) : '') + '</div></div>';
+            sectionHtml += '</div>';
+            sectionHtml += '</a>';
+        });
+
         sectionHtml += '</div>';
         return sectionHtml;
     }
@@ -793,14 +898,205 @@
         return sectionHtml;
     }
 
-    html += renderBrickStructureSection('Interfaces', brick.interfaces || [], 'No interfaces listed for this product brick.');
+    function renderBrickDependencyTable(items) {
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>Brick</th><th>Type</th><th>Interface</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            const linkedBrick = all_bricks.find(candidate => candidate.id === item.targetBrickId) || {};
+            const linkedName = linkedBrick.name || item.targetBrickId || '';
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/' + escapeHomeHtml(item.targetBrickId || '') + '.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<a target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(item.targetBrickId || '') + '.html" class="activity-link">' + escapeHomeHtml(linkedName) + '</a>';
+            tableHtml += '</div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.type || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.interface || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function renderExternalDependencyTable(items, subjectLabel) {
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>' + escapeHomeHtml(subjectLabel || 'External System') + '</th><th>Type</th><th>Interface</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/external-system.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<span>' + escapeHomeHtml(item.system || '') + '</span>';
+            tableHtml += '</div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.type || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.interface || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function findIncomingBrickDependencies() {
+        const incomingDependencies = [];
+        all_bricks.forEach(candidate => {
+            (candidate.brickDependencies || []).forEach(item => {
+                if (item.targetBrickId === brick.id) {
+                    incomingDependencies.push({
+                        sourceBrickId: candidate.id,
+                        sourceBrickName: candidate.name,
+                        type: item.type || '',
+                        interface: item.interface || '',
+                        description: item.description || ''
+                    });
+                }
+            });
+        });
+        return incomingDependencies;
+    }
+
+    function renderIncomingBrickDependencyTable(items) {
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>Dependent Brick</th><th>Type</th><th>Interface</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/' + escapeHomeHtml(item.sourceBrickId || '') + '.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<a target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(item.sourceBrickId || '') + '.html" class="activity-link">' + escapeHomeHtml(item.sourceBrickName || item.sourceBrickId || '') + '</a>';
+            tableHtml += '</div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.type || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.interface || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function renderDependencySection() {
+        const brickDependencies = brick.brickDependencies || [];
+        const incomingBrickDependencies = findIncomingBrickDependencies();
+        const externalSystemsThisBrickDependsOn = brick.externalSystemsThisBrickDependsOn || brick.externalSystemDependencies || [];
+        const externalSystemsDependingOnThisBrick = brick.externalSystemsDependingOnThisBrick || [];
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Dependencies</div>';
+
+        if (!brickDependencies.length && !incomingBrickDependencies.length && !externalSystemsThisBrickDependsOn.length && !externalSystemsDependingOnThisBrick.length) {
+            sectionHtml += '<div class="activity-muted">No dependency information is available for this product brick.</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        let chart = 'flowchart LR\n\n';
+        chart += 'current[\"' + escapeMermaidLabel(brick.name || brick.id || 'Current Brick') + '\"]\n';
+
+        brickDependencies.forEach((item, index) => {
+            const linkedBrick = all_bricks.find(candidate => candidate.id === item.targetBrickId) || {};
+            const nodeId = 'brickDep' + index;
+            const nodeLabel = escapeMermaidLabel(linkedBrick.name || item.targetBrickId || 'Brick Dependency');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += 'current -->|' + edgeLabel + '| ' + nodeId + '\n';
+        });
+
+        incomingBrickDependencies.forEach((item, index) => {
+            const nodeId = 'incomingBrickDep' + index;
+            const nodeLabel = escapeMermaidLabel(item.sourceBrickName || item.sourceBrickId || 'Dependent Brick');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += nodeId + ' -->|' + edgeLabel + '| current\n';
+        });
+
+        externalSystemsThisBrickDependsOn.forEach((item, index) => {
+            const nodeId = 'externalOutgoingDep' + index;
+            const nodeLabel = escapeMermaidLabel(item.system || 'External System');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += 'current -->|' + edgeLabel + '| ' + nodeId + '\n';
+        });
+
+        externalSystemsDependingOnThisBrick.forEach((item, index) => {
+            const nodeId = 'externalIncomingDep' + index;
+            const nodeLabel = escapeMermaidLabel(item.system || 'External System');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += nodeId + ' -->|' + edgeLabel + '| current\n';
+        });
+
+        chart += '\nclassDef currentBrick fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;\n';
+        chart += 'classDef internalBrick fill:#ecfccb,stroke:#6b7280,color:#111827;\n';
+        chart += 'classDef externalSystem fill:#f3f4f6,stroke:#65a30d,color:#365314;\n';
+        chart += 'class current currentBrick;\n';
+        if (brickDependencies.length) {
+            chart += 'class ' + brickDependencies.map((_, index) => 'brickDep' + index).join(',') + ' internalBrick;\n';
+        }
+        if (incomingBrickDependencies.length) {
+            chart += 'class ' + incomingBrickDependencies.map((_, index) => 'incomingBrickDep' + index).join(',') + ' internalBrick;\n';
+        }
+        if (externalSystemsThisBrickDependsOn.length) {
+            chart += 'class ' + externalSystemsThisBrickDependsOn.map((_, index) => 'externalOutgoingDep' + index).join(',') + ' externalSystem;\n';
+        }
+        if (externalSystemsDependingOnThisBrick.length) {
+            chart += 'class ' + externalSystemsDependingOnThisBrick.map((_, index) => 'externalIncomingDep' + index).join(',') + ' externalSystem;\n';
+        }
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">Brick Dependencies</div>';
+        if (brickDependencies.length) {
+            sectionHtml += renderBrickDependencyTable(brickDependencies);
+        } else {
+            sectionHtml += '<div class="activity-muted">No dependencies on other product bricks are listed.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">Dependent Bricks</div>';
+        if (incomingBrickDependencies.length) {
+            sectionHtml += renderIncomingBrickDependencyTable(incomingBrickDependencies);
+        } else {
+            sectionHtml += '<div class="activity-muted">No other product bricks currently depend on this brick.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">External Systems This Brick Depends On</div>';
+        if (externalSystemsThisBrickDependsOn.length) {
+            sectionHtml += renderExternalDependencyTable(externalSystemsThisBrickDependsOn, 'External System');
+        } else {
+            sectionHtml += '<div class="activity-muted">No outbound dependencies on external systems are listed.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">External Systems Depending On This Brick</div>';
+        if (externalSystemsDependingOnThisBrick.length) {
+            sectionHtml += renderExternalDependencyTable(externalSystemsDependingOnThisBrick, 'External System');
+        } else {
+            sectionHtml += '<div class="activity-muted">No inbound dependencies from external systems are listed.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">Dependency Diagram</div>';
+        sectionHtml += '<div class="dependency-diagram"><div class="mermaid">' + chart + '</div></div>';
+        sectionHtml += '</div>';
+
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
     html += renderBrickStructureSection('Internal Modules', brick.internalModules || [], 'No internal modules listed for this product brick.');
-    document.getElementById('Home').innerHTML = html;
+    html += renderBrickStructureSection('Interfaces', brick.interfaces || [], 'No interfaces listed for this product brick.');
+    document.getElementById('Modules').innerHTML = html;
     html = '';
 
+    html += renderDependencySection();
+    document.getElementById('Dependencies').innerHTML = html;
+    html = '';
+
+    html += renderRelatedTeams();
     html += renderLinkedProducts();
     html += renderSupportedJobs();
-    document.getElementById('Usage').innerHTML = html;
+    document.getElementById('Overview').innerHTML = html;
     html = '';
 </script>
 
