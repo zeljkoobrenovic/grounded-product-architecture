@@ -163,6 +163,7 @@
 
         .domain-column {
             min-width: 220px;
+            width: 100%;
         }
 
         .domain-title {
@@ -268,11 +269,14 @@
             document.getElementById('tab_' + tabName).className += " active";
         }
 
-        const config = ${config};
-        const bricks = ${bricks};
+        const bricksPayload = ${bricks};
+        const bricksMetadata = bricksPayload.metadata || {};
+        const bricks = bricksPayload.bricks || [];
+        const brickRendering = bricksMetadata.rendering || bricksMetadata.render || {};
+        const brickTypes = bricksMetadata.types || [];
         const typeColorMap = {};
 
-        config.types.forEach(type => {
+        brickTypes.forEach(type => {
             typeColorMap[type.id.toLowerCase()] = type;
             typeColorMap[type.name.toLowerCase()] = type;
         });
@@ -284,53 +288,24 @@
             return 'var(--surface-fallback)';
         }
 
-        function normalizeBricks(items) {
-            const maxRows = 1000;
-
-            return items.map(item => {
-                const rowNumber = Number(item.row) || 1;
-
-                return {
-                    ...item,
-                    row: Math.min(rowNumber, maxRows),
-                    domain: item.domain || 'Other',
-                    group: item.group || 'Ungrouped',
-                    color: colorOf(item.type),
-                    isHighlighted: Boolean(item.name && item.name.includes('*'))
-                };
-            });
+        function normalizeBrick(item) {
+            return {
+                ...item,
+                color: colorOf(item.type),
+                isHighlighted: Boolean(item.name && item.name.includes('*'))
+            };
         }
 
-        function groupBricks(items) {
-            const rows = new Map();
-
-            items.forEach(item => {
-                if (!rows.has(item.row)) {
-                    rows.set(item.row, new Map());
-                }
-
-                const domains = rows.get(item.row);
-                if (!domains.has(item.domain)) {
-                    domains.set(item.domain, new Map());
-                }
-
-                const groups = domains.get(item.domain);
-                if (!groups.has(item.group)) {
-                    groups.set(item.group, []);
-                }
-
-                groups.get(item.group).push(item);
-            });
-
-            return Array.from(rows.entries())
-                .sort((left, right) => left[0] - right[0])
-                .map(([, domains]) => Array.from(domains.entries()).map(([domain, groups]) => ({
-                    domain,
-                    groups: Array.from(groups.entries()).map(([group, itemsInGroup]) => ({
-                        name: group,
-                        items: itemsInGroup
-                    }))
-                })));
+        function normalizeGroup(group) {
+            return {
+                ...group,
+                children: (group.children || []).map(child => {
+                    if ((child.type || '').toLowerCase() === 'group') {
+                        return normalizeGroup(child);
+                    }
+                    return normalizeBrick(child);
+                })
+            };
         }
 
         function renderBrick(item) {
@@ -352,7 +327,7 @@
             return `
                 <div class="group">
                     <div class="group-title">${group.name}</div>
-                    <div class="group-items">${group.items.map(renderBrick).join('')}</div>
+                    <div class="group-items">${(group.children || []).map(renderBrick).join('')}</div>
                 </div>
             `;
         }
@@ -360,20 +335,59 @@
         function renderDomain(domain) {
             return `
                 <section class="domain-column">
-                    <div class="domain-title">${domain.domain}</div>
-                    <div class="domain-groups">${domain.groups.map(renderGroup).join('')}</div>
+                    <div class="domain-title">${domain.name}</div>
+                    <div class="domain-groups">${(domain.children || []).map(renderGroup).join('')}</div>
                 </section>
             `;
         }
 
+        function buildGroupRowLookup() {
+            const lookup = {};
+            ((brickRendering.rows) || []).forEach(rowInfo => {
+                const row = Number(rowInfo.row) || 1;
+                (rowInfo.brickIds || []).forEach(brickId => {
+                    lookup[String(brickId)] = row;
+                });
+            });
+            return lookup;
+        }
+
+        function applyRowsToHierarchy(items, groupRows) {
+            return items.map(group => ({
+                ...normalizeGroup(group),
+                row: groupRows[String(group.id)] || Number(group.row) || 1
+            }));
+        }
+
+        function filterHierarchyForRow(items, targetRow) {
+            return items.filter(group => group.row === targetRow);
+        }
+
         function renderMap(items) {
+            const groupRows = buildGroupRowLookup();
+            const normalizedItems = applyRowsToHierarchy(items, groupRows);
+            const rows = Array.from(new Set(
+                Object.values(groupRows)
+                    .map(value => Number(value) || 1)
+                    .concat([1])
+            )).sort((left, right) => left - right);
+
+            console.log(normalizedItems)
+            console.log(rows)
+
             return `
                 <div class="map">
-                    ${groupBricks(normalizeBricks(items)).map(row => `
-                        <div class="map-row">
-                            ${row.map(renderDomain).join('')}
-                        </div>
-                    `).join('')}
+                    ${rows.map(row => {
+                        const rowItems = filterHierarchyForRow(normalizedItems, row);
+                        if (!rowItems.length) {
+                            return '';
+                        }
+                        return `
+                            <div class="map-row" data-row="${row}">
+                                ${rowItems.map(renderDomain).join('')}
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             `;
         }
@@ -381,7 +395,7 @@
         function renderLegend() {
             return `
                 <div class="legend-title">Legend:</div>
-                ${config.types.map(type => `
+                ${brickTypes.map(type => `
                     <div class="legend-item" style="background-color: ${type.color}">${type.name}</div>
                 `).join('')}
             `;
@@ -413,8 +427,8 @@
         <tr>
             <td class="hero-logo-cell"><img class="hero-logo" src="icons/logo.png" alt="Product Bricks"></td>
             <td class="hero-copy-cell">
-                <div class="hero-title">Product Bricks</div>
-                <div class="hero-subtitle">${domain_name} | ${domain_description}</div>
+                <div class="hero-title" id="doc-title">...</div>
+                <div class="hero-subtitle" id="doc-description">...</div>
             </td>
         </tr>
     </table>
@@ -430,6 +444,11 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('doc-title').innerText = bricksMetadata.title || 'Product Bricks';
+    document.getElementById('doc-description').innerText = bricksMetadata.description || (`${domain_name} | ${domain_description}`);
+</script>
 
 </body>
 </html>

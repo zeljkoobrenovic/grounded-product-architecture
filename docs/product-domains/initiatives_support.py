@@ -1,6 +1,8 @@
 import json
 import os
 
+from product_bricks_support import build_bricks_lookup, load_product_bricks_payload
+
 
 def load_json_if_exists(path, default_value):
     if os.path.exists(path):
@@ -90,19 +92,6 @@ def build_customers_lookup(customers):
             }
 
     return lookup, kpi_lookup
-
-
-def build_bricks_lookup(product_bricks):
-    lookup = {}
-    for item in product_bricks:
-        lookup[str(item['id'])] = {
-            'id': str(item['id']),
-            'name': item.get('name', str(item['id'])),
-            'domain': item.get('domain', ''),
-            'group': item.get('group', ''),
-            'icon': str(item['id']) + '.png'
-        }
-    return lookup
 
 
 def interface_aliases(interface):
@@ -240,7 +229,7 @@ def load_domain_activity(domains_root, domain_id):
         domains_root + domain_id + '/products/products.json',
         domains_root + domain_id + '/product/products.json'
     ], {'portfolio': {'products': []}})
-    product_bricks = load_json_if_exists(domains_root + domain_id + '/product-bricks/product-bricks.json', [])
+    product_bricks = load_product_bricks_payload(domains_root + domain_id + '/product-bricks/product-bricks.json')
     initiatives = load_json_if_exists(domains_root + domain_id + '/delivery/initiatives.json', {'items': []})
     releases = load_json_if_exists(domains_root + domain_id + '/delivery/releases.json', {'items': []})
     ongoing_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/ongoing.json', {'items': []})

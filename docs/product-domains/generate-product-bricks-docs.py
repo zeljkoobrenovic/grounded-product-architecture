@@ -3,6 +3,7 @@ import datetime
 import os
 import shutil
 from initiatives_support import load_domain_activity, filter_for_brick
+from product_bricks_support import flatten_product_bricks, load_product_bricks_payload
 
 def load_json_if_exists(path, default_value):
     if os.path.exists(path):
@@ -25,7 +26,6 @@ domains_root = '../../_config/product-domains/'
 root_templates = '../../_templates/product-bricks/'
 
 config = json.load(open(domains_root + 'config.json'))
-template_config = json.load(open(root_templates + 'config.json'))
 evidence_fragments_cache = load_json_if_exists('../../_config/evidence-fragments/cache/evidence-fragments.json', [])
 
 
@@ -222,7 +222,8 @@ for domain in config['domains']:
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
 
-    data = json.load(open(product_bricks_config_path))
+    data = load_product_bricks_payload(product_bricks_config_path)
+    flat_bricks = flatten_product_bricks(data)
     activity_data = load_domain_activity(domains_root, domain_id)
     products = load_json_if_exists(domains_root + domain_id + '/products/products.json', {'portfolio': {'products': []}})
     customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
@@ -265,9 +266,8 @@ for domain in config['domains']:
             content = template.replace('${domain_name}', domain_name)
             content = content.replace('${domain_description}', domain['description'])
             content = content.replace('${bricks}', json.dumps(data))
-            content = content.replace('${config}', json.dumps(template_config))
             html_file.write(content)
 
     process()
 
-    create_landing_pages(data, activity_data, products, customers, evidence_items)
+    create_landing_pages(flat_bricks, activity_data, products, customers, evidence_items)

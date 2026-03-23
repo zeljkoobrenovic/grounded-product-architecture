@@ -4,6 +4,7 @@ import os
 import shutil
 
 from initiatives_support import enrich_discoveries
+from product_bricks_support import build_bricks_lookup, load_product_bricks_payload
 
 date_string = datetime.date.today().strftime('%Y-%m-%d')
 
@@ -91,19 +92,6 @@ def build_customers_lookup(customers):
             }
 
     return lookup, kpi_lookup
-
-
-def build_bricks_lookup(product_bricks):
-    lookup = {}
-    for item in product_bricks:
-        lookup[str(item['id'])] = {
-            'id': str(item['id']),
-            'name': item.get('name', str(item['id'])),
-            'domain': item.get('domain', ''),
-            'group': item.get('group', ''),
-            'icon': str(item['id']) + '.png'
-        }
-    return lookup
 
 
 def interface_aliases(interface):
@@ -283,7 +271,7 @@ for domain in config['domains']:
 
     customers = json.load(open(customers_path)) if os.path.exists(customers_path) else []
     products = json.load(open(products_path)) if os.path.exists(products_path) else {}
-    bricks = json.load(open(bricks_path)) if os.path.exists(bricks_path) else []
+    bricks = load_product_bricks_payload(bricks_path)
 
     customers_lookup, kpi_lookup = build_customers_lookup(customers)
     bricks_lookup = build_bricks_lookup(bricks)

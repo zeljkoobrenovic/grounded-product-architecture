@@ -9,6 +9,7 @@ from initiatives_support import (
     enrich_discoveries,
     enrich_items,
 )
+from product_bricks_support import load_product_bricks_payload
 
 date_string = datetime.date.today().strftime('%Y-%m-%d')
 
@@ -180,7 +181,7 @@ for domain in config['domains']:
         continue
 
     customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
-    bricks = load_json_if_exists(domains_root + domain_id + '/product-bricks/product-bricks.json', [])
+    bricks = load_product_bricks_payload(domains_root + domain_id + '/product-bricks/product-bricks.json')
     initiatives = load_json_if_exists(domains_root + domain_id + '/delivery/initiatives.json', {'items': []})
     releases = load_json_if_exists(domains_root + domain_id + '/delivery/releases.json', {'items': []})
     ongoing_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/ongoing.json', {'items': []})
