@@ -65,6 +65,8 @@ def flatten_product_bricks(payload):
             'type': node.get('type', ''),
             'description': node.get('description', ''),
             'children': [],
+            'internalModules': node.get('internalModules', []),
+            'interfaces': node.get('interfaces', []),
             'domain': domain_name,
             'group': group_name
         })
@@ -81,8 +83,12 @@ def build_bricks_lookup(product_bricks_payload):
         lookup[str(item['id'])] = {
             'id': str(item['id']),
             'name': item.get('name', str(item['id'])),
+            'type': item.get('type', ''),
+            'description': item.get('description', ''),
             'domain': item.get('domain', ''),
             'group': item.get('group', ''),
+            'internalModules': item.get('internalModules', []),
+            'interfaces': item.get('interfaces', []),
             'icon': str(item['id']) + '.png'
         }
     return lookup
@@ -128,6 +134,8 @@ def legacy_bricks_to_payload(items, title='Product Bricks', description=''):
             'name': item.get('name', ''),
             'type': item.get('type', ''),
             'description': item.get('description', ''),
+            'internalModules': item.get('internalModules', []),
+            'interfaces': item.get('interfaces', []),
             'children': []
         })
 

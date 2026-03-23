@@ -343,6 +343,50 @@
             color: grey;
         }
 
+        .structure-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .structure-card {
+            padding: 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .structure-card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .structure-card-type {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .structure-card-copy {
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .structure-card-meta {
+            margin-top: 10px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
         .evidence-group {
             margin-top: 18px;
             padding: 16px;
@@ -508,6 +552,7 @@
 <div style="margin: 20px;">
     <div class="tab">
         <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Home</button>
+        <button class="tablinks" id="tab_UsageTab" onclick="openTab('UsageTab')">Usage</button>
         <button class="tablinks" id="tab_InitiativesTab" onclick="openTab('InitiativesTab')">Initiatives</button>
         <button class="tablinks" id="tab_ReleasesTab" onclick="openTab('ReleasesTab')">Releases</button>
         <button class="tablinks" id="tab_EvidenceTab" onclick="openTab('EvidenceTab')">Evidence</button>
@@ -515,6 +560,9 @@
 
     <div id="HomeTab" class="tabcontent" style="display: block; padding: 10px">
         <div id="Home"></div>
+    </div>
+    <div id="UsageTab" class="tabcontent" style="padding: 10px">
+        <div id="Usage"></div>
     </div>
     <div id="EvidenceTab" class="tabcontent" style="padding: 10px;">
         <div id="Evidence"></div>
@@ -710,9 +758,49 @@
         return sectionHtml;
     }
 
+    function renderBrickStructureSection(title, items, emptyMessage) {
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">' + escapeHomeHtml(title) + '</div>';
+        if (!items || !items.length) {
+            sectionHtml += '<div class="activity-muted">' + escapeHomeHtml(emptyMessage) + '</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        sectionHtml += '<div class="structure-grid">';
+        items.forEach(item => {
+            const isObject = item && typeof item === 'object' && !Array.isArray(item);
+            const name = isObject ? (item.title || item.name || item.id || '') : String(item || '');
+            const description = isObject ? (item.description || item.summary || '') : '';
+            const type = isObject ? (item.type || '') : '';
+            const meta = isObject ? [item.id, item.protocol, item.direction].filter(Boolean).join(' | ') : '';
+
+            sectionHtml += '<div class="structure-card">';
+            if (type) {
+                sectionHtml += '<div class="structure-card-type">' + escapeHomeHtml(type) + '</div>';
+            }
+            sectionHtml += '<div class="structure-card-title">' + escapeHomeHtml(name) + '</div>';
+            if (description) {
+                sectionHtml += '<div class="structure-card-copy">' + escapeHomeHtml(description) + '</div>';
+            }
+            if (meta) {
+                sectionHtml += '<div class="structure-card-meta">' + escapeHomeHtml(meta) + '</div>';
+            }
+            sectionHtml += '</div>';
+        });
+        sectionHtml += '</div>';
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    html += renderBrickStructureSection('Interfaces', brick.interfaces || [], 'No interfaces listed for this product brick.');
+    html += renderBrickStructureSection('Internal Modules', brick.internalModules || [], 'No internal modules listed for this product brick.');
+    document.getElementById('Home').innerHTML = html;
+    html = '';
+
     html += renderLinkedProducts();
     html += renderSupportedJobs();
-    document.getElementById('Home').innerHTML = html;
+    document.getElementById('Usage').innerHTML = html;
     html = '';
 </script>
 

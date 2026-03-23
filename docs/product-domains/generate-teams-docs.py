@@ -142,6 +142,127 @@ def enrich_team(team, team_lookup, customers_lookup, bricks_lookup, initiatives,
     return enriched
 
 
+def add_dependency_data(enriched_payload):
+    teams = []
+    for group in enriched_payload.get('groups', []):
+        for team in group.get('teams', []):
+            teams.append(team)
+
+    def brick_ids(team):
+        ids = set()
+        for brick in team.get('ownedProductBricks', []):
+            ids.add(str(brick.get('brickId', '')))
+        for brick in team.get('supportingProductBricks', []):
+            ids.add(str(brick.get('brickId', '')))
+        return ids
+
+    def brick_name_map(team):
+        names = {}
+        for brick in team.get('ownedProductBricks', []) + team.get('supportingProductBricks', []):
+            brick_id = str(brick.get('brickId', ''))
+            brick_name = brick.get('brickName') or ((brick.get('brick') or {}).get('name')) or brick_id
+            names[brick_id] = brick_name
+        return names
+
+    def item_keys(items):
+        return {str(item.get('landingPageKey', '')) for item in items if item.get('landingPageKey') is not None}
+
+    def item_lookup(items):
+        lookup = {}
+        for item in items:
+            key = str(item.get('landingPageKey', ''))
+            if key:
+                lookup[key] = {
+                    'landingPageKey': key,
+                    'sectionFolder': item.get('sectionFolder', ''),
+                    'description': item.get('description', ''),
+                    'date': item.get('date', '')
+                }
+        return lookup
+
+    for team in teams:
+        current_brick_ids = brick_ids(team)
+        current_brick_names = brick_name_map(team)
+        current_initiatives = item_keys(team.get('relatedInitiatives', []))
+        current_releases = item_keys(team.get('relatedReleases', []))
+        current_initiative_lookup = item_lookup(team.get('relatedInitiatives', []))
+        current_release_lookup = item_lookup(team.get('relatedReleases', []))
+
+        shared_bricks = []
+        shared_initiatives = []
+        shared_releases = []
+
+        for other in teams:
+            if other.get('id') == team.get('id'):
+                continue
+
+            overlap_bricks = sorted(current_brick_ids.intersection(brick_ids(other)))
+            if overlap_bricks:
+                shared_bricks.append({
+                    'teamId': other.get('id', ''),
+                    'teamName': other.get('name', other.get('id', '')),
+                    'sharedBrickIds': overlap_bricks,
+                    'sharedBrickNames': [current_brick_names.get(brick_id, brick_id) for brick_id in overlap_bricks]
+                })
+
+            overlap_initiatives = sorted(current_initiatives.intersection(item_keys(other.get('relatedInitiatives', []))))
+            if overlap_initiatives:
+                shared_initiatives.append({
+                    'teamId': other.get('id', ''),
+                    'teamName': other.get('name', other.get('id', '')),
+                    'sharedInitiativeKeys': overlap_initiatives,
+                    'sharedInitiatives': [
+                        current_initiative_lookup.get(key, {
+                            'landingPageKey': key,
+                            'sectionFolder': 'initiatives',
+                            'description': key,
+                            'date': ''
+                        })
+                        for key in overlap_initiatives
+                    ]
+                })
+
+            overlap_releases = sorted(current_releases.intersection(item_keys(other.get('relatedReleases', []))))
+            if overlap_releases:
+                shared_releases.append({
+                    'teamId': other.get('id', ''),
+                    'teamName': other.get('name', other.get('id', '')),
+                    'sharedReleaseKeys': overlap_releases,
+                    'sharedReleases': [
+                        current_release_lookup.get(key, {
+                            'landingPageKey': key,
+                            'sectionFolder': 'releases',
+                            'description': key,
+                            'date': ''
+                        })
+                        for key in overlap_releases
+                    ]
+                })
+
+        explicit_relationships = []
+        for other in team.get('dependsOnTeams', []):
+            explicit_relationships.append({
+                'teamId': other.get('id', ''),
+                'teamName': other.get('name', other.get('id', '')),
+                'relationshipType': 'depends_on',
+                'relationshipLabel': 'depends on'
+            })
+        for other in team.get('defaultSupportingTeams', []):
+            explicit_relationships.append({
+                'teamId': other.get('id', ''),
+                'teamName': other.get('name', other.get('id', '')),
+                'relationshipType': 'supported_by',
+                'relationshipLabel': 'supported by'
+            })
+
+        team['dependencyData'] = {
+            'sharedProductBricks': shared_bricks,
+            'sharedInitiatives': shared_initiatives,
+            'sharedReleases': shared_releases,
+            'explicitRelationships': explicit_relationships
+        }
+
+
 def create_overview_docs(domain, docs_folder, teams_payload):
     if os.path.exists(docs_folder):
         shutil.rmtree(docs_folder)
@@ -217,6 +338,8 @@ for domain in config['domains']:
                 for team in group.get('teams', [])
             ]
         })
+
+    add_dependency_data(enriched_payload)
 
     docs_folder = domain_id + '/teams/'
     create_overview_docs(domain, docs_folder, enriched_payload)
