@@ -300,11 +300,11 @@ def choose_customers_for_quarter(customers, quarter_activities, fallback_count):
     return customers[:fallback_count]
 
 
-def build_goal(domain, customer, period_key, period_type, initiatives, releases):
+def build_objective(domain, customer, period_key, period_type, initiatives, releases):
     year, quarter = period_key.split("-Q")
     start_date, end_date = quarter_start_end(int(year), int(quarter))
 
-    goal = {
+    objective = {
         "id": f"{domain['id']}-{period_key.lower()}-{slugify(customer['id'])}",
         "title": f"{period_key} {customer['name']} outcome goal",
         "objective": describe_objective(customer, period_type),
@@ -334,7 +334,7 @@ def build_goal(domain, customer, period_key, period_type, initiatives, releases)
             "releases": "delivery/releases.json" if (ROOT / domain["id"] / "delivery" / "releases.json").exists() else None
         }
     }
-    return goal
+    return objective
 
 
 def write_json(path, payload):
@@ -342,15 +342,15 @@ def write_json(path, payload):
     path.write_text(json.dumps(payload, indent=2))
 
 
-def build_payload(domain, timeframe_name, customers, initiatives, releases, goals, extra=None):
+def build_payload(domain, timeframe_name, customers, initiatives, releases, objectives, extra=None):
     payload = {
         "schemaVersion": "1.0",
         "domainId": domain["id"],
         "domainName": domain["name"],
         "timeframe": timeframe_name,
         "generatedOn": datetime.date.today().isoformat(),
-        "methodology": "Derived from customer KPI pyramids, 1-year product strategy horizons, and delivery activity using an OKR-inspired structure.",
-        "goals": goals
+        "methodology": "Derived from customer KPI pyramids, 1-year product strategy horizons, and delivery activity using an OKR-inspired objective structure.",
+        "objectives": objectives
     }
     if extra:
         payload.update(extra)
@@ -378,17 +378,17 @@ def main():
         next_selected_customers = choose_customers_for_quarter(customers, current_initiatives + current_releases, min(2, len(customers)))
         current_selected_customers = choose_customers_for_quarter(customers, current_initiatives + current_releases, min(2, len(customers)))
 
-        current_goals = [
-            build_goal(domain, customer, current_quarter_key, "current", current_initiatives, current_releases)
+        current_objectives = [
+            build_objective(domain, customer, current_quarter_key, "current", current_initiatives, current_releases)
             for customer in current_selected_customers
         ]
 
-        next_goals = [
-            build_goal(domain, customer, next_quarter_key, "next", current_initiatives, current_releases)
+        next_objectives = [
+            build_objective(domain, customer, next_quarter_key, "next", current_initiatives, current_releases)
             for customer in next_selected_customers
         ]
 
-        archive_goals = []
+        archive_objectives = []
         for index, archive_key in enumerate(archive_keys):
             quarter_initiatives = [item for item in initiatives if item["quarter"] == archive_key]
             quarter_releases = [item for item in releases if item["quarter"] == archive_key]
@@ -397,54 +397,54 @@ def main():
                 customer = selected_customers[0]
             else:
                 customer = customers[index % len(customers)]
-            archive_goals.append(build_goal(domain, customer, archive_key, "archive", quarter_initiatives, quarter_releases))
+            archive_objectives.append(build_objective(domain, customer, archive_key, "archive", quarter_initiatives, quarter_releases))
 
-        goals_root = domain_root / "goals"
+        objectives_root = domain_root / "objectives"
         write_json(
-            goals_root / "current.json",
+            objectives_root / "current.json",
             build_payload(
                 domain,
                 "current_quarter",
                 customers,
                 initiatives,
                 releases,
-                current_goals,
-                {
-                    "quarter": current_quarter_key,
-                    "description": "Goals for the current quarter."
-                }
+                    current_objectives,
+                    {
+                        "quarter": current_quarter_key,
+                        "description": "Objectives for the current quarter."
+                    }
+                )
             )
-        )
         write_json(
-            goals_root / "next.json",
+            objectives_root / "next.json",
             build_payload(
                 domain,
                 "next_quarter_preparation",
                 customers,
                 initiatives,
                 releases,
-                next_goals,
-                {
-                    "quarter": next_quarter_key,
-                    "description": "Preparation goals for the next quarter."
-                }
+                    next_objectives,
+                    {
+                        "quarter": next_quarter_key,
+                        "description": "Preparation objectives for the next quarter."
+                    }
+                )
             )
-        )
         write_json(
-            goals_root / "archive.json",
+            objectives_root / "archive.json",
             build_payload(
                 domain,
                 "archive",
                 customers,
                 initiatives,
                 releases,
-                archive_goals,
-                {
-                    "quartersCovered": archive_keys,
-                    "description": "Archived quarterly goals covering the past two years before the current quarter."
-                }
+                    archive_objectives,
+                    {
+                        "quartersCovered": archive_keys,
+                        "description": "Archived quarterly objectives covering the past two years before the current quarter."
+                    }
+                )
             )
-        )
 
 
 if __name__ == "__main__":
