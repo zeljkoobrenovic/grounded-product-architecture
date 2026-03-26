@@ -502,7 +502,8 @@
                 html += '<div style="display: inline-block; width: 200px; vertical-align: bottom; margin: 3px;">';
                 html += '<div style="text-align: left; border: 1px dashed grey; padding: 8px;">';
                 html += '<div style="color: blue; margin-bottom: 4px; max-height: 2em; margin-top: 0px; text-align: center; font-size: 90%">' + capability.capabilityName + '</div>';
-                html += '<div style="color: grey; margin-bottom: 10px; max-height: 2em; margin-top: 0px; text-align: center; font-size: 70%">' + capability.whyNeeded + '</div>';
+                html += '<div style="color: grey; margin-bottom: 10px; margin-top: 0px; text-align: center; font-size: 70%">' + capability.whyNeeded + '</div>';
+                html += renderDeliveryPathsSummary(capability.deliveryPaths);
                 html += '</div>';
                 html += '</div>';
             });
@@ -511,6 +512,19 @@
         html += '</td>';
         html += '</tr>';
         html += '</table>';
+
+        if (product.neededCapabilities && product.neededCapabilities.some(capability => (capability.deliveryPaths || []).length > 0)) {
+            html += '<div class="group">';
+            html += '<h2>Capability Delivery Paths</h2>';
+            product.neededCapabilities.forEach(capability => {
+                html += '<div style="border: 1px solid #d1d5db; border-radius: 12px; padding: 14px; margin-bottom: 16px; background: #fff;">';
+                html += '<div style="font-size: 120%; color: #1d4ed8; font-weight: bold; margin-bottom: 6px;">' + escapeHtml(capability.capabilityName) + '</div>';
+                html += '<div style="color: #6b7280; margin-bottom: 12px;">' + escapeHtml(capability.whyNeeded) + '</div>';
+                html += renderDeliveryPathsDetailed(capability.deliveryPaths);
+                html += '</div>';
+            });
+            html += '</div>';
+        }
 
 
         html += '</div>';
@@ -525,6 +539,44 @@
             .replaceAll('>', '&gt;')
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#39;');
+    }
+
+    function renderDeliveryPathsSummary(deliveryPaths) {
+        if (!deliveryPaths || !deliveryPaths.length) {
+            return '<div style="font-size: 70%; color: grey; text-align: center;">No delivery paths defined</div>';
+        }
+
+        let html = '';
+        html += '<div style="margin-top: 8px; border-top: 1px solid #e5e7eb; padding-top: 8px;">';
+        html += '<div style="font-size: 70%; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 6px;">Delivery Paths</div>';
+        deliveryPaths.forEach(path => {
+            html += '<div style="text-align: left; border: 1px solid #d1d5db; border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #f9fafb;">';
+            html += '<div style="font-size: 75%; color: #1d4ed8; font-weight: bold;">' + escapeHtml(path.pathName) + '</div>';
+            html += '<div style="font-size: 68%; color: #374151; margin-top: 3px;"><b>Part:</b> ' + escapeHtml(path.part) + '</div>';
+            html += '<div style="font-size: 68%; color: #374151;"><b>Target:</b> ' + escapeHtml(path.target) + '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderDeliveryPathsDetailed(deliveryPaths) {
+        if (!deliveryPaths || !deliveryPaths.length) {
+            return '<div class="activity-muted">No delivery paths defined.</div>';
+        }
+
+        let html = '';
+        deliveryPaths.forEach(path => {
+            html += '<div style="border-top: 1px solid #e5e7eb; padding: 10px 0;">';
+            html += '<div style="font-weight: bold; color: #111827;">' + escapeHtml(path.pathName) + ' <span class="activity-muted">(' + escapeHtml(path.pathId) + ')</span></div>';
+            html += '<div style="margin-top: 4px;"><b>Part:</b> ' + escapeHtml(path.part) + '</div>';
+            html += '<div><b>Deployment unit:</b> ' + escapeHtml(path.deploymentUnit) + '</div>';
+            html += '<div><b>Pipeline:</b> ' + escapeHtml(path.pipeline) + '</div>';
+            html += '<div><b>Target:</b> ' + escapeHtml(path.target) + '</div>';
+            html += '<div><b>Supports interfaces:</b> ' + escapeHtml((path.supportsInterfaces || []).join(', ')) + '</div>';
+            html += '</div>';
+        });
+        return html;
     }
 
     function formatDate(dateValue) {

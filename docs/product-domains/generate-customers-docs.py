@@ -10,11 +10,11 @@ domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/customers/'
 
 config = json.load(open(domains_root + 'config.json'))
-def copy_icons(icons_path, docs_folder):
+def copy_media(icons_path, docs_folder):
     if os.path.exists(icons_path):
         for filename in os.listdir(icons_path):
             src = os.path.join(icons_path, filename)
-            dst = os.path.join(docs_folder, 'icons', filename)
+            dst = os.path.join(docs_folder, filename)
             if os.path.isfile(src):
                 shutil.copy2(src, dst)
 
@@ -22,9 +22,11 @@ def copy_icons(icons_path, docs_folder):
 def create_overview_docs(domain, docs_folder):
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
+    os.makedirs(os.path.join(docs_folder, 'media'), exist_ok=True)
 
-    copy_icons(templates_root + 'icons', docs_folder)
-    copy_icons(domains_root + domain['id'] + '/customers/icons', docs_folder)
+    copy_media(templates_root + 'icons', docs_folder + 'icons')
+    copy_media(domains_root + domain['id'] + '/customers/icons', docs_folder + 'icons')
+    copy_media(domains_root + domain['id'] + '/customers/media', docs_folder + 'media')
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()

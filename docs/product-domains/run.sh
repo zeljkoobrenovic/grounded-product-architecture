@@ -10,7 +10,7 @@ for script in \
     generate-customers-docs.py \
     generate-products-docs.py \
     generate-product-bricks-docs.py \
-    generate-goals-docs.py \
+    generate-objectives-docs.py \
     generate-delivery-docs.py \
     generate-teams-docs.py \
     generate-rituals-docs.py
