@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Runtime and Guardrails Review</title>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 28px;
+            color: #202124;
+            max-width: 1100px;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .domain-label {
+            margin-bottom: 14px;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background-color: #f3ece8;
+            color: #6d4c41;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 14px;
+        }
+
+        .hero-table {
+            border-collapse: collapse;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .hero-logo {
+            width: 108px;
+            height: 108px;
+            margin-right: 12px;
+        }
+
+        .hero-logo-cell {
+            border: none;
+            vertical-align: top;
+            padding-top: 4px;
+            padding-right: 12px;
+        }
+
+        .hero-copy-cell {
+            vertical-align: top;
+            border: none;
+        }
+
+        h1 {
+            font-size: 34px;
+            line-height: 1.25;
+            margin: 0 0 8px 0;
+        }
+
+        .meta {
+            color: #6b7280;
+            margin-bottom: 22px;
+        }
+
+        .section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 18px;
+            margin-top: 18px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .lead {
+            font-size: 19px;
+            line-height: 1.55;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 13px;
+        }
+
+        .pill-name {
+            font-weight: bold;
+            color: #6d4c41;
+        }
+
+        .pill-meta {
+            color: #6b7280;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px;
+            background-color: #fafafa;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        .detail-value {
+            line-height: 1.5;
+        }
+
+        .list-row {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            background-color: #fafafa;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+</head>
+<body>
+<div class="domain-label">Platform Engineering</div>
+<table class="hero-table">
+    <tr>
+        <td class="hero-logo-cell"><img class="hero-logo" src="../icons/logo.png" alt="Rituals"></td>
+        <td class="hero-copy-cell">
+            <div class="eyebrow">Ritual</div>
+            <h1 id="Title"></h1>
+            <div id="Meta" class="meta"></div>
+        </td>
+    </tr>
+</table>
+<div id="Content"></div>
+
+<script>
+    const meeting = {"id": "biweekly-runtime-governance", "title": "Runtime and Guardrails Review", "category": "operations-governance", "description": "Biweekly review of runtime standards, policy coverage, exceptions, and platform operational risk.", "goal": "Improve control coverage and reliability while keeping the standard path usable.", "participants": {"required": ["Identity and Guardrails Lead", "Observability and Reliability Lead", "Delivery Automation Lead"], "optional": ["Security Lead", "Compliance Engineer", "Enablement Lead"]}, "owner": "Identity and Guardrails Lead", "cadence": "biweekly", "durationMinutes": 60, "format": "review-and-decision", "inputs": ["Control coverage report", "Exception trends", "Incident findings", "Template and pipeline changes"], "outputs": ["Guardrail changes", "Exception policy updates", "Platform hardening priorities"]};
+    const domainName = 'Platform Engineering';
+
+    function escapeHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function titleCase(value) {
+        return String(value || '')
+            .split('-')
+            .map(part => part ? part[0].toUpperCase() + part.slice(1) : part)
+            .join(' ');
+    }
+
+    function renderRoleList(label, items) {
+        if (!items || !items.length) {
+            return '';
+        }
+        let html = '<div class="section"><div class="section-title">' + escapeHtml(label) + '</div>';
+        items.forEach(item => {
+            html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(item) + '</div><div class="pill-meta">Role</div></div></div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderItemList(label, items) {
+        if (!items || !items.length) {
+            return '';
+        }
+        let html = '<div class="section"><div class="section-title">' + escapeHtml(label) + '</div>';
+        items.forEach(item => {
+            html += '<div class="list-row">' + escapeHtml(item) + '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    document.getElementById('Title').innerHTML = escapeHtml(meeting.title || 'Ritual');
+    document.getElementById('Meta').innerHTML = escapeHtml(domainName) + ' | ' + escapeHtml(titleCase(meeting.category || 'ritual')) + ' | ' + escapeHtml(meeting.cadence || '');
+
+    let html = '';
+    html += '<div class="section"><div class="section-title">Description</div><div class="lead">' + escapeHtml(meeting.description || '') + '</div></div>';
+    html += '<div class="section"><div class="section-title">Goal</div><div class="lead">' + escapeHtml(meeting.goal || '') + '</div></div>';
+    html += '<div class="section"><div class="section-title">Key Details</div><div class="detail-grid">';
+    html += '<div class="detail-card"><div class="detail-label">Cadence</div><div class="detail-value">' + escapeHtml(meeting.cadence || '') + '</div></div>';
+    html += '<div class="detail-card"><div class="detail-label">Duration</div><div class="detail-value">' + escapeHtml(String(meeting.durationMinutes || '')) + ' minutes</div></div>';
+    html += '<div class="detail-card"><div class="detail-label">Owner</div><div class="detail-value">' + escapeHtml(meeting.owner || '') + '</div></div>';
+    html += '<div class="detail-card"><div class="detail-label">Format</div><div class="detail-value">' + escapeHtml(meeting.format || '') + '</div></div>';
+    html += '</div></div>';
+    html += renderRoleList('Required Participants', meeting.participants ? meeting.participants.required : []);
+    html += renderRoleList('Optional Participants', meeting.participants ? meeting.participants.optional : []);
+    html += renderItemList('Inputs', meeting.inputs || []);
+    html += renderItemList('Outputs', meeting.outputs || []);
+
+    document.getElementById('Content').innerHTML = html;
+</script>
+</body>
+</html>

@@ -532,6 +532,185 @@
         document.getElementById('Home').innerHTML = html;
     }
 
+    function addJobs() {
+        const jobs = product.jobsToBeDone || [];
+        if (!jobs.length) {
+            document.getElementById('Jobs').innerHTML = '<div class="group">No product jobs defined for this product yet.</div>';
+            return;
+        }
+
+        let html = '';
+        jobs.forEach(job => {
+            html += '<div class="group">';
+            html += '<div style="font-size: 170%; color: #1d4ed8; margin-bottom: 10px;">' + escapeHtml(job.name) + '</div>';
+            if (job.what_it_is) {
+                html += '<div style="margin-bottom: 10px;"><b>What it is:</b> ' + escapeHtml(job.what_it_is) + '</div>';
+            }
+            if (job.outcome) {
+                html += '<div style="margin-bottom: 16px;"><b>Outcome:</b> ' + escapeHtml(job.outcome) + '</div>';
+            }
+            (job.steps || []).forEach(step => {
+                html += '<div class="step">';
+                html += '<div style="font-size: 120%; color: #1d4ed8; margin-bottom: 8px;">' + escapeHtml(step.step) + '</div>';
+                html += '<div style="font-size: 90%; margin-bottom: 10px;">' + escapeHtml(step.description || '') + '</div>';
+                ((step.capabilitiesNeeded) || []).forEach(capability => {
+                    html += '<div style="margin-top: 8px; padding: 8px; background: #f8fafc; border: 1px solid #d1d5db; border-radius: 8px;">';
+                    html += '<div><b>' + escapeHtml(capability.name) + '</b> <span class="activity-muted">(#' + escapeHtml(capability.id) + ')</span></div>';
+                    html += '<div class="activity-muted">' + escapeHtml(capability.how_it_supports || '') + '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+            html += '</div>';
+        });
+
+        document.getElementById('Jobs').innerHTML = html;
+    }
+
+    function addKPIChild(child, color) {
+        let html = '';
+        html += '<div class="kpi" style="background-color: ' + color + '">';
+        html += '<div style="font-size: 100%; padding: 4px">';
+        html += escapeHtml(child.name || '');
+        html += '</div>';
+        html += '<div style="background-color: white; font-size: 80%; padding: 2px">';
+        html += escapeHtml(child.description || '');
+        html += '</div>';
+        html += '</div>';
+
+        if (child.children && child.children.length) {
+            html += '<table style="width: 100%"><tr>';
+            child.children.forEach(c => {
+                html += '<td style="vertical-align: top;">';
+                html += addKPIChild(c, color);
+                html += '</td>';
+            });
+            html += '</tr></table>';
+        }
+        return html;
+    }
+
+    function addKPIPyramid(pyramid, color) {
+        if (!pyramid || !pyramid.top || !(pyramid.branches || []).length) {
+            return '<div class="group">No KPI pyramid defined.</div>';
+        }
+
+        let html = '';
+        html += '<div style="text-align: center; vertical-align: top">';
+        html += '<table style="vertical-align: top">';
+        html += '<tr>';
+        html += '<td colspan="' + pyramid.branches.length + '">';
+        html += '<div class="kpi" style="background-color: ' + color + '">';
+        html += '<div style="font-size: 120%; padding: 4px">' + escapeHtml(pyramid.top.name || '') + '</div>';
+        html += '<div style="background-color: white; font-size: 80%; padding: 2px">' + escapeHtml(pyramid.top.description || '') + '</div>';
+        html += '</div>';
+        html += '</td>';
+        html += '</tr>';
+        html += '<tr>';
+        pyramid.branches.forEach(c => {
+            html += '<td style="vertical-align: top;">' + addKPIChild(c, color) + '</td>';
+        });
+        html += '</tr>';
+        html += '</table>';
+        html += '</div>';
+        return html;
+    }
+
+    function addKPIs() {
+        if (!product.kpiPyramids || !product.kpiPyramids.customerOutcomes || !product.kpiPyramids.businessOutcomes) {
+            document.getElementById('KPI').innerHTML = '<div class="group">No KPI pyramid defined for this product yet.</div>';
+            return;
+        }
+
+        let html = '';
+        html += '<div class="group">';
+        html += '<div style="text-align: left; font-size: 150%; color: blue; margin-bottom: 12px">Customer Outcomes</div>';
+        html += addKPIPyramid(product.kpiPyramids.customerOutcomes, '#C0F3EA');
+        html += '</div>';
+        html += '<div class="group">';
+        html += '<div style="text-align: left; font-size: 150%; color: blue; margin-bottom: 12px">Business Outcomes</div>';
+        html += addKPIPyramid(product.kpiPyramids.businessOutcomes, '#B7BDF7');
+        html += '</div>';
+        document.getElementById('KPI').innerHTML = html;
+    }
+
+    function normalizeRoadmapKpi(value, supportingKey) {
+        if (!value) {
+            return {northStar: '', [supportingKey]: []};
+        }
+        if (typeof value === 'string') {
+            return {northStar: value, [supportingKey]: []};
+        }
+        const normalized = Object.assign({}, value);
+        normalized.northStar = normalized.northStar || normalized.name || '';
+        normalized[supportingKey] = normalized[supportingKey] || [];
+        return normalized;
+    }
+
+    function addProductVision() {
+        if (!product.productStrategy || !product.productStrategy.timeHorizons) {
+            document.getElementById('Roadmap').innerHTML = '<div class="group">No product vision defined for this product yet.</div>';
+            return;
+        }
+
+        const strategy = product.productStrategy;
+        const timeHorizon1 = strategy.timeHorizons['1_year'];
+        const timeHorizon2 = strategy.timeHorizons['3_year'];
+        const timeHorizon3 = strategy.timeHorizons['5_year'];
+        const businessKpi1 = normalizeRoadmapKpi(timeHorizon1.businessKPI, 'revenueStreams');
+        const businessKpi2 = normalizeRoadmapKpi(timeHorizon2.businessKPI, 'revenueStreams');
+        const businessKpi3 = normalizeRoadmapKpi(timeHorizon3.businessKPI, 'revenueStreams');
+        const customerKpi1 = normalizeRoadmapKpi(timeHorizon1.customerKPI, 'supporting');
+        const customerKpi2 = normalizeRoadmapKpi(timeHorizon2.customerKPI, 'supporting');
+        const customerKpi3 = normalizeRoadmapKpi(timeHorizon3.customerKPI, 'supporting');
+
+        let html = '';
+        html += '<div class="group">';
+        html += '<table>';
+        html += '<tr style="font-size: 80%; color: #a0a0a0">';
+        html += '<td></td><td style="padding-left: 16px">Year 1</td><td style="padding-left: 16px">Year 3</td><td style="padding-left: 16px">Year 5</td><td style="padding-left: 16px"></td>';
+        html += '<td rowspan="10" style="width: 280px; vertical-align: top; padding: 20px">';
+        html += '<div style="font-size: 120%; margin-bottom: 24px">VISION</div>';
+        html += '<div style="font-size: 140%">' + escapeHtml(strategy.vision || '') + '</div>';
+        html += '</td>';
+        html += '</tr>';
+        html += '<tr>';
+        [timeHorizon1, timeHorizon2, timeHorizon3].forEach((h, index) => {
+            html += '<td' + (index === 0 ? '' : ' style="display:none"') + '></td>';
+            html += '<td style="padding: 6px; width: 250px; border-left: 2px solid grey; vertical-align: top">';
+            html += '<div style="padding: 6px; width: 250px">' + escapeHtml(h.productTheme || '') + '</div>';
+            html += '<div style="padding: 10px; font-size: 80%">' + escapeHtml(h.focus || '') + '</div>';
+            html += '</td>';
+        });
+        html += '<td style="padding: 10px"></td>';
+        html += '</tr>';
+        html += '<tr><td></td><td style="height: 40px; background-color: black; color: #f0f0f0; padding: 20px">Milestone 1 (Year 1)</td><td style="height: 40px; background-color: black; color: #f0f0f0; padding: 20px">Milestone 2 (Year 3)</td><td style="height: 40px; background-color: black; color: #f0f0f0; padding: 20px">Milestone 3 (Year 5)</td><td></td></tr>';
+        html += '<tr><td>Business<br>KPI</td>';
+        [businessKpi1, businessKpi2, businessKpi3].forEach(kpi => {
+            html += '<td style="padding: 6px; width: 250px; border-left: 2px solid grey; vertical-align: top">';
+            html += '<div style="padding: 6px; width: 250px">' + escapeHtml(kpi.northStar || '') + '</div>';
+            html += '<div style="padding: 6px; width: 250px; font-size: 80%">';
+            (kpi.revenueStreams || []).forEach(stream => {
+                html += '<div style="margin-top: 2px; margin-bottom: 2px; padding: 2px; border: 1px solid lightgrey; border-radius: 7px">' + escapeHtml(stream) + '</div>';
+            });
+            html += '</div></td>';
+        });
+        html += '<td></td></tr>';
+        html += '<tr><td>Customer<br>KPI</td>';
+        [customerKpi1, customerKpi2, customerKpi3].forEach(kpi => {
+            html += '<td style="padding: 6px; width: 250px; border-left: 2px solid grey; vertical-align: top">';
+            html += '<div style="padding: 6px; width: 250px">' + escapeHtml(kpi.northStar || '') + '</div>';
+            html += '<div style="padding: 6px; width: 250px; font-size: 80%">';
+            (kpi.supporting || []).forEach(item => {
+                html += '<div style="margin-top: 2px; margin-bottom: 2px; padding: 2px; border: 1px solid lightgrey; border-radius: 7px">' + escapeHtml(item) + '</div>';
+            });
+            html += '</div></td>';
+        });
+        html += '<td></td></tr>';
+        html += '</table></div>';
+        document.getElementById('Roadmap').innerHTML = html;
+    }
+
     function escapeHtml(value) {
         return (value || '')
             .replaceAll('&', '&amp;')
@@ -673,6 +852,9 @@
 
     addHeader();
     addHome();
+    addJobs();
+    addKPIs();
+    addProductVision();
     document.getElementById('Initiatives').innerHTML = renderActivityTable(initiatives, 'Initiatives', product.id);
     document.getElementById('Releases').innerHTML = renderActivityTable(releases, 'Releases', product.id);
 
