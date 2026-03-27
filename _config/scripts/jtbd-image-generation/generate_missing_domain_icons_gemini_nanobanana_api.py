@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate missing customer, start-page, and product-brick icons via Gemini Nano Banana."""
+"""Generate missing customer, KPI, start-page, and product-brick icons via Gemini Nano Banana."""
 
 from __future__ import annotations
 
@@ -321,6 +321,19 @@ def normalize_icon_filename(value: str | None, fallback_stem: str) -> str:
     return filename
 
 
+def slugify(value: str | None) -> str:
+    chars: list[str] = []
+    last_dash = False
+    for ch in (value or "").strip().lower():
+        if ch.isalnum():
+            chars.append(ch)
+            last_dash = False
+        elif not last_dash:
+            chars.append("-")
+            last_dash = True
+    return "".join(chars).strip("-") or "item"
+
+
 def flatten_product_bricks(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     flat: list[dict[str, Any]] = []
 
@@ -432,6 +445,29 @@ Icon requirements:
 """.strip()
 
 
+def build_kpi_prompt(
+    domain_name: str,
+    domain_description: str,
+    customer: dict[str, Any],
+    kpi: dict[str, Any],
+    kpi_scope: str,
+) -> str:
+    return f"""
+Create a square KPI icon for a product-strategy dashboard.
+
+KPI: {kpi.get("name", "")}
+KPI description: {kpi.get("description", "")}
+
+Icon requirements:
+- A minimalist icon in a clean, professional line-art style, no text.
+- No text, or labels.
+- No borders or frames.
+- The design features bold, consistent black outlines with rounded stroke ends.
+- Use thick, uniform line weights and simple geometric shapes.
+- No shading, no gradients, and no colors, only high-contrast black and white vector-style graphics.
+""".strip()
+
+
 def build_start_logo_prompt(domain_name: str, domain_description: str) -> str:
     return f"""
 Create a square domain logo icon for an internal product architecture start page.
@@ -463,6 +499,32 @@ Icon requirements:
 - Use thick, uniform line weights and simple geometric shapes. 
 - No shading, no gradients, and no colors—only high-contrast black and white vector-style graphics. 
 """.strip()
+
+
+def iter_kpi_nodes(customer: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    nodes: list[tuple[str, dict[str, Any]]] = []
+
+    def walk(node: Any, scope: str) -> None:
+        if not isinstance(node, dict):
+            return
+        if node.get("name"):
+            nodes.append((scope, node))
+        for child in node.get("children", []) or []:
+            walk(child, scope)
+
+    pyramids = customer.get("kpiPyramids") or {}
+    customer_outcomes = pyramids.get("customerOutcomes") or {}
+    business_outcomes = pyramids.get("businessOutcomes") or {}
+
+    walk(customer_outcomes.get("top"), "customer-outcomes")
+    for branch in customer_outcomes.get("branches", []) or []:
+        walk(branch, "customer-outcomes")
+
+    walk(business_outcomes.get("top"), "business-outcomes")
+    for branch in business_outcomes.get("branches", []) or []:
+        walk(branch, "business-outcomes")
+
+    return nodes
 
 
 def should_generate(path: Path, args: argparse.Namespace, generated_count: int) -> bool:
@@ -549,6 +611,35 @@ def main() -> int:
                         if icon_path not in processed_icon_paths:
                             processed_icon_paths.add(icon_path)
                             prompt = build_customer_prompt(domain_name, domain_description, customer)
+                            if generate_icon(
+                                api_key=api_key,
+                                prompt=prompt,
+                                path=icon_path,
+                                args=args,
+                                generated_count=total_generated,
+                            ):
+                                total_generated += 1
+
+                        for kpi_scope, kpi_node in iter_kpi_nodes(customer):
+                            kpi_id = str(kpi_node.get("id") or slugify(str(kpi_node.get("name") or "kpi")))
+                            filename = normalize_icon_filename(
+                                kpi_node.get("icon"),
+                                f"kpi-{customer_id}-{kpi_id}",
+                            )
+                            if kpi_node.get("icon") != filename:
+                                kpi_node["icon"] = filename
+                                json_changed = True
+                            icon_path = customers_json_path.parent / "icons" / filename
+                            if icon_path in processed_icon_paths:
+                                continue
+                            processed_icon_paths.add(icon_path)
+                            prompt = build_kpi_prompt(
+                                domain_name,
+                                domain_description,
+                                customer,
+                                kpi_node,
+                                kpi_scope,
+                            )
                             if generate_icon(
                                 api_key=api_key,
                                 prompt=prompt,

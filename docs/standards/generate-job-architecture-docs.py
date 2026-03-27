@@ -6,7 +6,7 @@ from pathlib import Path
 
 DATE_STRING = datetime.date.today().strftime('%Y-%m-%d')
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_PATH = REPO_ROOT / '_config' / 'standards' / 'management' / 'job-architecture' / 'job-architecture.json'
+CONFIG_PATH = REPO_ROOT / '_config' / 'standards' / 'job-architecture' / 'job-architecture.json'
 TEMPLATE_ROOT = REPO_ROOT / '_templates' / 'standards' / 'job-architecture'
 TEMPLATE_PATH = TEMPLATE_ROOT / 'index.html'
 DOCS_ROOT = Path(__file__).resolve().parent / 'job-architecture'

@@ -3,19 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>${customer_name}</title>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-129891352-1"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-
-        gtag('js', new Date());
-        gtag('config', 'UA-129891352-1');
-    </script>
-
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
@@ -218,6 +205,21 @@
             box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
             padding: 4px;
             border-radius: 5px;
+        }
+
+        .kpi-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .kpi-icon {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            border-radius: 4px;
+            padding: 2px;
         }
 
         .triangle {
@@ -497,6 +499,7 @@
     const config = ${config};
     const all_customers = ${all_customers};
     const customer = ${customer};
+    const customerInsights = ${customer_insights};
     const discoveries = ${discoveries};
     const initiatives = ${initiatives};
     const releases = ${releases};
@@ -514,6 +517,7 @@
             <button class="tablinks" id="tab_DiscoveriesTab" onclick="openTab('DiscoveriesTab')">Discoveries</button>
             <button class="tablinks" id="tab_InitiativesTab" onclick="openTab('InitiativesTab')">Initiatives</button>
             <button class="tablinks" id="tab_ReleasesTab" onclick="openTab('ReleasesTab')">Releases</button>
+            <button class="tablinks" id="tab_InsightsTab" onclick="openTab('InsightsTab')">Insights</button>
             <button class="tablinks" id="tab_ResourcesTab" onclick="openTab('ResourcesTab')">Resources</button>
         </div>
 
@@ -537,6 +541,9 @@
         </div>
         <div id="ReleasesTab" class="tabcontent" style="padding: 10px;">
             <div id="Releases"></div>
+        </div>
+        <div id="InsightsTab" class="tabcontent" style="padding: 10px;">
+            <div id="Insights"></div>
         </div>
         <div id="ResourcesTab" class="tabcontent" style="padding: 10px;">
             <div id="Resources"></div>
@@ -679,6 +686,56 @@
         html += '</table>';
 
         document.getElementById('Home').innerHTML = html;
+    }
+
+    function addInsights() {
+        let html = '';
+
+        html += '<div style="margin: 24px">';
+        html += '<div style="font-size: 180%; color: blue; margin-bottom: 14px">Selected Recent Insights</div>';
+
+        if (!customerInsights || customerInsights.length === 0) {
+            html += '<div class="group">No customer-linked insights defined for this domain yet.</div>';
+        } else {
+            customerInsights.forEach(insight => {
+                html += '<div class="group" style="width: 250px; display: inline-block; margin: 8px; padding: 16px; background: white">';
+                html += '<div style="font-size: 150%; color: #1d4ed8; margin-bottom: 8px">' + escapeHtml(insight.title) + '</div>';
+                html += '<div style="margin-bottom: 10px">' + escapeHtml(insight.summary) + '</div>';
+                if (insight.implication) {
+                    html += '<div style="margin-bottom: 10px"><b>Product implication:</b> ' + escapeHtml(insight.implication) + '</div>';
+                }
+                if (insight.link) {
+                    if (insight.link.jobIds && insight.link.jobIds.length) {
+                        html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>Jobs:</b> ' + escapeHtml(insight.link.jobIds.join(', ')) + '</div>';
+                    }
+                    if (insight.link.kpis && insight.link.kpis.length) {
+                        html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>KPIs:</b> ' + escapeHtml(insight.link.kpis.join(', ')) + '</div>';
+                    }
+                }
+                if (insight.tags && insight.tags.length) {
+                    html += '<div style="margin-top: 8px; margin-bottom: 10px">';
+                    insight.tags.forEach(tag => {
+                        html += '<span style="display:inline-block; margin:0 8px 6px 0; padding:4px 10px; border-radius:999px; background:#eef2f6; font-size:12px">' + escapeHtml(tag) + '</span>';
+                    });
+                    html += '</div>';
+                }
+                if (insight.sources && insight.sources.length) {
+                    html += '<div style="margin-top: 8px">';
+                    html += '<div style="font-size: 13px; color: #6b7280; margin-bottom: 4px">Sources</div>';
+                    insight.sources.forEach(source => {
+                        html += '<div style="font-size: 13px; margin-bottom: 4px">';
+                        html += '<a class="activity-link" target="_blank" href="' + escapeHtml(source.url) + '">' + escapeHtml(source.title) + '</a>';
+                        html += '<span class="activity-muted"> (' + escapeHtml(source.publisher || '') + (source.date ? ', ' + escapeHtml(source.date) : '') + ')</span>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        document.getElementById('Insights').innerHTML = html;
     }
 
     function addJBTD() {
@@ -842,6 +899,19 @@
         comicButton.className = 'jobs-view-button' + (showComic ? ' jobs-view-button-active' : '');
     }
 
+    function kpiIconFile(node) {
+        return (node && node.icon) ? node.icon : 'kpi.png';
+    }
+
+    function renderKpiTitle(node) {
+        let html = '';
+        html += '<div class="kpi-title">';
+        html += '<img class="kpi-icon" src="../icons/' + escapeHtml(kpiIconFile(node)) + '" onerror="this.onerror=null;this.src=\'../icons/kpi.png\'">';
+        html += '<div>' + escapeHtml(node.name || '') + '</div>';
+        html += '</div>';
+        return html;
+    }
+
     function addKPIChild(child, color) {
         let html = '';
 
@@ -852,7 +922,7 @@
         html += '<td colspan="' + (child.children ? child.children.length : 1) + '" style="vertical-align: top">';
         html += '<div class="kpi" style="background-color: ' + color + '">';
         html += '<div style="font-size: 90%; padding: 4px">';
-        html += child.name;
+        html += renderKpiTitle(child);
         html += '</div>';
         html += '<div style="background-color: white; font-size: 80%; padding: 2px">';
         html += child.description ? child.description : '&nbsp;';
@@ -884,7 +954,7 @@
         html += '<td colspan="' + pyramid.branches.length + '">';
         html += '<div class="kpi" style="background-color: ' + color + '">';
         html += '<div style="font-size: 120%; padding: 4px">';
-        html += pyramid.top.name;
+        html += renderKpiTitle(pyramid.top);
         html += '</div>';
         html += '<div style="background-color: white; font-size: 80%; padding: 2px">';
         html += pyramid.top.description ? pyramid.top.description : '&nbsp;';
@@ -1189,6 +1259,7 @@
     document.getElementById('Discoveries').innerHTML = renderActivityTable(discoveries, 'Discoveries', customer.id);
     document.getElementById('Initiatives').innerHTML = renderActivityTable(initiatives, 'Initiatives', customer.id);
     document.getElementById('Releases').innerHTML = renderActivityTable(releases, 'Releases', customer.id);
+    addInsights();
 
 
 </script>

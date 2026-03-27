@@ -180,11 +180,34 @@
             border: 1px solid #ccc;
             border-top: none;
         }
+
+        .kpi-badge {
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background-color: #f8fafc;
+            font-size: 12px;
+            color: #4b5563;
+            text-align: center;
+        }
+
+        .kpi-badge-icon {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+            border-radius: 4px;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            padding: 2px;
+        }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
     <script>
-        function openTab(evt, cityName) {
+        function openTab(tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
             for (i = 0; i < tabcontent.length; i++) {
@@ -194,8 +217,8 @@
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
-            document.getElementById(cityName).style.display = "block";
-            evt.currentTarget.className += " active";
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById('tab_' + tabName).className += " active";
         }
     </script>
 </head>
@@ -228,13 +251,39 @@
 
 <div class="tab">
     <button class="tablinks active" id="tab_customers" onclick="openTab('customers')">Customers</button>
+    <button class="tablinks" id="tab_insights" onclick="openTab('insights')">Insights</button>
 </div>
 <div>
     <div id="customers" style="display: block" class="tabcontent"></div>
+    <div id="insights" class="tabcontent"></div>
 </div>
 
 <script>
     const customers = ${customers};
+    const insights = ${insights};
+
+    function topCustomerKpi(customer) {
+        return (((customer || {}).kpiPyramids || {}).customerOutcomes || {}).top || null;
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function customerLookup() {
+        const lookup = {};
+        customers.forEach(group => {
+            group.customers.forEach(customer => {
+                lookup[customer.id] = customer;
+            });
+        });
+        return lookup;
+    }
 
     function update() {
         let html = '';
@@ -248,7 +297,14 @@
                 html += '<div style="text-align: center">';
                 html += '<img src="icons/' + customer.icon + '" style="height: 190px; border: 1px solid lightgrey; border-radius: 50%; box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;" onerror="this.onerror=null;this.src=\'icons/customer.png\'">';
                 html += '</div>';
-                html += '<div style="color: blue; margin-bottom: 10px; height: 2em; margin-top: 12px">' + customer.name + '</div>';
+                html += '<div style="color: blue; margin-bottom: 10px; height: 2em; margin-top: 12px; text-align: center">' + customer.name + '</div>';
+                const topKpi = topCustomerKpi(customer);
+                if (topKpi && topKpi.name) {
+                    const kpiIcon = topKpi.icon ? topKpi.icon : 'kpi.png';
+                    html += '<div class="kpi-badge">';
+                    html += '<span>KPI: ' + topKpi.name + '</span>';
+                    html += '</div>';
+                }
 
                 html += '<table>';
                 html += '<tr>';
@@ -316,7 +372,68 @@
         document.getElementById('customers').innerHTML = html;
     }
 
+    function renderInsights() {
+        const lookup = customerLookup();
+        let html = '<div style="padding: 12px">';
+
+        if (!insights.items || insights.items.length === 0) {
+            html += '<div class="section">No customer insights defined for this domain yet.</div>';
+            html += '</div>';
+            document.getElementById('insights').innerHTML = html;
+            return;
+        }
+
+        insights.items.forEach(insight => {
+            html += '<div class="section" style="display: inline-block; width: 250px; vertical-align: top; background-color: white; padding: 16px; margin-bottom: 14px">';
+            html += '<div style="font-size: 22px; color: #1d4ed8; margin-bottom: 8px">' + escapeHtml(insight.title) + '</div>';
+            html += '<div style="color: #4b5563; margin-bottom: 10px">' + escapeHtml(insight.summary) + '</div>';
+            if (insight.implication) {
+                html += '<div style="margin-bottom: 12px"><b>Product implication:</b> ' + escapeHtml(insight.implication) + '</div>';
+            }
+            if (insight.tags && insight.tags.length) {
+                html += '<div style="margin-bottom: 10px">';
+                insight.tags.forEach(tag => {
+                    html += '<span style="display:inline-block; margin:0 8px 6px 0; padding:4px 10px; border-radius:999px; background:#eef2f7; font-size:12px">' + escapeHtml(tag) + '</span>';
+                });
+                html += '</div>';
+            }
+            if (insight.linkedCustomers && insight.linkedCustomers.length) {
+                html += '<div style="margin-bottom: 10px"><b>Connected customers:</b></div>';
+                insight.linkedCustomers.forEach(link => {
+                    const customer = lookup[link.customerId];
+                    html += '<div style="margin: 0 0 8px 0; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc">';
+                    if (customer) {
+                        html += '<a target="_blank" href="landing_pages/' + customer.id + '.html" style="color:#1d4ed8; font-weight:bold">' + escapeHtml(customer.name) + '</a>';
+                    } else {
+                        html += '<span style="font-weight:bold">' + escapeHtml(link.customerId) + '</span>';
+                    }
+                    if (link.jobIds && link.jobIds.length) {
+                        html += '<div style="font-size: 13px; color: #4b5563; margin-top: 4px"><b>Jobs:</b> ' + escapeHtml(link.jobIds.join(', ')) + '</div>';
+                    }
+                    if (link.kpis && link.kpis.length) {
+                        html += '<div style="font-size: 13px; color: #4b5563; margin-top: 4px"><b>KPIs:</b> ' + escapeHtml(link.kpis.join(', ')) + '</div>';
+                    }
+                    html += '</div>';
+                });
+            }
+            if (insight.sources && insight.sources.length) {
+                html += '<div><b>Sources:</b></div>';
+                insight.sources.forEach(source => {
+                    html += '<div style="font-size: 13px; margin-top: 4px">';
+                    html += '<a target="_blank" href="' + escapeHtml(source.url) + '" style="color:#1d4ed8">' + escapeHtml(source.title) + '</a>';
+                    html += ' <span style="color:#6b7280">(' + escapeHtml(source.publisher || '') + (source.date ? ', ' + escapeHtml(source.date) : '') + ')</span>';
+                    html += '</div>';
+                });
+            }
+            html += '</div>';
+        });
+
+        html += '</div>';
+        document.getElementById('insights').innerHTML = html;
+    }
+
     update();
+    renderInsights();
 </script>
 </body>
 </html>
