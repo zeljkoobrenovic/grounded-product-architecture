@@ -387,6 +387,32 @@
             font-size: 12px;
         }
 
+        .step-media-card {
+            margin-top: 10px;
+            display: inline-block;
+            max-width: 280px;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .step-media-image {
+            display: block;
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 6px;
+            object-fit: contain;
+            background-color: #f8fafc;
+        }
+
+        .step-media-caption {
+            margin-top: 6px;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
         .dependency-diagram {
             margin-top: 10px;
             padding: 12px;
@@ -748,6 +774,23 @@
             .replaceAll("'", '&#39;');
     }
 
+    function resolveCustomerMediaSrc(src) {
+        const value = (src || '').trim();
+        if (!value) {
+            return '';
+        }
+        if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
+            return value;
+        }
+        if (value.startsWith('../') || value.startsWith('./')) {
+            return value;
+        }
+        if (value.startsWith('media/') || value.startsWith('icons/')) {
+            return '../../customers/' + value;
+        }
+        return '../../customers/media/' + value;
+    }
+
     function escapeMermaidLabel(value) {
         return (value || '')
             .replaceAll('&', 'and')
@@ -848,8 +891,25 @@
                         item.usedInSteps.forEach(step => {
                             sectionHtml += '<div class="activity-block">';
                             sectionHtml += '<div><b>' + escapeHomeHtml(step.step) + '</b></div>';
+                            if (step.description) {
+                                sectionHtml += '<div class="activity-muted">' + escapeHomeHtml(step.description) + '</div>';
+                            }
                             if (step.howItSupports) {
                                 sectionHtml += '<div class="activity-muted"> - How it supports: ' + escapeHomeHtml(step.howItSupports) + '</div>';
+                            }
+                            if (step.media && step.media.length) {
+                                const media = step.media[0];
+                                const mediaSrc = resolveCustomerMediaSrc(media.src);
+                                if (mediaSrc) {
+                                    sectionHtml += '<div class="step-media-card">';
+                                    sectionHtml += '<a target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(mediaSrc) + '">';
+                                    sectionHtml += '<img class="step-media-image" src="' + escapeHomeHtml(mediaSrc) + '" alt="' + escapeHomeHtml(media.alt || media.title || step.step || 'Job step media') + '">';
+                                    sectionHtml += '</a>';
+                                    if (media.title || media.alt) {
+                                        sectionHtml += '<div class="step-media-caption">' + escapeHomeHtml(media.title || media.alt) + '</div>';
+                                    }
+                                    sectionHtml += '</div>';
+                                }
                             }
                             sectionHtml += '</div>';
                         });

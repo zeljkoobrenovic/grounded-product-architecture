@@ -114,7 +114,8 @@ def build_brick_context(brick, products, customers):
         used_step = {
             'step': step.get('step', ''),
             'description': step.get('description', ''),
-            'howItSupports': capability.get('how_it_supports', '') or matched_capability.get('whyNeeded', '')
+            'howItSupports': capability.get('how_it_supports', '') or matched_capability.get('whyNeeded', ''),
+            'media': step.get('media', [])
         }
         if used_step not in supported_job['usedInSteps']:
             supported_job['usedInSteps'].append(used_step)
