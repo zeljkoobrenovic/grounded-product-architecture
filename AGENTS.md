@@ -52,7 +52,9 @@ Each domain typically contains:
 - `product/delivery.json`
   - Product delivery definition, channels, APIs, events, MVP scope, and capability mappings.
 - `product-bricks/product-bricks.json`
-  - The catalog of product bricks/capabilities.
+  - The catalog of product bricks, the reusable implementation-facing building blocks.
+- `product-bricks/product-capability.json`
+  - The catalog of outcome-based product capabilities composed from one or more product bricks and/or external systems.
 - `product-bricks/targets.json`
   - Release targets and planning overlays.
 - `product-bricks/documents.json`

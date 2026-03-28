@@ -73,6 +73,7 @@ Create the minimum source package under `_config/product-domains/<domain-id>/`:
 - `products/products.json`
 - `product/delivery.json`
 - `product-bricks/product-bricks.json`
+- `product-bricks/product-capability.json`
 - `product-bricks/targets.json`
 - `product-bricks/documents.json`
 - `product-bricks/roadmap/roadmap.json`
@@ -153,6 +154,15 @@ Product bricks should bridge:
 - concrete systems, services, APIs, workflows, and data capabilities
 
 Do not define bricks as vague aspirations. They should be buildable and ownable.
+
+`product-bricks/product-capability.json` should contain the outcome-based product capabilities that those bricks enable.
+
+Product capabilities should:
+
+- express the strategic "what" rather than the implementation "how"
+- connect a valuable outcome to one or more product bricks
+- optionally include required external systems when the capability depends on them
+- remain durable and higher-level than the underlying brick catalog
 
 ### 7. Add planning overlays
 

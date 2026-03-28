@@ -43,6 +43,33 @@ def load_product_bricks_payload(path, default_title='Product Bricks', default_de
     }
 
 
+def load_product_capabilities_payload(path, default_title='Product Capabilities', default_description=''):
+    if not os.path.exists(path):
+        return {'metadata': {'title': default_title, 'description': default_description}, 'capabilities': []}
+
+    payload = json.load(open(path))
+
+    if isinstance(payload, list):
+        return {
+            'metadata': {
+                'title': default_title,
+                'description': default_description
+            },
+            'capabilities': payload
+        }
+
+    metadata = dict(payload.get('metadata', {}))
+    if 'title' not in metadata:
+        metadata['title'] = default_title
+    if 'description' not in metadata:
+        metadata['description'] = default_description
+
+    return {
+        'metadata': metadata,
+        'capabilities': payload.get('capabilities', [])
+    }
+
+
 def flatten_product_bricks(payload):
     flat_bricks = []
 
@@ -78,6 +105,32 @@ def flatten_product_bricks(payload):
         walk(brick, [])
 
     return flat_bricks
+
+
+def flatten_product_capabilities(payload):
+    flat_capabilities = []
+
+    for capability in payload.get('capabilities', []):
+        flat_capabilities.append({
+            'id': capability.get('id', ''),
+            'name': capability.get('name', ''),
+            'type': capability.get('type', 'outcome-based-capability'),
+            'description': capability.get('description', ''),
+            'group': capability.get('group', ''),
+            'flows': capability.get('flows', []),
+            'outcomes': capability.get('outcomes', []),
+            'brickDependencies': capability.get('brickDependencies', capability.get('productBrickDependencies', [])),
+            'externalSystemsThisCapabilityDependsOn': capability.get(
+                'externalSystemsThisCapabilityDependsOn',
+                capability.get('externalSystemsThisBrickDependsOn', capability.get('externalSystemDependencies', []))
+            ),
+            'externalSystemsDependingOnThisCapability': capability.get(
+                'externalSystemsDependingOnThisCapability',
+                capability.get('externalSystemsDependingOnThisBrick', [])
+            )
+        })
+
+    return flat_capabilities
 
 
 def build_bricks_lookup(product_bricks_payload):

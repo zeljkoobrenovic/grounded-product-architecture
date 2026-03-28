@@ -3,7 +3,12 @@ import datetime
 import os
 import shutil
 from initiatives_support import load_domain_activity, filter_for_brick
-from product_bricks_support import flatten_product_bricks, load_product_bricks_payload
+from product_bricks_support import (
+    flatten_product_bricks,
+    flatten_product_capabilities,
+    load_product_bricks_payload,
+    load_product_capabilities_payload,
+)
 
 def load_json_if_exists(path, default_value):
     if os.path.exists(path):
@@ -228,6 +233,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${date}', date_string)
                             .replace('${config}', json.dumps(config))
                             .replace('${all_bricks}', json.dumps(bricks))
+                            .replace('${all_capabilities}', json.dumps(flat_capabilities))
                             .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${brick_data}', json.dumps(brick))
                             .replace('${evidence}', json.dumps(evidence))
@@ -247,6 +253,7 @@ for domain in config['domains']:
     root_domain = domains_root + docs_folder
 
     product_bricks_config_path = root_domain + 'product-bricks.json'
+    product_capabilities_config_path = root_domain + 'product-capability.json'
 
     if not os.path.exists(product_bricks_config_path):
         print("Skipping " + root_domain)
@@ -260,6 +267,8 @@ for domain in config['domains']:
 
     data = load_product_bricks_payload(product_bricks_config_path)
     flat_bricks = flatten_product_bricks(data)
+    capabilities_payload = load_product_capabilities_payload(product_capabilities_config_path)
+    flat_capabilities = flatten_product_capabilities(capabilities_payload)
     activity_data = load_domain_activity(domains_root, domain_id)
     products = load_json_if_exists(domains_root + domain_id + '/products/products.json', {'portfolio': {'products': []}})
     customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
@@ -303,6 +312,10 @@ for domain in config['domains']:
             content = template.replace('${domain_name}', domain_name)
             content = content.replace('${domain_description}', domain['description'])
             content = content.replace('${bricks}', json.dumps(data))
+            content = content.replace('${product_capabilities}', json.dumps({
+                'metadata': capabilities_payload.get('metadata', {}),
+                'capabilities': flat_capabilities
+            }))
             html_file.write(content)
 
     process()
