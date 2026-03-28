@@ -90,15 +90,35 @@ def prepare_payload(payload, initiative_index_map, release_index_map):
         source_objective['landingPageId'] = source_objective_page_id(source_objective)
         objective_lookup[source_objective['id']] = {
             'pageId': source_objective['landingPageId'],
-            'title': source_objective.get('title', 'Objective')
+            'title': source_objective.get('title', 'Objective'),
+            'linkedInitiatives': source_objective.get('linkedInitiatives', []),
+            'linkedReleases': source_objective.get('linkedReleases', [])
         }
 
     for company_objective in company_objective_items(prepared):
         company_objective['landingPageId'] = company_objective_page_id(company_objective, prepared)
+        initiative_map = {}
+        release_map = {}
         for key_result in company_objective.get('keyResults', []):
             source_id = key_result.get('sourceObjectiveId')
             if source_id in objective_lookup:
                 key_result['sourceObjectivePageId'] = objective_lookup[source_id]['pageId']
+                for item in objective_lookup[source_id]['linkedInitiatives']:
+                    key = item.get('id') or f"{item.get('date', '')}|{item.get('description', '')}"
+                    initiative_map[key] = dict(item)
+                for item in objective_lookup[source_id]['linkedReleases']:
+                    key = item.get('id') or f"{item.get('date', '')}|{item.get('description', '')}"
+                    release_map[key] = dict(item)
+        company_objective['linkedInitiatives'] = sorted(
+            initiative_map.values(),
+            key=lambda item: item.get('date', ''),
+            reverse=True
+        )
+        company_objective['linkedReleases'] = sorted(
+            release_map.values(),
+            key=lambda item: item.get('date', ''),
+            reverse=True
+        )
 
     for source_objective in prepared['objectives']:
         source_objective['companyObjectiveRefs'] = []
