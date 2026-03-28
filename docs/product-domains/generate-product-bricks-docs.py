@@ -208,6 +208,18 @@ def build_brick_evidence(brick_id, evidence_items):
     return {'brickId': brick_id, 'groups': groups}
 
 
+def dedupe_by(items, key_builder):
+    index = {}
+    ordered = []
+    for item in items:
+        key = key_builder(item)
+        if key in index:
+            continue
+        index[key] = True
+        ordered.append(item)
+    return ordered
+
+
 def create_landing_pages(bricks, activity_data, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'landing_page.html').read();
 
@@ -244,6 +256,61 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${releases}', json.dumps(filter_for_brick(activity_data['releases'], brick['id']))))
 
 
+def create_capability_landing_pages(capabilities, bricks, activity_data, products, customers, teams_payload):
+    landing_page_template = open(root_templates + 'capability_landing_page.html').read();
+    brick_lookup = {brick['id']: brick for brick in bricks}
+
+    for capability in capabilities:
+        related_bricks = []
+        linked_products = []
+        supported_jobs = []
+        related_teams = []
+        initiatives = []
+        releases = []
+
+        for dep in capability.get('brickDependencies', []):
+            brick_id = dep.get('targetBrickId', '')
+            if not brick_id or brick_id not in brick_lookup:
+                continue
+            brick = brick_lookup[brick_id]
+            related_bricks.append(brick)
+            brick_linked_products, brick_supported_jobs = build_brick_context(brick, products, customers)
+            linked_products.extend(brick_linked_products)
+            supported_jobs.extend(brick_supported_jobs)
+            related_teams.extend(build_brick_team_context(brick, teams_payload))
+            initiatives.extend(filter_for_brick(activity_data['initiatives'], brick_id))
+            releases.extend(filter_for_brick(activity_data['releases'], brick_id))
+
+        related_bricks = dedupe_by(related_bricks, lambda item: item.get('id', ''))
+        linked_products = dedupe_by(linked_products, lambda item: item.get('id', ''))
+        supported_jobs = dedupe_by(
+            supported_jobs,
+            lambda item: (
+                item.get('customerId', ''),
+                item.get('productId', ''),
+                item.get('jobId', '')
+            )
+        )
+        related_teams = dedupe_by(related_teams, lambda item: item.get('teamId', ''))
+        initiatives = dedupe_by(initiatives, lambda item: json.dumps(item, sort_keys=True))
+        releases = dedupe_by(releases, lambda item: json.dumps(item, sort_keys=True))
+
+        htmlFile = docs_folder + 'capability_pages/' + str(capability['id']) + '.html'
+        with open(htmlFile, 'w') as html_file:
+            html_file.write(landing_page_template
+                            .replace('${config}', json.dumps(config))
+                            .replace('${all_bricks}', json.dumps(bricks))
+                            .replace('${all_capabilities}', json.dumps(capabilities))
+                            .replace('${capability_name}', capability.get('name', capability.get('id', '')).replace('&', '&amp;'))
+                            .replace('${capability_data}', json.dumps(capability))
+                            .replace('${related_bricks}', json.dumps(related_bricks))
+                            .replace('${linked_products}', json.dumps(linked_products))
+                            .replace('${related_teams}', json.dumps(related_teams))
+                            .replace('${supported_jobs}', json.dumps(supported_jobs))
+                            .replace('${initiatives}', json.dumps(initiatives))
+                            .replace('${releases}', json.dumps(releases)))
+
+
 for domain in config['domains']:
     domain_id = domain['id']
     domain_name = domain['name']
@@ -264,6 +331,7 @@ for domain in config['domains']:
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
+    os.makedirs(os.path.join(docs_folder, 'capability_pages'), exist_ok=True)
 
     data = load_product_bricks_payload(product_bricks_config_path)
     flat_bricks = flatten_product_bricks(data)
@@ -321,3 +389,4 @@ for domain in config['domains']:
     process()
 
     create_landing_pages(flat_bricks, activity_data, products, customers, evidence_items, teams_payload)
+    create_capability_landing_pages(flat_capabilities, flat_bricks, activity_data, products, customers, teams_payload)

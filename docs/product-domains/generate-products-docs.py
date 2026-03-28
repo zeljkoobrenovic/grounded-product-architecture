@@ -30,11 +30,14 @@ def create_overview_docs(domain, docs_folder):
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()
+        deployment_path = domains_root + domain['id'] + '/products/deployment.json'
+        deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
         html_file.write(template
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])
-                        .replace('${products}', json.dumps(products)))
+                        .replace('${products}', json.dumps(products))
+                        .replace('${deployment}', json.dumps(deployment)))
 
 def create_landing_pages(products, docs_folder, activity_data):
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)

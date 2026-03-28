@@ -245,7 +245,7 @@ def normalize_products(domain, customers_by_id, bricks):
                     'type': product.get('category', product.get('type', 'Product')),
                     'primaryCustomers': [],
                     'interfaces': product.get('interfaces', []) or to_interfaces_from_channels(product),
-                    'neededCapabilities': []
+                    'neededBricks': []
                 }
                 for persona_id in product.get('primaryPersonas', []):
                     customer = customers_by_id.get(persona_id)
@@ -256,11 +256,12 @@ def normalize_products(domain, customers_by_id, bricks):
                 capability_ids = product.get('coreCapabilityIds', []) + product.get('adjacentCapabilityIds', [])
                 for capability_id in capability_ids:
                     brick = bricks.get(str(capability_id))
-                    normalized['neededCapabilities'].append({
-                        'capabilityCode': brick.get('id', str(capability_id)) if brick else str(capability_id),
-                        'capabilityName': brick.get('name', str(capability_id)) if brick else str(capability_id),
+                    normalized['neededBricks'].append({
+                        'brickId': brick.get('id', str(capability_id)) if brick else str(capability_id),
+                        'brickName': brick.get('name', str(capability_id)) if brick else str(capability_id),
                         'whyNeeded': f'Needed by {normalized["name"]} to support its core workflows.',
-                        'mappingType': 'generated_from_delivery'
+                        'mappingType': 'generated_from_delivery',
+                        'deploymentChannels': []
                     })
                 products.append(normalized)
             return {
@@ -309,12 +310,13 @@ def normalize_products(domain, customers_by_id, bricks):
             'type': product_type,
             'primaryCustomers': [{'id': customer['id'], 'name': customer['name']}] if customer else [],
             'interfaces': interfaces,
-            'neededCapabilities': [
+            'neededBricks': [
                 {
-                    'capabilityCode': capability.get('id', 'capability'),
-                    'capabilityName': capability.get('name', capability.get('id', 'Capability')),
+                    'brickId': capability.get('id', 'brick'),
+                    'brickName': capability.get('name', capability.get('id', 'Brick')),
                     'whyNeeded': f'Needed by {name} to support a key workflow.',
-                    'mappingType': 'generated_from_customers'
+                    'mappingType': 'generated_from_customers',
+                    'deploymentChannels': []
                 }
                 for capability in capability_slice
             ]
@@ -376,7 +378,7 @@ def safe_date(year, month, day):
 
 
 def synth_description(item_type, product, bricks, interfaces, customer):
-    brick_names = [brick.get('name', brick.get('capabilityName', 'core capability')) for brick in bricks[:3]]
+    brick_names = [brick.get('name', brick.get('brickName', 'core brick')) for brick in bricks[:3]]
     channel_names = [interface.get('name', interface.get('type', 'channel')) for interface in interfaces[:2]]
     if item_type == 'initiative':
         return f"{product['name']} initiative focused on improving {', '.join(name.lower() for name in brick_names[:2])}, strengthening customer value for {customer['name']}, and evolving delivery across {', '.join(channel_names)}."
@@ -404,8 +406,8 @@ def generate_item(item_type, date_string, domain, product, customer, kpis, brick
     for customer_id in customer_ids[:2]:
         c = domain['customers_by_id'].get(customer_id, customer)
         names = customer_kpi_names(c)
-        brick_a = bricks[0].get('name', bricks[0].get('capabilityName', 'workflow')) if bricks else 'workflow'
-        brick_b = bricks[1].get('name', bricks[1].get('capabilityName', 'workflow')) if len(bricks) > 1 else brick_a
+        brick_a = bricks[0].get('name', bricks[0].get('brickName', 'workflow')) if bricks else 'workflow'
+        brick_b = bricks[1].get('name', bricks[1].get('brickName', 'workflow')) if len(bricks) > 1 else brick_a
         customer_pair = pick_two(names['customer'], item_index)
         business_pair = pick_two(names['business'], item_index)
         customer_impact.append({
@@ -426,8 +428,8 @@ def generate_item(item_type, date_string, domain, product, customer, kpis, brick
         'customerImpact': customer_impact,
         'productBricks': [
             {
-                'brickId': str(brick.get('id', brick.get('capabilityCode', f'brick-{idx}'))),
-                'change': f"{'Released' if item_type == 'release' else 'Extended'} {brick.get('name', brick.get('capabilityName', 'capability'))} with domain-specific workflow improvements."
+                'brickId': str(brick.get('id', brick.get('brickId', f'brick-{idx}'))),
+                'change': f"{'Released' if item_type == 'release' else 'Extended'} {brick.get('name', brick.get('brickName', 'brick'))} with domain-specific workflow improvements."
             }
             for idx, brick in enumerate(bricks[:4], start=1)
         ],
@@ -455,12 +457,12 @@ def generate_time_series(domain, products_data, product_bricks_data, customers_f
         for position in range(count):
             product = products[running_index % len(products)]
             customer = customers_flat[running_index % len(customers_flat)]
-            needed = product.get('neededCapabilities', [])
+            needed = product.get('neededBricks', [])
             product_bricks = []
-            for needed_capability in needed:
+            for needed_brick in needed:
                 matched = None
                 for brick in brick_list:
-                    if brick.get('name') == needed_capability.get('capabilityName') or str(brick.get('id')) == str(needed_capability.get('capabilityCode')):
+                    if brick.get('name') == needed_brick.get('brickName') or str(brick.get('id')) == str(needed_brick.get('brickId')):
                         matched = brick
                         break
                 if matched:
