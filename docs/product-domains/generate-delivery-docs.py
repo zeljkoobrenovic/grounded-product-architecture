@@ -3,7 +3,12 @@ import json
 import os
 import shutil
 
-from initiatives_support import enrich_discoveries
+from initiatives_support import (
+    OBJECTIVE_PERIODS,
+    enrich_discoveries,
+    load_objective_period_payload,
+    merge_item_payloads,
+)
 from product_bricks_support import build_bricks_lookup, load_product_bricks_payload
 
 date_string = datetime.date.today().strftime('%Y-%m-%d')
@@ -243,6 +248,16 @@ def render_list(template_root, template_name, docs_folder, domain, placeholder_n
     return data['items']
 
 
+def render_landing_pages_only(template_root, docs_folder, template_placeholder, template_name, domain, items):
+    if os.path.exists(docs_folder):
+        shutil.rmtree(docs_folder)
+    os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
+    os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
+    if os.path.exists(os.path.join(template_root, 'icons')):
+        copy_icons(os.path.join(template_root, 'icons'), docs_folder)
+    render_landing_pages(template_root, docs_folder, template_placeholder, template_name, domain, items)
+
+
 def render_landing_pages(template_root, docs_folder, template_placeholder, template_name, domain, items):
     template = open(os.path.join(template_root, template_name)).read()
 
@@ -266,7 +281,6 @@ for domain in config['domains']:
         products_path = domains_root + domain_id + '/product/products.json'
     bricks_path = domains_root + domain_id + '/product-bricks/product-bricks.json'
 
-    initiatives_path = base_path + 'initiatives.json'
     releases_path = base_path + 'releases.json'
 
     customers = json.load(open(customers_path)) if os.path.exists(customers_path) else []
@@ -280,8 +294,12 @@ for domain in config['domains']:
     initiatives_enriched = {'items': []}
     discoveries_enriched = {'ongoing': [], 'archived': [], 'items': []}
 
-    if os.path.exists(initiatives_path):
-        initiatives = json.load(open(initiatives_path))
+    domain_root = domains_root + domain_id
+    initiatives = merge_item_payloads([
+        load_objective_period_payload(domain_root, period, 'initiatives.json', {'items': []})
+        for period in OBJECTIVE_PERIODS
+    ])
+    if initiatives.get('items'):
         initiatives_enriched = enrich_items(initiatives, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup)
 
     initiative_lookup = {
@@ -293,11 +311,12 @@ for domain in config['domains']:
         if item.get('initiativeId')
     }
 
-    ongoing_discoveries_path = domains_root + domain_id + '/discoveries/ongoing.json'
-    archived_discoveries_path = domains_root + domain_id + '/discoveries/archived.json'
-    if os.path.exists(ongoing_discoveries_path) or os.path.exists(archived_discoveries_path):
-        ongoing_discoveries = json.load(open(ongoing_discoveries_path)) if os.path.exists(ongoing_discoveries_path) else {'items': []}
-        archived_discoveries = json.load(open(archived_discoveries_path)) if os.path.exists(archived_discoveries_path) else {'items': []}
+    ongoing_discoveries = merge_item_payloads([
+        load_objective_period_payload(domain_root, period, 'discoveries.json', {'items': []})
+        for period in ['current', 'next']
+    ])
+    archived_discoveries = load_objective_period_payload(domain_root, 'archived', 'discoveries.json', {'items': []})
+    if ongoing_discoveries.get('items') or archived_discoveries.get('items'):
         discoveries_enriched = enrich_discoveries(ongoing_discoveries, archived_discoveries, initiative_lookup)
 
     discovery_lookup = {
@@ -323,18 +342,18 @@ for domain in config['domains']:
 
     # Build initiative/release → objective landing page mapping
     objective_url_map = {}  # initiative/release description|date → objective landing page URL
-    for obj_file in ['current.json', 'next.json', 'archive.json']:
-        obj_path = domains_root + domain_id + '/objectives/' + obj_file
+    for period in OBJECTIVE_PERIODS:
+        obj_path = os.path.join(domain_root, 'objectives', period, 'objectives.json')
         if not os.path.exists(obj_path):
             continue
         obj_data = json.load(open(obj_path))
         for obj in obj_data.get('objectives', obj_data.get('goals', [])):
             obj_page_id = obj.get('id', '')
-            obj_url = '../objectives/landing_pages/' + obj_page_id + '.html#InitiativesTab'
+            obj_url = '../objectives/' + period + '/landing_pages/' + obj_page_id + '.html#InitiativesTab'
             for linked in obj.get('linkedInitiatives', []):
                 key = f"{linked.get('date', '')}|{linked.get('description', '')}"
                 objective_url_map[key] = obj_url
-            obj_rel_url = '../objectives/landing_pages/' + obj_page_id + '.html#ReleasesTab'
+            obj_rel_url = '../objectives/' + period + '/landing_pages/' + obj_page_id + '.html#ReleasesTab'
             for linked in obj.get('linkedReleases', []):
                 key = f"{linked.get('date', '')}|{linked.get('description', '')}"
                 objective_url_map[key + '|release'] = obj_rel_url
@@ -347,14 +366,12 @@ for domain in config['domains']:
     if initiatives_enriched.get('items'):
         initiatives_docs_folder = domain_id + '/initiatives/'
         initiatives_template_root = '../../_templates/initiatives/'
-        initiative_items = render_list(initiatives_template_root, 'initiatives.html', initiatives_docs_folder, domain, 'initiatives', initiatives_enriched)
-        render_landing_pages(initiatives_template_root, initiatives_docs_folder, 'initiative', 'landing_page.html', domain, initiative_items)
+        render_landing_pages_only(initiatives_template_root, initiatives_docs_folder, 'initiative', 'landing_page.html', domain, initiatives_enriched['items'])
 
     if discoveries_enriched.get('items'):
         discoveries_docs_folder = domain_id + '/discoveries/'
         discoveries_template_root = '../../_templates/discoveries/'
-        discovery_items = render_list(discoveries_template_root, 'index.html', discoveries_docs_folder, domain, 'discoveries', discoveries_enriched)
-        render_landing_pages(discoveries_template_root, discoveries_docs_folder, 'discovery', 'landing_page.html', domain, discovery_items)
+        render_landing_pages_only(discoveries_template_root, discoveries_docs_folder, 'discovery', 'landing_page.html', domain, discoveries_enriched['items'])
 
     if os.path.exists(releases_path):
         releases = json.load(open(releases_path))

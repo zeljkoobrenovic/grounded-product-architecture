@@ -6,8 +6,7 @@ import shutil
 from initiatives_support import (
     build_bricks_lookup,
     build_customers_lookup,
-    enrich_discoveries,
-    enrich_items,
+    load_domain_activity,
 )
 from product_bricks_support import load_product_bricks_payload
 
@@ -303,16 +302,12 @@ for domain in config['domains']:
 
     customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
     bricks = load_product_bricks_payload(domains_root + domain_id + '/product-bricks/product-bricks.json')
-    initiatives = load_json_if_exists(domains_root + domain_id + '/delivery/initiatives.json', {'items': []})
-    releases = load_json_if_exists(domains_root + domain_id + '/delivery/releases.json', {'items': []})
-    ongoing_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/ongoing.json', {'items': []})
-    archived_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/archived.json', {'items': []})
-
     customers_lookup, kpi_lookup = build_customers_lookup(customers)
     bricks_lookup = build_bricks_lookup(bricks)
-    initiatives_enriched = enrich_items(initiatives, customers_lookup, kpi_lookup, bricks_lookup, {})
-    releases_enriched = enrich_items(releases, customers_lookup, kpi_lookup, bricks_lookup, {})
-    discoveries_enriched = enrich_discoveries(ongoing_discoveries, archived_discoveries, {})
+    activity_data = load_domain_activity(domains_root, domain_id)
+    initiatives_enriched = activity_data.get('initiatives', {'items': []})
+    releases_enriched = activity_data.get('releases', {'items': []})
+    discoveries_enriched = activity_data.get('discoveries', {'items': []})
 
     teams_payload = json.load(open(teams_path))
     team_lookup = build_team_lookup(teams_payload)

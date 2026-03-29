@@ -6,7 +6,7 @@ from initiatives_support import load_domain_activity, filter_for_product
 
 date_string = datetime.date.today().strftime('%Y-%m-%d')
 
-apps = json.load(open('../../_config/start/apps.json'))
+apps = json.load(open('../../_config/product-domains/start/apps.json'))
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/start/'

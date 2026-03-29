@@ -232,17 +232,51 @@ def prepare_payload(payload, initiative_lookup, release_lookup, discovery_lookup
 
     for source_objective in prepared['objectives']:
         enriched_inits = []
+        objective_prefix = (source_objective.get('id') or '') + '/'
+        matched_by_kr = [
+            item for item in enriched_init_list
+            if (item.get('keyResultId') or '').startswith(objective_prefix)
+        ]
+        seen_init_keys = set()
+        for item in matched_by_kr:
+            key = item.get('initiativeId') or item.get('title') or json.dumps(item, sort_keys=True)
+            if key not in seen_init_keys:
+                enriched_inits.append(item)
+                seen_init_keys.add(key)
         for linked in source_objective.get('linkedInitiatives', []):
             idx = linked.get('landingPageIndex')
             if idx is not None and idx in init_by_index:
-                enriched_inits.append(init_by_index[idx])
+                item = init_by_index[idx]
+                key = item.get('initiativeId') or item.get('title') or json.dumps(item, sort_keys=True)
+                if key not in seen_init_keys:
+                    enriched_inits.append(item)
+                    seen_init_keys.add(key)
         source_objective['enrichedInitiatives'] = enriched_inits
 
         enriched_rels = []
+        linked_init_ids = {
+            item.get('initiativeId')
+            for item in enriched_inits
+            if item.get('initiativeId')
+        }
+        matched_releases = [
+            item for item in enriched_rel_list
+            if item.get('initiativeId') in linked_init_ids
+        ]
+        seen_release_keys = set()
+        for item in matched_releases:
+            key = item.get('releaseId') or item.get('title') or json.dumps(item, sort_keys=True)
+            if key not in seen_release_keys:
+                enriched_rels.append(item)
+                seen_release_keys.add(key)
         for linked in source_objective.get('linkedReleases', []):
             idx = linked.get('landingPageIndex')
             if idx is not None and idx in rel_by_index:
-                enriched_rels.append(rel_by_index[idx])
+                item = rel_by_index[idx]
+                key = item.get('releaseId') or item.get('title') or json.dumps(item, sort_keys=True)
+                if key not in seen_release_keys:
+                    enriched_rels.append(item)
+                    seen_release_keys.add(key)
         source_objective['enrichedReleases'] = enriched_rels
 
     for company_objective in company_objective_items(prepared):
@@ -263,9 +297,7 @@ def prepare_payload(payload, initiative_lookup, release_lookup, discovery_lookup
     return prepared
 
 
-def create_overview_docs(domain, docs_folder, current_payload, next_payload, archive_payload):
-    if os.path.exists(docs_folder):
-        shutil.rmtree(docs_folder)
+def create_period_docs(domain, docs_folder, period, period_label, payload, period_links):
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 
     copy_icons(templates_root + 'icons', docs_folder)
@@ -276,43 +308,61 @@ def create_overview_docs(domain, docs_folder, current_payload, next_payload, arc
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])
-                        .replace('${current_payload}', json.dumps(current_payload))
-                        .replace('${next_payload}', json.dumps(next_payload))
-                        .replace('${archive_payload}', json.dumps(archive_payload)))
+                        .replace('${period}', period)
+                        .replace('${period_label}', period_label)
+                        .replace('${payload}', json.dumps(payload))
+                        .replace('${current_href}', period_links['current'])
+                        .replace('${next_href}', period_links['next'])
+                        .replace('${archived_href}', period_links['archived']))
 
 
-def create_landing_pages(docs_folder, payloads, domain):
+def create_root_redirect(docs_folder):
+    with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
+        html_file.write("""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=current/index.html">
+    <title>Objectives</title>
+</head>
+<body>
+    <p><a href="current/index.html">Open current objectives</a></p>
+</body>
+</html>
+""")
+
+
+def create_landing_pages(docs_folder, payload, domain):
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
     template = open(templates_root + 'landing_page.html').read()
 
-    for payload in payloads:
-        for source_objective in objective_items(payload):
-            landing_page_file = os.path.join(docs_folder, 'landing_pages', source_objective['landingPageId'] + '.html')
-            with open(landing_page_file, 'w') as html_file:
-                html_file.write(template
-                                .replace('${date}', date_string)
-                                .replace('${domain_name}', domain['name'])
-                                .replace('${page_title}', source_objective.get('title', 'Objective'))
-                                .replace('${page_kind}', 'source-objective')
-                                .replace('${page_payload}', json.dumps(source_objective)))
+    for source_objective in objective_items(payload):
+        landing_page_file = os.path.join(docs_folder, 'landing_pages', source_objective['landingPageId'] + '.html')
+        with open(landing_page_file, 'w') as html_file:
+            html_file.write(template
+                            .replace('${date}', date_string)
+                            .replace('${domain_name}', domain['name'])
+                            .replace('${page_title}', source_objective.get('title', 'Objective'))
+                            .replace('${page_kind}', 'source-objective')
+                            .replace('${page_payload}', json.dumps(source_objective)))
 
-        for company_objective in company_objective_items(payload):
-            landing_page_file = os.path.join(docs_folder, 'landing_pages', company_objective['landingPageId'] + '.html')
-            with open(landing_page_file, 'w') as html_file:
-                html_file.write(template
-                                .replace('${date}', date_string)
-                                .replace('${domain_name}', domain['name'])
-                                .replace('${page_title}', company_objective.get('title', 'Company Objective'))
-                                .replace('${page_kind}', 'company-objective')
-                                .replace('${page_payload}', json.dumps(company_objective)))
+    for company_objective in company_objective_items(payload):
+        landing_page_file = os.path.join(docs_folder, 'landing_pages', company_objective['landingPageId'] + '.html')
+        with open(landing_page_file, 'w') as html_file:
+            html_file.write(template
+                            .replace('${date}', date_string)
+                            .replace('${domain_name}', domain['name'])
+                            .replace('${page_title}', company_objective.get('title', 'Company Objective'))
+                            .replace('${page_kind}', 'company-objective')
+                            .replace('${page_payload}', json.dumps(company_objective)))
 
 
 for domain in config['domains']:
     domain_id = domain['id']
     objectives_root = domains_root + domain_id + '/objectives/'
-    current_path = objectives_root + 'current.json'
-    next_path = objectives_root + 'next.json'
-    archive_path = objectives_root + 'archive.json'
+    current_path = objectives_root + 'current/objectives.json'
+    next_path = objectives_root + 'next/objectives.json'
+    archive_path = objectives_root + 'archived/objectives.json'
 
     if not os.path.exists(current_path):
         continue
@@ -320,11 +370,18 @@ for domain in config['domains']:
     current_payload = json.load(open(current_path))
     next_payload = json.load(open(next_path)) if os.path.exists(next_path) else {'objectives': [], 'companyObjectives': []}
     archive_payload = json.load(open(archive_path)) if os.path.exists(archive_path) else {'objectives': [], 'companyObjectives': []}
-    initiative_lookup = build_activity_lookup(domains_root + domain_id + '/delivery/initiatives.json')
+    initiative_lookup = build_activity_lookup(objectives_root + 'current/initiatives.json')
+    initiative_lookup.update(build_activity_lookup(objectives_root + 'next/initiatives.json'))
+    initiative_lookup.update(build_activity_lookup(objectives_root + 'archived/initiatives.json'))
     release_lookup = build_activity_lookup(domains_root + domain_id + '/delivery/releases.json')
-    ongoing_discoveries_path = domains_root + domain_id + '/discoveries/ongoing.json'
-    archived_discoveries_path = domains_root + domain_id + '/discoveries/archived.json'
-    ongoing_discoveries = json.load(open(ongoing_discoveries_path)) if os.path.exists(ongoing_discoveries_path) else {'items': []}
+    ongoing_discoveries_path = objectives_root + 'current/discoveries.json'
+    next_discoveries_path = objectives_root + 'next/discoveries.json'
+    archived_discoveries_path = objectives_root + 'archived/discoveries.json'
+    ongoing_discoveries = {'items': []}
+    if os.path.exists(ongoing_discoveries_path):
+        ongoing_discoveries['items'].extend(json.load(open(ongoing_discoveries_path)).get('items', []))
+    if os.path.exists(next_discoveries_path):
+        ongoing_discoveries['items'].extend(json.load(open(next_discoveries_path)).get('items', []))
     archived_discoveries = json.load(open(archived_discoveries_path)) if os.path.exists(archived_discoveries_path) else {'items': []}
     discoveries_enriched = enrich_discoveries(ongoing_discoveries, archived_discoveries, {})
     discovery_lookup = {
@@ -347,5 +404,35 @@ for domain in config['domains']:
     archive_payload = prepare_payload(archive_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
 
     docs_folder = domain_id + '/objectives/'
-    create_overview_docs(domain, docs_folder, current_payload, next_payload, archive_payload)
-    create_landing_pages(docs_folder, [current_payload, next_payload, archive_payload], domain)
+    if os.path.exists(docs_folder):
+        shutil.rmtree(docs_folder)
+    os.makedirs(docs_folder, exist_ok=True)
+    create_root_redirect(docs_folder)
+
+    create_period_docs(
+        domain,
+        os.path.join(docs_folder, 'current'),
+        'current',
+        'Current',
+        current_payload,
+        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html'}
+    )
+    create_period_docs(
+        domain,
+        os.path.join(docs_folder, 'next'),
+        'next',
+        'Next',
+        next_payload,
+        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html'}
+    )
+    create_period_docs(
+        domain,
+        os.path.join(docs_folder, 'archived'),
+        'archived',
+        'Archived',
+        archive_payload,
+        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html'}
+    )
+    create_landing_pages(os.path.join(docs_folder, 'current'), current_payload, domain)
+    create_landing_pages(os.path.join(docs_folder, 'next'), next_payload, domain)
+    create_landing_pages(os.path.join(docs_folder, 'archived'), archive_payload, domain)

@@ -3,6 +3,8 @@ import os
 
 from product_bricks_support import build_bricks_lookup, load_product_bricks_payload
 
+OBJECTIVE_PERIODS = ['current', 'next', 'archived']
+
 
 def load_json_if_exists(path, default_value):
     if os.path.exists(path):
@@ -15,6 +17,17 @@ def load_first_existing(paths, default_value):
         if os.path.exists(path):
             return json.load(open(path))
     return default_value
+
+
+def load_objective_period_payload(domain_root, period, filename, default_value):
+    return load_json_if_exists(os.path.join(domain_root, 'objectives', period, filename), default_value)
+
+
+def merge_item_payloads(payloads):
+    merged = {'items': []}
+    for payload in payloads:
+        merged['items'].extend(payload.get('items', []))
+    return merged
 
 
 def normalize_icon_name(icon_name, fallback='customer.png'):
@@ -221,19 +234,27 @@ def enrich_items(data, customers_lookup, kpi_lookup, bricks_lookup, channels_loo
 
 
 def load_domain_activity(domains_root, domain_id):
+    domain_root = os.path.join(domains_root, domain_id)
+
     customers = load_first_existing([
-        domains_root + domain_id + '/customers/customers.json',
-        domains_root + domain_id + '/product/customers.json'
+        domain_root + '/customers/customers.json',
+        domain_root + '/product/customers.json'
     ], [])
     products = load_first_existing([
-        domains_root + domain_id + '/products/products.json',
-        domains_root + domain_id + '/product/products.json'
+        domain_root + '/products/products.json',
+        domain_root + '/product/products.json'
     ], {'portfolio': {'products': []}})
-    product_bricks = load_product_bricks_payload(domains_root + domain_id + '/product-bricks/product-bricks.json')
-    initiatives = load_json_if_exists(domains_root + domain_id + '/delivery/initiatives.json', {'items': []})
-    releases = load_json_if_exists(domains_root + domain_id + '/delivery/releases.json', {'items': []})
-    ongoing_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/ongoing.json', {'items': []})
-    archived_discoveries = load_json_if_exists(domains_root + domain_id + '/discoveries/archived.json', {'items': []})
+    product_bricks = load_product_bricks_payload(domain_root + '/product-bricks/product-bricks.json')
+    initiatives = merge_item_payloads([
+        load_objective_period_payload(domain_root, period, 'initiatives.json', {'items': []})
+        for period in OBJECTIVE_PERIODS
+    ])
+    releases = load_json_if_exists(domain_root + '/delivery/releases.json', {'items': []})
+    ongoing_discoveries = merge_item_payloads([
+        load_objective_period_payload(domain_root, period, 'discoveries.json', {'items': []})
+        for period in ['current', 'next']
+    ])
+    archived_discoveries = load_objective_period_payload(domain_root, 'archived', 'discoveries.json', {'items': []})
 
     customers_lookup, kpi_lookup = build_customers_lookup(customers)
     bricks_lookup = build_bricks_lookup(product_bricks)
