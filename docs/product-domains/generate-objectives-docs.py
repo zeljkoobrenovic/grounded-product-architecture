@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 
-from initiatives_support import enrich_discoveries
+from initiatives_support import enrich_discoveries, load_domain_activity
 
 
 date_string = datetime.date.today().strftime('%Y-%m-%d')
@@ -128,7 +128,7 @@ def company_objective_page_id(company_objective, payload):
     return f"{safe_quarter}-{company_objective['id']}"
 
 
-def prepare_payload(payload, initiative_lookup, release_lookup, discovery_lookup):
+def prepare_payload(payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives=None, enriched_releases=None):
     prepared = copy.deepcopy(payload)
     prepared['objectives'] = [
         enrich_source_objective_links(item, initiative_lookup, release_lookup)
@@ -222,6 +222,44 @@ def prepare_payload(payload, initiative_lookup, release_lookup, discovery_lookup
                         'landingPageId': company_objective.get('landingPageId')
                     })
 
+    # Attach full enriched initiative/release items to each objective
+    enriched_init_list = enriched_initiatives.get('items', []) if enriched_initiatives else []
+    enriched_rel_list = enriched_releases.get('items', []) if enriched_releases else []
+
+    # Build lookup: landingPageIndex -> full enriched item
+    init_by_index = {item.get('landingPageIndex'): item for item in enriched_init_list}
+    rel_by_index = {item.get('landingPageIndex'): item for item in enriched_rel_list}
+
+    for source_objective in prepared['objectives']:
+        enriched_inits = []
+        for linked in source_objective.get('linkedInitiatives', []):
+            idx = linked.get('landingPageIndex')
+            if idx is not None and idx in init_by_index:
+                enriched_inits.append(init_by_index[idx])
+        source_objective['enrichedInitiatives'] = enriched_inits
+
+        enriched_rels = []
+        for linked in source_objective.get('linkedReleases', []):
+            idx = linked.get('landingPageIndex')
+            if idx is not None and idx in rel_by_index:
+                enriched_rels.append(rel_by_index[idx])
+        source_objective['enrichedReleases'] = enriched_rels
+
+    for company_objective in company_objective_items(prepared):
+        enriched_inits = []
+        for linked in company_objective.get('linkedInitiatives', []):
+            idx = linked.get('landingPageIndex')
+            if idx is not None and idx in init_by_index:
+                enriched_inits.append(init_by_index[idx])
+        company_objective['enrichedInitiatives'] = enriched_inits
+
+        enriched_rels = []
+        for linked in company_objective.get('linkedReleases', []):
+            idx = linked.get('landingPageIndex')
+            if idx is not None and idx in rel_by_index:
+                enriched_rels.append(rel_by_index[idx])
+        company_objective['enrichedReleases'] = enriched_rels
+
     return prepared
 
 
@@ -299,9 +337,14 @@ for domain in config['domains']:
         if item.get('id')
     }
 
-    current_payload = prepare_payload(current_payload, initiative_lookup, release_lookup, discovery_lookup)
-    next_payload = prepare_payload(next_payload, initiative_lookup, release_lookup, discovery_lookup)
-    archive_payload = prepare_payload(archive_payload, initiative_lookup, release_lookup, discovery_lookup)
+    # Load full enriched initiatives and releases for embedding in landing pages
+    domain_activity = load_domain_activity(domains_root, domain_id)
+    enriched_initiatives = domain_activity.get('initiatives', {'items': []})
+    enriched_releases = domain_activity.get('releases', {'items': []})
+
+    current_payload = prepare_payload(current_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
+    next_payload = prepare_payload(next_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
+    archive_payload = prepare_payload(archive_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
 
     docs_folder = domain_id + '/objectives/'
     create_overview_docs(domain, docs_folder, current_payload, next_payload, archive_payload)

@@ -321,6 +321,29 @@ for domain in config['domains']:
             linked_discoveries.append(linked_item)
         item['discoveryLinks'] = linked_discoveries
 
+    # Build initiative/release → objective landing page mapping
+    objective_url_map = {}  # initiative/release description|date → objective landing page URL
+    for obj_file in ['current.json', 'next.json', 'archive.json']:
+        obj_path = domains_root + domain_id + '/objectives/' + obj_file
+        if not os.path.exists(obj_path):
+            continue
+        obj_data = json.load(open(obj_path))
+        for obj in obj_data.get('objectives', obj_data.get('goals', [])):
+            obj_page_id = obj.get('id', '')
+            obj_url = '../objectives/landing_pages/' + obj_page_id + '.html#InitiativesTab'
+            for linked in obj.get('linkedInitiatives', []):
+                key = f"{linked.get('date', '')}|{linked.get('description', '')}"
+                objective_url_map[key] = obj_url
+            obj_rel_url = '../objectives/landing_pages/' + obj_page_id + '.html#ReleasesTab'
+            for linked in obj.get('linkedReleases', []):
+                key = f"{linked.get('date', '')}|{linked.get('description', '')}"
+                objective_url_map[key + '|release'] = obj_rel_url
+
+    # Attach objectiveLandingPageUrl to enriched items
+    for item in initiatives_enriched.get('items', []):
+        key = f"{item.get('date', '')}|{item.get('description', '')}"
+        item['objectiveLandingPageUrl'] = objective_url_map.get(key, '')
+
     if initiatives_enriched.get('items'):
         initiatives_docs_folder = domain_id + '/initiatives/'
         initiatives_template_root = '../../_templates/initiatives/'
@@ -338,5 +361,8 @@ for domain in config['domains']:
         releases_docs_folder = domain_id + '/releases/'
         releases_template_root = '../../_templates/releases/'
         enriched = enrich_items(releases, customers_lookup, kpi_lookup, bricks_lookup, channels_lookup)
+        for item in enriched.get('items', []):
+            key = f"{item.get('date', '')}|{item.get('description', '')}"
+            item['objectiveLandingPageUrl'] = objective_url_map.get(key + '|release', '')
         release_items = render_list(releases_template_root, 'index.html', releases_docs_folder, domain, 'releases', enriched)
         render_landing_pages(releases_template_root, releases_docs_folder, 'release', 'landing_page.html', domain, release_items)

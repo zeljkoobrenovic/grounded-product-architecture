@@ -5,7 +5,7 @@ Applies the following improvements across all 10 product domains:
 
 1. Upgrade premium-long-haul-airline objectives from schema v1.0 to v2.0
 2. Fix duplicate KR IDs in general-listings-marketplace
-3. Add keyResultIds to initiatives (linking initiatives back to KRs)
+3. Add keyResultId to initiatives (linking each initiative to one KR)
 4. Add initiativeId to releases (linking releases to their initiative)
 5. Add status field to key results
 6. Standardize discovery outcome vocabulary
@@ -146,8 +146,8 @@ def fix_duplicate_kr_ids(domain_path):
 
 # ─── 3. Add keyResultIds to initiatives ───
 
-def add_key_result_ids_to_initiatives(domain_path, domain_id):
-    """Link initiatives back to KRs by matching on product brick overlap."""
+def add_key_result_id_to_initiatives(domain_path, domain_id):
+    """Link each initiative to a single KR by best product brick overlap."""
     initiatives_path = os.path.join(domain_path, 'delivery', 'initiatives.json')
     if not os.path.exists(initiatives_path):
         return
@@ -155,7 +155,6 @@ def add_key_result_ids_to_initiatives(domain_path, domain_id):
     initiatives = load_json(initiatives_path)
 
     # Collect all KRs with their objective's linked product bricks
-    # Each objective links to initiatives that share product bricks with KRs
     kr_brick_map = []  # list of (qualified_kr_id, set_of_bricks)
     for filename in ['current.json', 'next.json', 'archive.json']:
         obj_path = os.path.join(domain_path, 'objectives', filename)
@@ -163,34 +162,39 @@ def add_key_result_ids_to_initiatives(domain_path, domain_id):
             continue
         obj_data = load_json(obj_path)
         for obj in obj_data.get('objectives', []):
-            # Gather all bricks referenced by this objective's linked initiatives
             obj_bricks = set()
             for linked in obj.get('linkedInitiatives', []):
                 for b in linked.get('productBricks', []):
                     obj_bricks.add(b if isinstance(b, str) else b.get('brickId', ''))
-            # Each KR in this objective is associated with those bricks
             for kr in obj.get('keyResults', []):
                 qualified_id = f'{obj["id"]}/{kr["id"]}'
                 kr_brick_map.append((qualified_id, obj_bricks))
 
     changed = False
     for item in initiatives.get('items', []):
-        if 'keyResultIds' not in item:
+        # Remove old array field if present
+        item.pop('keyResultIds', None)
+
+        if 'keyResultId' not in item:
             init_bricks = set()
             for b in item.get('productBricks', []):
                 init_bricks.add(b.get('brickId', b) if isinstance(b, dict) else b)
 
-            # Find KRs whose objective shares product bricks with this initiative
-            matched_krs = sorted(set(
-                kr_id for kr_id, kr_bricks in kr_brick_map
-                if init_bricks & kr_bricks
-            ))
-            item['keyResultIds'] = matched_krs
+            # Find the single best-matching KR by brick overlap
+            best_kr = ''
+            best_score = 0
+            for kr_id, kr_bricks in kr_brick_map:
+                score = len(init_bricks & kr_bricks)
+                if score > best_score:
+                    best_score = score
+                    best_kr = kr_id
+            item['keyResultId'] = best_kr
             changed = True
 
     if changed:
         save_json(initiatives_path, initiatives)
-        print(f'  Added keyResultIds to initiatives ({sum(1 for i in initiatives["items"] if i.get("keyResultIds"))} linked)')
+        linked = sum(1 for i in initiatives['items'] if i.get('keyResultId'))
+        print(f'  Added keyResultId to initiatives ({linked} linked)')
 
 
 # ─── 4. Add initiativeId to releases ───
@@ -385,7 +389,7 @@ def main():
             fix_duplicate_kr_ids(domain_path)
 
         # 3. Add keyResultIds to initiatives
-        add_key_result_ids_to_initiatives(domain_path, domain_id)
+        add_key_result_id_to_initiatives(domain_path, domain_id)
 
         # 4. Add initiativeId to releases
         add_initiative_id_to_releases(domain_path, domain_id)
