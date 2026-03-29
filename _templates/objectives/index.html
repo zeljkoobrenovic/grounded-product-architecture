@@ -414,11 +414,28 @@
         document.getElementById('tab_Archive').textContent = 'Archive (' + archiveCount + ')';
     }
 
+    function statusColor(status) {
+        const map = {'on-track': '#16a34a', 'at-risk': '#d97706', 'off-track': '#dc2626', 'achieved': '#0284c7', 'planned': '#6b7280'};
+        return map[status] || '#6b7280';
+    }
+
+    function statusBadge(status) {
+        if (!status) return '';
+        return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:white;background-color:' + statusColor(status) + '">' + escapeHtml(status) + '</span>';
+    }
+
+    function priorityBadge(priority) {
+        if (!priority) return '';
+        const colors = {'p0': '#dc2626', 'p1': '#d97706', 'p2': '#6b7280', 'p3': '#9ca3af'};
+        const color = colors[priority] || '#6b7280';
+        return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:white;background-color:' + color + '">' + escapeHtml(priority) + '</span>';
+    }
+
     function renderMetric(metric) {
         const label = metric.kpiName || metric.metric || '';
         return '<div class="metric">' +
-            '<div class="metric-name">' + escapeHtml(label) + '</div>' +
-            '<div class="metric-meta">' + escapeHtml(metric.kind || '') + (metric.unit ? ' | ' + escapeHtml(metric.unit) : '') + (metric.targetDirection ? ' | ' + escapeHtml(metric.targetDirection) : '') + '</div>' +
+            '<div class="metric-name">' + escapeHtml(label) + ' ' + statusBadge(metric.status) + '</div>' +
+            '<div class="metric-meta">' + escapeHtml(metric.kind || '') + (metric.unit ? ' | ' + escapeHtml(metric.unit) : '') + (metric.targetDirection ? ' | ' + escapeHtml(metric.targetDirection) : '') + (metric.commitmentLabel ? ' | ' + escapeHtml(metric.commitmentLabel) : '') + '</div>' +
             '</div>';
     }
 
@@ -481,7 +498,11 @@
         }
 
         html += '<div class="section"><div class="section-title">Execution</div>';
-        html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String((item.keyResults || []).length)) + ' key results</div><div class="pill-meta">Outcome contract</div></div></div>';
+        const krs = item.keyResults || [];
+        const krStatusCounts = {};
+        krs.forEach(kr => { const s = kr.status || 'unknown'; krStatusCounts[s] = (krStatusCounts[s] || 0) + 1; });
+        const krSummary = Object.entries(krStatusCounts).map(([s, c]) => c + ' ' + s).join(', ');
+        html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String(krs.length)) + ' key results</div><div class="pill-meta">' + escapeHtml(krSummary) + '</div></div></div>';
         html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String((item.linkedInitiatives || []).length)) + ' initiatives</div><div class="pill-meta">Linked change</div></div></div>';
         html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String((item.linkedReleases || []).length)) + ' releases</div><div class="pill-meta">Shipped change</div></div></div>';
         html += '</div>';
@@ -611,7 +632,8 @@
             const keyResultKey = objective.id + '_' + (keyResult.id || keyResult.metric || keyResult.statement || 'kr');
             const keyResultId = mermaidSafeId('kr', keyResultKey);
             const keyResultLabel = keyResult.metric || keyResult.statement || keyResult.id || keyResultKey;
-            addNode(keyResultId, 'Key Result: ' + keyResultLabel, 'keyResult');
+            const statusSuffix = keyResult.status ? ' [' + keyResult.status + ']' : '';
+            addNode(keyResultId, 'KR: ' + keyResultLabel + statusSuffix, 'keyResult');
             return keyResultId;
         }
 
