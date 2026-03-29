@@ -165,22 +165,38 @@
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script>
-        function openTab(evt, cityName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
+        function initTab() {
+            let tabName = '';
+            if (typeof apps !== 'undefined' && apps.length > 0) {
+                tabName = 'tab_content_' + apps[0].tab;
             }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                if (document.getElementById('tab_' + hash)) {
+                    tabName = hash;
+                }
             }
-            document.getElementById(cityName).style.display = "block";
-            evt.currentTarget.className += " active";
+            if (tabName) {
+                openTab(tabName);
+            }
+        }
+
+        function openTab(tabName) {
+            const tabcontent = document.getElementsByClassName('tabcontent');
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = 'none';
+            }
+            const tablinks = document.getElementsByClassName('tablinks');
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(' active', '');
+            }
+            history.pushState({}, '', '#' + tabName);
+            document.getElementById(tabName).style.display = 'block';
+            document.getElementById('tab_' + tabName).className += ' active';
         }
     </script>
 </head>
-<body>
+<body onhashchange="initTab()">
 <div style="margin-top: 10px"><img src="icons/logo.png" style="height: 164px; border: 1px solid lightgrey; border-radius: 20px; padding: 12px; margin: 8px;"></div>
 <div style="margin: 8px; margin-top: 0; font-size: 40px; color: #8c8c8c">${domain_name}</div>
 <div style="margin-bottom: 36px; font-size: 20px; color: #8c8c8c">${domain_description}</div>
@@ -193,19 +209,17 @@
     const apps = ${apps};
     let tabNavigationHtml = '';
     let tabContentHtml = '';
-    let first = true;
     apps.forEach(tab => {
-        tabNavigationHtml += '<button class="tablinks ' + (first ? 'active' : '') + '" onclick="openTab(event, \'tab_content_' + tab.tab + '\')">' + tab.tab + '</button>';
+        tabNavigationHtml += '<button id="tab_tab_content_' + tab.tab + '" class="tablinks" onclick="openTab(\'tab_content_' + tab.tab + '\')">' + tab.tab + '</button>';
 
-        tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;' + (first ? 'display: block;' : '') + '">' +
+        tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;">' +
             '<div id="content_' + tab.tab + '"></div>' +
             '</div>\n';
-
-        first = false;
     });
 
     document.getElementById('tab_navigation').innerHTML = tabNavigationHtml;
     document.getElementById('tab_content').innerHTML = tabContentHtml;
+    initTab();
 </script>
 
 <script>

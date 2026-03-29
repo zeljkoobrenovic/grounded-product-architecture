@@ -677,7 +677,7 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onload="initTab()" onhashchange="initTab()">
 <div class="domain-label">${domain_name}</div>
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
@@ -705,13 +705,13 @@
 </div>
 
 <div class="tab">
-    <button class="tablinks active" id="tab_overview" onclick="openTab(event, 'home')">Overview</button>
-    <button class="tablinks" id="tab_cards" onclick="openTab(event, 'cards')">Team Cards</button>
-    <button class="tablinks" id="tab_dependencies" onclick="openTab(event, 'dependencies')">Dependencies</button>
-    <button class="tablinks" id="tab_matrix" onclick="openTab(event, 'matrix')">Matrix</button>
+    <button class="tablinks" id="tab_home" onclick="openTab('home')">Overview</button>
+    <button class="tablinks" id="tab_cards" onclick="openTab('cards')">Team Cards</button>
+    <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
+    <button class="tablinks" id="tab_matrix" onclick="openTab('matrix')">Matrix</button>
 </div>
 
-<div id="home" class="tabcontent" style="display: block">
+<div id="home" class="tabcontent">
     <div class="tab-intro">A compact team topology view showing group and team names with one colored circle per staffing role block.</div>
     <div id="OverviewSummary" class="summary-strip"></div>
     <div id="Overview"></div>
@@ -768,7 +768,18 @@
         return (roles || []).map(role => escapeHtml(role.role) + ' x' + escapeHtml(String(role.count))).join(', ');
     }
 
-    function openTab(evt, tabName) {
+    function initTab() {
+        let tabName = 'home';
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (document.getElementById('tab_' + hash)) {
+                tabName = hash;
+            }
+        }
+        openTab(tabName);
+    }
+
+    function openTab(tabName) {
         const tabcontent = document.getElementsByClassName('tabcontent');
         for (let i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = 'none';
@@ -777,8 +788,9 @@
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
         }
+        history.pushState({}, '', '#' + tabName);
         document.getElementById(tabName).style.display = 'block';
-        evt.currentTarget.className += ' active';
+        document.getElementById('tab_' + tabName).className += ' active';
         if (tabName === 'dependencies') {
             renderDependenciesView();
         }
