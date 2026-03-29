@@ -225,7 +225,7 @@
 </div>
 
 <script>
-    const pageData = {"id": "obj-foundation", "title": "Archive Establish a usable shared engineering foundation", "statement": "Focus archived periods on making shared runtime, delivery, and onboarding capabilities reliable enough for broad platform adoption.", "objectiveType": "company", "status": "archived", "keyResultIds": ["platform-engineering-2024-q2-penm-kr-1-foundation", "platform-engineering-2025-q1-swtl-kr-2-foundation"], "keyResults": [{"id": "kr-1", "metric": "Median team onboarding time", "kind": "customer", "targetDirection": "decrease", "target": "Move onboarding from bespoke consulting toward a reusable platform path", "baseline": "Each new team required heavy manual setup support", "statement": "Reduce onboarding time by standardizing templates, service metadata, and runtime bootstrap flows.", "companyKeyResultId": "platform-engineering-2024-q2-penm-kr-1-foundation", "companyObjectiveId": "obj-foundation", "companyObjectiveTitle": "Establish a usable shared engineering foundation", "executingTeams": [{"teamId": "plat-golden-paths", "teamName": "Platform Golden Paths", "role": "executing", "intent": "Standardize supported starting points and migrations."}], "supportingTeams": [{"teamId": "plat-portal-catalog", "teamName": "Platform Portal and Catalog", "role": "supporting", "intent": "Improve platform discovery and ownership clarity."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "Archived outcome pursued through progressive maturation of the foundation.", "inspiredByInsights": []}, {"id": "kr-2", "metric": "Lead time for change", "kind": "business", "targetDirection": "decrease", "target": "Make the shared delivery path materially faster than local bespoke tooling", "baseline": "Delivery paths varied widely across teams", "statement": "Reduce lead time for change by improving shared pipeline quality, runtime provisioning, and deployment consistency.", "companyKeyResultId": "platform-engineering-2025-q1-swtl-kr-2-foundation", "companyObjectiveId": "obj-foundation", "companyObjectiveTitle": "Establish a usable shared engineering foundation", "executingTeams": [{"teamId": "plat-delivery-automation", "teamName": "Platform Delivery Automation", "role": "executing", "intent": "Improve the shared CI/CD and release path."}], "supportingTeams": [{"teamId": "plat-environment-provisioning", "teamName": "Platform Environment Provisioning", "role": "supporting", "intent": "Standardize runtime setup and reduce environment delays."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "Archived outcome depended on multiple platform product areas maturing together.", "inspiredByInsights": []}], "landingPageId": "archive-obj-foundation", "inspiredByInsights": [], "linkedInitiatives": [], "linkedReleases": []};
+    const pageData = {"id": "obj-foundation", "title": "Archive Establish a usable shared engineering foundation", "statement": "Focus archived periods on making shared runtime, delivery, and onboarding capabilities reliable enough for broad platform adoption.", "objectiveType": "company", "status": "archived", "landingPageId": "archive-obj-foundation", "inspiredByInsights": [], "sourceObjectiveRefs": [], "linkedInitiatives": [], "linkedReleases": [], "keyResultsCount": 0, "highIntegrityCommitmentCount": 0};
     const pageKind = 'company-objective';
     const domainName = 'Platform Engineering';
 
@@ -353,14 +353,6 @@
         html += '<div class="key-result-title">' + escapeHtml(item.metric) + '</div>';
         html += '<div>' + escapeHtml(item.statement || '') + '</div>';
         html += '<div class="metric-meta">' + escapeHtml(item.targetDirection || '') + (item.target ? ' | ' + escapeHtml(item.target) : '') + (item.commitmentLabel ? ' | ' + escapeHtml(item.commitmentLabel) : '') + '</div>';
-
-        if (options.showObjective && item.companyObjectiveTitle) {
-            html += '<div class="list-description">Company objective: ' + escapeHtml(item.companyObjectiveTitle) + '</div>';
-        }
-        if (options.showSource && item.sourceObjectiveTitle) {
-            const href = item.sourceObjectivePageId ? (item.sourceObjectivePageId + '.html') : '';
-            html += '<div class="list-description">Source objective: ' + linkOf(href, item.sourceObjectiveTitle, 'entity-link') + '</div>';
-        }
         if (item.baseline) {
             html += '<div class="list-description">Baseline: ' + escapeHtml(item.baseline) + '</div>';
         }
@@ -369,9 +361,6 @@
         }
         html += renderTeams('Executing Teams', item.executingTeams || [], true);
         html += renderTeams('Supporting Teams', item.supportingTeams || [], true);
-        if (!(options.suppressRepeatedInsights && sameInsightSet(options.pageInsights, item.inspiredByInsights || []))) {
-            html += renderInsights('Inspired By Insights', item.inspiredByInsights || [], true);
-        }
         html += '</div>';
         return html;
     }
@@ -436,15 +425,14 @@
             html += '<div class="section"><div class="section-title">Design Notes</div><div class="list-row"><div class="list-description">' + escapeHtml(page.okrDesignNotes) + '</div></div></div>';
         }
 
-        if (page.keyResults && page.keyResults.length) {
-            html += '<div class="section"><div class="section-title">Key Results</div>';
-            page.keyResults.forEach(item => {
-                html += renderKeyResult(item, {
-                    showObjective: false,
-                    showSource: true,
-                    suppressRepeatedInsights: true,
-                    pageInsights: page.inspiredByInsights || []
-                });
+        if (page.sourceObjectiveRefs && page.sourceObjectiveRefs.length) {
+            html += '<div class="section"><div class="section-title">Source Objectives</div>';
+            page.sourceObjectiveRefs.forEach(item => {
+                const href = item.landingPageId ? item.landingPageId + '.html' : '';
+                html += '<div class="pill"><div><div class="pill-name">' + linkOf(href, item.title, 'pill-name') + '</div><div class="pill-meta">' +
+                    escapeHtml(String(item.keyResultsCount || 0) + ' key results') +
+                    ((item.quarter ? ' | ' + escapeHtml(item.quarter) : '')) +
+                    '</div></div></div>';
             });
             html += '</div>';
         }
@@ -462,29 +450,8 @@
         return html;
     }
 
-    function collectCompanyDiscoveries(page) {
-        const lookup = {};
-        (page.inspiredByInsights || []).forEach(item => {
-            const key = item.insightId || item.id || item.insightTitle || item.title;
-            if (key) {
-                lookup[key] = item;
-            }
-        });
-        (page.keyResults || []).forEach(item => {
-            (item.inspiredByInsights || []).forEach(insight => {
-                const key = insight.insightId || insight.id || insight.insightTitle || insight.title;
-                if (key) {
-                    lookup[key] = insight;
-                }
-            });
-        });
-        return Object.values(lookup);
-    }
-
     function renderDiscoveriesTab(page, kind) {
-        const items = kind === 'company-objective'
-            ? collectCompanyDiscoveries(page)
-            : (page.inspiredByInsights || []);
+        const items = page.inspiredByInsights || [];
         if (!items.length) {
             return renderEmptyState('No discoveries linked to this objective.');
         }

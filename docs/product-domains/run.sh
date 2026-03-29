@@ -12,8 +12,7 @@ for script in \
     generate-product-bricks-docs.py \
     generate-objectives-docs.py \
     generate-delivery-docs.py \
-    generate-teams-docs.py \
-    generate-rituals-docs.py
+    generate-teams-docs.py
 do
     python3 "$script"
 done

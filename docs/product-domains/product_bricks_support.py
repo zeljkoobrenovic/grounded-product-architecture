@@ -43,11 +43,11 @@ def load_product_bricks_payload(path, default_title='Product Bricks', default_de
     }
 
 
-def load_product_capabilities_payload(path, default_title='Product Capabilities', default_description=''):
+def load_product_capabilities_payload(path, default_title='Product Experiences', default_description=''):
     if not os.path.exists(path):
         return {
             'metadata': {'title': default_title, 'description': default_description},
-            'capabilities': []
+            'experiences': []
         }
 
     payload = json.load(open(path))
@@ -58,7 +58,7 @@ def load_product_capabilities_payload(path, default_title='Product Capabilities'
                 'title': default_title,
                 'description': default_description
             },
-            'capabilities': payload
+            'experiences': payload
         }
 
     metadata = dict(payload.get('metadata', {}))
@@ -69,7 +69,7 @@ def load_product_capabilities_payload(path, default_title='Product Capabilities'
 
     return {
         'metadata': metadata,
-        'capabilities': payload.get('capabilities', [])
+        'experiences': payload.get('experiences', payload.get('capabilities', []))
     }
 
 
@@ -113,24 +113,26 @@ def flatten_product_bricks(payload):
 def flatten_product_capabilities(payload):
     flat_capabilities = []
 
-    for capability in payload.get('capabilities', []):
+    for capability in payload.get('experiences', payload.get('capabilities', [])):
         flat_capabilities.append({
             'id': capability.get('id', ''),
             'name': capability.get('name', ''),
-            'type': capability.get('type', 'outcome-based-capability'),
+            'type': capability.get('type', 'outcome-based-experience'),
             'description': capability.get('description', ''),
             'group': capability.get('group', ''),
             'flows': capability.get('flows', []),
             'outcomes': capability.get('outcomes', []),
             'brickDependencies': capability.get('brickDependencies', capability.get('productBrickDependencies', [])),
             'externalSystemsThisCapabilityDependsOn': capability.get(
-                'externalSystemsThisCapabilityDependsOn',
+                'externalSystemsThisExperienceDependsOn',
+                capability.get('externalSystemsThisCapabilityDependsOn',
                 capability.get('externalSystemsThisBrickDependsOn', capability.get('externalSystemDependencies', []))
-            ),
+            )),
             'externalSystemsDependingOnThisCapability': capability.get(
-                'externalSystemsDependingOnThisCapability',
+                'externalSystemsDependingOnThisExperience',
+                capability.get('externalSystemsDependingOnThisCapability',
                 capability.get('externalSystemsDependingOnThisBrick', [])
-            )
+            ))
         })
 
     return flat_capabilities

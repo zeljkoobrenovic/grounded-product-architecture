@@ -32,41 +32,65 @@ def company_objective_items(payload):
     return payload.get('companyObjectives', [])
 
 
-def build_activity_index(delivery_path):
+def build_activity_lookup(delivery_path):
     if not os.path.exists(delivery_path):
         return {}
 
     items = json.load(open(delivery_path)).get('items', [])
     sorted_items = sorted(enumerate(items), key=lambda item: item[1].get('date', ''), reverse=True)
-    index_map = {}
+    item_map = {}
 
     for landing_index, (source_index, item) in enumerate(sorted_items):
-        key = f"{item.get('date', '')}|{item.get('title') or item.get('name') or item.get('description', '').strip()}"
-        index_map[key] = landing_index
-        index_map[str(source_index)] = landing_index
+        lookup_item = {
+            'landingPageIndex': landing_index,
+            'title': item.get('title') or item.get('name'),
+            'name': item.get('name') or item.get('title'),
+            'description': item.get('description', ''),
+            'id': item.get('initiativeId') or item.get('releaseId') or item.get('id')
+        }
+        lookup_keys = [
+            f"{item.get('date', '')}|{item.get('title', '').strip()}",
+            f"{item.get('date', '')}|{item.get('name', '').strip()}",
+            f"{item.get('date', '')}|{item.get('description', '').strip()}"
+        ]
+        for key in lookup_keys:
+            if key != f"{item.get('date', '')}|":
+                item_map[key] = lookup_item
+        item_map[str(source_index)] = lookup_item
 
-    return index_map
+    return item_map
 
 
-def enrich_source_objective_links(source_objective, initiative_index_map, release_index_map):
+def enrich_activity_links(items, activity_lookup, id_field):
+    enriched_items = []
+    for item in items:
+        enriched = dict(item)
+        key = f"{item.get('date', '')}|{item.get('description', '')}"
+        activity_info = activity_lookup.get(key, {})
+        if activity_info.get('landingPageIndex') is not None:
+            enriched['landingPageIndex'] = activity_info.get('landingPageIndex')
+        if activity_info.get('title') and not enriched.get('title'):
+            enriched['title'] = activity_info.get('title')
+        if activity_info.get('name') and not enriched.get('name'):
+            enriched['name'] = activity_info.get('name')
+        if activity_info.get('id') and not enriched.get(id_field):
+            enriched[id_field] = activity_info.get('id')
+        enriched_items.append(enriched)
+    return enriched_items
+
+
+def enrich_source_objective_links(source_objective, initiative_lookup, release_lookup):
     enriched_objective = copy.deepcopy(source_objective)
-    enriched_initiatives = []
-    enriched_releases = []
-
-    for item in source_objective.get('linkedInitiatives', []):
-        enriched = dict(item)
-        key = f"{item.get('date', '')}|{item.get('description', '')}"
-        enriched['landingPageIndex'] = initiative_index_map.get(key)
-        enriched_initiatives.append(enriched)
-
-    for item in source_objective.get('linkedReleases', []):
-        enriched = dict(item)
-        key = f"{item.get('date', '')}|{item.get('description', '')}"
-        enriched['landingPageIndex'] = release_index_map.get(key)
-        enriched_releases.append(enriched)
-
-    enriched_objective['linkedInitiatives'] = enriched_initiatives
-    enriched_objective['linkedReleases'] = enriched_releases
+    enriched_objective['linkedInitiatives'] = enrich_activity_links(
+        source_objective.get('linkedInitiatives', []),
+        initiative_lookup,
+        'initiativeId'
+    )
+    enriched_objective['linkedReleases'] = enrich_activity_links(
+        source_objective.get('linkedReleases', []),
+        release_lookup,
+        'releaseId'
+    )
     return enriched_objective
 
 
@@ -85,6 +109,15 @@ def enrich_insights(items, discovery_lookup):
     return enriched_items
 
 
+def merge_insights(items):
+    lookup = {}
+    for item in items or []:
+        key = item.get('insightId') or item.get('id') or item.get('insightTitle') or item.get('title')
+        if key and key not in lookup:
+            lookup[key] = dict(item)
+    return list(lookup.values())
+
+
 def source_objective_page_id(source_objective):
     return source_objective['id']
 
@@ -95,40 +128,78 @@ def company_objective_page_id(company_objective, payload):
     return f"{safe_quarter}-{company_objective['id']}"
 
 
-def prepare_payload(payload, initiative_index_map, release_index_map, discovery_lookup):
+def prepare_payload(payload, initiative_lookup, release_lookup, discovery_lookup):
     prepared = copy.deepcopy(payload)
     prepared['objectives'] = [
-        enrich_source_objective_links(item, initiative_index_map, release_index_map)
+        enrich_source_objective_links(item, initiative_lookup, release_lookup)
         for item in objective_items(prepared)
     ]
+
+    company_lookup = {}
+    for company_objective in company_objective_items(prepared):
+        company_objective['landingPageId'] = company_objective_page_id(company_objective, prepared)
+        company_objective['inspiredByInsights'] = enrich_insights(company_objective.get('inspiredByInsights', []), discovery_lookup)
+        company_objective['sourceObjectiveRefs'] = []
+        company_objective['linkedInitiatives'] = []
+        company_objective['linkedReleases'] = []
+        company_objective['keyResultsCount'] = 0
+        company_objective['highIntegrityCommitmentCount'] = 0
+        company_lookup[company_objective['id']] = company_objective
 
     objective_lookup = {}
     for source_objective in prepared['objectives']:
         source_objective['landingPageId'] = source_objective_page_id(source_objective)
         source_objective['inspiredByInsights'] = enrich_insights(source_objective.get('inspiredByInsights', []), discovery_lookup)
+        enriched_key_results = []
+        for key_result in source_objective.get('keyResults', []):
+            enriched_key_result = dict(key_result)
+            enriched_key_results.append(enriched_key_result)
+        source_objective['keyResults'] = enriched_key_results
         objective_lookup[source_objective['id']] = {
             'pageId': source_objective['landingPageId'],
             'title': source_objective.get('title', 'Objective'),
             'linkedInitiatives': source_objective.get('linkedInitiatives', []),
-            'linkedReleases': source_objective.get('linkedReleases', [])
+            'linkedReleases': source_objective.get('linkedReleases', []),
+            'keyResultsCount': len(source_objective.get('keyResults', [])),
+            'highIntegrityCommitmentCount': len([
+                item for item in source_objective.get('keyResults', [])
+                if item.get('commitmentType') == 'high_integrity_commitment'
+            ])
         }
 
     for company_objective in company_objective_items(prepared):
-        company_objective['landingPageId'] = company_objective_page_id(company_objective, prepared)
-        company_objective['inspiredByInsights'] = enrich_insights(company_objective.get('inspiredByInsights', []), discovery_lookup)
         initiative_map = {}
         release_map = {}
-        for key_result in company_objective.get('keyResults', []):
-            key_result['inspiredByInsights'] = enrich_insights(key_result.get('inspiredByInsights', []), discovery_lookup)
-            source_id = key_result.get('sourceObjectiveId')
-            if source_id in objective_lookup:
-                key_result['sourceObjectivePageId'] = objective_lookup[source_id]['pageId']
-                for item in objective_lookup[source_id]['linkedInitiatives']:
-                    key = item.get('id') or f"{item.get('date', '')}|{item.get('description', '')}"
-                    initiative_map[key] = dict(item)
-                for item in objective_lookup[source_id]['linkedReleases']:
-                    key = item.get('id') or f"{item.get('date', '')}|{item.get('description', '')}"
-                    release_map[key] = dict(item)
+        source_refs = []
+        for source_objective in prepared['objectives']:
+            if company_objective.get('id') not in source_objective.get('companyObjectiveIds', []):
+                continue
+            source_refs.append({
+                'id': source_objective.get('id'),
+                'title': source_objective.get('title'),
+                'landingPageId': source_objective.get('landingPageId'),
+                'quarter': (source_objective.get('period') or {}).get('quarter'),
+                'keyResultsCount': len(source_objective.get('keyResults', [])),
+                'highIntegrityCommitmentCount': len([
+                    item for item in source_objective.get('keyResults', [])
+                    if item.get('commitmentType') == 'high_integrity_commitment'
+                ])
+            })
+            company_objective['keyResultsCount'] += len(source_objective.get('keyResults', []))
+            company_objective['highIntegrityCommitmentCount'] += len([
+                item for item in source_objective.get('keyResults', [])
+                if item.get('commitmentType') == 'high_integrity_commitment'
+            ])
+            for item in source_objective.get('linkedInitiatives', []):
+                key = item.get('initiativeId') or item.get('id') or f"{item.get('date', '')}|{item.get('description', '')}"
+                initiative_map[key] = dict(item)
+            for item in source_objective.get('linkedReleases', []):
+                key = item.get('releaseId') or item.get('id') or f"{item.get('date', '')}|{item.get('description', '')}"
+                release_map[key] = dict(item)
+        company_objective['sourceObjectiveRefs'] = sorted(
+            source_refs,
+            key=lambda item: (item.get('quarter', ''), item.get('title', ''))
+        )
         company_objective['linkedInitiatives'] = sorted(
             initiative_map.values(),
             key=lambda item: item.get('date', ''),
@@ -211,8 +282,8 @@ for domain in config['domains']:
     current_payload = json.load(open(current_path))
     next_payload = json.load(open(next_path)) if os.path.exists(next_path) else {'objectives': [], 'companyObjectives': []}
     archive_payload = json.load(open(archive_path)) if os.path.exists(archive_path) else {'objectives': [], 'companyObjectives': []}
-    initiative_index_map = build_activity_index(domains_root + domain_id + '/delivery/initiatives.json')
-    release_index_map = build_activity_index(domains_root + domain_id + '/delivery/releases.json')
+    initiative_lookup = build_activity_lookup(domains_root + domain_id + '/delivery/initiatives.json')
+    release_lookup = build_activity_lookup(domains_root + domain_id + '/delivery/releases.json')
     ongoing_discoveries_path = domains_root + domain_id + '/discoveries/ongoing.json'
     archived_discoveries_path = domains_root + domain_id + '/discoveries/archived.json'
     ongoing_discoveries = json.load(open(ongoing_discoveries_path)) if os.path.exists(ongoing_discoveries_path) else {'items': []}
@@ -228,9 +299,9 @@ for domain in config['domains']:
         if item.get('id')
     }
 
-    current_payload = prepare_payload(current_payload, initiative_index_map, release_index_map, discovery_lookup)
-    next_payload = prepare_payload(next_payload, initiative_index_map, release_index_map, discovery_lookup)
-    archive_payload = prepare_payload(archive_payload, initiative_index_map, release_index_map, discovery_lookup)
+    current_payload = prepare_payload(current_payload, initiative_lookup, release_lookup, discovery_lookup)
+    next_payload = prepare_payload(next_payload, initiative_lookup, release_lookup, discovery_lookup)
+    archive_payload = prepare_payload(archive_payload, initiative_lookup, release_lookup, discovery_lookup)
 
     docs_folder = domain_id + '/objectives/'
     create_overview_docs(domain, docs_folder, current_payload, next_payload, archive_payload)

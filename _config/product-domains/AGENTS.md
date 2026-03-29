@@ -358,6 +358,9 @@ From `docs/product-domains/`:
 - `python3 generate-goals-docs.py`
 - `python3 generate-delivery-docs.py`
 - `python3 generate-teams-docs.py`
+
+From `docs/standards/`:
+
 - `python3 generate-rituals-docs.py`
 
 From `_config/product-domains/`:
@@ -372,7 +375,7 @@ Patch generators instead of domain data when the issue is structural, cross-doma
 
 Examples:
 
-- optional domain-specific ritual support
+- shared rituals owned under standards
 - icon filename normalization
 - broken cross-link generation
 - shared navigation defects
@@ -397,7 +400,7 @@ A domain is usually complete enough for review when all of the following exist:
 - `delivery`
 - `discoveries`
 - `teams`
-- `rituals` if domain-specific cadence matters
+- links to shared `standards/rituals`
 
 And all key references resolve across:
 
@@ -420,7 +423,7 @@ And the generated docs exist under:
 - `docs/product-domains/<domain-id>/releases/`
 - `docs/product-domains/<domain-id>/discoveries/`
 - `docs/product-domains/<domain-id>/teams/`
-- `docs/product-domains/<domain-id>/rituals/` when applicable
+- `docs/standards/rituals/`
 
 ## Biases To Keep
 
@@ -435,5 +438,5 @@ And the generated docs exist under:
 - do not treat generated HTML as the primary artifact
 - do not stop at customer and product definitions without execution objects
 - do not leave goals as auto-generated boilerplate
-- do not create teams, rituals, discoveries, initiatives, and releases that do not connect to each other
+- do not create teams, discoveries, initiatives, and releases that do not connect to each other
 - do not regenerate unrelated domains unless the user asked for it

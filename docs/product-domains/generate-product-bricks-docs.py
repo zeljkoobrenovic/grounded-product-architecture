@@ -433,6 +433,7 @@ for domain in config['domains']:
             content = content.replace('${bricks}', json.dumps(data))
             content = content.replace('${product_capabilities}', json.dumps({
                 'metadata': capabilities_payload.get('metadata', {}),
+                'experiences': flat_capabilities,
                 'capabilities': flat_capabilities
             }))
             html_file.write(content)

@@ -296,6 +296,25 @@
             overflow-x: auto;
         }
 
+        .graph-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .graph-filter {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid #d7dce1;
+            border-radius: 999px;
+            background-color: #f8fafc;
+            font-size: 12px;
+            color: #4b5563;
+        }
+
         @media (max-width: 720px) {
             body {
                 margin: 12px;
@@ -360,7 +379,6 @@
     <a class="section-link" href="../products/index.html">Products</a>
     <a class="section-link" href="../teams/index.html">Teams</a>
     <a class="section-link active" href="../objectives/index.html">Objectives</a>
-    <a class="section-link" href="../rituals/index.html">Rituals</a>
     <a class="section-link" href="../releases/index.html">Releases</a>
     <a class="section-link" href="../initiatives/index.html">Initiatives</a>
     <a class="section-link" href="../discoveries/index.html">Discoveries</a>
@@ -394,6 +412,7 @@
     const currentPayload = ${current_payload};
     const nextPayload = ${next_payload};
     const archivePayload = ${archive_payload};
+    const graphFilters = {};
 
     function escapeHtml(value) {
         return String(value || '')
@@ -422,7 +441,7 @@
         const stats = [
             {value: companyObjectiveItems(currentPayload).length, label: 'Current company objectives'},
             {value: objectiveItems(currentPayload).length, label: 'Current source objectives'},
-            {value: countKeyResults(companyObjectiveItems(currentPayload)), label: 'Current key results'},
+            {value: countKeyResults(objectiveItems(currentPayload)), label: 'Current key results'},
             {value: ((archivePayload.quartersCovered || []).length || 0), label: 'Archived quarters'}
         ];
         let html = '';
@@ -446,7 +465,9 @@
 
     function renderCompanyObjectiveCard(item) {
         const href = 'landing_pages/' + encodeURIComponent(item.landingPageId) + '.html';
-        const hicCount = (item.keyResults || []).filter(kr => kr.commitmentType === 'high_integrity_commitment').length;
+        const sourceObjectiveCount = (item.sourceObjectiveRefs || []).length;
+        const keyResultsCount = item.keyResultsCount || 0;
+        const hicCount = item.highIntegrityCommitmentCount || 0;
         let html = '<a target="_blank" rel="noopener noreferrer" href="' + href + '">';
         html += '<div class="card">';
         html += '<div class="card-header"><span class="card-badge">Company Objective</span><span class="card-period">' + escapeHtml(item.status || '') + '</span></div>';
@@ -461,8 +482,9 @@
             html += '</div>';
         }
 
-        html += '<div class="section"><div class="section-title">Key Result Portfolio</div>';
-        html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String((item.keyResults || []).length)) + ' key results</div><div class="pill-meta">Outcome scope</div></div></div>';
+        html += '<div class="section"><div class="section-title">Source Objective Portfolio</div>';
+        html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String(sourceObjectiveCount)) + ' source objectives</div><div class="pill-meta">Outcome hierarchy</div></div></div>';
+        html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String(keyResultsCount)) + ' key results</div><div class="pill-meta">Measured at source level</div></div></div>';
         html += '<div class="pill"><div><div class="pill-name">' + escapeHtml(String(hicCount)) + ' commitments</div><div class="pill-meta">High integrity</div></div></div>';
         html += '</div>';
 
@@ -538,7 +560,29 @@
             .trim();
     }
 
-    function buildDependencyGraph(payload) {
+    function filterStateForTab(tabId) {
+        if (!graphFilters[tabId]) {
+            graphFilters[tabId] = {
+                keyResults: true,
+                initiatives: true,
+                releases: true,
+                discoveries: true
+            };
+        }
+        return graphFilters[tabId];
+    }
+
+    function payloadForTab(tabId) {
+        if (tabId === 'Current') {
+            return currentPayload;
+        }
+        if (tabId === 'Next') {
+            return nextPayload;
+        }
+        return archivePayload;
+    }
+
+    function buildDependencyGraph(payload, filters) {
         const objectives = objectiveItems(payload);
         const companyObjectives = companyObjectiveItems(payload);
         if (!objectives.length && !companyObjectives.length) {
@@ -567,84 +611,171 @@
             lines.push(edge);
         }
 
+        function addDiscoveryNode(insight) {
+            const discoveryKey = insight.insightId || insight.id || insight.insightTitle || insight.title;
+            if (!discoveryKey) {
+                return null;
+            }
+            const discoveryId = mermaidSafeId('di', discoveryKey);
+            const discoveryLabel = insight.insightTitle || insight.title || discoveryKey;
+            addNode(discoveryId, 'Discovery: ' + discoveryLabel, 'discovery');
+            return discoveryId;
+        }
+
+        function addInitiativeNode(initiative) {
+            const initiativeKey = initiative.id || initiative.initiativeId || initiative.title || initiative.description;
+            if (!initiativeKey) {
+                return null;
+            }
+            const initiativeId = mermaidSafeId('in', initiativeKey);
+            const initiativeLabel = initiative.title || initiative.description || initiative.initiativeId || initiativeKey;
+            addNode(initiativeId, 'Initiative: ' + initiativeLabel, 'initiative');
+            return initiativeId;
+        }
+
+        function addReleaseNode(release) {
+            const releaseKey = release.id || release.releaseId || release.title || release.description || release.date;
+            if (!releaseKey) {
+                return null;
+            }
+            const releaseId = mermaidSafeId('re', releaseKey);
+            const releaseLabel = release.title || release.description || release.releaseId || release.date || releaseKey;
+            addNode(releaseId, 'Release: ' + releaseLabel, 'release');
+            return releaseId;
+        }
+
+        function addKeyResultNode(objective, keyResult) {
+            const keyResultKey = objective.id + '_' + (keyResult.id || keyResult.metric || keyResult.statement || 'kr');
+            const keyResultId = mermaidSafeId('kr', keyResultKey);
+            const keyResultLabel = keyResult.metric || keyResult.statement || keyResult.id || keyResultKey;
+            addNode(keyResultId, 'Key Result: ' + keyResultLabel, 'keyResult');
+            return keyResultId;
+        }
+
         companyObjectives.forEach(companyObjective => {
             const companyId = mermaidSafeId('co', companyObjective.id);
             addNode(companyId, 'Company Objective: ' + (companyObjective.title || companyObjective.id), 'companyObjective');
 
-            (companyObjective.keyResults || []).forEach(keyResult => {
-                const sourceId = keyResult.sourceObjectiveId ? mermaidSafeId('so', keyResult.sourceObjectiveId) : null;
-                if (sourceId) {
-                    addEdge(sourceId, companyId, 'supports');
-                }
-
-                (keyResult.executingTeams || []).forEach(team => {
-                    const teamId = mermaidSafeId('tm', team.teamId || team.teamName);
-                    addNode(teamId, 'Team: ' + (team.teamName || team.teamId), 'team');
-                    addEdge(teamId, companyId, 'executes');
+            if (filters.discoveries) {
+                (companyObjective.inspiredByInsights || []).forEach(insight => {
+                    const discoveryId = addDiscoveryNode(insight);
+                    if (discoveryId) {
+                        addEdge(discoveryId, companyId, 'informs');
+                    }
                 });
-
-                (keyResult.supportingTeams || []).forEach(team => {
-                    const teamId = mermaidSafeId('tm', team.teamId || team.teamName);
-                    addNode(teamId, 'Team: ' + (team.teamName || team.teamId), 'team');
-                    addEdge(teamId, companyId, 'supports');
-                });
-            });
+            }
         });
 
         objectives.forEach(objective => {
             const objectiveId = mermaidSafeId('so', objective.id);
+            const keyResultIds = [];
             addNode(objectiveId, 'Source Objective: ' + (objective.title || objective.id), 'sourceObjective');
 
-            (objective.linkedCustomers || []).forEach(customer => {
-                const customerId = mermaidSafeId('cu', customer.customerId || customer.customerName);
-                addNode(customerId, 'Customer: ' + (customer.customerName || customer.customerId), 'customer');
-                addEdge(customerId, objectiveId, 'needs');
+            (objective.companyObjectiveRefs || []).forEach(ref => {
+                const companyKey = ref.id || ref.companyObjectiveId;
+                if (!companyKey) {
+                    return;
+                }
+                const companyId = mermaidSafeId('co', companyKey);
+                addNode(companyId, 'Company Objective: ' + (ref.title || companyKey), 'companyObjective');
+                addEdge(objectiveId, companyId, 'supports');
             });
 
-            (objective.linkedInitiatives || []).forEach(initiative => {
-                const initiativeKey = initiative.id || initiative.initiativeId || initiative.title || initiative.description;
-                const initiativeLabel = initiative.title || initiative.description || initiative.initiativeId || initiativeKey;
-                const initiativeId = mermaidSafeId('in', initiativeKey);
-                addNode(initiativeId, 'Initiative: ' + initiativeLabel, 'initiative');
-                addEdge(initiativeId, objectiveId, 'delivers');
+            (objective.companyObjectiveIds || []).forEach(companyObjectiveId => {
+                const companyId = mermaidSafeId('co', companyObjectiveId);
+                addNode(companyId, 'Company Objective: ' + companyObjectiveId, 'companyObjective');
+                addEdge(objectiveId, companyId, 'supports');
             });
+
+            if (filters.discoveries) {
+                (objective.inspiredByInsights || []).forEach(insight => {
+                    const discoveryId = addDiscoveryNode(insight);
+                    if (discoveryId) {
+                        addEdge(discoveryId, objectiveId, 'informs');
+                    }
+                });
+            }
+
+            if (filters.keyResults) {
+                (objective.keyResults || []).forEach(keyResult => {
+                    const keyResultId = addKeyResultNode(objective, keyResult);
+                    keyResultIds.push(keyResultId);
+                    addEdge(keyResultId, objectiveId, 'measures');
+                });
+            }
+
+            if (filters.initiatives && keyResultIds.length) {
+                (objective.linkedInitiatives || []).forEach(initiative => {
+                    const initiativeId = addInitiativeNode(initiative);
+                    if (initiativeId) {
+                        keyResultIds.forEach(keyResultId => addEdge(initiativeId, keyResultId, 'delivers'));
+                    }
+                });
+            }
+
+            if (filters.releases && keyResultIds.length) {
+                (objective.linkedReleases || []).forEach(release => {
+                    const releaseId = addReleaseNode(release);
+                    if (releaseId) {
+                        keyResultIds.forEach(keyResultId => addEdge(releaseId, keyResultId, 'ships'));
+                    }
+                });
+            }
         });
 
         lines.push('classDef companyObjective fill:#d9ecff,stroke:#315b7c,stroke-width:1.5px,color:#1f2937');
         lines.push('classDef sourceObjective fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.2px,color:#1f2937');
-        lines.push('classDef team fill:#e7f7ed,stroke:#2f855a,stroke-width:1.2px,color:#1f2937');
-        lines.push('classDef customer fill:#fff4da,stroke:#b7791f,stroke-width:1.2px,color:#1f2937');
+        lines.push('classDef keyResult fill:#eef2ff,stroke:#4c51bf,stroke-width:1.2px,color:#1f2937');
         lines.push('classDef initiative fill:#ffe2e2,stroke:#c53030,stroke-width:1.2px,color:#1f2937');
+        lines.push('classDef discovery fill:#e7f7ed,stroke:#2f855a,stroke-width:1.2px,color:#1f2937');
+        lines.push('classDef release fill:#fff4da,stroke:#b7791f,stroke-width:1.2px,color:#1f2937');
 
         return lines.join('\n');
+    }
+
+    function toggleGraphFilter(tabId, filterKey, isEnabled) {
+        filterStateForTab(tabId)[filterKey] = isEnabled;
+        renderGraphSection(tabId);
+    }
+
+    function renderGraphSection(tabId) {
+        const graphHost = document.getElementById('graph_wrap_' + tabId);
+        if (!graphHost) {
+            return;
+        }
+        const graph = buildDependencyGraph(payloadForTab(tabId), filterStateForTab(tabId));
+        if (!graph) {
+            graphHost.innerHTML = '<div class="empty">No graph relationships match the current filters.</div>';
+            return;
+        }
+        graphHost.innerHTML = '<div class="mermaid">' + graph + '</div>';
+        mermaid.run({querySelector: '#graph_wrap_' + tabId + ' .mermaid'});
     }
 
     function renderDependencyGraph(tabId, payload) {
         if (tabId === 'Archive') {
             return '';
         }
-        const graph = buildDependencyGraph(payload);
-        if (!graph) {
-            return '';
-        }
+        const filters = filterStateForTab(tabId);
         return renderSubsection(
             'Dependency Graph',
-            'Visualizes how customers, initiatives, source objectives, company objectives, and teams connect for this planning period.',
-            '<div class="dependency-graph"><div class="mermaid">' + graph + '</div></div>'
+            'Visualizes the hierarchy among company objectives, source objectives, key results, initiatives, discoveries, and releases for this planning period.',
+            '<div class="graph-filters">' +
+                '<label class="graph-filter"><input type="checkbox" ' + (filters.keyResults ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'keyResults\', this.checked)">Key Results</label>' +
+                '<label class="graph-filter"><input type="checkbox" ' + (filters.initiatives ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'initiatives\', this.checked)">Initiatives</label>' +
+                '<label class="graph-filter"><input type="checkbox" ' + (filters.releases ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'releases\', this.checked)">Releases</label>' +
+                '<label class="graph-filter"><input type="checkbox" ' + (filters.discoveries ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'discoveries\', this.checked)">Discoveries</label>' +
+            '</div>' +
+            '<div class="dependency-graph" id="graph_wrap_' + tabId + '"></div>'
         );
     }
 
     function renderMermaidForTab(tabId) {
         const tab = document.getElementById(tabId);
-        if (!tab || tab.dataset.mermaidRendered === 'true' || tabId === 'Archive') {
+        if (!tab || tabId === 'Archive') {
             return;
         }
-        const graph = tab.querySelector('.mermaid');
-        if (!graph) {
-            return;
-        }
-        mermaid.run({querySelector: '#' + tabId + ' .mermaid'});
-        tab.dataset.mermaidRendered = 'true';
+        renderGraphSection(tabId);
     }
 
     function renderTab(divId, payload, emptyText) {
@@ -658,12 +789,12 @@
         let html = '';
         html += renderSubsection(
             'Company Objectives',
-            'A small set of company-level outcomes that organize the quarter and collect the active key results.',
+            'A small set of company-level outcomes that organize the quarter and group the contributing source objectives.',
             renderCardGrid(companyObjectives, renderCompanyObjectiveCard, 'No company objectives are defined for this period.')
         );
         html += renderSubsection(
             'Source Objectives',
-            'Underlying objective packets linked to customers, KPIs, initiatives, and releases. These now feed the company objective layer instead of standing alone.',
+            'Underlying objective packets linked to customers, KPIs, key results, initiatives, releases, and discoveries.',
             renderCardGrid(objectives, renderSourceObjectiveCard, 'No source objectives are defined for this period.')
         );
         html += renderDependencyGraph(divId, payload);

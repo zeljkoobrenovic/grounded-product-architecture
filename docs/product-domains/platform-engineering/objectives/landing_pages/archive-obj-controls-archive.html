@@ -225,7 +225,7 @@
 </div>
 
 <script>
-    const pageData = {"id": "obj-controls-archive", "title": "Archive Raise the safety and operability baseline", "statement": "Focus archived periods on embedding guardrails, telemetry, and incident discipline into the standard path rather than relying on manual governance and heroics.", "objectiveType": "company", "status": "archived", "keyResultIds": ["platform-engineering-2025-q2-srel-kr-1-controls", "platform-engineering-2025-q4-srel-kr-2-controls"], "keyResults": [{"id": "kr-1", "metric": "Production services with baseline controls", "kind": "customer", "targetDirection": "increase", "target": "Increase standard identity, artifact, and policy coverage across production services", "baseline": "Control coverage depended on local team maturity and manual reviews", "statement": "Increase baseline control coverage by encoding more security and compliance expectations into the shared path.", "companyKeyResultId": "platform-engineering-2025-q2-srel-kr-1-controls", "companyObjectiveId": "obj-controls-archive", "companyObjectiveTitle": "Raise the safety and operability baseline", "executingTeams": [{"teamId": "plat-identity-guardrails", "teamName": "Platform Identity and Guardrails", "role": "executing", "intent": "Move common controls into templates, delivery automation, and supported runtime defaults."}], "supportingTeams": [{"teamId": "plat-golden-paths", "teamName": "Platform Golden Paths", "role": "supporting", "intent": "Bake stronger controls into the default service path."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "Archived outcome was achieved through incremental guardrail improvements.", "inspiredByInsights": []}, {"id": "kr-2", "metric": "Incident MTTR for common platform failure classes", "kind": "customer", "targetDirection": "decrease", "target": "Make response to shared-platform incidents more repeatable and less improvisational", "baseline": "Telemetry quality and ownership data varied across the estate", "statement": "Reduce incident MTTR by standardizing service telemetry, routing, and remediation workflows.", "companyKeyResultId": "platform-engineering-2025-q4-srel-kr-2-controls", "companyObjectiveId": "obj-controls-archive", "companyObjectiveTitle": "Raise the safety and operability baseline", "executingTeams": [{"teamId": "plat-observability-reliability", "teamName": "Platform Observability and Reliability", "role": "executing", "intent": "Improve telemetry, routing, and incident response automation."}], "supportingTeams": [{"teamId": "plat-portal-catalog", "teamName": "Platform Portal and Catalog", "role": "supporting", "intent": "Provide service ownership and dependency visibility used during response."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "Archived outcome came from repeated operational hardening rather than a single change.", "inspiredByInsights": []}], "landingPageId": "archive-obj-controls-archive", "inspiredByInsights": [], "linkedInitiatives": [], "linkedReleases": []};
+    const pageData = {"id": "obj-controls-archive", "title": "Archive Raise the safety and operability baseline", "statement": "Focus archived periods on embedding guardrails, telemetry, and incident discipline into the standard path rather than relying on manual governance and heroics.", "objectiveType": "company", "status": "archived", "landingPageId": "archive-obj-controls-archive", "inspiredByInsights": [], "sourceObjectiveRefs": [], "linkedInitiatives": [], "linkedReleases": [], "keyResultsCount": 0, "highIntegrityCommitmentCount": 0};
     const pageKind = 'company-objective';
     const domainName = 'Platform Engineering';
 
@@ -353,14 +353,6 @@
         html += '<div class="key-result-title">' + escapeHtml(item.metric) + '</div>';
         html += '<div>' + escapeHtml(item.statement || '') + '</div>';
         html += '<div class="metric-meta">' + escapeHtml(item.targetDirection || '') + (item.target ? ' | ' + escapeHtml(item.target) : '') + (item.commitmentLabel ? ' | ' + escapeHtml(item.commitmentLabel) : '') + '</div>';
-
-        if (options.showObjective && item.companyObjectiveTitle) {
-            html += '<div class="list-description">Company objective: ' + escapeHtml(item.companyObjectiveTitle) + '</div>';
-        }
-        if (options.showSource && item.sourceObjectiveTitle) {
-            const href = item.sourceObjectivePageId ? (item.sourceObjectivePageId + '.html') : '';
-            html += '<div class="list-description">Source objective: ' + linkOf(href, item.sourceObjectiveTitle, 'entity-link') + '</div>';
-        }
         if (item.baseline) {
             html += '<div class="list-description">Baseline: ' + escapeHtml(item.baseline) + '</div>';
         }
@@ -369,9 +361,6 @@
         }
         html += renderTeams('Executing Teams', item.executingTeams || [], true);
         html += renderTeams('Supporting Teams', item.supportingTeams || [], true);
-        if (!(options.suppressRepeatedInsights && sameInsightSet(options.pageInsights, item.inspiredByInsights || []))) {
-            html += renderInsights('Inspired By Insights', item.inspiredByInsights || [], true);
-        }
         html += '</div>';
         return html;
     }
@@ -436,15 +425,14 @@
             html += '<div class="section"><div class="section-title">Design Notes</div><div class="list-row"><div class="list-description">' + escapeHtml(page.okrDesignNotes) + '</div></div></div>';
         }
 
-        if (page.keyResults && page.keyResults.length) {
-            html += '<div class="section"><div class="section-title">Key Results</div>';
-            page.keyResults.forEach(item => {
-                html += renderKeyResult(item, {
-                    showObjective: false,
-                    showSource: true,
-                    suppressRepeatedInsights: true,
-                    pageInsights: page.inspiredByInsights || []
-                });
+        if (page.sourceObjectiveRefs && page.sourceObjectiveRefs.length) {
+            html += '<div class="section"><div class="section-title">Source Objectives</div>';
+            page.sourceObjectiveRefs.forEach(item => {
+                const href = item.landingPageId ? item.landingPageId + '.html' : '';
+                html += '<div class="pill"><div><div class="pill-name">' + linkOf(href, item.title, 'pill-name') + '</div><div class="pill-meta">' +
+                    escapeHtml(String(item.keyResultsCount || 0) + ' key results') +
+                    ((item.quarter ? ' | ' + escapeHtml(item.quarter) : '')) +
+                    '</div></div></div>';
             });
             html += '</div>';
         }
@@ -462,29 +450,8 @@
         return html;
     }
 
-    function collectCompanyDiscoveries(page) {
-        const lookup = {};
-        (page.inspiredByInsights || []).forEach(item => {
-            const key = item.insightId || item.id || item.insightTitle || item.title;
-            if (key) {
-                lookup[key] = item;
-            }
-        });
-        (page.keyResults || []).forEach(item => {
-            (item.inspiredByInsights || []).forEach(insight => {
-                const key = insight.insightId || insight.id || insight.insightTitle || insight.title;
-                if (key) {
-                    lookup[key] = insight;
-                }
-            });
-        });
-        return Object.values(lookup);
-    }
-
     function renderDiscoveriesTab(page, kind) {
-        const items = kind === 'company-objective'
-            ? collectCompanyDiscoveries(page)
-            : (page.inspiredByInsights || []);
+        const items = page.inspiredByInsights || [];
         if (!items.length) {
             return renderEmptyState('No discoveries linked to this objective.');
         }
