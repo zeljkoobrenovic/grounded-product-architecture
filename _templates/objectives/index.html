@@ -89,33 +89,6 @@
             line-height: 1.4;
         }
 
-        .summary-strip {
-            margin: 0 0 14px 0;
-        }
-
-        .stat {
-            display: inline-block;
-            min-width: 150px;
-            margin: 0 10px 10px 0;
-            padding: 12px 14px;
-            border: 1px solid lightgrey;
-            border-radius: 6px;
-            background-color: #f8f8f8;
-            vertical-align: top;
-        }
-
-        .stat-value {
-            font-size: 30px;
-            color: #315b7c;
-        }
-
-        .stat-label {
-            color: #6b7280;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
         .tab {
             overflow: hidden;
             border: 1px solid #ccc;
@@ -329,7 +302,6 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script>
         mermaid.initialize({
@@ -394,8 +366,6 @@
     </table>
 </div>
 
-<div id="Summary" class="summary-strip"></div>
-
 <div class="tab">
     <button class="tablinks" id="tab_Current" onclick="openTab('Current')">Current</button>
     <button class="tablinks" id="tab_Next" onclick="openTab('Next')">Next</button>
@@ -435,18 +405,13 @@
         return total;
     }
 
-    function renderSummary() {
-        const stats = [
-            {value: companyObjectiveItems(currentPayload).length, label: 'Current company objectives'},
-            {value: objectiveItems(currentPayload).length, label: 'Current source objectives'},
-            {value: countKeyResults(objectiveItems(currentPayload)), label: 'Current key results'},
-            {value: ((archivePayload.quartersCovered || []).length || 0), label: 'Archived quarters'}
-        ];
-        let html = '';
-        stats.forEach(stat => {
-            html += '<div class="stat"><div class="stat-value">' + escapeHtml(String(stat.value)) + '</div><div class="stat-label">' + escapeHtml(stat.label) + '</div></div>';
-        });
-        document.getElementById('Summary').innerHTML = html;
+    function updateTabLabels() {
+        const currentCount = companyObjectiveItems(currentPayload).length + objectiveItems(currentPayload).length;
+        const nextCount = companyObjectiveItems(nextPayload).length + objectiveItems(nextPayload).length;
+        const archiveCount = companyObjectiveItems(archivePayload).length + objectiveItems(archivePayload).length;
+        document.getElementById('tab_Current').textContent = 'Current (' + currentCount + ')';
+        document.getElementById('tab_Next').textContent = 'Next (' + nextCount + ')';
+        document.getElementById('tab_Archive').textContent = 'Archive (' + archiveCount + ')';
     }
 
     function renderMetric(metric) {
@@ -759,10 +724,10 @@
             'Dependency Graph',
             'Visualizes the hierarchy among company objectives, source objectives, key results, initiatives, discoveries, and releases for this planning period.',
             '<div class="graph-filters">' +
-                '<label class="graph-filter"><input type="checkbox" ' + (filters.keyResults ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'keyResults\', this.checked)">Key Results</label>' +
-                '<label class="graph-filter"><input type="checkbox" ' + (filters.initiatives ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'initiatives\', this.checked)">Initiatives</label>' +
-                '<label class="graph-filter"><input type="checkbox" ' + (filters.releases ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'releases\', this.checked)">Releases</label>' +
-                '<label class="graph-filter"><input type="checkbox" ' + (filters.discoveries ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'discoveries\', this.checked)">Discoveries</label>' +
+            '<label class="graph-filter"><input type="checkbox" ' + (filters.keyResults ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'keyResults\', this.checked)">Key Results</label>' +
+            '<label class="graph-filter"><input type="checkbox" ' + (filters.initiatives ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'initiatives\', this.checked)">Initiatives</label>' +
+            '<label class="graph-filter"><input type="checkbox" ' + (filters.releases ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'releases\', this.checked)">Releases</label>' +
+            '<label class="graph-filter"><input type="checkbox" ' + (filters.discoveries ? 'checked ' : '') + 'onchange="toggleGraphFilter(\'' + tabId + '\', \'discoveries\', this.checked)">Discoveries</label>' +
             '</div>' +
             '<div class="dependency-graph" id="graph_wrap_' + tabId + '"></div>'
         );
@@ -800,7 +765,7 @@
         document.getElementById(divId).innerHTML = html;
     }
 
-    renderSummary();
+    updateTabLabels();
     renderTab('Current', currentPayload, 'No current-quarter objectives are defined.');
     renderTab('Next', nextPayload, 'No next-quarter preparation objectives are defined.');
     renderTab('Archive', archivePayload, 'No archived objectives are defined.');
