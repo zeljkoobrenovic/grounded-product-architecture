@@ -14,11 +14,16 @@ config = json.load(open(domains_root + 'config.json'))
 
 def copy_icons(icons_path, docs_folder):
     if os.path.exists(icons_path):
-        for filename in os.listdir(icons_path):
-            src = os.path.join(icons_path, filename)
-            dst = os.path.join(docs_folder, 'icons', filename)
-            if os.path.isfile(src):
-                shutil.copy2(src, dst)
+        target_root = os.path.join(docs_folder, 'icons')
+        for root, _, filenames in os.walk(icons_path):
+            rel_root = os.path.relpath(root, icons_path)
+            target_dir = target_root if rel_root == '.' else os.path.join(target_root, rel_root)
+            os.makedirs(target_dir, exist_ok=True)
+            for filename in filenames:
+                src = os.path.join(root, filename)
+                dst = os.path.join(target_dir, filename)
+                if os.path.isfile(src):
+                    shutil.copy2(src, dst)
 
 
 def create_overview_docs(domain, docs_folder):

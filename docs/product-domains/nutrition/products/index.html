@@ -249,6 +249,24 @@
             margin-bottom: 4px;
         }
 
+        .deployment-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .deployment-card-icon {
+            width: 38px;
+            height: 38px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 5px;
+            flex: 0 0 auto;
+        }
+
         .deployment-card-meta {
             font-size: 11px;
             color: #6b7280;
@@ -459,6 +477,39 @@
         return '<img src="../product-bricks/icons/' + safeId + '.png" alt="' + safeName + '" title="' + safeName + '" style="width: 40px; height: 40px; object-fit: contain; border-radius: 10px; background: white; border: 1px solid #d1d5db; padding: 4px;" onerror="' + fallback + '">';
     }
 
+    function deploymentIconFile(channel, group) {
+        const text = [
+            group && group.groupId,
+            group && group.groupName,
+            channel && channel.subChannelId,
+            channel && channel.subChannelName,
+            channel && channel.channelType
+        ].join(' ').toLowerCase();
+
+        if (text.includes('ios')) {
+            return 'app_store_ios.png';
+        }
+        if (text.includes('android') || text.includes('play store') || text.includes('play-store')) {
+            return 'app_store_android.png';
+        }
+        if (text.includes('private cloud') || text.includes('private-cloud')) {
+            return 'private_cloud.png';
+        }
+        if (text.includes('cloud') || text.includes('runtime') || text.includes('edge') || text.includes('cdn')) {
+            return 'public_cloud.png';
+        }
+        if (text.includes('saas') || text.includes('analytics') || text.includes('crm') || text.includes('datadog') || text.includes('snowflake') || text.includes('databricks') || text.includes('salesforce')) {
+            return 'saas.png';
+        }
+        return 'deployment.png';
+    }
+
+    function renderDeploymentIcon(channel, group) {
+        const fileName = deploymentIconFile(channel, group);
+        const label = escapeHtml((channel && (channel.subChannelName || channel.subChannelId)) || 'Deployment channel');
+        return '<img class="deployment-card-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+    }
+
     function renderDeploymentChannels() {
         const container = document.getElementById('deployment');
         const groups = deployment.channels || [];
@@ -516,8 +567,11 @@
 
             (group.channels || []).forEach(channel => {
                 html += '<article class="deployment-card">';
-                html += '<div class="deployment-card-title">' + escapeHtml(channel.subChannelName || channel.subChannelId) + '</div>';
+                html += '<div class="deployment-card-header">';
+                html += renderDeploymentIcon(channel, group);
+                html += '<div><div class="deployment-card-title">' + escapeHtml(channel.subChannelName || channel.subChannelId) + '</div>';
                 html += '<div class="deployment-card-meta">' + escapeHtml(channel.channelType || 'channel') + '</div>';
+                html += '</div></div>';
                 if (channel.description) {
                     html += '<div class="deployment-card-copy">' + escapeHtml(channel.description) + '</div>';
                 }

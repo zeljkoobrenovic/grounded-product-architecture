@@ -220,6 +220,64 @@ def dedupe_by(items, key_builder):
     return ordered
 
 
+def merge_supported_jobs(items):
+    merged = {}
+    ordered = []
+
+    for item in items:
+        key = (
+            item.get('customerId', ''),
+            item.get('productId', ''),
+            item.get('jobId', '')
+        )
+        if key not in merged:
+            merged[key] = dict(item)
+            merged[key]['usedInSteps'] = list(item.get('usedInSteps', []))
+            ordered.append(merged[key])
+            continue
+
+        existing = merged[key]
+        if not existing.get('supportRationale') and item.get('supportRationale'):
+            existing['supportRationale'] = item.get('supportRationale')
+
+        existing_steps = existing.setdefault('usedInSteps', [])
+        for step in item.get('usedInSteps', []):
+            if step not in existing_steps:
+                existing_steps.append(step)
+
+    return ordered
+
+
+def merge_named_records(items, id_field, list_fields=None):
+    merged = {}
+    ordered = []
+    list_fields = list_fields or []
+
+    for item in items:
+        item_id = item.get(id_field, '')
+        if item_id not in merged:
+            merged[item_id] = dict(item)
+            for field in list_fields:
+                merged[item_id][field] = list(item.get(field, []))
+            ordered.append(merged[item_id])
+            continue
+
+        existing = merged[item_id]
+        for field, value in item.items():
+            if field in list_fields:
+                continue
+            if not existing.get(field) and value:
+                existing[field] = value
+
+        for field in list_fields:
+            existing_values = existing.setdefault(field, [])
+            for value in item.get(field, []):
+                if value not in existing_values:
+                    existing_values.append(value)
+
+    return ordered
+
+
 def create_landing_pages(bricks, activity_data, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'landing_page.html').read();
 
@@ -262,11 +320,11 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
 
     for capability in capabilities:
         related_bricks = []
-        linked_products = []
-        supported_jobs = []
-        related_teams = []
-        initiatives = []
-        releases = []
+        linked_products = list(capability.get('supportedProducts', []))
+        supported_jobs = list(capability.get('supportedCustomerJobs', []))
+        related_teams = list(capability.get('owningTeams', []))
+        initiatives = list(capability.get('relatedInitiatives', []))
+        releases = list(capability.get('relatedReleases', []))
 
         for dep in capability.get('brickDependencies', []):
             brick_id = dep.get('targetBrickId', '')
@@ -282,16 +340,9 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
             releases.extend(filter_for_brick(activity_data['releases'], brick_id))
 
         related_bricks = dedupe_by(related_bricks, lambda item: item.get('id', ''))
-        linked_products = dedupe_by(linked_products, lambda item: item.get('id', ''))
-        supported_jobs = dedupe_by(
-            supported_jobs,
-            lambda item: (
-                item.get('customerId', ''),
-                item.get('productId', ''),
-                item.get('jobId', '')
-            )
-        )
-        related_teams = dedupe_by(related_teams, lambda item: item.get('teamId', ''))
+        linked_products = merge_named_records(linked_products, 'id')
+        supported_jobs = merge_supported_jobs(supported_jobs)
+        related_teams = merge_named_records(related_teams, 'teamId')
         initiatives = dedupe_by(initiatives, lambda item: json.dumps(item, sort_keys=True))
         releases = dedupe_by(releases, lambda item: json.dumps(item, sort_keys=True))
 

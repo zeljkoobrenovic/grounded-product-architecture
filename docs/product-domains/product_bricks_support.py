@@ -45,7 +45,10 @@ def load_product_bricks_payload(path, default_title='Product Bricks', default_de
 
 def load_product_capabilities_payload(path, default_title='Product Capabilities', default_description=''):
     if not os.path.exists(path):
-        return {'metadata': {'title': default_title, 'description': default_description}, 'capabilities': []}
+        return {
+            'metadata': {'title': default_title, 'description': default_description},
+            'capabilities': []
+        }
 
     payload = json.load(open(path))
 

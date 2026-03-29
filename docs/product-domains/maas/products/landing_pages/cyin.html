@@ -378,14 +378,57 @@
         }
 
         .channel-pill {
-            display: inline-block;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
             padding: 7px 10px;
-            border-radius: 999px;
+            border-radius: 9px;
             font-size: 12px;
             font-weight: bold;
             border: 2px solid currentColor;
             background: white;
             box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.72);
+        }
+
+        .brick-channel-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            padding: 2px;
+            flex: 0 0 auto;
+        }
+
+        .channel-pill-icon{
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            padding: 2px;
+        }
+
+        .channel-pill-title {
+            display: block;
+            line-height: 1.25;
+            text-align: center;
+        }
+
+        .channel-brick-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 2px;
+            max-width: 132px;
+        }
+
+        .channel-brick-icon {
+            width: 14px;
+            height: 14px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid blue;
+            padding: 2px;
         }
 
         .brick-card {
@@ -431,12 +474,10 @@
         }
 
         .brick-channel-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
             margin-top: 8px;
             padding-top: 8px;
             border-top: 1px solid #e5e7eb;
+            text-align: center;
         }
 
         .brick-channel-chip {
@@ -456,6 +497,12 @@
 
         .brick-channel-name {
             line-height: 1.2;
+        }
+
+        .brick-channel-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .brick-channel-part {
@@ -645,7 +692,11 @@
                 html += '<div class="channel-pill-row">';
                 group.channels.forEach(channel => {
                     const color = channelColor(channel.ref);
-                    html += '<span class="channel-pill" style="color:' + color + '; background:' + hexToRgba(color, 0.14) + ';">' + escapeHtml(channel.name) + '</span>';
+                    html += '<span class="channel-pill" style="color:' + color + '; background:' + hexToRgba(color, 0.14) + ';">';
+                    html += renderDeploymentIcon(channel);
+                    html += '<span class="channel-pill-title">' + escapeHtml(channel.name) + '</span>';
+                    html += renderChannelBrickIcons(channel.bricks || []);
+                    html += '</span>';
                 });
                 html += '</div>';
                 html += '</div>';
@@ -704,6 +755,37 @@
         return palette[Math.abs(hash) % palette.length];
     }
 
+    function deploymentIconFile(channel) {
+        const text = [
+            channel && channel.ref,
+            channel && channel.groupId,
+            channel && channel.name
+        ].join(' ').toLowerCase();
+
+        if (text.includes('ios')) {
+            return 'app_store_ios.png';
+        }
+        if (text.includes('android') || text.includes('play store') || text.includes('play-store')) {
+            return 'app_store_android.png';
+        }
+        if (text.includes('private cloud') || text.includes('private-cloud')) {
+            return 'private_cloud.png';
+        }
+        if (text.includes('cloud') || text.includes('runtime') || text.includes('edge') || text.includes('cdn')) {
+            return 'public_cloud.png';
+        }
+        if (text.includes('saas') || text.includes('analytics') || text.includes('crm') || text.includes('datadog') || text.includes('snowflake') || text.includes('databricks') || text.includes('salesforce')) {
+            return 'saas.png';
+        }
+        return 'deployment.png';
+    }
+
+    function renderDeploymentIcon(channel) {
+        const fileName = deploymentIconFile(channel);
+        const label = escapeHtml((channel && channel.name) || 'Deployment channel');
+        return '<img class="channel-pill-icon" src="../icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+    }
+
     function prettifyChannelGroup(groupId) {
         return (groupId || 'other')
             .split('-')
@@ -727,16 +809,46 @@
                 if (!grouped[groupId].channels[ref]) {
                     grouped[groupId].channels[ref] = {
                         ref: ref,
-                        name: channel.channelName || channel.channelId || ref
+                        groupId: groupId,
+                        name: channel.channelName || channel.channelId || ref,
+                        bricks: {}
                     };
                 }
+                grouped[groupId].channels[ref].bricks[brick.brickId] = {
+                    brickId: brick.brickId,
+                    brickName: brick.brickName
+                };
             });
         });
         return Object.values(grouped).map(group => ({
             id: group.id,
             name: group.name,
-            channels: Object.values(group.channels).sort((a, b) => a.name.localeCompare(b.name))
+            channels: Object.values(group.channels).map(channel => ({
+                ref: channel.ref,
+                groupId: channel.groupId,
+                name: channel.name,
+                bricks: Object.values(channel.bricks).sort((a, b) => (a.brickName || a.brickId).localeCompare(b.brickName || b.brickId))
+            })).sort((a, b) => a.name.localeCompare(b.name))
         })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function renderSmallBrickIcon(brickId, brickName) {
+        const safeId = escapeHtml(brickId || '');
+        const safeName = escapeHtml(brickName || brickId || 'Product brick');
+        const fallback = "if(!this.dataset.fallbackStage){this.dataset.fallbackStage='jpeg';this.src='../../product-bricks/icons/" + safeId + ".jpeg';}else if(this.dataset.fallbackStage==='jpeg'){this.dataset.fallbackStage='jpg';this.src='../../product-bricks/icons/" + safeId + ".jpg';}else{this.onerror=null;this.src='../../product-bricks/icons/logo.png';}";
+        return '<img class="channel-brick-icon" src="../../product-bricks/icons/' + safeId + '.png" alt="' + safeName + '" title="' + safeName + '" onerror="' + fallback + '">';
+    }
+
+    function renderChannelBrickIcons(bricks) {
+        if (!bricks || !bricks.length) {
+            return '';
+        }
+        let html = '<span class="channel-brick-row">';
+        bricks.forEach(brick => {
+            html += renderSmallBrickIcon(brick.brickId, brick.brickName);
+        });
+        html += '</span>';
+        return html;
     }
 
     function renderBrickChannelMarkers(deploymentChannels) {
@@ -746,10 +858,7 @@
         let html = '<div class="brick-channel-row">';
         deploymentChannels.forEach(channel => {
             const color = channelColor(channel.deploymentChannelRef || channel.channelId || channel.channelName || '');
-            html += '<span class="brick-channel-chip" style="color:' + color + '; background: linear-gradient(180deg, ' + hexToRgba(color, 0.2) + ' 0%, rgba(255,255,255,0.92) 100%);">';
-            html += '<span class="brick-channel-name">' + escapeHtml(channel.channelName || channel.channelId) + '</span>';
-            html += '<span class="brick-channel-part">' + escapeHtml(channel.deploymentPart || 'deployed') + '</span>';
-            html += '</span>';
+            html += '<img class="brick-channel-icon" src="../icons/deployment/' + deploymentIconFile({ref: channel.deploymentChannelRef || channel.channelId || '', name: channel.channelName || channel.channelId || ''}) + '" alt="' + escapeHtml(channel.channelName || channel.channelId || 'Deployment channel') + '" title="' + escapeHtml(channel.channelName || channel.channelId || 'Deployment channel') + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
         });
         html += '</div>';
         return html;

@@ -4,6 +4,8 @@ import json
 import os
 import shutil
 
+from initiatives_support import enrich_discoveries
+
 
 date_string = datetime.date.today().strftime('%Y-%m-%d')
 
@@ -68,6 +70,21 @@ def enrich_source_objective_links(source_objective, initiative_index_map, releas
     return enriched_objective
 
 
+def enrich_insights(items, discovery_lookup):
+    enriched_items = []
+    for item in items or []:
+        enriched_item = dict(item)
+        discovery_info = discovery_lookup.get(item.get('insightId', '') or item.get('id', ''), {})
+        if discovery_info.get('landingPageIndex') is not None:
+            enriched_item['landingPageIndex'] = discovery_info.get('landingPageIndex')
+        if discovery_info.get('name') and not enriched_item.get('insightTitle'):
+            enriched_item['insightTitle'] = discovery_info.get('name')
+        if discovery_info.get('status') and not enriched_item.get('status'):
+            enriched_item['status'] = discovery_info.get('status')
+        enriched_items.append(enriched_item)
+    return enriched_items
+
+
 def source_objective_page_id(source_objective):
     return source_objective['id']
 
@@ -78,7 +95,7 @@ def company_objective_page_id(company_objective, payload):
     return f"{safe_quarter}-{company_objective['id']}"
 
 
-def prepare_payload(payload, initiative_index_map, release_index_map):
+def prepare_payload(payload, initiative_index_map, release_index_map, discovery_lookup):
     prepared = copy.deepcopy(payload)
     prepared['objectives'] = [
         enrich_source_objective_links(item, initiative_index_map, release_index_map)
@@ -88,6 +105,7 @@ def prepare_payload(payload, initiative_index_map, release_index_map):
     objective_lookup = {}
     for source_objective in prepared['objectives']:
         source_objective['landingPageId'] = source_objective_page_id(source_objective)
+        source_objective['inspiredByInsights'] = enrich_insights(source_objective.get('inspiredByInsights', []), discovery_lookup)
         objective_lookup[source_objective['id']] = {
             'pageId': source_objective['landingPageId'],
             'title': source_objective.get('title', 'Objective'),
@@ -97,9 +115,11 @@ def prepare_payload(payload, initiative_index_map, release_index_map):
 
     for company_objective in company_objective_items(prepared):
         company_objective['landingPageId'] = company_objective_page_id(company_objective, prepared)
+        company_objective['inspiredByInsights'] = enrich_insights(company_objective.get('inspiredByInsights', []), discovery_lookup)
         initiative_map = {}
         release_map = {}
         for key_result in company_objective.get('keyResults', []):
+            key_result['inspiredByInsights'] = enrich_insights(key_result.get('inspiredByInsights', []), discovery_lookup)
             source_id = key_result.get('sourceObjectiveId')
             if source_id in objective_lookup:
                 key_result['sourceObjectivePageId'] = objective_lookup[source_id]['pageId']
@@ -193,10 +213,24 @@ for domain in config['domains']:
     archive_payload = json.load(open(archive_path)) if os.path.exists(archive_path) else {'objectives': [], 'companyObjectives': []}
     initiative_index_map = build_activity_index(domains_root + domain_id + '/delivery/initiatives.json')
     release_index_map = build_activity_index(domains_root + domain_id + '/delivery/releases.json')
+    ongoing_discoveries_path = domains_root + domain_id + '/discoveries/ongoing.json'
+    archived_discoveries_path = domains_root + domain_id + '/discoveries/archived.json'
+    ongoing_discoveries = json.load(open(ongoing_discoveries_path)) if os.path.exists(ongoing_discoveries_path) else {'items': []}
+    archived_discoveries = json.load(open(archived_discoveries_path)) if os.path.exists(archived_discoveries_path) else {'items': []}
+    discoveries_enriched = enrich_discoveries(ongoing_discoveries, archived_discoveries, {})
+    discovery_lookup = {
+        item.get('id', ''): {
+            'landingPageIndex': item.get('landingPageIndex'),
+            'name': item.get('name', ''),
+            'status': item.get('status', '')
+        }
+        for item in discoveries_enriched.get('items', [])
+        if item.get('id')
+    }
 
-    current_payload = prepare_payload(current_payload, initiative_index_map, release_index_map)
-    next_payload = prepare_payload(next_payload, initiative_index_map, release_index_map)
-    archive_payload = prepare_payload(archive_payload, initiative_index_map, release_index_map)
+    current_payload = prepare_payload(current_payload, initiative_index_map, release_index_map, discovery_lookup)
+    next_payload = prepare_payload(next_payload, initiative_index_map, release_index_map, discovery_lookup)
+    archive_payload = prepare_payload(archive_payload, initiative_index_map, release_index_map, discovery_lookup)
 
     docs_folder = domain_id + '/objectives/'
     create_overview_docs(domain, docs_folder, current_payload, next_payload, archive_payload)

@@ -930,6 +930,14 @@
                 grouped[area].push(capability);
             });
 
+            function summarizeCapabilityStory(capability) {
+                const firstFlow = (capability.flows || [])[0] || {};
+                const firstStep = (firstFlow.steps || [])[0] || {};
+                const actor = firstFlow.primaryActor || firstStep.actor || '';
+                const trigger = firstFlow.trigger || firstStep.trigger || '';
+                return {actor, trigger};
+            }
+
             const areas = Object.keys(grouped).sort((left, right) => left.localeCompare(right));
             container.innerHTML = `
                 <div class="capabilities-summary">
@@ -954,13 +962,17 @@
                     <section class="capability-area">
                         <div class="capability-area-title">${area}</div>
                         <div class="capability-grid">
-                            ${grouped[area].map(capability => `
+                            ${grouped[area].map(capability => {
+                                const story = summarizeCapabilityStory(capability);
+                                return `
                                 <article class="capability-card" id="capability-${capability.id}">
                                     <div class="capability-card-title"><a target="_blank" href="capability_pages/${capability.id}.html">${capability.name || capability.id}</a></div>
                                     <div class="capability-card-copy">${capability.description || ''}</div>
+                                    ${story.actor ? `<div class="capability-card-copy"><strong>Actor:</strong> ${story.actor}</div>` : ''}
+                                    ${story.trigger ? `<div class="capability-card-copy"><strong>Trigger:</strong> ${story.trigger}</div>` : ''}
                                     <div class="capability-card-subtitle">Flows Facilitated</div>
                                     <ul class="capability-list">
-                                        ${((capability.flows || []).length ? capability.flows : ['No flows listed.']).map(flow => `<li>${flow}</li>`).join('')}
+                                        ${((capability.flows || []).length ? capability.flows.map(flow => flow.title || flow.id) : ['No flows listed.']).map(flow => `<li>${flow}</li>`).join('')}
                                     </ul>
                                     <div class="capability-card-subtitle">Outcomes</div>
                                     <ul class="capability-list">
@@ -968,7 +980,8 @@
                                     </ul>
                                     ${renderCapabilityPills(capability, brickLookup)}
                                 </article>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                     </section>
                 `).join('')}
