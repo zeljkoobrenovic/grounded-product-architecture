@@ -33,8 +33,8 @@ def create_overview_docs(domain, docs_folder, ktlo_payload, initiatives_payload)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
 
-    copy_media(templates_root + 'icons', docs_folder + 'icons')
     copy_media(initiatives_templates_root + 'icons', docs_folder + 'icons')
+    copy_media(templates_root + 'icons', docs_folder + 'icons')
     copy_media(domains_root + domain['id'] + '/ktlo/icons', docs_folder + 'icons')
 
     template = open(templates_root + 'index.html').read()
