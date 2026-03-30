@@ -12,7 +12,6 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 CONFIG_DIR = ROOT_DIR / "_config" / "evidence" / "aws"
 TEMPLATES_DIR = ROOT_DIR / "_templates" / "evidence" / "aws"
 OUTPUT_DIR = ROOT_DIR / "docs" / "evidence" / "aws"
-OUTPUT_DOCS_DIR = OUTPUT_DIR / "docs"
 TEMPLATE_ICON_DIR = TEMPLATES_DIR / "icons"
 REMOTE_MEDIA_PREFIX = "https://zeljkoobrenovic.github.io/sokrates-media/"
 AWS_GROUPS = ("services", "regions", "accounts", "api-operations")
@@ -140,7 +139,7 @@ def parse_csv_group(group: str) -> dict:
 
 
 def render_month_pages(group: str, data: dict, template: str) -> None:
-    group_dir = OUTPUT_DOCS_DIR / group
+    group_dir = OUTPUT_DIR / group
     group_dir.mkdir(parents=True, exist_ok=True)
 
     date_string = datetime.date.today().strftime("%Y-%m-%d")
@@ -174,7 +173,7 @@ def render_month_pages(group: str, data: dict, template: str) -> None:
 
 
 def render_trends_page(group: str, data: dict, template: str) -> None:
-    group_dir = OUTPUT_DOCS_DIR / group
+    group_dir = OUTPUT_DIR / group
     group_dir.mkdir(parents=True, exist_ok=True)
 
     date_string = datetime.date.today().strftime("%Y-%m-%d")
@@ -210,16 +209,16 @@ def render_group_index(group: str, active_group: str) -> None:
         )
 
     content = group_index_template.replace("${tabs}", "".join(tabs))
-    (OUTPUT_DOCS_DIR / group / "index.html").write_text(content, encoding="utf-8")
+    (OUTPUT_DIR / group / "index.html").write_text(content, encoding="utf-8")
 
 
 def write_root_redirect() -> None:
-    content = (TEMPLATES_DIR / "root-redirect.html").read_text(encoding="utf-8")
+    content = (TEMPLATES_DIR / "root-redirect.html").read_text(encoding="utf-8").replace("docs/services/index.html", "services/index.html")
     (OUTPUT_DIR / "index.html").write_text(content, encoding="utf-8")
 
 
 def copy_icons() -> None:
-    target = OUTPUT_DOCS_DIR / "logos"
+    target = OUTPUT_DIR / "logos"
     if target.exists():
         shutil.rmtree(target)
     if TEMPLATE_ICON_DIR.exists():
@@ -228,7 +227,6 @@ def copy_icons() -> None:
 
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    OUTPUT_DOCS_DIR.mkdir(parents=True, exist_ok=True)
     copy_icons()
 
     aws_template = (TEMPLATES_DIR / "aws.html").read_text(encoding="utf-8")
