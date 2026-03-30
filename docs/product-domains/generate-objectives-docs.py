@@ -309,6 +309,7 @@ def create_period_docs(domain, docs_folder, period, period_label, payload, perio
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])
                         .replace('${period}', period)
+                        .replace('${period_icon}', f'{period}.png')
                         .replace('${period_label}', period_label)
                         .replace('${payload}', json.dumps(payload))
                         .replace('${current_href}', period_links['current'])
@@ -345,6 +346,7 @@ def create_landing_pages(docs_folder, payload, domain):
                             .replace('${domain_name}', domain['name'])
                             .replace('${page_title}', source_objective.get('title', 'Objective'))
                             .replace('${page_kind}', 'source-objective')
+                            .replace('${page_period}', (source_objective.get('period') or {}).get('type', payload.get('timeframe', '')))
                             .replace('${page_payload}', json.dumps(source_objective)))
 
     for company_objective in company_objective_items(payload):
@@ -355,6 +357,7 @@ def create_landing_pages(docs_folder, payload, domain):
                             .replace('${domain_name}', domain['name'])
                             .replace('${page_title}', company_objective.get('title', 'Company Objective'))
                             .replace('${page_kind}', 'company-objective')
+                            .replace('${page_period}', payload.get('timeframe', ''))
                             .replace('${page_payload}', json.dumps(company_objective)))
 
 
