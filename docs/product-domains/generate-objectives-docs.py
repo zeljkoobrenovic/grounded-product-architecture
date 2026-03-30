@@ -313,7 +313,8 @@ def create_period_docs(domain, docs_folder, period, period_label, payload, perio
                         .replace('${payload}', json.dumps(payload))
                         .replace('${current_href}', period_links['current'])
                         .replace('${next_href}', period_links['next'])
-                        .replace('${archived_href}', period_links['archived']))
+                        .replace('${archived_href}', period_links['archived'])
+                        .replace('${ktlo_href}', period_links['ktlo']))
 
 
 def create_root_redirect(docs_folder):
@@ -363,6 +364,7 @@ for domain in config['domains']:
     current_path = objectives_root + 'current/objectives.json'
     next_path = objectives_root + 'next/objectives.json'
     archive_path = objectives_root + 'archived/objectives.json'
+    ktlo_path = objectives_root + 'ktlo/objectives.json'
 
     if not os.path.exists(current_path):
         continue
@@ -370,9 +372,11 @@ for domain in config['domains']:
     current_payload = json.load(open(current_path))
     next_payload = json.load(open(next_path)) if os.path.exists(next_path) else {'objectives': [], 'companyObjectives': []}
     archive_payload = json.load(open(archive_path)) if os.path.exists(archive_path) else {'objectives': [], 'companyObjectives': []}
+    ktlo_payload = json.load(open(ktlo_path)) if os.path.exists(ktlo_path) else {'objectives': [], 'companyObjectives': []}
     initiative_lookup = build_activity_lookup(objectives_root + 'current/initiatives.json')
     initiative_lookup.update(build_activity_lookup(objectives_root + 'next/initiatives.json'))
     initiative_lookup.update(build_activity_lookup(objectives_root + 'archived/initiatives.json'))
+    initiative_lookup.update(build_activity_lookup(objectives_root + 'ktlo/initiatives.json'))
     release_lookup = build_activity_lookup(domains_root + domain_id + '/delivery/releases.json')
     ongoing_discoveries_path = objectives_root + 'current/discoveries.json'
     next_discoveries_path = objectives_root + 'next/discoveries.json'
@@ -402,6 +406,7 @@ for domain in config['domains']:
     current_payload = prepare_payload(current_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
     next_payload = prepare_payload(next_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
     archive_payload = prepare_payload(archive_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
+    ktlo_payload = prepare_payload(ktlo_payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives, enriched_releases)
 
     docs_folder = domain_id + '/objectives/'
     if os.path.exists(docs_folder):
@@ -415,7 +420,7 @@ for domain in config['domains']:
         'current',
         'Current',
         current_payload,
-        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html'}
+        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html', 'ktlo': '../ktlo/index.html'}
     )
     create_period_docs(
         domain,
@@ -423,7 +428,7 @@ for domain in config['domains']:
         'next',
         'Next',
         next_payload,
-        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html'}
+        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html', 'ktlo': '../ktlo/index.html'}
     )
     create_period_docs(
         domain,
@@ -431,8 +436,17 @@ for domain in config['domains']:
         'archived',
         'Archived',
         archive_payload,
-        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html'}
+        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html', 'ktlo': '../ktlo/index.html'}
+    )
+    create_period_docs(
+        domain,
+        os.path.join(docs_folder, 'ktlo'),
+        'ktlo',
+        'KTLO',
+        ktlo_payload,
+        {'current': '../current/index.html', 'next': '../next/index.html', 'archived': '../archived/index.html', 'ktlo': '../ktlo/index.html'}
     )
     create_landing_pages(os.path.join(docs_folder, 'current'), current_payload, domain)
     create_landing_pages(os.path.join(docs_folder, 'next'), next_payload, domain)
     create_landing_pages(os.path.join(docs_folder, 'archived'), archive_payload, domain)
+    create_landing_pages(os.path.join(docs_folder, 'ktlo'), ktlo_payload, domain)
