@@ -8,7 +8,6 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/ktlo/'
-initiatives_templates_root = '../../_templates/initiatives/'
 
 config = json.load(open(domains_root + 'config.json'))
 
@@ -33,7 +32,6 @@ def create_overview_docs(domain, docs_folder, ktlo_payload, initiatives_payload)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
 
-    copy_media(initiatives_templates_root + 'icons', docs_folder + 'icons')
     copy_media(templates_root + 'icons', docs_folder + 'icons')
     copy_media(domains_root + domain['id'] + '/ktlo/icons', docs_folder + 'icons')
 
@@ -47,7 +45,17 @@ def create_overview_docs(domain, docs_folder, ktlo_payload, initiatives_payload)
 
 def create_landing_pages(domain, docs_folder, ktlo_payload, initiatives_payload):
     template = open(templates_root + 'landing_page.html').read()
-    initiative_template = open(initiatives_templates_root + 'landing_page.html').read()
+    initiative_template = open(templates_root + 'initiative_landing_page.html').read()
+
+    objective_lookup = {item.get('id'): item for item in objective_items(ktlo_payload)}
+    key_result_lookup = {}
+    for objective in objective_items(ktlo_payload):
+        for key_result in objective.get('keyResults', []):
+            key_result_lookup[objective.get('id', '') + '/' + key_result.get('id', '')] = {
+                **key_result,
+                'objectiveId': objective.get('id'),
+                'objectiveTitle': objective.get('title')
+            }
 
     for objective in objective_items(ktlo_payload):
         linked_initiatives = [
@@ -71,8 +79,22 @@ def create_landing_pages(domain, docs_folder, ktlo_payload, initiatives_payload)
             html_file.write(page)
 
     for initiative in initiatives_payload.get('items', []):
+        objective_id = (initiative.get('keyResultId') or '').split('/')[0]
+        linked_objective = objective_lookup.get(objective_id, {})
+        linked_key_result = key_result_lookup.get(initiative.get('keyResultId', ''), {})
+        enriched_initiative = dict(initiative)
+        if linked_objective:
+            enriched_initiative['linkedObjective'] = {
+                'id': linked_objective.get('id'),
+                'title': linked_objective.get('title'),
+                'objective': linked_objective.get('objective'),
+                'status': linked_objective.get('status'),
+                'href': linked_objective.get('id', '') + '.html'
+            }
+        if linked_key_result:
+            enriched_initiative['linkedKeyResult'] = linked_key_result
         page = (initiative_template
-                .replace('${initiative}', json.dumps(initiative))
+                .replace('${initiative}', json.dumps(enriched_initiative))
                 .replace('${domain_name}', domain['name']))
         landing_page_id = initiative.get('landingPageId') or ('initiative-' + initiative.get('initiativeId', 'item'))
         with open(os.path.join(docs_folder, 'landing_pages', landing_page_id + '.html'), 'w') as html_file:
