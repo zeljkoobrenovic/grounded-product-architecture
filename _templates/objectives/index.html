@@ -271,6 +271,45 @@
             line-height: 1.45;
         }
 
+        .key-result-targets {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .key-result-target {
+            border: 1px solid #d7dce1;
+            border-radius: 8px;
+            background: #ffffff;
+            padding: 8px 10px;
+        }
+
+        .key-result-target-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .key-result-target-date {
+            font-size: 12px;
+            color: #4b5563;
+            margin-bottom: 4px;
+        }
+
+        .confidence-chip {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: white;
+        }
+
         .kr-status {
             display: inline-block;
             margin-left: 8px;
@@ -394,6 +433,36 @@
         return '<span class="kr-status" style="background-color:' + statusColor(status) + '">' + escapeHtml(status) + '</span>';
     }
 
+    function confidenceColor(confidence) {
+        const map = {
+            'green': '#16a34a',
+            'amber': '#d97706',
+            'red': '#dc2626',
+            'undefined': '#6b7280'
+        };
+        return map[confidence] || '#6b7280';
+    }
+
+    function confidenceChip(confidence) {
+        if (!confidence) return '';
+        return '<span class="confidence-chip" style="background-color:' + confidenceColor(confidence) + '">' + escapeHtml(confidence) + '</span>';
+    }
+
+    function renderTargetSummary(label, target) {
+        if (!target) return '';
+        let html = '<div class="key-result-target">';
+        html += '<div class="key-result-target-label">' + escapeHtml(label) + '</div>';
+        if (target.date) {
+            html += '<div class="key-result-target-date">' + escapeHtml(target.date) + '</div>';
+        }
+        if (target.target) {
+            html += '<div class="key-result-statement">' + escapeHtml(target.target) + '</div>';
+        }
+        html += confidenceChip(target.confidence);
+        html += '</div>';
+        return html;
+    }
+
     function renderCompanyObjectiveCard(item) {
         const href = 'landing_pages/' + encodeURIComponent(item.landingPageId) + '.html';
         let html = '<a target="_blank" rel="noopener noreferrer" href="' + href + '">';
@@ -419,6 +488,12 @@
                 index += 1;
                 html += '<div class="key-result-row">';
                 html += '<div class="key-result-metric">[KR' + index + '] ' + escapeHtml(kr.metric || kr.kpiName || 'Key Result') + statusBadge(kr.status) + '</div>';
+                if (kr.target1 || kr.target2) {
+                    html += '<div class="key-result-targets">';
+                    html += renderTargetSummary('Target 1', kr.target1);
+                    html += renderTargetSummary('Target 2', kr.target2);
+                    html += '</div>';
+                }
                 html += '</div>';
             });
             html += '</div>';

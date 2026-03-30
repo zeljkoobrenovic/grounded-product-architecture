@@ -62,6 +62,70 @@ def next_quarter(year, quarter):
     return year, quarter + 1
 
 
+def target2_date(year, quarter):
+    if quarter in (1, 2):
+        return datetime.date(year, 12, 31), f"{year}-year-end target"
+    if quarter == 3:
+        next_year, next_q = next_quarter(year, 4)
+        _, end_date = quarter_start_end(next_year, next_q)
+        return end_date, f"{next_year}-Q{next_q} target"
+    _, end_date = quarter_start_end(year + 1, 2)
+    return end_date, f"{year + 1}-Q2 target"
+
+
+def confidence_for_status(status):
+    mapping = {
+        "achieved": "green",
+        "on-track": "green",
+        "at-risk": "amber",
+        "off-track": "red",
+        "planned": "undefined",
+        "active": "undefined",
+        "archived": "undefined"
+    }
+    return mapping.get((status or "").strip().lower(), "undefined")
+
+
+def soften_confidence(confidence, status):
+    if (status or "").strip().lower() == "achieved":
+        return confidence
+    mapping = {
+        "green": "amber",
+        "amber": "red",
+        "red": "red",
+        "undefined": "undefined"
+    }
+    return mapping.get(confidence, "undefined")
+
+
+def clean_text(text):
+    value = (text or "").strip()
+    if not value:
+        return ""
+    return value[:-1] if value.endswith(".") else value
+
+
+def lc_first(text):
+    value = clean_text(text)
+    if not value:
+        return ""
+    return value[0].lower() + value[1:]
+
+
+def projected_value(metric, direction, horizon, target_text, statement_text):
+    metric_name = metric or "the metric"
+    target_fragment = lc_first(target_text) or f"improve {metric_name}"
+    statement_fragment = lc_first(statement_text)
+    if horizon == 1:
+        if statement_fragment:
+            return f"Current estimate: {metric_name} moves far enough to show clear momentum toward {target_fragment}, driven by {statement_fragment}."
+        return f"Current estimate: {metric_name} moves far enough to show clear momentum toward {target_fragment}."
+
+    if direction == "decrease":
+        return f"Current estimate: {metric_name} ends the horizon sustainably lower than today's baseline, with {target_fragment} holding across the broader operating model."
+    return f"Current estimate: {metric_name} ends the horizon sustainably ahead of today's baseline, with {target_fragment} holding across the broader operating model."
+
+
 def collect_kpis(node, target):
     if not node:
         return
@@ -227,19 +291,42 @@ def build_kpi_links(customer, kind, limit):
     return result
 
 
-def build_key_results(customer):
+def build_key_results(customer, period_key, key_result_status):
     key_results = []
+    year_text, quarter_text = period_key.split("-Q")
+    year = int(year_text)
+    quarter = int(quarter_text)
+    next_year, next_q = next_quarter(year, quarter)
+    _, target1_end = quarter_start_end(next_year, next_q)
+    target2_end, target2_label = target2_date(year, quarter)
+    base_confidence = confidence_for_status(key_result_status)
     linked_customer = build_kpi_links(customer, "customer", 2)
     linked_business = build_kpi_links(customer, "business", 1)
     for index, item in enumerate(linked_customer + linked_business, start=1):
+        target_text = "Improve quarter over quarter"
+        statement_text = f"{'Increase' if item['targetDirection'] == 'increase' else 'Decrease'} {item['kpiName']} during the quarter."
         key_results.append({
             "id": f"kr-{index}",
             "metric": item["kpiName"],
             "kind": item["kind"],
             "targetDirection": item["targetDirection"],
-            "target": "Improve quarter over quarter",
+            "target": target_text,
             "baseline": "Baseline to be confirmed from quarterly reporting",
-            "statement": f"{'Increase' if item['targetDirection'] == 'increase' else 'Decrease'} {item['kpiName']} during the quarter."
+            "statement": statement_text,
+            "target1": {
+                "label": f"{next_year}-Q{next_q} target",
+                "date": target1_end.isoformat(),
+                "target": target_text,
+                "projectedValue": projected_value(item["kpiName"], item["targetDirection"], 1, target_text, statement_text),
+                "confidence": base_confidence
+            },
+            "target2": {
+                "label": target2_label,
+                "date": target2_end.isoformat(),
+                "target": target_text,
+                "projectedValue": projected_value(item["kpiName"], item["targetDirection"], 2, target_text, statement_text),
+                "confidence": soften_confidence(base_confidence, key_result_status)
+            }
         })
     return key_results
 
@@ -325,7 +412,7 @@ def build_objective(domain, customer, period_key, period_type, initiatives, rele
         ],
         "linkedCustomerKPIs": build_kpi_links(customer, "customer", 2),
         "linkedBusinessKPIs": build_kpi_links(customer, "business", 1),
-        "keyResults": build_key_results(customer),
+        "keyResults": build_key_results(customer, period_key, "planned" if period_type == "next" else "on-track"),
         "linkedInitiatives": summarize_links(initiatives, customer["id"]),
         "linkedReleases": summarize_links(releases, customer["id"]),
         "sourceReferences": {
