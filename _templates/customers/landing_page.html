@@ -52,10 +52,7 @@
         }
 
         .review-image-small {
-            box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
-            width: 180px;
-            margin: 6px;
-            padding: 6px;
+            width: 100%;
         }
 
         .tab-image {
@@ -487,6 +484,7 @@
         <div class="tab">
             <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Home</button>
             <button class="tablinks" id="tab_JobsTab" onclick="openTab('JobsTab')">Jobs To Be Done</button>
+            <button class="tablinks" id="tab_JourneysTab" onclick="openTab('JourneysTab')">Journeys</button>
             <button class="tablinks" id="tab_KPITab" onclick="openTab('KPITab')">KPIs</button>
             <button class="tablinks" id="tab_RoadmapTab" onclick="openTab('RoadmapTab')">Product Vision</button>
             <button class="tablinks" id="tab_DiscoveriesTab" onclick="openTab('DiscoveriesTab')">Discoveries</button>
@@ -501,6 +499,9 @@
         </div>
         <div id="JobsTab" class="tabcontent" style="padding: 10px;">
             <div id="Jobs"></div>
+        </div>
+        <div id="JourneysTab" class="tabcontent" style="padding: 10px;">
+            <div id="Journeys"></div>
         </div>
         <div id="KPITab" class="tabcontent" style="padding: 10px;">
             <div id="KPI"></div>
@@ -853,6 +854,76 @@
 
         document.getElementById('Jobs').innerHTML = html;
         setJobsView('default');
+    }
+
+    function addJourneys() {
+        const journeys = customer.customerJourneyStories || [];
+        if (!journeys.length) {
+            document.getElementById('Journeys').innerHTML = '<div class="group">No customer journeys defined for this customer yet.</div>';
+            return;
+        }
+
+        let html = '';
+        html += '<div style="height: 50px"></div>';
+
+        journeys.forEach(journey => {
+            const stages = journey.stages || [];
+            html += '<div class="group job-detail-group">';
+            if (journey.media && journey.media.length) {
+                html += '<div style="margin-top: 10px">';
+                journey.media.forEach(item => {
+                    if (!item || !item.src) {
+                        return;
+                    }
+                    html += '<div style="display: inline-block">';
+                    const src = '../' + item.src;
+                    html += '<a target="_blank" href="' + src + '">';
+                    html += '<img src="' + src + '" class="job-detail-hero">';
+                    html += '</a>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+            html += '<div style="font-size: 210%; color: blue; margin-bottom: 12px">' + escapeHtml(journey.name || '') + '</div>';
+            if (journey.summary) {
+                html += '<div style="margin-bottom: 12px">' + escapeHtml(journey.summary) + '</div>';
+            }
+            if (journey.linkedJobIds && journey.linkedJobIds.length) {
+                html += '<div style="font-size: 80%; color: grey; margin-top: 8px;">Linked jobs: ' + escapeHtml(journey.linkedJobIds.join(', ')) + '</div>';
+            }
+            html += '<div style="text-align: center; margin-top: 24px; background-color: white" class="group">';
+            stages.forEach((stage, index) => {
+                html += '<div class="step">';
+                html += '<div style="font-size: 70%; color: grey; margin-bottom: 8px">Stage ' + (index + 1) + '</div>';
+                html += '<div style="font-size: 130%; color: blue; margin-bottom: 12px">' + escapeHtml(stage.stage || '') + '</div>';
+                if (stage.media && stage.media.length) {
+                    stage.media.forEach(item => {
+                        if (!item || !item.src) {
+                            return;
+                        }
+                        const src = '../' + item.src;
+                        html += '<div style="margin-bottom: 12px">';
+                        html += '<a target="_blank" href="' + src + '">';
+                        html += '<img src="' + src + '" class="review-image-small">';
+                        html += '</a>';
+                        html += '</div>';
+                    });
+                }
+                if (stage.narrative) {
+                    html += '<div style="font-size: 90%; margin-top: 8px">' + escapeHtml(stage.narrative) + '</div>';
+                }
+                html += '</div>';
+                if (index < stages.length - 1) {
+                    html += '<div style="display: inline-block; vertical-align: top; margin-top: 120px;">';
+                    html += '<img src="../icons/right.png" style="width: 32px; margin-left: 8px; margin-right: 8px">';
+                    html += '</div>';
+                }
+            });
+            html += '</div>';
+            html += '</div>';
+        });
+
+        document.getElementById('Journeys').innerHTML = html;
     }
 
     function setJobsView(view) {
@@ -1228,6 +1299,7 @@
     addHeader();
     addHome();
     addJBTD();
+    addJourneys();
     addKPIs();
     addProductVision();
     document.getElementById('Discoveries').innerHTML = renderActivityTable(discoveries, 'Discoveries', customer.id);

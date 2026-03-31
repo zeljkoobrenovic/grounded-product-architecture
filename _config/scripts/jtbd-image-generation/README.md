@@ -1,17 +1,19 @@
-# JTBD Image Generation
+# Customer Image Generation
 
-This folder contains source-first scripts that scan product-domain customer models, generate job-to-be-done imagery, save files into each domain's `customers/media/` folder, and update `customers.json` media references when needed.
+This folder contains source-first scripts that scan product-domain customer models, generate customer-facing imagery, save files into each domain's `customers/media/` folder, and update `customers.json` media references when needed.
 
 ## What It Does
 
 - finds every `_config/product-domains/<domain-id>/customers/customers.json`
-- reads every customer, job-to-be-done, and step
+- reads every customer plus:
+  - `jobsToBeDone` and their steps
+  - `customerJourneyStories` and their stages
 - builds a better image prompt from:
   - customer name and description
-  - JTBD name, outcome, and description
-  - step text and capability mappings
-  - the style cues from `_prompts/customers/jtbd-cartoon-prompt.txt`
-- calls either the OpenAI Images API or the Gemini Nano Banana image API
+  - JTBD name, outcome, description, and capability mappings
+  - journey summary, linked jobs, and stage narratives
+  - the style cues from `_prompts/customers/jtbd-cartoon-prompt.txt` or `_prompts/customers/customer-journeys.md`
+- calls either the OpenAI Images API or the Gemini Nano Banana image API for JTBD images, and the Gemini Nano Banana image API for journey images
 - writes image files into `customers/media/`
 - patches `media` entries in JSON if missing or stale
 
@@ -28,7 +30,7 @@ The script uses only Python's standard library. No extra package install is requ
 
 From the repository root:
 
-OpenAI Images API:
+JTBD images via OpenAI Images API:
 
 ```bash
 export OPENAI_API_KEY=...
@@ -37,13 +39,23 @@ python3 _config/scripts/jtbd-image-generation/generate_jtbd_images_openai_images
 python3 _config/scripts/jtbd-image-generation/generate_jtbd_images_openai_images_api.py --domain nutrition --overwrite
 ```
 
-Gemini Nano Banana API:
+JTBD images via Gemini Nano Banana API:
 
 ```bash
 export GEMINI_API_KEY=...
 python3 _config/scripts/jtbd-image-generation/generate_jtbd_images_gemini_nanobanana_api.py --dry-run
 python3 _config/scripts/jtbd-image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain nutrition --limit 4
 python3 _config/scripts/jtbd-image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain nutrition --overwrite
+```
+
+Customer journey images via Gemini Nano Banana API:
+
+```bash
+export GEMINI_API_KEY=...
+python3 _config/scripts/jtbd-image-generation/generate_journey_images_gemini_nanobanana_api.py --dry-run
+python3 _config/scripts/jtbd-image-generation/generate_journey_images_gemini_nanobanana_api.py --domain bike-mobility --json-only
+python3 _config/scripts/jtbd-image-generation/generate_journey_images_gemini_nanobanana_api.py --domain nutrition --limit 4
+python3 _config/scripts/jtbd-image-generation/generate_journey_images_gemini_nanobanana_api.py --domain nutrition --overwrite
 ```
 
 Useful flags:
@@ -56,9 +68,16 @@ Useful flags:
 - `--dry-run` prints planned actions only
 - `--model` defaults to `gpt-image-1.5` for OpenAI and `gemini-3-pro-image-preview` for Gemini
 - `--api-key-env` on the Gemini script lets you switch between `GEMINI_API_KEY` and `GOOGLE_API_KEY`
+- `generate_journey_images_gemini_nanobanana_api.py` creates:
+  - one image for each `customerJourneyStories[]`
+  - one image for each `customerJourneyStories[].stages[]`
+- `generate_jtbd_images_*` creates:
+  - one image for each `jobsToBeDone[]`
+  - one image for each `jobsToBeDone[].steps[]`
 
 ## Notes
 
 - The script updates only `customers/customers.json`. It does not regenerate `docs/`.
 - Existing non-image media entries are preserved.
 - Existing user changes elsewhere in the worktree are untouched.
+- A safe first run is `--dry-run` or `--json-only` on one domain before doing full image generation.
