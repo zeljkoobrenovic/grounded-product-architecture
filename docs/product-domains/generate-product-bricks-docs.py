@@ -315,7 +315,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
 
 
 def create_capability_landing_pages(capabilities, bricks, activity_data, products, customers, teams_payload):
-    landing_page_template = open(root_templates + 'capability_landing_page.html').read();
+    landing_page_template = open(root_templates + 'experience_landing_page.html').read();
     brick_lookup = {brick['id']: brick for brick in bricks}
 
     for capability in capabilities:
@@ -346,7 +346,7 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
         initiatives = dedupe_by(initiatives, lambda item: json.dumps(item, sort_keys=True))
         releases = dedupe_by(releases, lambda item: json.dumps(item, sort_keys=True))
 
-        htmlFile = docs_folder + 'capability_pages/' + str(capability['id']) + '.html'
+        htmlFile = docs_folder + 'experience_pages/' + str(capability['id']) + '.html'
         with open(htmlFile, 'w') as html_file:
             html_file.write(landing_page_template
                             .replace('${config}', json.dumps(config))
@@ -382,7 +382,7 @@ for domain in config['domains']:
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
-    os.makedirs(os.path.join(docs_folder, 'capability_pages'), exist_ok=True)
+    os.makedirs(os.path.join(docs_folder, 'experience_pages'), exist_ok=True)
 
     data = load_product_bricks_payload(product_bricks_config_path)
     flat_bricks = flatten_product_bricks(data)
