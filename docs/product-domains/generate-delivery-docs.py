@@ -60,7 +60,10 @@ def collect_kpis(node, target):
         target[node['name'].lower()] = {
             'name': node.get('name', ''),
             'description': node.get('description', ''),
-            'unit': node.get('unit', '')
+            'unit': node.get('unit', ''),
+            'currentValue': node.get('currentValue', ''),
+            'link': node.get('link', ''),
+            'linkLabel': node.get('linkLabel', '')
         }
     for child in node.get('children', []):
         collect_kpis(child, target)
@@ -156,6 +159,9 @@ def enrich_kpi(kpi, details, kind):
         'expectedImpact': kpi.get('expectedImpact', ''),
         'description': info.get('description', ''),
         'unit': info.get('unit', ''),
+        'currentValue': info.get('currentValue', ''),
+        'link': info.get('link', ''),
+        'linkLabel': info.get('linkLabel', ''),
         'kind': kind
     }
 

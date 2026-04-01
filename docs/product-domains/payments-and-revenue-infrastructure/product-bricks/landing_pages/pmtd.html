@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Method Orchestration</title>
+
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 0;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+
+        .review-image {
+            box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+            width: 400px;
+            margin: 10px;
+            padding: 10px
+        }
+
+        .review-image-small {
+            box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+            width: 180px;
+            margin: 6px;
+            padding: 6px;
+        }
+
+        .tab-image {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+        }
+
+        .tab-image-selected {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+            border-bottom: 4px solid blue;
+        }
+
+        .group {
+            margin-top: 2px;
+            margin-bottom: 40px;
+            padding: 20px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            overflow: hidden;
+            border: 1px solid lightgrey;
+        }
+
+        .repo {
+            overflow: hidden;
+            margin: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+        }
+
+        .aws {
+            overflow: hidden;
+            margin: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+        }
+
+
+        .person {
+            text-align: center;
+            padding: 6px;
+            margin: 4px;
+            display: inline-block;
+            font-size: 11px;
+            width: 110px;
+            overflow: hidden;
+            white-space: nowrap;
+            vertical-align: top;
+        }
+
+        .docs {
+            text-align: center;
+            padding: 6px;
+            margin: 4px;
+            display: inline-block;
+            font-size: 11px;
+            width: 110px;
+            overflow: hidden;
+            vertical-align: top;
+        }
+
+        .team {
+            text-align: center;
+            padding: 6px;
+            margin: 8px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 13px;
+            width: 110px;
+            overflow: hidden;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            white-space: nowrap;
+            vertical-align: top;
+            border: 2px solid grey;
+            height: 140px;
+        }
+
+        .legacy-team {
+            text-align: center;
+            padding: 6px;
+            margin: 8px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 13px;
+            width: 110px;
+            overflow: hidden;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            white-space: nowrap;
+            vertical-align: top;
+            border: 2px dashed grey;
+            height: 140px;
+        }
+
+        .number {
+            display: inline-block;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+            margin: 8px;
+            width: 100px;
+        }
+
+        .dependency-icon {
+            height: 32px;
+            margin-left: 8px;
+            margin-right: 8px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+            padding: 4px;
+            border-radius: 5px;
+        }
+
+        .activity-summary {
+            margin: 14px 0;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .activity-stat {
+            display: inline-block;
+            margin-right: 18px;
+            min-width: 110px;
+        }
+
+        .activity-stat-value {
+            font-size: 30px;
+            color: #1d4ed8;
+        }
+
+        .activity-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .activity-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .activity-table th,
+        .activity-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        .activity-table th {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .activity-link {
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .tag {
+            color: #6b7280;
+            font-size: 90%;
+            padding: 3px;
+            border: 1px solid grey;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .activity-muted {
+            color: #6b7280;
+            font-size: 90%;
+        }
+
+        .activity-block {
+            margin-bottom: 8px;
+            padding-left: 10px;
+            border-left: 3px solid #d7dce1;
+        }
+
+        .activity-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 12px;
+        }
+
+        .activity-pill-highlight {
+            background-color: #dbeafe;
+            border: 1px solid #60a5fa;
+        }
+
+        .activity-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .activity-icon-round {
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .home-section {
+            margin-top: 18px;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .home-section-title {
+            font-size: 12px;
+            color: blue;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        .home-link-card {
+            display: block;
+            margin-bottom: 12px;
+            padding: 12px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: white;
+            color: inherit;
+        }
+
+        .home-link-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .home-link-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #d1d5db;
+            background-color: white;
+        }
+
+        .home-link-title {
+            font-weight: bold;
+            color: #1d4ed8;
+            font-size: 140%;
+        }
+
+        .home-link-meta {
+            color: #6b7280;
+        }
+
+        .home-link-copy {
+            line-height: 1.5;
+            color: grey;
+        }
+
+        .structure-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .structure-card {
+            padding: 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .structure-card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .structure-card-type {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .structure-card-copy {
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .structure-card-meta {
+            margin-top: 10px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .step-media-card {
+            margin-top: 10px;
+            display: inline-block;
+            max-width: 280px;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .step-media-image {
+            display: block;
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 6px;
+            object-fit: contain;
+            background-color: #f8fafc;
+        }
+
+        .step-media-caption {
+            margin-top: 6px;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .dependency-diagram {
+            margin-top: 10px;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            overflow-x: auto;
+        }
+
+        .dependency-subsection {
+            margin-top: 18px;
+        }
+
+        .dependency-subsection-title {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .dependency-entity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dependency-entity-icon {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background-color: white;
+            padding: 2px;
+        }
+
+        .evidence-group {
+            margin-top: 18px;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .evidence-group:first-child {
+            margin-top: 0;
+        }
+
+        .evidence-group-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .evidence-group-description {
+            color: #6b7280;
+            margin-bottom: 14px;
+        }
+
+        .evidence-card {
+            padding: 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: white;
+            display: inline-block;
+            width: 260px;
+            vertical-align: top;
+            margin: 5px;
+            box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+        }
+
+        .evidence-card:last-child {
+            margin-bottom: 0;
+        . id
+        }
+
+        .evidence-card-title {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: blue;
+        }
+
+        .evidence-card-header {
+            background-color: #f0f0f0;
+            padding: 12px;
+            margin-top: -14px;
+            margin-left: -14px;
+            margin-right: -14px;
+            margin-bottom: 8px;
+        }
+
+        .evidence-card-meta {
+            margin-bottom: 8px;
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .evidence-card-summary {
+            line-height: 1.5;
+            margin-bottom: 10px;
+            font-size: 90%;
+            color: grey;
+        }
+
+        .evidence-links {
+            margin-top: 8px;
+        }
+
+        .evidence-link {
+            margin-right: 10px;
+            margin-bottom: 8px;
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .evidence-link-muted {
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 8px;
+            color: #6b7280;
+        }
+
+        .evidence-id {
+            font-family: monospace;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+        function initTab() {
+            let tabName = 'OverviewTab';
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                if (document.getElementById('tab_' + hash)) {
+                    tabName = hash;
+                }
+            }
+            openTab(tabName);
+        }
+
+        function openTab(tabName) {
+            const tabcontent = document.getElementsByClassName('tabcontent');
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = 'none';
+            }
+            const tablinks = document.getElementsByClassName('tablinks');
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(' active', '');
+            }
+            history.pushState({}, '', '#' + tabName);
+            document.getElementById(tabName).style.display = 'block';
+            document.getElementById('tab_' + tabName).className += ' active';
+            if (tabName === 'DependenciesTab') {
+                renderDependenciesDiagramIfNeeded();
+            }
+        }
+    </script>
+</head>
+<body onload="initTab()" onhashchange="initTab()">
+
+<script>
+    const config = {"domains": [{"id": "emobility", "name": "eMobility", "description": "The eMobility domain covers the platforms, operations, and customer journeys required to run charging networks, roaming services, driver experiences, and fleet electrification at scale."}, {"id": "nutrition", "name": "Nutrition", "description": "The Nutrition domain covers the products, capabilities, and stakeholders needed to design, produce, govern, and improve nutrition solutions with strong compliance, quality, and sustainability outcomes."}, {"id": "real-estate-marketplace", "name": "Real Estate Marketplace", "description": "The Real Estate Marketplace domain covers the customer journeys, commercial workflows, and platform capabilities required to connect property seekers, owners, intermediaries, and partners."}, {"id": "general-listings-marketplace", "name": "General Listings Marketplace", "description": "Covers the customer journeys, trust mechanisms, commercial workflows, and platform capabilities required to run a broad local classifieds marketplace across goods, vehicles, services, jobs, and professional storefront supply."}, {"id": "maas", "name": "Mobility-as-a-Service (MaaS)", "description": "The products, workflows, and platform capabilities required to run parking, curbside, public transport payments, fleet mobility, city-planning intelligence, and partner ecosystems at global urban-mobility scale."}, {"id": "internal", "name": "Internal", "description": "The Internal domain covers the tools, workflows, and enabling capabilities used by internal teams to operate, analyze, support, and improve the business."}, {"id": "platform-engineering", "name": "Platform Engineering", "description": "The Platform Engineering domain covers the internal developer platforms, golden paths, runtime foundations, delivery guardrails, and reliability workflows used by product and technology teams to ship software faster, safer, and with lower cognitive load."}, {"id": "mambu", "name": "Mambu", "description": "The Mambu domain covers the banking products, platform capabilities, and ecosystem integrations needed for lenders and financial institutions to launch and scale modern cloud-native banking services."}, {"id": "payments-and-revenue-infrastructure", "name": "Payments and Revenue Infrastructure", "description": "The Payments and Revenue Infrastructure domain covers the merchant, platform, finance, and risk workflows required to accept payments globally, automate recurring revenue, orchestrate multi-party funds flows, and operate internet-scale commerce with compliance and financial control."}, {"id": "bike-mobility", "name": "Bike Mobility", "description": "The Bike Mobility domain covers the products, workflows, and platform capabilities required to launch and scale employer-backed bike leasing, rider services, dealer ecosystems, pooled bike fleets, and lifecycle services across European markets."}, {"id": "premium-long-haul-airline", "name": "Premium Long-Haul Airline", "description": "The Premium Long-Haul Airline domain covers the products, workflows, and platform capabilities required to retail, operate, service, recover, and grow a premium airline across long-haul passenger travel, holidays, loyalty, partner connectivity, and cargo."}, {"id": "travel-accommodations-marketplace", "name": "Travel Accommodations Marketplace", "description": "The Travel Accommodations Marketplace domain covers the traveler journeys, partner workflows, trust controls, merchandising systems, and platform capabilities required to run a global accommodations marketplace across hotels, homes, apartments, hostels, and managed travel stays."}, {"id": "hosted-stays-marketplace", "name": "Hosted Stays Marketplace", "description": "The Hosted Stays Marketplace domain covers the guest, host, co-host, trust, payment, and compliance workflows required to run a global marketplace for homes, rooms, and professionally managed short-term rental stays."}, {"id": "ride-sharing-marketplace", "name": "Ride Sharing Marketplace", "description": "The Ride Sharing Marketplace domain covers the rider, driver, fleet, business-travel, and marketplace-operations workflows required to run an on-demand and scheduled rides platform with dynamic pricing, dispatch, trust, and multimodal extensions."}, {"id": "audio-streaming-platform", "name": "Audio Streaming Platform", "description": "The Audio Streaming Platform domain covers the listener, creator, rights-holder, and advertiser workflows required to run a global audio platform spanning music, podcasts, video podcasts, audiobooks, subscriptions, creator growth, and advertising monetization."}, {"id": "online-retail-marketplace", "name": "Online Retail Marketplace", "description": "The Online Retail Marketplace domain covers the shopper, Prime, seller, fulfillment, retail-media, trust, and shared-commerce workflows required to run a scaled digital retail marketplace across first-party retail, third-party supply, subscriptions, and advertising."}]};
+    const all_bricks = [{"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "children": [], "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant Payments", "group": "Checkout and conversion"}, {"id": "elem", "name": "Payment Elements", "type": "full-stack", "description": "Embeddable payment form components with centralized method logic and wallet support.", "children": [], "internalModules": [{"title": "Payment form rendering", "description": "Delivers embeddable payment components across buyer surfaces.", "type": "service"}], "interfaces": [{"title": "Embedded payment UI", "description": "Customizable payment element rendered in merchant surfaces.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Method orchestration API", "description": "Uses payment method ranking and eligibility logic."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant Payments", "group": "Checkout and conversion"}, {"id": "pmlk", "name": "Payment Links", "type": "full-stack", "description": "Low-code payment collection surfaces for one-off and lightweight commerce flows.", "children": [], "internalModules": [{"title": "Hosted link generation", "description": "Creates hosted payment and collection links for operators.", "type": "service"}], "interfaces": [{"title": "Payment link management UI", "description": "Dashboard workflow for link creation and monitoring.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "chck", "type": "composition", "interface": "Hosted session components", "description": "Reuses hosted payment session capabilities."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant Payments", "group": "Checkout and conversion"}, {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "children": [], "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant Payments", "group": "Checkout and conversion"}, {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "children": [], "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant Payments", "group": "Payment performance and omnichannel"}, {"id": "term", "name": "Terminal and Reader Operations", "type": "full-stack", "description": "Reader provisioning, card-present payment acceptance, and in-person operational control.", "children": [], "internalModules": [{"title": "Reader fleet management", "description": "Manages reader lifecycle, connectivity, and configuration.", "type": "service"}], "interfaces": [{"title": "Reader operations UI", "description": "Operator workflow for reader assignment and health.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "ledg", "type": "context", "interface": "Unified payment state model", "description": "Uses shared money-state logic across online and in-person flows."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant Payments", "group": "Payment performance and omnichannel"}, {"id": "subs", "name": "Subscription and Price Management", "type": "full-stack", "description": "Product, price, recurring lifecycle, and proration controls for recurring businesses.", "children": [], "internalModules": [{"title": "Pricing and subscription state engine", "description": "Manages plans, prices, renewals, and lifecycle changes.", "type": "service"}], "interfaces": [{"title": "Billing configuration UI", "description": "Operator workflow for price and subscription management.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Revenue Automation", "group": "Monetization control plane"}, {"id": "usag", "name": "Usage Metering and Rating", "type": "full-stack", "description": "Captures usage events, rating logic, and billable volume for hybrid pricing models.", "children": [], "internalModules": [{"title": "Meter ingestion and rating", "description": "Ingests usage events and converts them into billable amounts.", "type": "service"}], "interfaces": [{"title": "Meter definitions UI", "description": "Operator controls for meters and pricing rules.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "subs", "type": "composition", "interface": "Price and plan definitions", "description": "Uses product and pricing metadata from the subscription model."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Revenue Automation", "group": "Monetization control plane"}, {"id": "invo", "name": "Invoicing and Collections", "type": "full-stack", "description": "Invoice generation, collection workflows, reminders, and dunning behavior.", "children": [], "internalModules": [{"title": "Invoice lifecycle orchestration", "description": "Creates invoices and manages payment collection states.", "type": "service"}], "interfaces": [{"title": "Invoice operations UI", "description": "Dashboard for invoice review, reminders, and retries.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "auth", "type": "composition", "interface": "Payment collection optimization", "description": "Uses payment success optimization during collection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Revenue Automation", "group": "Monetization control plane"}, {"id": "taxx", "name": "Tax Determination and Registration", "type": "full-stack", "description": "Tax obligation monitoring, calculation, and registration support across geographies.", "children": [], "internalModules": [{"title": "Tax rules and obligation engine", "description": "Evaluates tax applicability and registration thresholds.", "type": "service"}], "interfaces": [{"title": "Tax dashboard", "description": "Operator workflow for registrations and tax monitoring.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "invo", "type": "context", "interface": "Invoice and transaction context", "description": "Uses billing and transaction details for tax calculation."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Revenue Automation", "group": "Tax and accounting automation"}, {"id": "revn", "name": "Revenue Recognition", "type": "full-stack", "description": "Automates revenue schedules and accounting treatment from Stripe event data.", "children": [], "internalModules": [{"title": "Recognition rules engine", "description": "Applies accounting logic to billing and payment events.", "type": "service"}], "interfaces": [{"title": "Revenue reporting UI", "description": "Operator workflow for revenue schedules and accounting review.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "ledg", "type": "data", "interface": "Money-state ledger data", "description": "Uses payment and settlement event history for accounting outputs."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Revenue Automation", "group": "Tax and accounting automation"}, {"id": "rpts", "name": "Reporting, Sigma, and Data Export", "type": "full-stack", "description": "Queryable reporting, exports, and operational analytics across Stripe workflows.", "children": [], "internalModules": [{"title": "Reporting and export engine", "description": "Builds dashboards, scheduled exports, and queryable data surfaces.", "type": "service"}], "interfaces": [{"title": "Reporting UI", "description": "Operator reporting and query workflows.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "ledg", "type": "data", "interface": "Unified event and ledger model", "description": "Uses shared financial event data across products."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Revenue Automation", "group": "Tax and accounting automation"}, {"id": "acct", "name": "Connected Account Lifecycle", "type": "full-stack", "description": "Account types, capability state, lifecycle transitions, and platform controls for counterparties.", "children": [], "internalModules": [{"title": "Account capability orchestration", "description": "Tracks connected-account state, requirements, and activation logic.", "type": "service"}], "interfaces": [{"title": "Connected account UI", "description": "Operator workflows for account lifecycle and status management.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "kycb", "type": "composition", "interface": "Verification requirements service", "description": "Uses verification requirements to decide account status."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Money Movement", "group": "Platform onboarding"}, {"id": "kycb", "name": "KYC and KYB Verification", "type": "full-stack", "description": "Business and individual verification workflows required to activate and maintain accounts.", "children": [], "internalModules": [{"title": "Verification workflow engine", "description": "Collects and validates required KYC and KYB data.", "type": "service"}], "interfaces": [{"title": "Onboarding verification UI", "description": "Hosted and operator-assisted verification workflows.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "composition", "interface": "Identity verification service", "description": "Uses identity document checks for stronger assurance where needed."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Money Movement", "group": "Platform onboarding"}, {"id": "iden", "name": "Identity Verification", "type": "full-stack", "description": "Document and identity verification workflows used in higher-assurance onboarding and fraud-sensitive scenarios.", "children": [], "internalModules": [{"title": "Identity evidence verification", "description": "Evaluates documents and identity signals for onboarding or compliance flows.", "type": "service"}], "interfaces": [{"title": "Identity capture UI", "description": "Hosted identity verification flow.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Money Movement", "group": "Platform onboarding"}, {"id": "split", "name": "Funds Routing and Split Settlement", "type": "full-stack", "description": "Moves money between platform and counterparties while applying fees, reserves, and settlement rules.", "children": [], "internalModules": [{"title": "Split settlement engine", "description": "Calculates fee shares, reserves, and transfers across parties.", "type": "service"}], "interfaces": [{"title": "Funds flow controls UI", "description": "Operator workflow for platform fee and settlement settings.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "ledg", "type": "data", "interface": "Balance and ledger service", "description": "Uses shared money-state and balance bookkeeping."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Money Movement", "group": "Platform funds and financial products"}, {"id": "pyot", "name": "Global Payouts and Treasury Workflows", "type": "full-stack", "description": "Outbound payouts, scheduling, rails management, and treasury-adjacent money movement workflows.", "children": [], "internalModules": [{"title": "Payout execution engine", "description": "Schedules and executes outbound money movement across payout rails.", "type": "service"}], "interfaces": [{"title": "Payout operations UI", "description": "Operator workflow for payout timing, failures, and status.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "split", "type": "composition", "interface": "Funds routing service", "description": "Uses routed balances and settlement outcomes to trigger payouts."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Money Movement", "group": "Platform funds and financial products"}, {"id": "issu", "name": "Issuing and Spend Controls", "type": "full-stack", "description": "Card issuing, spend controls, and programmatic card use cases for platforms and businesses.", "children": [], "internalModules": [{"title": "Card program controls", "description": "Manages card issuance and spend policy behavior.", "type": "service"}], "interfaces": [{"title": "Card program UI", "description": "Operator workflow for issuing programs and controls.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "acct", "type": "context", "interface": "Account capability model", "description": "Uses connected-account state and entitlements."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Money Movement", "group": "Platform funds and financial products"}, {"id": "capm", "name": "Capital and Financing Offers", "type": "full-stack", "description": "Financing and capital offer workflows tied to performance and money-movement history.", "children": [], "internalModules": [{"title": "Offer and repayment engine", "description": "Generates financing offers and repayment logic based on platform or merchant activity.", "type": "service"}], "interfaces": [{"title": "Capital offer UI", "description": "Operator and recipient workflow for financing visibility and acceptance.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rpts", "type": "data", "interface": "Performance and cash-flow reporting", "description": "Uses historical transaction and payout data to assess eligibility."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Money Movement", "group": "Platform funds and financial products"}, {"id": "rada", "name": "Fraud Detection and Adaptive Risk Controls", "type": "full-stack", "description": "AI-assisted fraud scoring, adaptive controls, and operator workflows across payment and platform activity.", "children": [], "internalModules": [{"title": "Risk scoring and controls engine", "description": "Evaluates transaction and behavioral signals to apply adaptive controls.", "type": "service"}], "interfaces": [{"title": "Risk review UI", "description": "Fraud operations workflow and rule configuration surface.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Shared Financial Foundations", "group": "Trust and financial operations"}, {"id": "disp", "name": "Disputes and Chargeback Operations", "type": "full-stack", "description": "Chargeback handling, evidence workflows, and loss management across payment products.", "children": [], "internalModules": [{"title": "Dispute case orchestration", "description": "Tracks dispute lifecycle, evidence, and outcomes.", "type": "service"}], "interfaces": [{"title": "Dispute operations UI", "description": "Operator workflow for dispute review and evidence management.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk and fraud event history", "description": "Uses risk context to support case handling and loss analysis."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Shared Financial Foundations", "group": "Trust and financial operations"}, {"id": "ledg", "name": "Balances and Internal Ledger", "type": "full-stack", "description": "Shared money-state ledger across charges, invoices, transfers, refunds, and payouts.", "children": [], "internalModules": [{"title": "Financial event ledger", "description": "Records and reconciles money-state transitions across product lines.", "type": "service"}], "interfaces": [{"title": "Balance state UI", "description": "Operator views into balances and money movement state.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Shared Financial Foundations", "group": "Trust and financial operations"}, {"id": "reca", "name": "Reconciliation and Balance Operations", "type": "full-stack", "description": "Exception handling, payout understanding, and finance-operations workflows built on Stripe's money-state model.", "children": [], "internalModules": [{"title": "Reconciliation exception workflow", "description": "Explains and resolves mismatches between financial events and cash movement.", "type": "service"}], "interfaces": [{"title": "Reconciliation UI", "description": "Finance and operations workflow for investigating balance and payout issues.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "ledg", "type": "composition", "interface": "Ledger event model", "description": "Uses shared ledger events and balances as the basis for exception handling."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Shared Financial Foundations", "group": "Trust and financial operations"}, {"id": "webh", "name": "Eventing and Webhooks", "type": "full-stack", "description": "Outbound event delivery and integration hooks for payment, billing, and platform workflows.", "children": [], "internalModules": [{"title": "Event dispatch engine", "description": "Publishes reliable workflow events to customer systems.", "type": "service"}], "interfaces": [{"title": "Webhook configuration UI", "description": "Developer workflow for event subscriptions and endpoint management.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "devx", "type": "context", "interface": "Developer identity and API controls", "description": "Uses shared developer authentication and environment controls."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Shared Financial Foundations", "group": "Developer and integration foundations"}, {"id": "devx", "name": "Developer API and Dashboard Foundations", "type": "full-stack", "description": "Shared API credentials, dashboard foundations, environment controls, and operator experience.", "children": [], "internalModules": [{"title": "Developer platform control plane", "description": "Manages keys, environments, permissions, and common dashboard behaviors.", "type": "service"}], "interfaces": [{"title": "Dashboard shell and developer UI", "description": "Shared developer and operator workspace foundation.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Shared Financial Foundations", "group": "Developer and integration foundations"}];
+    const allCapabilities = [{"id": "accept-payments-globally", "name": "Accept Payments Globally with High Conversion", "icon": "accept-payments-globally.png", "type": "outcome-based-experience", "description": "Help merchants turn purchase intent into captured payments across markets and payment methods with low friction and low loss.", "group": "Merchant Payments", "flows": [{"id": "accept-payments-globally-flow", "title": "Accept Payments Globally with High Conversion", "description": "From buyer checkout intent to captured payment and managed exceptions.", "steps": [{"id": "launch-the-right-checkout-surface", "title": "Launch the right checkout surface", "dependencies": [{"type": "brick", "id": "chck", "name": "Hosted Checkout", "description": "Hosted checkout experience.", "how": "Accelerates launch and standardizes buyer experience."}, {"type": "brick", "id": "elem", "name": "Payment Elements", "description": "Embeddable payment UI.", "how": "Supports custom payment experiences without rebuilding orchestration."}]}, {"id": "present-the-best-payment-options", "title": "Present the best payment options", "dependencies": [{"type": "brick", "id": "pmtd", "name": "Payment Method Orchestration", "description": "Payment method selection and ordering.", "how": "Shows the right methods by market and context."}, {"type": "brick", "id": "auth", "name": "Authorization Optimization", "description": "Approval-rate optimization.", "how": "Recovers legitimate payments that would otherwise fail."}]}, {"id": "protect-and-operate-the-transaction", "title": "Protect and operate the transaction", "dependencies": [{"type": "brick", "id": "rada", "name": "Fraud Detection and Adaptive Risk Controls", "description": "Fraud scoring and adaptive controls.", "how": "Reduces fraud without unnecessary conversion loss."}, {"type": "brick", "id": "disp", "name": "Disputes and Chargeback Operations", "description": "Post-payment loss and dispute handling.", "how": "Keeps payment success economically durable."}]}]}], "outcomes": ["Higher successful payment conversion", "Higher merchant GPV retention"], "brickDependencies": [{"targetBrickId": "chck", "type": "composition"}, {"targetBrickId": "elem", "type": "composition"}, {"targetBrickId": "pmtd", "type": "composition"}, {"targetBrickId": "auth", "type": "composition"}, {"targetBrickId": "rada", "type": "composition"}, {"targetBrickId": "disp", "type": "composition"}], "externalSystemsThisCapabilityDependsOn": [], "externalSystemsDependingOnThisCapability": []}, {"id": "automate-recurring-revenue", "name": "Automate Recurring Revenue and Finance Workflows", "icon": "automate-recurring-revenue.png", "type": "outcome-based-experience", "description": "Help recurring businesses launch monetization changes quickly while keeping collections, tax, and accounting trustworthy.", "group": "Revenue Automation", "flows": [{"id": "automate-recurring-revenue-flow", "title": "Automate Recurring Revenue and Finance Workflows", "description": "From pricing setup to collections and accounting outputs.", "steps": [{"id": "configure-monetization", "title": "Configure monetization", "dependencies": [{"type": "brick", "id": "subs", "name": "Subscription and Price Management", "description": "Recurring pricing and lifecycle logic.", "how": "Lets RevOps launch recurring models quickly."}, {"type": "brick", "id": "usag", "name": "Usage Metering and Rating", "description": "Usage billing logic.", "how": "Supports modern hybrid and usage-based models."}]}, {"id": "collect-and-recover-revenue", "title": "Collect and recover revenue", "dependencies": [{"type": "brick", "id": "invo", "name": "Invoicing and Collections", "description": "Invoice and dunning workflow.", "how": "Turns billable activity into collected cash."}, {"type": "brick", "id": "auth", "name": "Authorization Optimization", "description": "Recurring payment optimization.", "how": "Improves renewal success on legitimate charges."}]}, {"id": "close-the-loop-with-finance", "title": "Close the loop with finance", "dependencies": [{"type": "brick", "id": "taxx", "name": "Tax Determination and Registration", "description": "Tax compliance operations.", "how": "Keeps monetization globally launchable."}, {"type": "brick", "id": "revn", "name": "Revenue Recognition", "description": "Accounting treatment automation.", "how": "Makes billed activity auditable and trusted."}, {"type": "brick", "id": "rpts", "name": "Reporting, Sigma, and Data Export", "description": "Reporting and exports.", "how": "Gives RevOps and finance one analytical picture."}]}]}], "outcomes": ["Higher net revenue retention", "Lower month-end manual work"], "brickDependencies": [{"targetBrickId": "subs", "type": "composition"}, {"targetBrickId": "usag", "type": "composition"}, {"targetBrickId": "invo", "type": "composition"}, {"targetBrickId": "taxx", "type": "composition"}, {"targetBrickId": "revn", "type": "composition"}, {"targetBrickId": "rpts", "type": "composition"}], "externalSystemsThisCapabilityDependsOn": [], "externalSystemsDependingOnThisCapability": []}, {"id": "operate-platform-money-movement", "name": "Operate Platform Onboarding, Funds Flows, and Payouts", "icon": "operate-platform-money-movement.png", "type": "outcome-based-experience", "description": "Help platforms activate counterparties, route funds, and scale payouts safely with strong operator visibility.", "group": "Platform Infrastructure", "flows": [{"id": "operate-platform-money-movement-flow", "title": "Operate Platform Onboarding, Funds Flows, and Payouts", "description": "From connected-account onboarding into live payouts and operator controls.", "steps": [{"id": "activate-connected-accounts", "title": "Activate connected accounts", "dependencies": [{"type": "brick", "id": "acct", "name": "Connected Account Lifecycle", "description": "Connected-account state model.", "how": "Keeps account activation and capability state explicit."}, {"type": "brick", "id": "kycb", "name": "KYC and KYB Verification", "description": "Verification workflows.", "how": "Reduces activation loss caused by incomplete compliance steps."}, {"type": "brick", "id": "iden", "name": "Identity Verification", "description": "Higher-assurance identity workflows.", "how": "Adds trust where platforms need stronger assurance."}]}, {"id": "route-and-disburse-funds", "title": "Route and disburse funds", "dependencies": [{"type": "brick", "id": "split", "name": "Funds Routing and Split Settlement", "description": "Funds-flow orchestration.", "how": "Handles fees, reserves, and multi-party settlement."}, {"type": "brick", "id": "pyot", "name": "Global Payouts and Treasury Workflows", "description": "Payout execution.", "how": "Moves money out on the right schedule and rails."}]}, {"id": "operate-the-money-system", "title": "Operate the money system", "dependencies": [{"type": "brick", "id": "ledg", "name": "Balances and Internal Ledger", "description": "Shared money-state ledger.", "how": "Keeps ownership of money legible across parties."}, {"type": "brick", "id": "reca", "name": "Reconciliation and Balance Operations", "description": "Exception and payout operations.", "how": "Lets platform operators trust what happened and why."}]}]}], "outcomes": ["Higher connected-account activation", "Higher platform GPV growth"], "brickDependencies": [{"targetBrickId": "acct", "type": "composition"}, {"targetBrickId": "kycb", "type": "composition"}, {"targetBrickId": "iden", "type": "composition"}, {"targetBrickId": "split", "type": "composition"}, {"targetBrickId": "pyot", "type": "composition"}, {"targetBrickId": "reca", "type": "composition"}], "externalSystemsThisCapabilityDependsOn": [], "externalSystemsDependingOnThisCapability": []}, {"id": "run-trust-and-finance-operations", "name": "Run Trust, Reporting, and Finance Operations", "icon": "run-trust-and-finance-operations.png", "type": "outcome-based-experience", "description": "Make Stripe operable for finance, risk, and engineering teams through shared ledger, reporting, and eventing capabilities.", "group": "Shared Foundations", "flows": [{"id": "run-trust-and-finance-operations-flow", "title": "Run Trust, Reporting, and Finance Operations", "description": "From real-time decisions into auditable reporting and integrations.", "steps": [{"id": "make-real-time-risk-and-state-decisions", "title": "Make real-time risk and state decisions", "dependencies": [{"type": "brick", "id": "rada", "name": "Fraud Detection and Adaptive Risk Controls", "description": "Real-time risk decisioning.", "how": "Protects the system while preserving legitimate activity."}, {"type": "brick", "id": "ledg", "name": "Balances and Internal Ledger", "description": "Financial state tracking.", "how": "Provides the source of truth for money-state transitions."}]}, {"id": "understand-and-resolve-exceptions", "title": "Understand and resolve exceptions", "dependencies": [{"type": "brick", "id": "disp", "name": "Disputes and Chargeback Operations", "description": "Dispute workflows.", "how": "Explains and manages post-transaction risk events."}, {"type": "brick", "id": "reca", "name": "Reconciliation and Balance Operations", "description": "Finance exception workflow.", "how": "Helps operators close the loop on money movement anomalies."}]}, {"id": "export-and-integrate-operational-truth", "title": "Export and integrate operational truth", "dependencies": [{"type": "brick", "id": "rpts", "name": "Reporting, Sigma, and Data Export", "description": "Reporting and data workflows.", "how": "Turns Stripe activity into actionable operational and finance insight."}, {"type": "brick", "id": "webh", "name": "Eventing and Webhooks", "description": "Event-driven integration layer.", "how": "Connects Stripe state changes to customer systems."}, {"type": "brick", "id": "devx", "name": "Developer API and Dashboard Foundations", "description": "Shared control plane.", "how": "Makes the domain programmable and operable."}]}]}], "outcomes": ["Lower finance exception rate", "Higher operator trust"], "brickDependencies": [{"targetBrickId": "rada", "type": "composition"}, {"targetBrickId": "disp", "type": "composition"}, {"targetBrickId": "ledg", "type": "composition"}, {"targetBrickId": "reca", "type": "composition"}, {"targetBrickId": "rpts", "type": "composition"}, {"targetBrickId": "webh", "type": "composition"}, {"targetBrickId": "devx", "type": "composition"}], "externalSystemsThisCapabilityDependsOn": [], "externalSystemsDependingOnThisCapability": []}];
+    const brick = {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "children": [], "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant Payments", "group": "Checkout and conversion"};
+    const evidence = {"brickId": "pmtd", "groups": []};
+    const relatedTeams = [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "teamType": "stream-aligned", "groupId": "payments-experience", "groupName": "Payments Experience", "role": "owner", "roleLabel": "Owner"}, {"teamId": "checkout-conversion", "teamName": "Checkout Conversion", "teamType": "stream-aligned", "groupId": "payments-experience", "groupName": "Payments Experience", "role": "supporting", "roleLabel": "Supporting team"}];
+    const linkedProducts = [];
+    const supportedJobs = [];
+    const initiatives = {"items": [{"title": "Global Checkout Conversion Initiative", "date": "2026-04-12", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Growth Commerce GM", "group": "Direct Merchants", "icon": "commerce_gm.png"}, "customerKPIs": [{"kpi": "Successful payment conversion", "expectedImpact": "Increase captured payments from existing checkout demand.", "description": "Increase the share of legitimate checkout attempts that become captured payments to 97.5%.", "unit": "% of legitimate payment attempts", "currentValue": "82.1", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Issuer authorization rate", "expectedImpact": "Reduce avoidable legitimate declines.", "description": "Raise issuer authorization success on legitimate card attempts to 91.5%.", "unit": "% of legitimate card attempts", "currentValue": "52.8", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Enterprise merchant GPV retention", "expectedImpact": "Improve retained merchant volume through conversion quality.", "description": "Keep net GPV retention above 118% on scaled commerce cohorts by improving conversion and cross-product depth.", "unit": "% net GPV retention", "currentValue": "81.8", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "chck", "change": "Improve hosted checkout flows by market and device.", "brick": {"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chck.png"}}, {"brickId": "pmtd", "change": "Improve method ordering and country-level relevance.", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}, {"brickId": "auth", "change": "Improve approval recovery on legitimate traffic.", "brick": {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}], "deliveryChannels": [{"channelId": "hosted-checkout", "change": "Roll out updated checkout treatments.", "channel": {"productId": "hosted", "productName": "", "name": "hosted-checkout", "type": "product", "icon": "product.png"}}, {"channelId": "api-gateway", "change": "Expose supporting orchestration and authorization updates.", "channel": {"productId": "api", "productName": "", "name": "api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["checkout-conversion", "payment-network-performance"], "supportingTeamIds": ["trust-ops", "developer-foundations"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "discoveryIds": ["discovery-payments-revenue-infrastructure-2026-04-05-01-checkout"], "priority": "p1", "keyResultId": "payments-and-revenue-infrastructure-2026-q2-cg1-p1/kr-1", "landingPageIndex": 5}]};
+    const releases = {"items": [{"title": "Global Checkout Conversion Release", "date": "2026-05-14", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Growth Commerce GM", "group": "Direct Merchants", "icon": "commerce_gm.png"}, "customerKPIs": [{"kpi": "Successful payment conversion", "expectedImpact": "Increase the share of legitimate payment attempts that become captured payments.", "description": "Increase the share of legitimate checkout attempts that become captured payments to 97.5%.", "unit": "% of legitimate payment attempts", "currentValue": "82.1", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Issuer authorization rate", "expectedImpact": "Improve card and wallet payment success on legitimate demand.", "description": "Raise issuer authorization success on legitimate card attempts to 91.5%.", "unit": "% of legitimate card attempts", "currentValue": "52.8", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Enterprise merchant GPV retention", "expectedImpact": "Improve retained merchant volume through better conversion quality.", "description": "Keep net GPV retention above 118% on scaled commerce cohorts by improving conversion and cross-product depth.", "unit": "% net GPV retention", "currentValue": "81.8", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "chck", "change": "Improve hosted checkout conversion patterns and localization.", "brick": {"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chck.png"}}, {"brickId": "pmtd", "change": "Improve market-aware payment method ordering.", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}, {"brickId": "auth", "change": "Improve recovery and approval optimization on legitimate attempts.", "brick": {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}], "deliveryChannels": [{"channelId": "hosted-checkout", "change": "Release updated hosted checkout experiences.", "channel": {"productId": "hosted", "productName": "", "name": "hosted-checkout", "type": "product", "icon": "product.png"}}, {"channelId": "api-gateway", "change": "Release updated payment method and authorization APIs.", "channel": {"productId": "api", "productName": "", "name": "api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["checkout-conversion", "payment-network-performance"], "supportingTeamIds": ["trust-ops", "developer-foundations"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "landingPageIndex": 3}]};
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        flowchart: {
+            htmlLabels: false
+        }
+    });
+
+    function renderDependenciesDiagramIfNeeded() {
+        const container = document.getElementById('Dependencies');
+        if (!container || container.dataset.diagramRendered === 'true') {
+            return;
+        }
+        mermaid.run({querySelector: '#Dependencies .mermaid'}).then(() => {
+            container.dataset.diagramRendered = 'true';
+        }).catch(error => {
+            console.error('Failed to render dependency diagram', error);
+        });
+    }
+</script>
+<div id="Header"></div>
+
+<div style="margin: 20px;">
+    <div class="tab">
+        <button class="tablinks active" id="tab_OverviewTab" onclick="openTab('OverviewTab')">Overview</button>
+        <button class="tablinks" id="tab_ModulesTab" onclick="openTab('ModulesTab')">Modules</button>
+        <button class="tablinks" id="tab_DependenciesTab" onclick="openTab('DependenciesTab')">Dependencies</button>
+        <button class="tablinks" id="tab_InitiativesTab" onclick="openTab('InitiativesTab')">Initiatives</button>
+        <button class="tablinks" id="tab_ReleasesTab" onclick="openTab('ReleasesTab')">Releases</button>
+        <button class="tablinks" id="tab_EvidenceTab" onclick="openTab('EvidenceTab')">Evidence</button>
+    </div>
+
+    <div id="OverviewTab" class="tabcontent" style="padding: 10px">
+        <div id="Overview"></div>
+    </div>
+    <div id="ModulesTab" class="tabcontent" style="padding: 10px">
+        <div id="Modules"></div>
+    </div>
+    <div id="DependenciesTab" class="tabcontent" style="padding: 10px">
+        <div id="Dependencies"></div>
+    </div>
+    <div id="EvidenceTab" class="tabcontent" style="padding: 10px;">
+        <div id="Evidence"></div>
+    </div>
+    <div id="InitiativesTab" class="tabcontent" style="padding: 10px;">
+        <div id="Initiatives"></div>
+    </div>
+    <div id="ReleasesTab" class="tabcontent" style="padding: 10px;">
+        <div id="Releases"></div>
+    </div>
+</div>
+
+<script>
+</script>
+
+<script>
+    function isFalse(value) {
+        return !value || (value + '').toLowerCase().trim() === 'false' || (value + '').toLowerCase().trim() === 'no';
+    }
+
+    function isTrue(value) {
+        return !isFalse(value);
+    }
+
+</script>
+
+<script>
+    let div = document.createElement('div');
+    document.body.appendChild(div);
+
+    let html = '';
+
+    function addNavigation() {
+        html += '<div style="margin: 20px 20px 10px 20px; font-size: 85%; color: black">';
+        let prev_domain = all_bricks.length ? all_bricks[0].domain : '';
+        all_bricks.filter(c => c.domain && c.domain.toLowerCase().trim() !== 'on ice').forEach(cap => {
+            if (prev_domain && prev_domain.toLowerCase() !== cap.domain.toLowerCase()) {
+                prev_domain = cap.domain;
+                html += '<div style="margin-top: 5px; margin-left: 4px; vertical-align: top; display: inline-block; border-left: 2px solid lightgrey; height: 30px;">&nbsp;</div>';
+            }
+            html += '<a href="' + cap.id + '.html">';
+            const tabClass = cap.id === brick.id ? 'tab-image-selected' : 'tab-image';
+            html += '<img src="../icons/' + cap.id + '.png" class="' + tabClass + '" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            html += '</a>';
+        });
+        html += '</div>';
+    }
+
+    addNavigation();
+
+    html += '<div style="margin: 20px">';
+
+    function addHeader() {
+        html += '<table>';
+        html += '<tr>';
+        html += '<td>';
+        html += '<div>';
+        html += '<img src="../icons/' + brick.id + '.png" style="width: 110px" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+        html += '</div>';
+        html += '</td>';
+        html += '<td style="vertical-align: top">';
+        html += '<div style="margin-left: 20px; font-size: 90%; color: grey; vertical-align: top">';
+        html += brick.domain;
+        if (brick.group && brick.group !== brick.domain) {
+            html += ' / ' + brick.group;
+        }
+        html += ' / <span style="color: blue; font-weight: bold;">' + brick.id.toUpperCase() + '</span>';
+        html += '</div>';
+        html += '<div style="font-size: 50px; margin-left: 20px">';
+        html += brick.name;
+        html += '</div>';
+        html += '<div style="font-size: 16px; margin-left: 20px; color: grey; margin-top: 3px">';
+        html += brick.description ? brick.description : '';
+        html += '</div>';
+        html += '</td>';
+        html += '</tr>';
+        html += '</table>';
+    }
+
+    addHeader();
+
+    function addDocs() {
+        html += '<div  class="" style="margin-top: 32px">';
+
+        function addGroup(docs, icon) {
+            if (docs) {
+                docs.split('\n').forEach(doc => {
+                    const elements = doc.trim().split(',');
+                    const label = elements.length > 0 ? elements[0].trim() : '';
+                    const link = elements.length > 1 ? elements[1].trim() : '';
+                    if (label && link) {
+                        html += '<a target="_blank" href="' + link + '">';
+                        html += '<div class="docs">';
+                        html += '<div>';
+                        if (label.startsWith('Security ')) icon = 'security.png';
+                        html += '<img src="../icons/' + icon + '" ' + 'style="width: 54px;">';
+                        html += '</div>';
+                        html += '<div style="font-size: 110%">' + label.replace(/_/g, ' ') + '</div>';
+                        html += '</div>';
+                        html += '</a>';
+                    }
+                });
+            }
+        }
+
+        html += '</div>';
+    }
+
+    document.getElementById('Header').innerHTML = html;
+    html = '';
+
+    function escapeHomeHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function resolveCustomerMediaSrc(src) {
+        const value = (src || '').trim();
+        if (!value) {
+            return '';
+        }
+        if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
+            return value;
+        }
+        if (value.startsWith('../') || value.startsWith('./')) {
+            return value;
+        }
+        if (value.startsWith('media/') || value.startsWith('icons/')) {
+            return '../../customers/' + value;
+        }
+        return '../../customers/media/' + value;
+    }
+
+    function escapeMermaidLabel(value) {
+        return (value || '')
+            .replaceAll('&', 'and')
+            .replaceAll('"', '')
+            .replaceAll("'", '')
+            .replaceAll('<', '')
+            .replaceAll('>', '')
+            .replaceAll('[', '(')
+            .replaceAll(']', ')')
+            .replaceAll('{', '(')
+            .replaceAll('}', ')')
+            .replaceAll('|', '/');
+    }
+
+    function renderLinkedProducts() {
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Used In Products</div>';
+        if (!linkedProducts.length) {
+            sectionHtml += '<div class="activity-muted">No linked products were inferred for this brick.</div>';
+        } else {
+            linkedProducts.forEach(product => {
+                sectionHtml += '<a class="home-link-card" target="_blank" rel="noopener noreferrer" href="../../products/landing_pages/' + escapeHomeHtml(product.id) + '.html">';
+                sectionHtml += '<div class="home-link-head">';
+                sectionHtml += '<img class="home-link-icon" src="../../products/icons/' + escapeHomeHtml(product.icon) + '" onerror="this.onerror=null;this.src=\'../../products/icons/product.png\'">';
+                sectionHtml += '<div><div class="home-link-title">' + escapeHomeHtml('[PRODUCT] ' + product.name) + '</div><div class="home-link-meta">' + escapeHomeHtml(product.type || 'Product') + '</div></div>';
+                sectionHtml += '</div>';
+                if (product.whyUsed) {
+                    sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(product.whyUsed) + '</div>';
+                }
+                sectionHtml += '</a>';
+            });
+        }
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function renderSupportedCapabilities() {
+        const supportedCapabilities = allCapabilities.filter(capability => {
+            return (capability.brickDependencies || []).some(dep => dep.targetBrickId === brick.id);
+        });
+
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Supported Product Capabilities</div>';
+        if (!supportedCapabilities.length) {
+            sectionHtml += '<div class="activity-muted">No product capabilities currently reference this brick.</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        supportedCapabilities.forEach(capability => {
+            sectionHtml += '<div class="home-link-card">';
+            sectionHtml += '<div class="home-link-head">';
+            sectionHtml += '<img class="home-link-icon" src="../icons/' + escapeHomeHtml(capability.icon || 'capability.png') + '" onerror="this.onerror=null;this.src=\'../icons/capability.png\'">';
+            sectionHtml += '<div><div class="home-link-title">' + escapeHomeHtml('[EXPERIENCE] ' + capability.name) + '</div>';
+            sectionHtml += '<div class="home-link-meta"><a target="_blank" rel="noopener noreferrer" href="../capability_pages/' + escapeHomeHtml(capability.id) + '.html">Open capability page</a> | <a target="_blank" rel="noopener noreferrer" href="../index.html#Capabilities">Open capability catalog</a></div></div>';
+            sectionHtml += '</div>';
+            if (capability.description) {
+                sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(capability.description) + '</div>';
+            }
+            if (capability.flows && capability.flows.length) {
+                sectionHtml += '<div class="activity-block">';
+                sectionHtml += '<div class="activity-muted"><strong>Flows facilitated</strong></div>';
+                capability.flows.forEach(flow => {
+                    sectionHtml += '<div class="activity-muted">- ' + escapeHomeHtml(flow.title || flow.id || '') + '</div>';
+                });
+                sectionHtml += '</div>';
+            }
+            if (capability.outcomes && capability.outcomes.length) {
+                sectionHtml += '<div class="activity-block">';
+                sectionHtml += '<div class="activity-muted"><strong>Outcomes</strong></div>';
+                capability.outcomes.forEach(outcome => {
+                    sectionHtml += '<div class="activity-muted">- ' + escapeHomeHtml(outcome) + '</div>';
+                });
+                sectionHtml += '</div>';
+            }
+            sectionHtml += '</div>';
+        });
+
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function renderRelatedTeams() {
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Teams Owning Or Supporting This Brick</div>';
+        if (!relatedTeams.length) {
+            sectionHtml += '<div class="activity-muted">No owning or supporting teams are linked to this product brick.</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        relatedTeams.forEach(team => {
+            sectionHtml += '<a class="home-link-card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHomeHtml(team.teamId) + '.html">';
+            sectionHtml += '<div class="home-link-head">';
+            sectionHtml += '<img class="home-link-icon" src="../../teams/icons/logo.png" onerror="this.onerror=null;this.src=\'../../teams/icons/logo.png\'">';
+            sectionHtml += '<div>';
+            if (team.teamType) {
+                sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(team.teamType) + '</div>';
+            }
+            sectionHtml += '<div class="home-link-title">' + escapeHomeHtml('[TEAM] ' + team.teamName) + '</div><div class="home-link-meta">' + escapeHomeHtml(team.roleLabel || '') + (team.groupName ? ' | ' + escapeHomeHtml(team.groupName) : '') + '</div></div>';
+            sectionHtml += '</div>';
+            sectionHtml += '</a>';
+        });
+
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function renderSupportedJobs() {
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Supported Customer Jobs-To-Be-Done</div>';
+        if (!supportedJobs.length) {
+            sectionHtml += '<div class="activity-muted">No supporting customer jobs were inferred for this brick.</div>';
+        } else {
+            const groupedJobs = {};
+            supportedJobs.forEach(item => {
+                const actorKey = item.customerId + '|' + item.productId;
+                if (!groupedJobs[actorKey]) {
+                    groupedJobs[actorKey] = {
+                        customerId: item.customerId,
+                        customerName: item.customerName,
+                        customerGroup: item.customerGroup,
+                        customerIcon: item.customerIcon,
+                        productId: item.productId,
+                        productName: item.productName,
+                        jobs: []
+                    };
+                }
+                groupedJobs[actorKey].jobs.push(item);
+            });
+
+            Object.values(groupedJobs).forEach(actor => {
+                sectionHtml += '<div class="home-link-card">';
+                sectionHtml += '<div class="home-link-head">';
+                sectionHtml += '<a target="_blank" rel="noopener noreferrer" href="../../customers/landing_pages/' + escapeHomeHtml(actor.customerId) + '.html">';
+                sectionHtml += '<img class="home-link-icon" src="../../customers/icons/' + escapeHomeHtml(actor.customerIcon) + '" onerror="this.onerror=null;this.src=\'../../customers/icons/customer.png\'">';
+                sectionHtml += '</a>';
+                sectionHtml += '<div><div class="home-link-title"><a target="_blank" rel="noopener noreferrer" href="../../customers/landing_pages/' + escapeHomeHtml(actor.customerId) + '.html">' + escapeHomeHtml(actor.customerName) + '</a></div><div class="home-link-meta">' + escapeHomeHtml(actor.customerGroup) + ' | <a target="_blank" rel="noopener noreferrer" href="../../products/landing_pages/' + escapeHomeHtml(actor.productId) + '.html">' + escapeHomeHtml(actor.productName) + '</a></div></div>';
+                sectionHtml += '</div>';
+                actor.jobs.forEach(item => {
+                    sectionHtml += '<div class="activity-block">';
+                    sectionHtml += '<div class="home-link-copy"><b>' + escapeHomeHtml(item.jobName) + '</b></div>';
+                    if (item.usedInSteps && item.usedInSteps.length) {
+                        item.usedInSteps.forEach(step => {
+                            sectionHtml += '<div class="activity-block">';
+                            sectionHtml += '<div><b>' + escapeHomeHtml(step.step) + '</b></div>';
+                            if (step.description) {
+                                sectionHtml += '<div class="activity-muted">' + escapeHomeHtml(step.description) + '</div>';
+                            }
+                            if (step.howItSupports) {
+                                sectionHtml += '<div class="activity-muted"> - How it supports: ' + escapeHomeHtml(step.howItSupports) + '</div>';
+                            }
+                            if (step.media && step.media.length) {
+                                const media = step.media[0];
+                                const mediaSrc = resolveCustomerMediaSrc(media.src);
+                                if (mediaSrc) {
+                                    sectionHtml += '<div class="step-media-card">';
+                                    sectionHtml += '<a target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(mediaSrc) + '">';
+                                    sectionHtml += '<img class="step-media-image" src="' + escapeHomeHtml(mediaSrc) + '" alt="' + escapeHomeHtml(media.alt || media.title || step.step || 'Job step media') + '">';
+                                    sectionHtml += '</a>';
+                                    if (media.title || media.alt) {
+                                        sectionHtml += '<div class="step-media-caption">' + escapeHomeHtml(media.title || media.alt) + '</div>';
+                                    }
+                                    sectionHtml += '</div>';
+                                }
+                            }
+                            sectionHtml += '</div>';
+                        });
+                    }
+                    sectionHtml += '</div>';
+                });
+                sectionHtml += '</div>';
+            });
+        }
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function renderBrickStructureSection(title, items, emptyMessage) {
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">' + escapeHomeHtml(title) + '</div>';
+        if (!items || !items.length) {
+            sectionHtml += '<div class="activity-muted">' + escapeHomeHtml(emptyMessage) + '</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        sectionHtml += '<div class="structure-grid">';
+        items.forEach(item => {
+            const isObject = item && typeof item === 'object' && !Array.isArray(item);
+            const name = isObject ? (item.title || item.name || item.id || '') : String(item || '');
+            const description = isObject ? (item.description || item.summary || '') : '';
+            const type = isObject ? (item.type || '') : '';
+            const meta = isObject ? [item.id, item.protocol, item.direction].filter(Boolean).join(' | ') : '';
+
+            sectionHtml += '<div class="structure-card">';
+            if (type) {
+                sectionHtml += '<div class="structure-card-type">' + escapeHomeHtml(type) + '</div>';
+            }
+            sectionHtml += '<div class="structure-card-title">' + escapeHomeHtml(name) + '</div>';
+            if (description) {
+                sectionHtml += '<div class="structure-card-copy">' + escapeHomeHtml(description) + '</div>';
+            }
+            if (meta) {
+                sectionHtml += '<div class="structure-card-meta">' + escapeHomeHtml(meta) + '</div>';
+            }
+            sectionHtml += '</div>';
+        });
+        sectionHtml += '</div>';
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function renderBrickDependencyTable(items) {
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>Brick</th><th>Type</th><th>Interface</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            const linkedBrick = all_bricks.find(candidate => candidate.id === item.targetBrickId) || {};
+            const linkedName = linkedBrick.name || item.targetBrickId || '';
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/' + escapeHomeHtml(item.targetBrickId || '') + '.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<a target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(item.targetBrickId || '') + '.html" class="activity-link">' + escapeHomeHtml(linkedName) + '</a>';
+            tableHtml += '</div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.type || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.interface || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function renderExternalDependencyTable(items, subjectLabel) {
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>' + escapeHomeHtml(subjectLabel || 'External System') + '</th><th>Type</th><th>Interface</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/external-system.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<span>' + escapeHomeHtml(item.system || '') + '</span>';
+            tableHtml += '</div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.type || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.interface || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function findIncomingBrickDependencies() {
+        const incomingDependencies = [];
+        all_bricks.forEach(candidate => {
+            (candidate.brickDependencies || []).forEach(item => {
+                if (item.targetBrickId === brick.id) {
+                    incomingDependencies.push({
+                        sourceBrickId: candidate.id,
+                        sourceBrickName: candidate.name,
+                        type: item.type || '',
+                        interface: item.interface || '',
+                        description: item.description || ''
+                    });
+                }
+            });
+        });
+        return incomingDependencies;
+    }
+
+    function renderIncomingBrickDependencyTable(items) {
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>Dependent Brick</th><th>Type</th><th>Interface</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/' + escapeHomeHtml(item.sourceBrickId || '') + '.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<a target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(item.sourceBrickId || '') + '.html" class="activity-link">' + escapeHomeHtml(item.sourceBrickName || item.sourceBrickId || '') + '</a>';
+            tableHtml += '</div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.type || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.interface || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function renderDependencySection() {
+        const brickDependencies = brick.brickDependencies || [];
+        const incomingBrickDependencies = findIncomingBrickDependencies();
+        const externalSystemsThisBrickDependsOn = brick.externalSystemsThisBrickDependsOn || brick.externalSystemDependencies || [];
+        const externalSystemsDependingOnThisBrick = brick.externalSystemsDependingOnThisBrick || [];
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Dependencies</div>';
+
+        if (!brickDependencies.length && !incomingBrickDependencies.length && !externalSystemsThisBrickDependsOn.length && !externalSystemsDependingOnThisBrick.length) {
+            sectionHtml += '<div class="activity-muted">No dependency information is available for this product brick.</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        let chart = 'flowchart LR\n\n';
+        chart += 'current[\"' + escapeMermaidLabel(brick.name || brick.id || 'Current Brick') + '\"]\n';
+
+        brickDependencies.forEach((item, index) => {
+            const linkedBrick = all_bricks.find(candidate => candidate.id === item.targetBrickId) || {};
+            const nodeId = 'brickDep' + index;
+            const nodeLabel = escapeMermaidLabel(linkedBrick.name || item.targetBrickId || 'Brick Dependency');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += 'current -->|' + edgeLabel + '| ' + nodeId + '\n';
+        });
+
+        incomingBrickDependencies.forEach((item, index) => {
+            const nodeId = 'incomingBrickDep' + index;
+            const nodeLabel = escapeMermaidLabel(item.sourceBrickName || item.sourceBrickId || 'Dependent Brick');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += nodeId + ' -->|' + edgeLabel + '| current\n';
+        });
+
+        externalSystemsThisBrickDependsOn.forEach((item, index) => {
+            const nodeId = 'externalOutgoingDep' + index;
+            const nodeLabel = escapeMermaidLabel(item.system || 'External System');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += 'current -->|' + edgeLabel + '| ' + nodeId + '\n';
+        });
+
+        externalSystemsDependingOnThisBrick.forEach((item, index) => {
+            const nodeId = 'externalIncomingDep' + index;
+            const nodeLabel = escapeMermaidLabel(item.system || 'External System');
+            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            chart += nodeId + '[\"' + nodeLabel + '\"]\n';
+            chart += nodeId + ' -->|' + edgeLabel + '| current\n';
+        });
+
+        chart += '\nclassDef currentBrick fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;\n';
+        chart += 'classDef internalBrick fill:#ecfccb,stroke:#6b7280,color:#111827;\n';
+        chart += 'classDef externalSystem fill:#f3f4f6,stroke:#65a30d,color:#365314;\n';
+        chart += 'class current currentBrick;\n';
+        if (brickDependencies.length) {
+            chart += 'class ' + brickDependencies.map((_, index) => 'brickDep' + index).join(',') + ' internalBrick;\n';
+        }
+        if (incomingBrickDependencies.length) {
+            chart += 'class ' + incomingBrickDependencies.map((_, index) => 'incomingBrickDep' + index).join(',') + ' internalBrick;\n';
+        }
+        if (externalSystemsThisBrickDependsOn.length) {
+            chart += 'class ' + externalSystemsThisBrickDependsOn.map((_, index) => 'externalOutgoingDep' + index).join(',') + ' externalSystem;\n';
+        }
+        if (externalSystemsDependingOnThisBrick.length) {
+            chart += 'class ' + externalSystemsDependingOnThisBrick.map((_, index) => 'externalIncomingDep' + index).join(',') + ' externalSystem;\n';
+        }
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">Brick Dependencies</div>';
+        if (brickDependencies.length) {
+            sectionHtml += renderBrickDependencyTable(brickDependencies);
+        } else {
+            sectionHtml += '<div class="activity-muted">No dependencies on other product bricks are listed.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">Dependent Bricks</div>';
+        if (incomingBrickDependencies.length) {
+            sectionHtml += renderIncomingBrickDependencyTable(incomingBrickDependencies);
+        } else {
+            sectionHtml += '<div class="activity-muted">No other product bricks currently depend on this brick.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">External Systems This Brick Depends On</div>';
+        if (externalSystemsThisBrickDependsOn.length) {
+            sectionHtml += renderExternalDependencyTable(externalSystemsThisBrickDependsOn, 'External System');
+        } else {
+            sectionHtml += '<div class="activity-muted">No outbound dependencies on external systems are listed.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">External Systems Depending On This Brick</div>';
+        if (externalSystemsDependingOnThisBrick.length) {
+            sectionHtml += renderExternalDependencyTable(externalSystemsDependingOnThisBrick, 'External System');
+        } else {
+            sectionHtml += '<div class="activity-muted">No inbound dependencies from external systems are listed.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">Dependency Diagram</div>';
+        sectionHtml += '<div class="dependency-diagram"><div class="mermaid">' + chart + '</div></div>';
+        sectionHtml += '</div>';
+
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    html += renderBrickStructureSection('Internal Modules', brick.internalModules || [], 'No internal modules listed for this product brick.');
+    html += renderBrickStructureSection('Interfaces', brick.interfaces || [], 'No interfaces listed for this product brick.');
+    document.getElementById('Modules').innerHTML = html;
+    html = '';
+
+    html += renderDependencySection();
+    document.getElementById('Dependencies').innerHTML = html;
+    html = '';
+
+    html += renderSupportedCapabilities();
+    html += renderRelatedTeams();
+    html += renderLinkedProducts();
+    html += renderSupportedJobs();
+    document.getElementById('Overview').innerHTML = html;
+    html = '';
+</script>
+
+<script>
+    function escapeEvidenceHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function renderEvidenceLinks(links) {
+        let html = '<div style="font-size: 90%">';
+        html += '<div style="font-size: 90%">Links:</div>';
+        html += '<ul style="padding-left: 20px">';
+        (links || []).forEach(link => {
+            const label = escapeEvidenceHtml(link.label || 'Open link');
+            const url = link.url || '';
+            html += '<li>';
+            html += '<a class="evidence-link" target="_blank" rel="noopener noreferrer" href="' + escapeEvidenceHtml(url) + '">' + label + '</a>';
+            html += '</li>';
+        });
+        html += '</ul>';
+        html += '</div>';
+        return html;
+    }
+
+    function renderEvidence() {
+        let html = '';
+        const groups = (evidence && evidence.groups) ? evidence.groups : [];
+
+        if (!groups.length) {
+            html += '<div class="group" style="margin-top:0">No evidence linked for this product brick.</div>';
+            document.getElementById('Evidence').innerHTML = html;
+            return;
+        }
+
+        groups.forEach(group => {
+            html += '<div class="evidence-group">';
+            html += '<div class="evidence-group-title">' + escapeEvidenceHtml(group.name) + '</div>';
+            if (group.description) {
+                html += '<div class="evidence-group-description">' + escapeEvidenceHtml(group.description) + '</div>';
+            }
+
+            (group.fragments || []).forEach(fragment => {
+                html += '<div class="evidence-card">';
+                html += '<div class="evidence-card-header">';
+                html += '<div class="evidence-card-meta">' + escapeEvidenceHtml(fragment.evidenceGroupTitle || fragment.type || 'Evidence fragment') + '</div>';
+                html += '<div class="evidence-card-title">' + escapeEvidenceHtml(fragment.title || fragment.id) + '</div>';
+                html += '</div>';
+                if (fragment.description) {
+                    html += '<div class="evidence-card-summary">' + escapeEvidenceHtml(fragment.description) + '</div>';
+                }
+                if (fragment.summary) {
+                    html += '<div class="evidence-card-summary" style="color: black">' + escapeEvidenceHtml(fragment.summary) + '</div>';
+                }
+                if (fragment.tags && fragment.tags.length) {
+                    fragment.tags.forEach(tag => {
+                        html += '<div class="tag" style="margin-bottom:10px;">' + escapeEvidenceHtml(tag) + '</div>';
+                    });
+                }
+                html += '<div class="evidence-links">' + renderEvidenceLinks(fragment.links) + '</div>';
+                html += '</div>';
+            });
+
+            html += '</div>';
+        });
+
+        document.getElementById('Evidence').innerHTML = html;
+    }
+
+    renderEvidence();
+</script>
+
+<script>
+    function escapeActivityHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function formatActivityDate(dateValue) {
+        if (!dateValue) return 'No date';
+        const date = new Date(dateValue + 'T00:00:00');
+        if (isNaN(date.getTime())) return dateValue;
+        return date.toLocaleDateString('en-GB', {year: 'numeric', month: 'short', day: 'numeric'});
+    }
+
+    function renderActivityKpis(items) {
+        let html = '';
+        items.forEach(item => {
+            html += '<div><b>' + escapeActivityHtml(item.kpi) + '</b>';
+            if (item.unit) {
+                html += ' <span class="activity-muted">(' + escapeActivityHtml(item.unit) + ')</span>';
+            }
+            if (item.expectedImpact) {
+                html += ': ' + escapeActivityHtml(item.expectedImpact);
+            }
+            if (item.description) {
+                html += '<div class="activity-muted">' + escapeActivityHtml(item.description) + '</div>';
+            }
+            html += '</div>';
+        });
+        return html;
+    }
+
+    function renderActivityImpactCell(item) {
+        let html = '';
+        (item.customerImpact || []).forEach(impact => {
+            html += '<div class="activity-block">';
+            html += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">';
+            html += '<img class="activity-icon activity-icon-round" src="../../customers/icons/' + escapeActivityHtml(impact.customer.icon) + '" onerror="this.onerror=null;this.src=\'../../customers/icons/customer.png\'">';
+            html += '<div><div style="font-weight:bold;">' + escapeActivityHtml(impact.customer.name) + ' <span class="activity-muted">(' + escapeActivityHtml(impact.customerId) + ')</span></div></div>';
+            html += '</div>';
+            html += renderActivityKpis(impact.customerKPIs || []);
+            html += renderActivityKpis(impact.businessKPIs || []);
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No customer impact listed</span>';
+    }
+
+    function renderActivityBrickCell(item, currentBrickId) {
+        let html = '';
+        (item.productBricks || []).forEach(brick => {
+            const isCurrent = String(brick.brickId) === String(currentBrickId);
+            html += '<div class="activity-pill' + (isCurrent ? ' activity-pill-highlight' : '') + '">';
+            html += '<img class="activity-icon" src="../icons/' + escapeActivityHtml(brick.brick.icon) + '" onerror="this.onerror=null;this.src=\'../icons/logo.png\'">';
+            html += '<div><div><b style="color:' + (isCurrent ? '#1d4ed8' : '#111827') + '">' + escapeActivityHtml(brick.brick.name) + '</b> <span class="activity-muted">(#' + escapeActivityHtml(brick.brickId) + ')</span></div><div class="activity-muted">' + escapeActivityHtml(brick.change) + '</div></div>';
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No product bricks listed</span>';
+    }
+
+    function renderActivityChannelCell(item) {
+        let html = '';
+        (item.deliveryChannels || []).forEach(channel => {
+            html += '<div class="activity-pill">';
+            html += '<img class="activity-icon" src="../../products/icons/' + escapeActivityHtml(channel.channel.icon) + '" onerror="this.onerror=null;this.src=\'../../products/icons/product.png\'">';
+            html += '<div><div><b>' + escapeActivityHtml(channel.channel.name) + '</b> <span class="activity-muted">(' + escapeActivityHtml(channel.channelId) + ')</span></div><div class="activity-muted">' + escapeActivityHtml(channel.change) + '</div></div>';
+            html += '</div>';
+        });
+        return html || '<span class="activity-muted">No delivery channels listed</span>';
+    }
+
+    function renderActivityTable(data, kind, currentBrickId) {
+        const items = (data && data.items) ? data.items : [];
+        let html = '';
+        html += '<div class="activity-summary">';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.length + '</div><div class="activity-stat-label">' + kind + '</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.filter(item => (item.customerImpact || []).length > 0).length + '</div><div class="activity-stat-label">With customer impact</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + items.filter(item => (item.deliveryChannels || []).length > 0).length + '</div><div class="activity-stat-label">With channels</div></div>';
+        html += '</div>';
+
+        if (!items.length) {
+            html += '<div class="group" style="margin-top:0">No related ' + kind.toLowerCase() + ' found for this product brick.</div>';
+            document.getElementById(kind).innerHTML = html;
+            return;
+        }
+
+        html += '<table class="activity-table">';
+        html += '<tr><th>Date</th><th>Description</th><th>Customer Impact</th><th>Product Bricks</th><th>Delivery Channels</th></tr>';
+        items.forEach(item => {
+            html += '<tr>';
+            html += '<td style="white-space:nowrap">' + escapeActivityHtml(formatActivityDate(item.date)) + '</td>';
+            html += '<td><a class="activity-link" target="_blank" rel="noopener noreferrer" href="../../' + kind.toLowerCase() + '/landing_pages/' + item.landingPageIndex + '.html">' + escapeActivityHtml(item.description || kind) + '</a></td>';
+            html += '<td>' + renderActivityImpactCell(item) + '</td>';
+            html += '<td>' + renderActivityBrickCell(item, currentBrickId) + '</td>';
+            html += '<td>' + renderActivityChannelCell(item) + '</td>';
+            html += '</tr>';
+        });
+        html += '</table>';
+        document.getElementById(kind).innerHTML = html;
+    }
+
+    renderActivityTable(initiatives, 'Initiatives', brick.id);
+    renderActivityTable(releases, 'Releases', brick.id);
+</script>
+
+<div style="margin: 30px; font-size: 80%; color: grey">
+    <p>data sources:</p>
+    <div style="color: grey" id="DataSources">
+    </div>
+</div>
+
+<script>
+
+    function addDataSourceLinks() {
+        const linkOf = (href, label) => '<li><a target="_blank" href="' + href + '">' + label + '</a></li>';
+
+        let html = '';
+
+        html += linkOf(config.sheets.details, 'main bricks sheet (basic data per brick)');
+        html += linkOf(config.sheets.targets, 'bricks\' release targets (including OKR targets)');
+        html += linkOf(config.sheets.documents, 'bricks\' decision & discussion documents');
+        html += linkOf(config.sheets.dependencies, 'target synergies and dependencies sheet');
+        html += linkOf(config.sheets.roadmap, 'roadmap');
+
+        return html;
+    }
+
+    document.getElementById('DataSources').innerHTML = addDataSourceLinks();
+</script>
+</body>
+</html>

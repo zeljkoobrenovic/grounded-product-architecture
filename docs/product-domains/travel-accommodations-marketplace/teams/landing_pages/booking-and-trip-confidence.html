@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking & Trip Confidence</title>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 28px;
+            color: #202124;
+            max-width: 1180px;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background-color: #ecfdf5;
+            color: #047857;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-size: 38px;
+            line-height: 1.2;
+            margin: 0 0 8px 0;
+        }
+
+        .meta {
+            color: #6b7280;
+            margin-bottom: 22px;
+        }
+
+        .mission {
+            font-size: 20px;
+            line-height: 1.55;
+            margin-bottom: 22px;
+        }
+
+        .section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 18px;
+            margin-top: 18px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .stat {
+            min-width: 150px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            color: #1d4ed8;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background-color: white;
+            padding: 14px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 13px;
+        }
+
+        .linked-icon {
+            width: 28px;
+            height: 28px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .pill-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .entity-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .entity-link:hover {
+            text-decoration: underline;
+        }
+
+        .role-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .role-table th,
+        .role-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        .role-table th {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .kpi-list {
+            margin-top: 6px;
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .activity-block {
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 3px solid #d7dce1;
+        }
+
+        .activity-link {
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .activity-meta {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+
+        .empty-state {
+            color: #6b7280;
+            font-style: italic;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body onload="initTab()" onhashchange="initTab()">
+<table>
+    <tr>
+        <td style="vertical-align: top; padding-top: 40px">
+            <img src="../icons/logo.png" style="width:108px; height:108px; margin-right:12px" alt="Team">
+        </td>
+        <td>
+            <div class="eyebrow">Team</div>
+            <h1 id="Title"></h1>
+            <div id="Meta" class="meta"></div>
+        </td>
+    </tr>
+</table>
+
+<div id="Mission" class="mission"></div>
+<div class="tab">
+    <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
+    <button class="tablinks" id="tab_discoveries-tab" onclick="openTab('discoveries-tab')">Discoveries</button>
+    <button class="tablinks" id="tab_initiatives-tab" onclick="openTab('initiatives-tab')">Initiatives</button>
+    <button class="tablinks" id="tab_releases-tab" onclick="openTab('releases-tab')">Releases</button>
+    <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
+</div>
+<div id="home-tab" class="tabcontent"></div>
+<div id="discoveries-tab" class="tabcontent"></div>
+<div id="initiatives-tab" class="tabcontent"></div>
+<div id="releases-tab" class="tabcontent"></div>
+<div id="dependencies-tab" class="tabcontent"></div>
+
+<script>
+    const team = {"id": "booking-and-trip-confidence", "name": "Booking & Trip Confidence", "teamType": "stream-aligned", "teamFamilyId": "traveler-growth", "teamFamilyName": "Traveler Growth", "orgLayer": "team", "mission": "Own traveler checkout, booking confirmation, trip management, messaging, and issue recovery surfaces.", "primaryCustomers": [{"customerId": "cg1-p1", "customerName": "Leisure Traveler / Stay Booker", "relatedKPIs": ["Support-free trip resolution", "Self-service change success"], "icon": "traveler.png"}, {"customerId": "cg2-p1", "customerName": "Managed Travel Booker / Travel Coordinator", "relatedKPIs": ["Invoice-ready booking rate", "Business-trip rebooking success"], "icon": "business.png"}], "ownedProductBricks": [{"brickId": "room", "brickName": "Room & Rate Selection", "brick": {"id": "room", "name": "Room & Rate Selection", "type": "full-stack", "description": "Selection and comparison of room plans, rate conditions, occupancy fit, and bundled stay options before checkout.", "domain": "Traveler Experience", "group": "Booking and trip management", "internalModules": [{"title": "Room Plan Resolver", "description": "Builds bookable room and rate combinations for the selected property and dates.", "type": "service"}, {"title": "Rate Condition Comparison", "description": "Normalizes cancellation, payment, and meal-plan differences across room offers.", "type": "service"}], "interfaces": [{"title": "Room Selection UI", "description": "Traveler-facing room and rate selection experience.", "type": "ui"}, {"title": "Room Offer API", "description": "API for bookable room, rate, and occupancy combinations.", "type": "api"}], "brickDependencies": [{"targetBrickId": "invt", "type": "inventory", "interface": "Rate and availability API", "description": "Uses live room, rate, and availability state from supply systems."}, {"targetBrickId": "deal", "type": "offer", "interface": "Offer treatment API", "description": "Applies eligible commercial treatments to room offers."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "room.png"}}, {"brickId": "book", "brickName": "Checkout & Booking Orchestration", "brick": {"id": "book", "name": "Checkout & Booking Orchestration", "type": "full-stack", "description": "Traveler checkout, reservation creation, policy handling, confirmation, and booking-state management.", "domain": "Traveler Experience", "group": "Booking and trip management", "internalModules": [{"title": "Checkout State and Eligibility", "description": "Validates bookability, rate conditions, traveler data, and policy constraints.", "type": "service"}, {"title": "Reservation Orchestration", "description": "Creates and updates booking records across marketplace and partner systems.", "type": "integration"}, {"title": "Policy and Disclosure Layer", "description": "Normalizes traveler-facing disclosure of payment, cancellation, and host-type obligations.", "type": "service"}], "interfaces": [{"title": "Checkout UI", "description": "Traveler-facing booking flow.", "type": "ui"}, {"title": "Reservation API", "description": "API used for reservation creation and update workflows.", "type": "api"}, {"title": "Reservation Event Feed", "description": "Publishes new booking and booking-state transition events.", "type": "event"}], "brickDependencies": [{"targetBrickId": "room", "type": "offer-selection", "interface": "Room offer API", "description": "Uses selected room and rate context to create the booking."}, {"targetBrickId": "paym", "type": "payment", "interface": "Payment authorization", "description": "Uses payment orchestration for charge, guarantee, and refund flows."}, {"targetBrickId": "conn", "type": "partner-sync", "interface": "Reservation push", "description": "Coordinates with partner connectivity where required."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "book.png"}}, {"brickId": "acct", "brickName": "Traveler Account & Wallet", "brick": {"id": "acct", "name": "Traveler Account & Wallet", "type": "full-stack", "description": "Traveler profile, preferences, traveler-party data, loyalty-adjacent preferences, and saved payment or invoicing context used across booking and trip management.", "domain": "Traveler Experience", "group": "Booking and trip management", "internalModules": [{"title": "Traveler Profile Store", "description": "Stores traveler identity, preferences, and recurring booking context.", "type": "service"}, {"title": "Wallet and Preference Controls", "description": "Manages saved payment methods, traveler details, and reusable booking preferences.", "type": "full-stack"}], "interfaces": [{"title": "Traveler Account UI", "description": "Traveler-facing account and profile workspace.", "type": "ui"}, {"title": "Traveler Profile API", "description": "API for traveler profile, wallet, and preference data.", "type": "api"}], "brickDependencies": [{"targetBrickId": "idam", "type": "identity", "interface": "Authentication and session API", "description": "Uses shared identity controls for traveler authentication and access."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "acct.png"}}, {"brickId": "msgc", "brickName": "Guest-Property Messaging", "brick": {"id": "msgc", "name": "Guest-Property Messaging", "type": "service", "description": "Structured and free-form communication between traveler, property, and operations for pre-stay, in-stay, and issue-handling moments.", "domain": "Traveler Experience", "group": "Booking and trip management", "internalModules": [{"title": "Conversation Thread Store", "description": "Stores and retrieves conversations between guests and properties.", "type": "service"}, {"title": "Message Delivery and Policy Controls", "description": "Applies routing, moderation, and compliance controls to travel-related messaging.", "type": "service"}], "interfaces": [{"title": "Messaging API", "description": "API used to send and receive property communication inside trip workflows.", "type": "api"}, {"title": "Message Event Feed", "description": "Event stream for message delivery, unread state, and escalation triggers.", "type": "event"}], "brickDependencies": [{"targetBrickId": "trip", "type": "context", "interface": "Trip context API", "description": "Uses trip and itinerary context to route messages correctly."}, {"targetBrickId": "trst", "type": "safety", "interface": "Risk and policy API", "description": "Uses trust controls to govern risky or policy-sensitive messaging."}], "externalSystemsThisBrickDependsOn": [{"system": "Email and Push Delivery Platforms", "type": "communication-platform", "interface": "Notification APIs", "description": "Uses external delivery channels for messaging notifications."}], "externalSystemsDependingOnThisBrick": [], "icon": "msgc.png"}}, {"brickId": "self", "brickName": "Self-Service Changes & Recovery", "brick": {"id": "self", "name": "Self-Service Changes & Recovery", "type": "full-stack", "description": "Traveler-facing change, cancellation, modification, and incident-recovery flows that reduce support-heavy trip management.", "domain": "Traveler Experience", "group": "Booking and trip management", "internalModules": [{"title": "Eligibility and Policy Engine", "description": "Determines which changes are allowed based on booking, policy, and payment state.", "type": "service"}, {"title": "Recovery Flow Orchestration", "description": "Handles traveler-initiated changes, exception prompts, and support escalation routes.", "type": "full-stack"}], "interfaces": [{"title": "Change and Recovery UI", "description": "Traveler-facing interface for modifications, cancellations, and issue reporting.", "type": "ui"}, {"title": "Change Decision API", "description": "API surface for change options and recovery outcomes.", "type": "api"}], "brickDependencies": [{"targetBrickId": "trip", "type": "journey-state", "interface": "Trip timeline API", "description": "Uses trip context and booking milestones."}, {"targetBrickId": "paym", "type": "refund", "interface": "Refund and payment-state API", "description": "Uses payment state to show accurate financial consequences."}, {"targetBrickId": "supp", "type": "escalation", "interface": "Support case API", "description": "Escalates high-friction cases to support operations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "self.png"}}, {"brickId": "trip", "brickName": "Trip Management & Messaging", "brick": {"id": "trip", "name": "Trip Management & Messaging", "type": "full-stack", "description": "Itinerary views, pre-stay and post-booking messaging, traveler self-service, and reservation-state communication.", "domain": "Traveler Experience", "group": "Booking and trip management", "internalModules": [{"title": "Trip Timeline", "description": "Maintains the customer-visible state of the stay journey.", "type": "full-stack"}, {"title": "Message and Notification Routing", "description": "Routes communications between traveler, property, and support flows.", "type": "service"}, {"title": "Trip Status Explanation Layer", "description": "Explains key itinerary states, next actions, and issue-prevention guidance.", "type": "service"}], "interfaces": [{"title": "Trip UI", "description": "Traveler trip management interface across app and web.", "type": "ui"}, {"title": "Trip API", "description": "API for traveler itinerary state, trip actions, and communications.", "type": "api"}, {"title": "Notification Event Feed", "description": "Event stream driving confirmations, reminders, and update notifications.", "type": "event"}], "brickDependencies": [{"targetBrickId": "book", "type": "state", "interface": "Booking state feed", "description": "Depends on booking-state changes from checkout orchestration."}, {"targetBrickId": "msgc", "type": "communication", "interface": "Messaging API", "description": "Uses guest-property communication services inside the trip journey."}, {"targetBrickId": "supp", "type": "escalation", "interface": "Support case handoff", "description": "Escalates difficult issues into support operations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "trip.png"}}, {"brickId": "reve", "brickName": "Review Collection & Stay Feedback", "brick": {"id": "reve", "name": "Review Collection & Stay Feedback", "type": "full-stack", "description": "Post-stay review invitation, traveler feedback capture, and verified-review submission flows tied to completed bookings.", "domain": "Traveler Experience", "group": "Booking and trip management", "internalModules": [{"title": "Stay Completion Triggering", "description": "Determines when travelers become eligible to leave verified reviews.", "type": "service"}, {"title": "Review Submission Experience", "description": "Captures stay feedback and structured review content from travelers.", "type": "full-stack"}], "interfaces": [{"title": "Review Invitation UI", "description": "Traveler-facing invitation and review submission experience.", "type": "ui"}, {"title": "Review Submission API", "description": "API for verified traveler feedback and review publication handoff.", "type": "api"}], "brickDependencies": [{"targetBrickId": "book", "type": "eligibility", "interface": "Stay completion feed", "description": "Uses completed booking state to determine review eligibility."}, {"targetBrickId": "rept", "type": "publication", "interface": "Review moderation API", "description": "Hands verified traveler feedback into review and quality operations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "reve.png"}}], "supportingProductBricks": [{"brickId": "supp", "brickName": "Customer Support & Recovery", "brick": {"id": "supp", "name": "Customer Support & Recovery", "type": "service", "description": "Support case management, issue triage, rebooking and recovery workflows, and exception handling across traveler and partner operations.", "domain": "Marketplace Foundations", "group": "Payments and recovery", "internalModules": [{"title": "Case and Workflow Orchestration", "description": "Routes support and recovery work between internal and partner actors.", "type": "service"}, {"title": "Recovery Decisioning", "description": "Supports refund, compensation, and alternative-stay recovery decisions.", "type": "service"}, {"title": "Escalation and SLA Controls", "description": "Prioritizes and routes urgent recovery cases based on business and traveler impact.", "type": "service"}], "interfaces": [{"title": "Support Operations API", "description": "Support and recovery service interface.", "type": "api"}, {"title": "Recovery Event Feed", "description": "Event stream for support escalations, recovery milestones, and exception closures.", "type": "event"}], "brickDependencies": [{"targetBrickId": "paym", "type": "finance", "interface": "Refund and compensation API", "description": "Uses payment systems to close the financial side of issue recovery."}, {"targetBrickId": "conn", "type": "partner-sync", "interface": "Partner state API", "description": "Uses connectivity and partner-state data during booking recovery."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "supp.png"}}, {"brickId": "paym", "brickName": "Payments & Payouts", "brick": {"id": "paym", "name": "Payments & Payouts", "type": "service", "description": "Payment collection, guarantees, payout orchestration, refunds, disputes, and finance visibility for multiple payment models.", "domain": "Marketplace Foundations", "group": "Payments and recovery", "internalModules": [{"title": "Traveler Payment Orchestration", "description": "Supports card capture, authorization, charge, and refund flows.", "type": "service"}, {"title": "Partner Remittance and Reconciliation", "description": "Handles payout scheduling, adjustments, and finance reconciliation.", "type": "service"}, {"title": "Payment Model Normalization", "description": "Normalizes pay-now, pay-later, pay-at-property, and managed-payment logic across markets.", "type": "service"}], "interfaces": [{"title": "Payments API", "description": "Finance API used by traveler and partner workflows.", "type": "api"}, {"title": "Payment State Feed", "description": "Event stream for authorizations, captures, refunds, and payout transitions.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Payment Service Providers", "type": "external-fintech", "interface": "Card and transfer APIs", "description": "Uses card processing and payout rails."}], "externalSystemsDependingOnThisBrick": [], "icon": "paym.png"}}], "dependsOnTeamIds": ["payments-and-financial-operations", "trust-and-marketplace-integrity", "platform-core-services"], "defaultSupportingTeamIds": ["payments-and-financial-operations", "trust-and-marketplace-integrity", "platform-core-services"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Keep checkout and trip confidence together so conversion and recovery tradeoffs are explicit.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own checkout and trip-management roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead team execution."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build checkout, booking-state, and messaging services."}, {"role": "Frontend / Mobile Engineer", "count": 2, "responsibility": "Build traveler-facing checkout and trip flows."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own booking-flow and state-transition reliability."}, {"role": "Product Designer", "count": 1, "responsibility": "Design traveler and business-booker booking flows."}]}, "groupId": "traveler-marketplace", "groupName": "Traveler Marketplace", "groupLeadership": [], "dependsOnTeams": [{"id": "payments-and-financial-operations", "name": "Payments & Financial Operations", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "payments-and-financial-operations", "name": "Payments & Financial Operations", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [{"date": "2026-04-15", "description": "Focused investment to improve traveler booking confidence by clarifying cancellation terms, payment timing, and booking-state visibility across high-intent accommodation checkout flows.", "landingPageKey": "3", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-05-14", "description": "Release focused on improving traveler booking confidence by clarifying payment timing, cancellation policies, and booking confirmation state across web and mobile checkout flows.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "sharedBrickIds": ["paym"], "sharedBrickNames": ["Payments & Payouts"]}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "sharedBrickIds": ["supp"], "sharedBrickNames": ["Customer Support & Recovery"]}], "sharedInitiatives": [{"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "sharedInitiativeKeys": ["3"], "sharedInitiatives": [{"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Focused investment to improve traveler booking confidence by clarifying cancellation terms, payment timing, and booking-state visibility across high-intent accommodation checkout flows.", "date": "2026-04-15"}]}], "sharedReleases": [{"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving traveler booking confidence by clarifying payment timing, cancellation policies, and booking confirmation state across web and mobile checkout flows.", "date": "2026-05-14"}]}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving traveler booking confidence by clarifying payment timing, cancellation policies, and booking confirmation state across web and mobile checkout flows.", "date": "2026-05-14"}]}], "explicitRelationships": [{"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
+    const domainName = 'Travel Accommodations Marketplace';
+
+    function escapeHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function linkOf(href, label, className) {
+        if (!href) return '<span class="' + className + '">' + escapeHtml(label) + '</span>';
+        return '<a class="entity-link ' + className + '" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>';
+    }
+
+    mermaid.initialize({startOnLoad: false, securityLevel: 'loose'});
+
+    function renderActivity(items, sectionType) {
+        if (!items || !items.length) {
+            return '<div class="empty-state">No ' + escapeHtml(sectionType.toLowerCase()) + ' linked to this team.</div>';
+        }
+        let html = '';
+        items.forEach(item => {
+            html += '<div class="activity-block">';
+            html += '<div class="activity-link">' + linkOf('../../' + item.sectionFolder + '/landing_pages/' + item.landingPageKey + '.html', item.description || sectionType, 'activity-link') + '</div>';
+            html += '<div class="activity-meta">' + escapeHtml(item.date || '') + ' | ' + escapeHtml(item.teamRoleLabel || '') + '</div>';
+            if (item.how) {
+                html += '<div class="activity-meta" style="margin-top:4px">' + escapeHtml(item.how) + '</div>';
+            }
+            html += '</div>';
+        });
+        return html;
+    }
+
+    function initTab() {
+        let tabName = 'home-tab';
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (document.getElementById('tab_' + hash)) {
+                tabName = hash;
+            }
+        }
+        openTab(tabName);
+    }
+
+    function openTab(tabName) {
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+        history.pushState({}, '', '#' + tabName);
+        document.getElementById(tabName).style.display = 'block';
+        document.getElementById('tab_' + tabName).className += ' active';
+        if (tabName === 'dependencies-tab') {
+            renderMermaidDiagrams();
+        }
+    }
+
+    function sanitizeMermaidId(value) {
+        return String(value || '')
+            .replace(/[^a-zA-Z0-9_]/g, '_')
+            .replace(/^([^a-zA-Z_])/, '_$1');
+    }
+
+    function sanitizeMermaidLabel(value) {
+        return String(value || '')
+            .replace(/&/g, ' and ')
+            .replace(/"/g, '')
+            .replace(/'/g, '')
+            .replace(/[|[\]{}()<>`]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function renderDependencyTable(items, columns, rowBuilder) {
+        if (!items || !items.length) {
+            return '<div class="empty-state">No dependency details found.</div>';
+        }
+
+        let html = '<table class="role-table"><thead><tr>';
+        columns.forEach(column => {
+            html += '<th>' + escapeHtml(column) + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        items.forEach(item => {
+            html += '<tr>';
+            rowBuilder(item).forEach(cell => {
+                html += '<td>' + cell + '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        return html;
+    }
+
+    function renderLinkedDependencyItems(items) {
+        if (!items || !items.length) {
+            return '<span class="empty-state">None</span>';
+        }
+
+        return items.map(item =>
+            linkOf(
+                '../../' + (item.sectionFolder || '') + '/landing_pages/' + (item.landingPageKey || '') + '.html',
+                item.description || item.landingPageKey || '',
+                ''
+            )
+        ).join('<br>');
+    }
+
+    function renderLinkedBricks(names, ids) {
+        if (!ids || !ids.length) {
+            return '<span class="empty-state">None</span>';
+        }
+
+        return ids.map((brickId, index) =>
+            linkOf(
+                '../../product-bricks/landing_pages/' + brickId + '.html',
+                (names || [])[index] || brickId,
+                ''
+            )
+        ).join('<br>');
+    }
+
+    function buildDependencyMermaid(title, items, keyName, labelBuilder, relationLabel) {
+        if (!items || !items.length) {
+            return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="empty-state">No dependencies found.</div></div>';
+        }
+
+        let chart = '';
+        chart += '---\n' +
+            'config:\n' +
+            '  htmlLabels: false\n' +
+            '---\n\n';
+
+        chart += 'flowchart LR\n\n';
+
+        const currentId = sanitizeMermaidId(team.id || 'current_team');
+        chart += currentId + '[\"' + sanitizeMermaidLabel('THIS TEAM') + '\"]\n';
+        chart += 'style ' + currentId + ' fill:#bbf\n';
+
+        items.forEach(item => {
+            const otherId = sanitizeMermaidId(item.teamId || item.teamName || 'team');
+            const edgeLabel = sanitizeMermaidLabel(labelBuilder(item));
+            chart += otherId + '[\"' + sanitizeMermaidLabel(item.teamName + ' Team' || item.teamId || 'Team') + '\"]\n';
+            chart += currentId + ' -->|' + edgeLabel + '| ' + otherId + '\n';
+        });
+
+        return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="mermaid">' + chart + '</div></div>';
+    }
+
+    function renderMermaidDiagrams() {
+        const container = document.getElementById('dependencies-tab');
+        if (!container || container.getAttribute('data-rendered') === 'true') {
+            return;
+        }
+
+        const dependencyData = team.dependencyData || {};
+        let html = '';
+        html += buildDependencyMermaid(
+            'Explicit Team Relationships',
+            dependencyData.explicitRelationships || [],
+            'relationshipType',
+            item => item.relationshipLabel || item.relationshipType || 'relationship',
+            'relationship'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.explicitRelationships || [],
+            ['Team', 'Relationship'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                escapeHtml(item.relationshipLabel || item.relationshipType || '')
+            ]
+        ) + '</div>';
+        html += buildDependencyMermaid(
+            'Shared Product Bricks',
+            dependencyData.sharedProductBricks || [],
+            'sharedBrickIds',
+            item => ((item.sharedBrickNames || []).slice(0, 3).join(', ') + (((item.sharedBrickNames || []).length > 3) ? ' +' + ((item.sharedBrickNames || []).length - 3) : '')) || 'shared bricks',
+            'shared bricks'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.sharedProductBricks || [],
+            ['Team', 'Shared Bricks'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                renderLinkedBricks(item.sharedBrickNames || [], item.sharedBrickIds || []),
+            ]
+        ) + '</div>';
+        html += buildDependencyMermaid(
+            'Shared Initiatives',
+            dependencyData.sharedInitiatives || [],
+            'sharedInitiativeKeys',
+            item => String((item.sharedInitiativeKeys || []).length) + ' shared initiatives',
+            'shared initiatives'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.sharedInitiatives || [],
+            ['Team', 'Shared Initiatives'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                renderLinkedDependencyItems(item.sharedInitiatives || [])
+            ]
+        ) + '</div>';
+        html += buildDependencyMermaid(
+            'Shared Releases',
+            dependencyData.sharedReleases || [],
+            'sharedReleaseKeys',
+            item => String((item.sharedReleaseKeys || []).length) + ' shared releases',
+            'shared releases'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.sharedReleases || [],
+            ['Team', 'Shared Releases'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                renderLinkedDependencyItems(item.sharedReleases || [])
+            ]
+        ) + '</div>';
+
+        container.innerHTML = html;
+        mermaid.run({querySelector: '#dependencies-tab .mermaid'});
+        container.setAttribute('data-rendered', 'true');
+    }
+
+    document.getElementById('Title').innerHTML = escapeHtml(team.name || 'Team');
+    document.getElementById('Meta').innerHTML = escapeHtml(domainName) + ' | ' + escapeHtml(team.groupName || '') + ' | ' + escapeHtml(team.teamType || '');
+    document.getElementById('Mission').innerHTML = escapeHtml(team.mission || '');
+
+    const staffing = team.staffing || {};
+    const groupLeadership = team.groupLeadership || {};
+
+    let homeHtml = '';
+    homeHtml += '<div class="section"><div class="section-title">Summary</div><div class="stats">';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String(staffing.suggestedHeadcount || 0)) + '</div><div class="stat-label">Suggested Headcount</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((staffing.roles || []).length)) + '</div><div class="stat-label">Role Blocks</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String(groupLeadership.suggestedHeadcount || 0)) + '</div><div class="stat-label">Group Leadership Headcount</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((groupLeadership.roles || []).length)) + '</div><div class="stat-label">Group Role Blocks</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.primaryCustomers || []).length)) + '</div><div class="stat-label">Primary Customers</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.ownedProductBricks || []).length)) + '</div><div class="stat-label">Owned Bricks</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.relatedDiscoveries || []).length)) + '</div><div class="stat-label">Discoveries</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.relatedInitiatives || []).length + (team.relatedReleases || []).length)) + '</div><div class="stat-label">Linked Delivery Items</div></div>';
+    homeHtml += '</div></div>';
+
+    if (staffing.staffingGuidance || (staffing.roles || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Staffing Model</div>';
+        if (staffing.staffingGuidance) {
+            homeHtml += '<div style="margin-bottom:12px; line-height:1.5">' + escapeHtml(staffing.staffingGuidance) + '</div>';
+        }
+        homeHtml += '<table class="role-table"><thead><tr><th>Role</th><th>Count</th><th>Responsibility</th></tr></thead><tbody>';
+        (staffing.roles || []).forEach(role => {
+            homeHtml += '<tr><td>' + escapeHtml(role.role) + '</td><td>' + escapeHtml(String(role.count || 0)) + '</td><td>' + escapeHtml(role.responsibility || '') + '</td></tr>';
+        });
+        homeHtml += '</tbody></table></div>';
+    }
+
+    if (team.groupLeadership && ((team.groupLeadership.roles || []).length || team.groupLeadership.leadershipModel)) {
+        homeHtml += '<div class="section"><div class="section-title">Group Leadership</div>';
+        if (team.groupLeadership.purpose) {
+            homeHtml += '<div style="margin-bottom:12px; line-height:1.5">' + escapeHtml(team.groupLeadership.purpose) + '</div>';
+        }
+        if (team.groupLeadership.leadershipModel) {
+            homeHtml += '<div style="margin-bottom:12px; line-height:1.5; color:#6b7280">' + escapeHtml(team.groupLeadership.leadershipModel) + '</div>';
+        }
+        homeHtml += '<table class="role-table"><thead><tr><th>Role</th><th>Count</th><th>Responsibility</th><th>Reports To</th></tr></thead><tbody>';
+        (team.groupLeadership.roles || []).forEach(role => {
+            homeHtml += '<tr><td>' + escapeHtml(role.role) + '</td><td>' + escapeHtml(String(role.count || 0)) + '</td><td>' + escapeHtml(role.responsibility || '') + '</td><td>' + escapeHtml(role.reportsTo || '') + '</td></tr>';
+        });
+        homeHtml += '</tbody></table></div>';
+    }
+
+    if ((team.primaryCustomers || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Primary Customers and KPIs</div><div class="grid">';
+        (team.primaryCustomers || []).forEach(customer => {
+            homeHtml += '<div class="card">';
+            homeHtml += '<div class="pill"><img class="linked-icon" src="../../customers/icons/' + escapeHtml(customer.icon || 'customer.png') + '" onerror="this.onerror=null;this.src=\'../../customers/icons/customer.png\'">' + linkOf('../../customers/landing_pages/' + customer.customerId + '.html', customer.customerName || customer.customerId, '') + '</div>';
+            if ((customer.relatedKPIs || []).length) {
+                homeHtml += '<div class="kpi-list">' + (customer.relatedKPIs || []).map(kpi => escapeHtml(kpi)).join('<br>') + '</div>';
+            }
+            homeHtml += '</div>';
+        });
+        homeHtml += '</div></div>';
+    }
+
+    if ((team.ownedProductBricks || []).length || (team.supportingProductBricks || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Product Brick Scope</div>';
+        if ((team.ownedProductBricks || []).length) {
+            homeHtml += '<div style="margin-bottom:8px; color:#6b7280">Owned product bricks</div>';
+            (team.ownedProductBricks || []).forEach(brick => {
+                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
+            });
+        }
+        if ((team.supportingProductBricks || []).length) {
+            homeHtml += '<div style="margin:14px 0 8px 0; color:#6b7280">Supporting product bricks</div>';
+            (team.supportingProductBricks || []).forEach(brick => {
+                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
+            });
+        }
+        homeHtml += '</div>';
+    }
+
+    if ((team.dependsOnTeams || []).length || (team.defaultSupportingTeams || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Team Relationships</div>';
+        if ((team.dependsOnTeams || []).length) {
+            homeHtml += '<div style="margin-bottom:8px; color:#6b7280">Depends on</div>';
+            (team.dependsOnTeams || []).forEach(otherTeam => {
+                homeHtml += '<div class="pill">' + linkOf(otherTeam.id + '.html', otherTeam.name, '') + '</div>';
+            });
+        }
+        if ((team.defaultSupportingTeams || []).length) {
+            homeHtml += '<div style="margin:14px 0 8px 0; color:#6b7280">Default supporting teams</div>';
+            (team.defaultSupportingTeams || []).forEach(otherTeam => {
+                homeHtml += '<div class="pill">' + linkOf(otherTeam.id + '.html', otherTeam.name, '') + '</div>';
+            });
+        }
+        homeHtml += '</div>';
+    }
+    document.getElementById('home-tab').innerHTML = homeHtml;
+    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('discoveries-tab').innerHTML = renderActivity(team.relatedDiscoveries || [], 'Discoveries');
+    document.getElementById('initiatives-tab').innerHTML = renderActivity(team.relatedInitiatives || [], 'Initiatives');
+    document.getElementById('releases-tab').innerHTML = renderActivity(team.relatedReleases || [], 'Releases');
+</script>
+</body>
+</html>

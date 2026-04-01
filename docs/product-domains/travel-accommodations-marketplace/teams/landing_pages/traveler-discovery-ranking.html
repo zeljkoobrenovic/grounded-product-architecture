@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Traveler Discovery & Ranking</title>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 28px;
+            color: #202124;
+            max-width: 1180px;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background-color: #ecfdf5;
+            color: #047857;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-size: 38px;
+            line-height: 1.2;
+            margin: 0 0 8px 0;
+        }
+
+        .meta {
+            color: #6b7280;
+            margin-bottom: 22px;
+        }
+
+        .mission {
+            font-size: 20px;
+            line-height: 1.55;
+            margin-bottom: 22px;
+        }
+
+        .section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 18px;
+            margin-top: 18px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .stat {
+            min-width: 150px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            color: #1d4ed8;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background-color: white;
+            padding: 14px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 13px;
+        }
+
+        .linked-icon {
+            width: 28px;
+            height: 28px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .pill-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .entity-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .entity-link:hover {
+            text-decoration: underline;
+        }
+
+        .role-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .role-table th,
+        .role-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+            text-align: left;
+        }
+
+        .role-table th {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .kpi-list {
+            margin-top: 6px;
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .activity-block {
+            margin-bottom: 10px;
+            padding-left: 10px;
+            border-left: 3px solid #d7dce1;
+        }
+
+        .activity-link {
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .activity-meta {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+
+        .empty-state {
+            color: #6b7280;
+            font-style: italic;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body onload="initTab()" onhashchange="initTab()">
+<table>
+    <tr>
+        <td style="vertical-align: top; padding-top: 40px">
+            <img src="../icons/logo.png" style="width:108px; height:108px; margin-right:12px" alt="Team">
+        </td>
+        <td>
+            <div class="eyebrow">Team</div>
+            <h1 id="Title"></h1>
+            <div id="Meta" class="meta"></div>
+        </td>
+    </tr>
+</table>
+
+<div id="Mission" class="mission"></div>
+<div class="tab">
+    <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
+    <button class="tablinks" id="tab_discoveries-tab" onclick="openTab('discoveries-tab')">Discoveries</button>
+    <button class="tablinks" id="tab_initiatives-tab" onclick="openTab('initiatives-tab')">Initiatives</button>
+    <button class="tablinks" id="tab_releases-tab" onclick="openTab('releases-tab')">Releases</button>
+    <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
+</div>
+<div id="home-tab" class="tabcontent"></div>
+<div id="discoveries-tab" class="tabcontent"></div>
+<div id="initiatives-tab" class="tabcontent"></div>
+<div id="releases-tab" class="tabcontent"></div>
+<div id="dependencies-tab" class="tabcontent"></div>
+
+<script>
+    const team = {"id": "traveler-discovery-ranking", "name": "Traveler Discovery & Ranking", "teamType": "stream-aligned", "teamFamilyId": "traveler-growth", "teamFamilyName": "Traveler Growth", "orgLayer": "team", "mission": "Own destination discovery, accommodation search, ranking, and traveler shortlist quality.", "primaryCustomers": [{"customerId": "cg1-p1", "customerName": "Leisure Traveler / Stay Booker", "relatedKPIs": ["Search-to-book conversion", "Traveler booking confidence"], "icon": "traveler.png"}, {"customerId": "cg2-p1", "customerName": "Managed Travel Booker / Travel Coordinator", "relatedKPIs": ["Policy-compliant booking rate"], "icon": "business.png"}], "ownedProductBricks": [{"brickId": "home", "brickName": "Marketplace Home & Destination Landing", "brick": {"id": "home", "name": "Marketplace Home & Destination Landing", "type": "full-stack", "description": "Primary traveler entry surfaces for destination inspiration, recent-search recall, campaign landings, and high-intent jump-off into stays discovery.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Landing Experience Shell", "description": "Composes home, destination, and campaign entry experiences across web and app.", "type": "full-stack"}, {"title": "Session Recall and Intent Recovery", "description": "Restores recent searches, trip context, and account-aware shortcuts.", "type": "service"}, {"title": "Merchandising Slot Orchestration", "description": "Places editorial, commercial, and destination modules in entry surfaces.", "type": "service"}], "interfaces": [{"title": "Traveler Entry UI", "description": "Web and mobile entry experience for trip discovery.", "type": "ui"}, {"title": "Landing Assembly API", "description": "API used to assemble home and destination landing content.", "type": "api"}, {"title": "Journey Event Stream", "description": "Captures destination-entry and merchandising interaction signals.", "type": "event"}], "brickDependencies": [{"targetBrickId": "dest", "type": "composition", "interface": "Destination context API", "description": "Uses destination context to build landing experiences."}, {"targetBrickId": "pers", "type": "personalization", "interface": "Recommendation feed", "description": "Uses recommendations to personalize destination entry surfaces."}], "externalSystemsThisBrickDependsOn": [{"system": "Marketing and Acquisition Platforms", "type": "traffic-source", "interface": "Deep link and campaign parameters", "description": "Consumes campaign and acquisition context for tailored entry experiences."}], "externalSystemsDependingOnThisBrick": [{"system": "Web and Mobile Clients", "type": "channel-consumer", "interface": "UI", "description": "Traveler clients use the home and landing experiences as the main marketplace entry point."}], "icon": "home.png"}}, {"brickId": "dest", "brickName": "Destination Discovery", "brick": {"id": "dest", "name": "Destination Discovery", "type": "full-stack", "description": "Destination entry, inspiration, map context, and landing surfaces that move travelers from broad trip intent into accommodation search.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Destination Context Graph", "description": "Builds place, district, landmark, and event context for travel discovery.", "type": "service"}, {"title": "Travel Intent Resolution", "description": "Converts destination and date intent into searchable marketplace parameters.", "type": "service"}, {"title": "Destination Experience Layer", "description": "Renders destination overviews, nearby areas, and next-step entry points.", "type": "full-stack"}], "interfaces": [{"title": "Destination Discovery UI", "description": "Traveler-facing destination exploration experience.", "type": "ui"}, {"title": "Destination Metadata API", "description": "API surface for place and market discovery context.", "type": "api"}, {"title": "Destination Signal Feed", "description": "Event stream carrying destination-demand and interaction signals.", "type": "event"}], "brickDependencies": [{"targetBrickId": "geoa", "type": "geo", "interface": "Geo and localization API", "description": "Uses geo, market, and localization data to represent destinations correctly."}, {"targetBrickId": "srch", "type": "handoff", "interface": "Search intent API", "description": "Hands high-intent destination context into search and ranking."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "dest.png"}}, {"brickId": "srch", "brickName": "Search, Ranking & Filters", "brick": {"id": "srch", "name": "Search, Ranking & Filters", "type": "full-stack", "description": "Accommodation search, filtering, sorting, map browsing, and ranking across traveler and policy intent.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Search Index and Facet Engine", "description": "Builds and serves searchable property, room, policy, and amenity facets.", "type": "service"}, {"title": "Ranking and Eligibility Pipeline", "description": "Combines relevance, quality, commercial, and traveler-context signals to order supply.", "type": "service"}, {"title": "Filter and Explainability Controls", "description": "Supports traveler filters, operator tuning, and ranking explanation surfaces.", "type": "service"}], "interfaces": [{"title": "Search Experience UI", "description": "Primary traveler interface for searching and filtering stays.", "type": "ui"}, {"title": "Search and Ranking API", "description": "API used by traveler and partner surfaces to query ranked accommodation inventory.", "type": "api"}, {"title": "Inventory Update Feed", "description": "Ingestion feed for availability, content, and commercial updates affecting search.", "type": "event"}], "brickDependencies": [{"targetBrickId": "invt", "type": "availability", "interface": "Availability feed", "description": "Depends on live rate and availability state."}, {"targetBrickId": "mkli", "type": "insight", "interface": "Ranking signals", "description": "Consumes commercial, quality, and demand signals."}, {"targetBrickId": "deal", "type": "offer", "interface": "Offer treatment API", "description": "Uses eligible offer treatments when ranking and presenting results."}], "externalSystemsThisBrickDependsOn": [{"system": "Search Infrastructure", "type": "platform", "interface": "Indexing and query infrastructure", "description": "Relies on scalable search infrastructure to serve high-volume discovery use cases."}], "externalSystemsDependingOnThisBrick": [{"system": "Traveler Web and App Clients", "type": "channel-consumer", "interface": "Search API", "description": "Traveler clients depend on search and ranking to surface relevant stays."}], "icon": "srch.png"}}, {"brickId": "mapb", "brickName": "Map-Based Stay Browser", "brick": {"id": "mapb", "name": "Map-Based Stay Browser", "type": "full-stack", "description": "Map-centric browse experience for neighborhood, landmark, and travel-radius decisions where location quality matters as much as property quality.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Map Tile and Geometry Adapter", "description": "Serves map geometry, viewport context, and geo overlays for marketplace browse flows.", "type": "service"}, {"title": "Viewport Result Resolver", "description": "Computes visible inventory and relevance inside changing map bounds.", "type": "service"}], "interfaces": [{"title": "Map Browse UI", "description": "Traveler-facing map and list browse interface.", "type": "ui"}, {"title": "Viewport Search API", "description": "API for fetching inventory relative to viewport and landmarks.", "type": "api"}], "brickDependencies": [{"targetBrickId": "srch", "type": "search", "interface": "Ranked results API", "description": "Uses the same underlying ranked inventory as core search."}, {"targetBrickId": "geoa", "type": "geo", "interface": "Map and geocoding API", "description": "Uses geo and localization services for map accuracy and area labeling."}], "externalSystemsThisBrickDependsOn": [{"system": "Mapping Platforms", "type": "geo-platform", "interface": "Map rendering and geocoding APIs", "description": "Depends on map providers for geospatial rendering and lookup."}], "externalSystemsDependingOnThisBrick": [], "icon": "mapb.png"}}, {"brickId": "pers", "brickName": "Personalization & Recommendations", "brick": {"id": "pers", "name": "Personalization & Recommendations", "type": "service", "description": "Recommendation, recirculation, and traveler-intent modeling across home, search, and post-booking return journeys.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Traveler Intent Models", "description": "Predicts likely destinations, accommodation types, and revisit opportunities.", "type": "service"}, {"title": "Recommendation Delivery Layer", "description": "Serves ranked recommendation sets into traveler surfaces.", "type": "service"}], "interfaces": [{"title": "Recommendation API", "description": "API for traveler recommendations and return-journey suggestions.", "type": "api"}, {"title": "Personalization Event Feed", "description": "Interaction and conversion signal feed for recommendation models.", "type": "event"}], "brickDependencies": [{"targetBrickId": "mkli", "type": "model-signal", "interface": "Marketplace signal feed", "description": "Uses marketplace intelligence as the signal base for personalization."}, {"targetBrickId": "acct", "type": "identity-context", "interface": "Traveler profile API", "description": "Uses account context to personalize recommendations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pers.png"}}, {"brickId": "deal", "brickName": "Deals and Member Merchandising", "brick": {"id": "deal", "name": "Deals and Member Merchandising", "type": "full-stack", "description": "Traveler-facing presentation of discounts, member programs, urgency signals, and merchandising treatments that influence choice and conversion.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Offer Eligibility Resolver", "description": "Determines which rate treatments, badges, and member offers a traveler can see.", "type": "service"}, {"title": "Merchandising Presentation Layer", "description": "Renders urgency, savings, and program treatments across search and property detail.", "type": "full-stack"}, {"title": "Treatment Experimentation Controls", "description": "Controls presentation variants and commercial experiments on traveler-facing offers.", "type": "service"}], "interfaces": [{"title": "Offer Presentation UI", "description": "Traveler-facing offer and discount display surface.", "type": "ui"}, {"title": "Offer Decision API", "description": "Provides eligible offer treatments to discovery and booking surfaces.", "type": "api"}], "brickDependencies": [{"targetBrickId": "prom", "type": "commercial-rule", "interface": "Promotion feed", "description": "Consumes partner promotion and program data."}, {"targetBrickId": "mkli", "type": "decision-support", "interface": "Commercial ranking signals", "description": "Uses marketplace intelligence to decide which treatments to show."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "deal.png"}}, {"brickId": "ssav", "brickName": "Saved Searches & Price Alerts", "brick": {"id": "ssav", "name": "Saved Searches & Price Alerts", "type": "full-stack", "description": "Saved-search persistence, price-watch behavior, and notification-triggered return journeys for travelers not ready to book immediately.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Saved Intent Store", "description": "Stores saved destination, price, and accommodation preferences for later retrieval.", "type": "service"}, {"title": "Alert Trigger Engine", "description": "Computes when inventory, price, or availability changes justify traveler alerts.", "type": "service"}], "interfaces": [{"title": "Saved Search UI", "description": "Traveler-facing controls for saving and managing search intent.", "type": "ui"}, {"title": "Alert Decision API", "description": "API for alert enrollment and signal evaluation.", "type": "api"}, {"title": "Alert Trigger Feed", "description": "Event stream used to trigger notifications when saved-search criteria change.", "type": "event"}], "brickDependencies": [{"targetBrickId": "srch", "type": "search-context", "interface": "Search query model", "description": "Uses search definitions and result context to persist traveler intent."}, {"targetBrickId": "trip", "type": "notification", "interface": "Notification routing API", "description": "Uses notification routing to deliver alert-driven return journeys."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "ssav.png"}}, {"brickId": "prop", "brickName": "Property Detail & Reviews", "brick": {"id": "prop", "name": "Property Detail & Reviews", "type": "full-stack", "description": "Property page, room detail, policy presentation, review surfaces, and booking confidence content.", "domain": "Traveler Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Property Content Assembly", "description": "Builds property, room, amenity, and policy views.", "type": "full-stack"}, {"title": "Review and Quality Signals", "description": "Presents verified review content and quality indicators.", "type": "service"}, {"title": "Trust and Policy Explanation Layer", "description": "Explains booking conditions, host type, and issue-prevention signals on property pages.", "type": "service"}], "interfaces": [{"title": "Property Detail UI", "description": "Traveler-facing property and room detail experience.", "type": "ui"}, {"title": "Property Detail API", "description": "API used to assemble property, room, and review state for traveler surfaces.", "type": "api"}], "brickDependencies": [{"targetBrickId": "rept", "type": "data", "interface": "Review and reputation feed", "description": "Uses verified guest reviews and quality indicators."}, {"targetBrickId": "trst", "type": "trust", "interface": "Trust signal API", "description": "Displays host-type and trust indicators."}, {"targetBrickId": "room", "type": "availability-context", "interface": "Room and rate API", "description": "Uses room and rate selection context inside the property detail journey."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "prop.png"}}], "supportingProductBricks": [{"brickId": "mkli", "brickName": "Marketplace Intelligence", "brick": {"id": "mkli", "name": "Marketplace Intelligence", "type": "service", "description": "Decision support and data products for ranking, pricing, promotion, quality, and marketplace economics.", "domain": "Marketplace Foundations", "group": "Trust, connectivity, and intelligence", "internalModules": [{"title": "Marketplace Metrics and Attribution", "description": "Produces commercial and operational insights across traveler and partner journeys.", "type": "service"}, {"title": "Decisioning Models", "description": "Supports ranking, pricing guidance, and partner recommendation logic.", "type": "service"}, {"title": "Experiment and Causal Analysis Layer", "description": "Measures the real effect of ranking, program, pricing, and UX changes.", "type": "service"}], "interfaces": [{"title": "Insight APIs and Reporting Feeds", "description": "Feeds downstream traveler, partner, and internal reporting surfaces.", "type": "api"}, {"title": "Marketplace Signal Feed", "description": "Event and feature feed for ranking, recommendations, and pricing systems.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "mkli.png"}}], "dependsOnTeamIds": ["marketplace-intelligence", "trust-and-marketplace-integrity", "platform-core-services"], "defaultSupportingTeamIds": ["marketplace-intelligence", "trust-and-marketplace-integrity", "platform-core-services"], "staffing": {"suggestedHeadcount": 10, "staffingGuidance": "Keep ranking, traveler discovery, and property-detail conversion in one feedback loop.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own search and conversion roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead team execution."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set architecture and ranking-system direction."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build ranking, property-page, and discovery services."}, {"role": "Frontend / Mobile Engineer", "count": 2, "responsibility": "Build traveler web and app discovery journeys."}, {"role": "Product Designer", "count": 1, "responsibility": "Design search, shortlist, and property-page trust UX."}, {"role": "Data Scientist / Analyst", "count": 1, "responsibility": "Own ranking and conversion analysis."}]}, "groupId": "traveler-marketplace", "groupName": "Traveler Marketplace", "groupLeadership": [], "dependsOnTeams": [{"id": "marketplace-intelligence", "name": "Marketplace Intelligence", "teamType": "complicated-subsystem", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "marketplace-intelligence", "name": "Marketplace Intelligence", "teamType": "complicated-subsystem", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [], "relatedReleases": [], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "hotel-partner-success", "teamName": "Hotel Partner Success", "sharedBrickIds": ["mkli"], "sharedBrickNames": ["Marketplace Intelligence"]}, {"teamId": "marketplace-intelligence", "teamName": "Marketplace Intelligence", "sharedBrickIds": ["mkli"], "sharedBrickNames": ["Marketplace Intelligence"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "marketplace-intelligence", "teamName": "Marketplace Intelligence", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "marketplace-intelligence", "teamName": "Marketplace Intelligence", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
+    const domainName = 'Travel Accommodations Marketplace';
+
+    function escapeHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function linkOf(href, label, className) {
+        if (!href) return '<span class="' + className + '">' + escapeHtml(label) + '</span>';
+        return '<a class="entity-link ' + className + '" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>';
+    }
+
+    mermaid.initialize({startOnLoad: false, securityLevel: 'loose'});
+
+    function renderActivity(items, sectionType) {
+        if (!items || !items.length) {
+            return '<div class="empty-state">No ' + escapeHtml(sectionType.toLowerCase()) + ' linked to this team.</div>';
+        }
+        let html = '';
+        items.forEach(item => {
+            html += '<div class="activity-block">';
+            html += '<div class="activity-link">' + linkOf('../../' + item.sectionFolder + '/landing_pages/' + item.landingPageKey + '.html', item.description || sectionType, 'activity-link') + '</div>';
+            html += '<div class="activity-meta">' + escapeHtml(item.date || '') + ' | ' + escapeHtml(item.teamRoleLabel || '') + '</div>';
+            if (item.how) {
+                html += '<div class="activity-meta" style="margin-top:4px">' + escapeHtml(item.how) + '</div>';
+            }
+            html += '</div>';
+        });
+        return html;
+    }
+
+    function initTab() {
+        let tabName = 'home-tab';
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (document.getElementById('tab_' + hash)) {
+                tabName = hash;
+            }
+        }
+        openTab(tabName);
+    }
+
+    function openTab(tabName) {
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+        history.pushState({}, '', '#' + tabName);
+        document.getElementById(tabName).style.display = 'block';
+        document.getElementById('tab_' + tabName).className += ' active';
+        if (tabName === 'dependencies-tab') {
+            renderMermaidDiagrams();
+        }
+    }
+
+    function sanitizeMermaidId(value) {
+        return String(value || '')
+            .replace(/[^a-zA-Z0-9_]/g, '_')
+            .replace(/^([^a-zA-Z_])/, '_$1');
+    }
+
+    function sanitizeMermaidLabel(value) {
+        return String(value || '')
+            .replace(/&/g, ' and ')
+            .replace(/"/g, '')
+            .replace(/'/g, '')
+            .replace(/[|[\]{}()<>`]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function renderDependencyTable(items, columns, rowBuilder) {
+        if (!items || !items.length) {
+            return '<div class="empty-state">No dependency details found.</div>';
+        }
+
+        let html = '<table class="role-table"><thead><tr>';
+        columns.forEach(column => {
+            html += '<th>' + escapeHtml(column) + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        items.forEach(item => {
+            html += '<tr>';
+            rowBuilder(item).forEach(cell => {
+                html += '<td>' + cell + '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        return html;
+    }
+
+    function renderLinkedDependencyItems(items) {
+        if (!items || !items.length) {
+            return '<span class="empty-state">None</span>';
+        }
+
+        return items.map(item =>
+            linkOf(
+                '../../' + (item.sectionFolder || '') + '/landing_pages/' + (item.landingPageKey || '') + '.html',
+                item.description || item.landingPageKey || '',
+                ''
+            )
+        ).join('<br>');
+    }
+
+    function renderLinkedBricks(names, ids) {
+        if (!ids || !ids.length) {
+            return '<span class="empty-state">None</span>';
+        }
+
+        return ids.map((brickId, index) =>
+            linkOf(
+                '../../product-bricks/landing_pages/' + brickId + '.html',
+                (names || [])[index] || brickId,
+                ''
+            )
+        ).join('<br>');
+    }
+
+    function buildDependencyMermaid(title, items, keyName, labelBuilder, relationLabel) {
+        if (!items || !items.length) {
+            return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="empty-state">No dependencies found.</div></div>';
+        }
+
+        let chart = '';
+        chart += '---\n' +
+            'config:\n' +
+            '  htmlLabels: false\n' +
+            '---\n\n';
+
+        chart += 'flowchart LR\n\n';
+
+        const currentId = sanitizeMermaidId(team.id || 'current_team');
+        chart += currentId + '[\"' + sanitizeMermaidLabel('THIS TEAM') + '\"]\n';
+        chart += 'style ' + currentId + ' fill:#bbf\n';
+
+        items.forEach(item => {
+            const otherId = sanitizeMermaidId(item.teamId || item.teamName || 'team');
+            const edgeLabel = sanitizeMermaidLabel(labelBuilder(item));
+            chart += otherId + '[\"' + sanitizeMermaidLabel(item.teamName + ' Team' || item.teamId || 'Team') + '\"]\n';
+            chart += currentId + ' -->|' + edgeLabel + '| ' + otherId + '\n';
+        });
+
+        return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div><div class="mermaid">' + chart + '</div></div>';
+    }
+
+    function renderMermaidDiagrams() {
+        const container = document.getElementById('dependencies-tab');
+        if (!container || container.getAttribute('data-rendered') === 'true') {
+            return;
+        }
+
+        const dependencyData = team.dependencyData || {};
+        let html = '';
+        html += buildDependencyMermaid(
+            'Explicit Team Relationships',
+            dependencyData.explicitRelationships || [],
+            'relationshipType',
+            item => item.relationshipLabel || item.relationshipType || 'relationship',
+            'relationship'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.explicitRelationships || [],
+            ['Team', 'Relationship'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                escapeHtml(item.relationshipLabel || item.relationshipType || '')
+            ]
+        ) + '</div>';
+        html += buildDependencyMermaid(
+            'Shared Product Bricks',
+            dependencyData.sharedProductBricks || [],
+            'sharedBrickIds',
+            item => ((item.sharedBrickNames || []).slice(0, 3).join(', ') + (((item.sharedBrickNames || []).length > 3) ? ' +' + ((item.sharedBrickNames || []).length - 3) : '')) || 'shared bricks',
+            'shared bricks'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.sharedProductBricks || [],
+            ['Team', 'Shared Bricks'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                renderLinkedBricks(item.sharedBrickNames || [], item.sharedBrickIds || []),
+            ]
+        ) + '</div>';
+        html += buildDependencyMermaid(
+            'Shared Initiatives',
+            dependencyData.sharedInitiatives || [],
+            'sharedInitiativeKeys',
+            item => String((item.sharedInitiativeKeys || []).length) + ' shared initiatives',
+            'shared initiatives'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.sharedInitiatives || [],
+            ['Team', 'Shared Initiatives'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                renderLinkedDependencyItems(item.sharedInitiatives || [])
+            ]
+        ) + '</div>';
+        html += buildDependencyMermaid(
+            'Shared Releases',
+            dependencyData.sharedReleases || [],
+            'sharedReleaseKeys',
+            item => String((item.sharedReleaseKeys || []).length) + ' shared releases',
+            'shared releases'
+        );
+        html += '<div class="section">' + renderDependencyTable(
+            dependencyData.sharedReleases || [],
+            ['Team', 'Shared Releases'],
+            item => [
+                linkOf(item.teamId + '.html', item.teamName || item.teamId, ''),
+                renderLinkedDependencyItems(item.sharedReleases || [])
+            ]
+        ) + '</div>';
+
+        container.innerHTML = html;
+        mermaid.run({querySelector: '#dependencies-tab .mermaid'});
+        container.setAttribute('data-rendered', 'true');
+    }
+
+    document.getElementById('Title').innerHTML = escapeHtml(team.name || 'Team');
+    document.getElementById('Meta').innerHTML = escapeHtml(domainName) + ' | ' + escapeHtml(team.groupName || '') + ' | ' + escapeHtml(team.teamType || '');
+    document.getElementById('Mission').innerHTML = escapeHtml(team.mission || '');
+
+    const staffing = team.staffing || {};
+    const groupLeadership = team.groupLeadership || {};
+
+    let homeHtml = '';
+    homeHtml += '<div class="section"><div class="section-title">Summary</div><div class="stats">';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String(staffing.suggestedHeadcount || 0)) + '</div><div class="stat-label">Suggested Headcount</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((staffing.roles || []).length)) + '</div><div class="stat-label">Role Blocks</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String(groupLeadership.suggestedHeadcount || 0)) + '</div><div class="stat-label">Group Leadership Headcount</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((groupLeadership.roles || []).length)) + '</div><div class="stat-label">Group Role Blocks</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.primaryCustomers || []).length)) + '</div><div class="stat-label">Primary Customers</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.ownedProductBricks || []).length)) + '</div><div class="stat-label">Owned Bricks</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.relatedDiscoveries || []).length)) + '</div><div class="stat-label">Discoveries</div></div>';
+    homeHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((team.relatedInitiatives || []).length + (team.relatedReleases || []).length)) + '</div><div class="stat-label">Linked Delivery Items</div></div>';
+    homeHtml += '</div></div>';
+
+    if (staffing.staffingGuidance || (staffing.roles || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Staffing Model</div>';
+        if (staffing.staffingGuidance) {
+            homeHtml += '<div style="margin-bottom:12px; line-height:1.5">' + escapeHtml(staffing.staffingGuidance) + '</div>';
+        }
+        homeHtml += '<table class="role-table"><thead><tr><th>Role</th><th>Count</th><th>Responsibility</th></tr></thead><tbody>';
+        (staffing.roles || []).forEach(role => {
+            homeHtml += '<tr><td>' + escapeHtml(role.role) + '</td><td>' + escapeHtml(String(role.count || 0)) + '</td><td>' + escapeHtml(role.responsibility || '') + '</td></tr>';
+        });
+        homeHtml += '</tbody></table></div>';
+    }
+
+    if (team.groupLeadership && ((team.groupLeadership.roles || []).length || team.groupLeadership.leadershipModel)) {
+        homeHtml += '<div class="section"><div class="section-title">Group Leadership</div>';
+        if (team.groupLeadership.purpose) {
+            homeHtml += '<div style="margin-bottom:12px; line-height:1.5">' + escapeHtml(team.groupLeadership.purpose) + '</div>';
+        }
+        if (team.groupLeadership.leadershipModel) {
+            homeHtml += '<div style="margin-bottom:12px; line-height:1.5; color:#6b7280">' + escapeHtml(team.groupLeadership.leadershipModel) + '</div>';
+        }
+        homeHtml += '<table class="role-table"><thead><tr><th>Role</th><th>Count</th><th>Responsibility</th><th>Reports To</th></tr></thead><tbody>';
+        (team.groupLeadership.roles || []).forEach(role => {
+            homeHtml += '<tr><td>' + escapeHtml(role.role) + '</td><td>' + escapeHtml(String(role.count || 0)) + '</td><td>' + escapeHtml(role.responsibility || '') + '</td><td>' + escapeHtml(role.reportsTo || '') + '</td></tr>';
+        });
+        homeHtml += '</tbody></table></div>';
+    }
+
+    if ((team.primaryCustomers || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Primary Customers and KPIs</div><div class="grid">';
+        (team.primaryCustomers || []).forEach(customer => {
+            homeHtml += '<div class="card">';
+            homeHtml += '<div class="pill"><img class="linked-icon" src="../../customers/icons/' + escapeHtml(customer.icon || 'customer.png') + '" onerror="this.onerror=null;this.src=\'../../customers/icons/customer.png\'">' + linkOf('../../customers/landing_pages/' + customer.customerId + '.html', customer.customerName || customer.customerId, '') + '</div>';
+            if ((customer.relatedKPIs || []).length) {
+                homeHtml += '<div class="kpi-list">' + (customer.relatedKPIs || []).map(kpi => escapeHtml(kpi)).join('<br>') + '</div>';
+            }
+            homeHtml += '</div>';
+        });
+        homeHtml += '</div></div>';
+    }
+
+    if ((team.ownedProductBricks || []).length || (team.supportingProductBricks || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Product Brick Scope</div>';
+        if ((team.ownedProductBricks || []).length) {
+            homeHtml += '<div style="margin-bottom:8px; color:#6b7280">Owned product bricks</div>';
+            (team.ownedProductBricks || []).forEach(brick => {
+                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
+            });
+        }
+        if ((team.supportingProductBricks || []).length) {
+            homeHtml += '<div style="margin:14px 0 8px 0; color:#6b7280">Supporting product bricks</div>';
+            (team.supportingProductBricks || []).forEach(brick => {
+                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
+            });
+        }
+        homeHtml += '</div>';
+    }
+
+    if ((team.dependsOnTeams || []).length || (team.defaultSupportingTeams || []).length) {
+        homeHtml += '<div class="section"><div class="section-title">Team Relationships</div>';
+        if ((team.dependsOnTeams || []).length) {
+            homeHtml += '<div style="margin-bottom:8px; color:#6b7280">Depends on</div>';
+            (team.dependsOnTeams || []).forEach(otherTeam => {
+                homeHtml += '<div class="pill">' + linkOf(otherTeam.id + '.html', otherTeam.name, '') + '</div>';
+            });
+        }
+        if ((team.defaultSupportingTeams || []).length) {
+            homeHtml += '<div style="margin:14px 0 8px 0; color:#6b7280">Default supporting teams</div>';
+            (team.defaultSupportingTeams || []).forEach(otherTeam => {
+                homeHtml += '<div class="pill">' + linkOf(otherTeam.id + '.html', otherTeam.name, '') + '</div>';
+            });
+        }
+        homeHtml += '</div>';
+    }
+    document.getElementById('home-tab').innerHTML = homeHtml;
+    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('discoveries-tab').innerHTML = renderActivity(team.relatedDiscoveries || [], 'Discoveries');
+    document.getElementById('initiatives-tab').innerHTML = renderActivity(team.relatedInitiatives || [], 'Initiatives');
+    document.getElementById('releases-tab').innerHTML = renderActivity(team.relatedReleases || [], 'Releases');
+</script>
+</body>
+</html>

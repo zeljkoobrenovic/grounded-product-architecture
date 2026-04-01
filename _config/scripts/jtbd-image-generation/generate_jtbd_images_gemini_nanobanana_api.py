@@ -20,10 +20,7 @@ API_URL_TEMPLATE = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 )
 MIME_TYPE_TO_FORMAT = {
-    "image/png": "png",
-    "image/jpeg": "jpeg",
-    "image/jpg": "jpeg",
-    "image/webp": "webp",
+    "image/png": "png"
 }
 OUTPUT_FORMAT="png"
 
