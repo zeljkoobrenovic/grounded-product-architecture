@@ -117,6 +117,7 @@ def flatten_product_capabilities(payload):
         flat_capabilities.append({
             'id': capability.get('id', ''),
             'name': capability.get('name', ''),
+            'icon': capability.get('icon', str(capability.get('id', '')) + '.png'),
             'type': capability.get('type', 'outcome-based-experience'),
             'description': capability.get('description', ''),
             'group': capability.get('group', ''),

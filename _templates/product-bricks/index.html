@@ -666,9 +666,9 @@
 
         function updateTabLabels() {
             const brickCount = getBrickCatalog().length;
-            const experienceCount = getCapabilityCatalogItems().length;
-            document.getElementById('tab_BigPicture').textContent = 'Functional Bricks (' + brickCount + ')';
-            document.getElementById('tab_Experiences').textContent = 'Experience Bricks (' + experienceCount + ')';
+            const capabilityCount = getCapabilityCatalogItems().length;
+            document.getElementById('tab_BigPicture').textContent = 'Product Bricks (' + brickCount + ')';
+            document.getElementById('tab_Capabilities').textContent = 'Product Capabilities (' + capabilityCount + ')';
         }
 
         function openTab(tabName) {
@@ -686,8 +686,8 @@
             if (tabName === 'Dependencies') {
                 renderDependenciesView();
             }
-            if (tabName === 'Experiences') {
-                renderExperiencesView();
+            if (tabName === 'Capabilities') {
+                renderCapabilitiesView();
             }
         }
 
@@ -696,7 +696,7 @@
         const bricksMetadata = bricksPayload.metadata || {};
         const capabilitiesMetadata = capabilitiesPayload.metadata || {};
         const bricks = bricksPayload.bricks || [];
-        const explicitCapabilities = capabilitiesPayload.experiences || capabilitiesPayload.capabilities || [];
+        const explicitCapabilities = capabilitiesPayload.capabilities || capabilitiesPayload.capabilities || [];
         const brickRendering = bricksMetadata.rendering || bricksMetadata.render || {};
         const brickTypes = bricksMetadata.types || [];
         const typeColorMap = {};
@@ -870,11 +870,18 @@
             return flattenBricks(bricks);
         }
 
+        function getCapabilityExternalSystems(capability) {
+            return capability.externalSystemsThisCapabilityDependsOn
+                || capability.externalSystemsThisBrickDependsOn
+                || capability.externalSystemDependencies
+                || [];
+        }
+
         function getCapabilityCatalogItems() {
             const fallbackCapabilities = getBrickCatalog().map(item => ({
                 ...item,
                 sourceType: 'brick-fallback',
-                externalSystemsThisCapabilityDependsOn: item.externalSystemsThisBrickDependsOn || item.externalSystemDependencies || [],
+                externalSystemsThisCapabilityDependsOn: getCapabilityExternalSystems(item),
                 externalSystemsDependingOnThisCapability: item.externalSystemsDependingOnThisBrick || []
             }));
 
@@ -922,7 +929,7 @@
                 `;
             }).filter(Boolean).join('');
 
-            const externalPills = (((capability.externalSystemsThisCapabilityDependsOn || capability.externalSystemsThisBrickDependsOn) || [])).map(dep => `
+            const externalPills = getCapabilityExternalSystems(capability).map(dep => `
                 <span class="capability-pill external" title="${dep.description || ''}">
                     <img src="icons/external-system.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
                     <span>${dep.system || 'External System'}</span>
@@ -937,8 +944,8 @@
             `;
         }
 
-        function renderExperiencesView() {
-            const container = document.getElementById('ExperiencesContent');
+        function renderCapabilitiesView() {
+            const container = document.getElementById('CapabilitiesContent');
             if (!container) {
                 return;
             }
@@ -967,11 +974,11 @@
                 <div class="capabilities-summary">
                     <div class="dependency-graph-stat">
                         <div class="dependency-graph-stat-value">${capabilities.length}</div>
-                        <div class="dependency-graph-stat-label">Experiences</div>
+                        <div class="dependency-graph-stat-label">Capabilities</div>
                     </div>
                     <div class="dependency-graph-stat">
                         <div class="dependency-graph-stat-value">${areas.length}</div>
-                        <div class="dependency-graph-stat-label">Experience Areas</div>
+                        <div class="dependency-graph-stat-label">Capability Areas</div>
                     </div>
                     <div class="dependency-graph-stat">
                         <div class="dependency-graph-stat-value">${capabilities.reduce((sum, item) => sum + ((item.flows || []).length), 0)}</div>
@@ -991,8 +998,8 @@
                                 return `
                                 <div class="capability-card" id="capability-${capability.id}">
                                     <div class="capability-card-header">
-                                        <img class="capability-card-icon" src="icons/experience.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
-                                        <div class="capability-card-title"><a target="_blank" href="experience_pages/${capability.id}.html">${capability.name || capability.id}</a></div>
+                                        <img class="capability-card-icon" src="icons/${capability.icon || 'capability.png'}" alt="" onerror="this.onerror=null;this.src='icons/capability.png'">
+                                        <div class="capability-card-title"><a target="_blank" href="capability_pages/${capability.id}.html">${capability.name || capability.id}</a></div>
                                     </div>
                                     <div class="capability-card-copy">${capability.description || ''}</div>
                                     ${story.actor ? `<div class="capability-card-copy"><strong>Actor:</strong> ${story.actor}</div>` : ''}
@@ -1024,7 +1031,7 @@
             capabilities.forEach(capability => {
                 (capability.brickDependencies || []).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
                 (capability.brickDependencies || []).forEach(dep => referencedBrickIds.add(dep.targetBrickId || ''));
-                ((capability.externalSystemsThisCapabilityDependsOn || capability.externalSystemsThisBrickDependsOn) || []).forEach(dep => {
+                getCapabilityExternalSystems(capability).forEach(dep => {
                     dependencyTypes.add(dep.type || 'unspecified');
                     externalSystems.add(dep.system || 'External System');
                 });
@@ -1079,7 +1086,7 @@
             return `
                 <div class="dependency-controls">
                     <div class="dependency-control-group">
-                        <div class="dependency-control-title">Product Experiences</div>
+                        <div class="dependency-control-title">Product Capabilities</div>
                         <div class="dependency-actions">
                             <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.dependency-capability-checkbox', true)">Show all</button>
                             <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.dependency-capability-checkbox', false)">Hide all</button>
@@ -1113,7 +1120,7 @@
                         <div class="dependency-node-legend-items">
                             <div class="dependency-node-legend-item">
                                 <span class="dependency-node-legend-swatch" style="background-color:#fde68a; border-color:#d97706;"></span>
-                                <span>Product experience</span>
+                                <span>Product capability</span>
                             </div>
                             <div class="dependency-node-legend-item">
                                 <span class="dependency-node-legend-swatch" style="background-color:#dbeafe; border-color:#2563eb;"></span>
@@ -1183,7 +1190,7 @@
                     });
                 });
 
-                ((item.externalSystemsThisCapabilityDependsOn || item.externalSystemsThisBrickDependsOn) || []).forEach((dep, index) => {
+                getCapabilityExternalSystems(item).forEach((dep, index) => {
                     if (!selectedDependencyTypes.has(dep.type || 'unspecified')) {
                         return;
                     }
@@ -1267,7 +1274,7 @@
             document.getElementById('DependenciesSummary').innerHTML = `
                 <div class="dependency-graph-stat">
                     <div class="dependency-graph-stat-value">${selectedCapabilityIds.size}</div>
-                    <div class="dependency-graph-stat-label">Experiences Shown</div>
+                    <div class="dependency-graph-stat-label">Capabilities Shown</div>
                 </div>
                 <div class="dependency-graph-stat">
                     <div class="dependency-graph-stat-value">${graph.nodes.length}</div>
@@ -1324,7 +1331,7 @@
             capabilities.forEach(capability => {
                 (capability.brickDependencies || []).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
                 (capability.brickDependencies || []).forEach(dep => referencedBrickIds.add(dep.targetBrickId || ''));
-                ((capability.externalSystemsThisCapabilityDependsOn || capability.externalSystemsThisBrickDependsOn) || []).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
+                getCapabilityExternalSystems(capability).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
                 ((capability.externalSystemsDependingOnThisCapability || capability.externalSystemsDependingOnThisBrick) || []).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
             });
             return {
@@ -1415,7 +1422,7 @@
                     });
                 });
 
-                ((capability.externalSystemsThisCapabilityDependsOn || capability.externalSystemsThisBrickDependsOn) || []).forEach(dep => {
+                getCapabilityExternalSystems(capability).forEach(dep => {
                     if (!selectedDependencyTypes.has(dep.type || 'unspecified')) {
                         return;
                     }
@@ -1491,7 +1498,7 @@
                     <table class="matrix-table">
                         <thead>
                             <tr>
-                                <th class="matrix-corner">Experience</th>
+                                <th class="matrix-corner">Capability</th>
                                 ${columns.map(column => `
                                     <th title="${column.name || column.id}">
                                         ${column.href ? `
@@ -1539,16 +1546,16 @@
                 if (source.kind === 'external' || target.kind === 'external') {
                     const title = deps.map(dep => {
                         if (dep.direction === 'capability_depends_on_external') {
-                            return 'Experience depends on external system: ' + dep.type;
+                            return 'Capability depends on external system: ' + dep.type;
                         }
                         if (dep.direction === 'external_supports_capability') {
-                            return 'External system supports experience dependency: ' + dep.type;
+                            return 'External system supports capability dependency: ' + dep.type;
                         }
                         if (dep.direction === 'external_depends_on_capability') {
-                            return 'External system depends on experience: ' + dep.type;
+                            return 'External system depends on capability: ' + dep.type;
                         }
                         if (dep.direction === 'capability_used_by_external') {
-                            return 'Experience is used by external system: ' + dep.type;
+                            return 'Capability is used by external system: ' + dep.type;
                         }
                         return dep.type;
                     }).join(', ');
@@ -1646,8 +1653,8 @@
 </div>
 <div>
     <div class="tab">
-        <button class="tablinks active" id="tab_BigPicture" onclick="openTab('BigPicture')">Functional Bricks</button>
-        <button class="tablinks" id="tab_Experiences" onclick="openTab('Experiences')">Experience Bricks</button>
+        <button class="tablinks active" id="tab_BigPicture" onclick="openTab('BigPicture')">Product Bricks</button>
+        <button class="tablinks" id="tab_Capabilities" onclick="openTab('Capabilities')">Product Capabilities</button>
         <button class="tablinks" id="tab_Dependencies" onclick="openTab('Dependencies')">Dependencies</button>
     </div>
     <div id="BigPicture" class="tabcontent" style="display: block">
@@ -1656,9 +1663,9 @@
             <div class="legend" id="Legend"></div>
         </div>
     </div>
-    <div id="Experiences" class="tabcontent">
+    <div id="Capabilities" class="tabcontent">
         <div class="capabilities-panel">
-            <div id="ExperiencesContent"></div>
+            <div id="CapabilitiesContent"></div>
         </div>
     </div>
     <div id="Dependencies" class="tabcontent">

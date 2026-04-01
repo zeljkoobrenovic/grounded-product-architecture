@@ -105,7 +105,7 @@ def call_gemini_nanobanana_api(
                 }
             ],
             "generationConfig": {
-                "responseModalities": ["TEXT", "IMAGE"],
+                "responseModalities": ["IMAGE"],
             },
         }
     ).encode("utf-8")

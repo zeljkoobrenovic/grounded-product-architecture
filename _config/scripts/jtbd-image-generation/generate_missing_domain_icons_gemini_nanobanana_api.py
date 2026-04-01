@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate missing customer, KPI, start-page, and product-brick icons via Gemini Nano Banana."""
+"""Generate missing customer, KPI, start-page, product-brick, and product-capability icons via Gemini Nano Banana."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ FFPROBE_PATH = shutil.which("ffprobe") or ""
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate missing customer, start-page, and product-brick icons with Gemini Nano Banana."
+        description="Generate missing customer, start-page, product-brick, and product-capability icons with Gemini Nano Banana."
     )
     parser.add_argument("--domain", help="Only process one domain id.")
     parser.add_argument("--limit", type=int, default=0, help="Max number of icons to generate.")
@@ -501,6 +501,23 @@ Icon requirements:
 """.strip()
 
 
+def build_capability_prompt(domain_name: str, domain_description: str, capability: dict[str, Any]) -> str:
+    return f"""
+Create a square product experience icon.
+
+Product capability: {capability.get("name", "")}
+Description: {capability.get("description", "")}
+
+Icon requirements:
+- A minimalist icon in a clean, professional line-art style, no text.
+- No text, or labels.
+- Without borders and without frames.
+- The design features bold, consistent black outlines.
+- Use thick, uniform line weights and simple geometric shapes.
+- No shading, no gradients, and no colors—only high-contrast black and white vector-style graphics.
+""".strip()
+
+
 def iter_kpi_nodes(customer: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     nodes: list[tuple[str, dict[str, Any]]] = []
 
@@ -590,6 +607,19 @@ def main() -> int:
             domain_name = str(start_config.get("name") or domain_name)
             domain_description = str(start_config.get("description") or "")
 
+        if start_config_path.exists():
+            start_logo_path = domain_dir / "start" / "icons" / "logo.png"
+            if start_logo_path not in processed_icon_paths:
+                processed_icon_paths.add(start_logo_path)
+                if generate_icon(
+                    api_key=api_key,
+                    prompt=build_start_logo_prompt(domain_name, domain_description),
+                    path=start_logo_path,
+                    args=args,
+                    generated_count=total_generated,
+                ):
+                    total_generated += 1
+
         customers_json_path = domain_dir / "customers" / "customers.json"
         if customers_json_path.exists():
             payload = load_json(customers_json_path)
@@ -653,19 +683,6 @@ def main() -> int:
                 dump_json(customers_json_path, payload, args.dry_run)
                 total_json_updates += 1
 
-        if start_config_path.exists():
-            start_logo_path = domain_dir / "start" / "icons" / "logo.png"
-            if start_logo_path not in processed_icon_paths:
-                processed_icon_paths.add(start_logo_path)
-                if generate_icon(
-                    api_key=api_key,
-                    prompt=build_start_logo_prompt(domain_name, domain_description),
-                    path=start_logo_path,
-                    args=args,
-                    generated_count=total_generated,
-                ):
-                    total_generated += 1
-
         product_bricks_path = domain_dir / "product-bricks" / "product-bricks.json"
         if product_bricks_path.exists():
             bricks_payload = load_json(product_bricks_path)
@@ -687,6 +704,47 @@ def main() -> int:
                     generated_count=total_generated,
                 ):
                     total_generated += 1
+
+        product_capabilities_path = domain_dir / "product-bricks" / "product-capability.json"
+        if product_capabilities_path.exists():
+            capabilities_payload = load_json(product_capabilities_path)
+            original_text = json.dumps(capabilities_payload, indent=2, ensure_ascii=False)
+            json_changed = False
+            capabilities = (
+                capabilities_payload.get("capabilities", [])
+                if isinstance(capabilities_payload, dict)
+                else []
+            )
+
+            for capability in capabilities:
+                if not isinstance(capability, dict):
+                    continue
+                capability_id = str(capability.get("id") or "").strip()
+                if not capability_id:
+                    continue
+
+                filename = normalize_icon_filename(capability.get("icon"), capability_id)
+                if capability.get("icon") != filename:
+                    capability["icon"] = filename
+                    json_changed = True
+
+                icon_path = domain_dir / "product-bricks" / "icons" / filename
+                if icon_path in processed_icon_paths:
+                    continue
+                processed_icon_paths.add(icon_path)
+                if generate_icon(
+                    api_key=api_key,
+                    prompt=build_capability_prompt(domain_name, domain_description, capability),
+                    path=icon_path,
+                    args=args,
+                    generated_count=total_generated,
+                ):
+                    total_generated += 1
+
+            updated_text = json.dumps(capabilities_payload, indent=2, ensure_ascii=False)
+            if json_changed or updated_text != original_text:
+                dump_json(product_capabilities_path, capabilities_payload, args.dry_run)
+                total_json_updates += 1
 
     print(
         f"Completed. Generated {total_generated} icons and updated {total_json_updates} JSON files."

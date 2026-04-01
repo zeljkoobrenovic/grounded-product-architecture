@@ -461,8 +461,8 @@
 <script>
     const config = ${config};
     const all_bricks = ${all_bricks};
-    const all_capabilities = ${all_capabilities};
-    const capability = ${capability_data};
+    const allCapabilities = ${all_capabilities};
+    const currentCapability = ${capability_data};
     const related_bricks = ${related_bricks};
     const linked_products = ${linked_products};
     const related_teams = ${related_teams};
@@ -502,7 +502,11 @@
     }
 
     function getFlows() {
-        return capability.flows || [];
+        return currentCapability.flows || [];
+    }
+
+    function getCapabilityExternalSystems() {
+        return currentCapability.externalSystemsThisCapabilityDependsOn || [];
     }
 
     function getFlowDependencies(flow) {
@@ -523,7 +527,7 @@
     }
 
     function getPrimaryActors() {
-        const capabilityJobs = capability.supportedCustomerJobs || [];
+        const capabilityJobs = currentCapability.supportedCustomerJobs || [];
         const allJobs = capabilityJobs.length ? capabilityJobs : supported_jobs;
         return dedupe(allJobs.map(item => item.customerName || item.customerGroup || '').filter(Boolean), item => item);
     }
@@ -583,20 +587,20 @@
 
 <script>
     let headerHtml = '<div class="nav-strip">';
-    all_capabilities.forEach(item => {
+    allCapabilities.forEach(item => {
         headerHtml += '<a class="nav-link" href="' + escapeHtml(item.id) + '.html">';
-        headerHtml += '<img src="../icons/experience.png" class="' + (item.id === capability.id ? 'tab-image-selected' : 'tab-image') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/experience.png\'">';
+        headerHtml += '<img src="../icons/' + escapeHtml(item.icon || 'capability.png') + '" class="' + (item.id === currentCapability.id ? 'tab-image-selected' : 'tab-image') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/capability.png\'">';
         headerHtml += '</a>';
     });
     headerHtml += '</div>';
 
     headerHtml += '<div class="page">';
     headerHtml += '<div class="header">';
-    headerHtml += '<img class="header-icon" src="../icons/capability_404.png" alt="" onerror="this.onerror=null;this.src=\'../icons/experience.png\'">';
+    headerHtml += '<img class="header-icon" src="../icons/' + escapeHtml(currentCapability.icon || 'capability.png') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/capability.png\'">';
     headerHtml += '<div>';
-    headerHtml += '<div class="header-meta">' + escapeHtml(capability.group || 'Experience') + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((capability.id || '').toUpperCase()) + '</span></div>';
-    headerHtml += '<div class="header-title">' + escapeHtml(capability.name || capability.id) + '</div>';
-    headerHtml += '<div class="header-copy">' + escapeHtml(capability.description || '') + '</div>';
+    headerHtml += '<div class="header-meta">' + escapeHtml(currentCapability.group || 'Capability') + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentCapability.id || '').toUpperCase()) + '</span></div>';
+    headerHtml += '<div class="header-title">' + escapeHtml(currentCapability.name || currentCapability.id) + '</div>';
+    headerHtml += '<div class="header-copy">' + escapeHtml(currentCapability.description || '') + '</div>';
     headerHtml += '</div></div></div>';
     document.getElementById('Header').innerHTML = headerHtml;
 
@@ -609,15 +613,15 @@
         html += '<div class="activity-summary">';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + flows.length + '</div><div class="activity-stat-label">Flows</div></div>';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + totalSteps + '</div><div class="activity-stat-label">Flow Steps</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + (capability.outcomes || []).length + '</div><div class="activity-stat-label">Outcomes</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + (currentCapability.outcomes || []).length + '</div><div class="activity-stat-label">Outcomes</div></div>';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + related_bricks.length + '</div><div class="activity-stat-label">Supporting Bricks</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + ((capability.externalSystemsThisCapabilityDependsOn || []).length) + '</div><div class="activity-stat-label">External Systems</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + getCapabilityExternalSystems().length + '</div><div class="activity-stat-label">External Systems</div></div>';
         html += '</div>';
 
-        html += '<div class="group"><div class="section-title">Why This Experience Matters</div>';
+        html += '<div class="group"><div class="section-title">Why This Capability Matters</div>';
         html += '<div class="card">';
-        html += '<div class="card-title">' + escapeHtml(capability.name || capability.id) + '</div>';
-        html += '<div class="card-copy">' + escapeHtml(capability.description || '') + '</div>';
+        html += '<div class="card-title">' + escapeHtml(currentCapability.name || currentCapability.id) + '</div>';
+        html += '<div class="card-copy">' + escapeHtml(currentCapability.description || '') + '</div>';
         if (primaryActors.length) {
             html += '<div class="card-meta">Primary actors</div>';
             html += '<div class="pill-row">' + primaryActors.map(actor => '<span class="pill">' + escapeHtml(actor) + '</span>').join('') + '</div>';
@@ -626,13 +630,13 @@
 
         html += '<div class="group"><div class="section-title">Flow Narrative</div>';
         if (!flows.length) {
-            html += '<div class="muted">No flows listed for this experience.</div>';
+            html += '<div class="muted">No flows listed for this capability.</div>';
         } else {
             html += '<div class="card-grid">';
             flows.forEach(flow => {
                 const summary = summarizeFlow(flow);
                 html += '<div class="card">';
-                html += '<div class="card-meta">' + escapeHtml(capability.group || 'Flow') + '</div>';
+                html += '<div class="card-meta">' + escapeHtml(currentCapability.group || 'Flow') + '</div>';
                 html += '<div class="card-title">' + escapeHtml(flow.title || flow.id) + '</div>';
                 html += '<div class="card-copy">' + escapeHtml(flow.description || '') + '</div>';
                 html += '<div class="muted">' + ((flow.steps || []).length) + ' steps</div>';
@@ -652,10 +656,10 @@
         html += '</div>';
 
         html += '<div class="group"><div class="section-title">Outcomes</div>';
-        if (!(capability.outcomes || []).length) {
+        if (!(currentCapability.outcomes || []).length) {
             html += '<div class="muted">No outcomes listed for this capability.</div>';
         } else {
-            html += '<div class="card"><ul class="list">' + capability.outcomes.map(outcome => '<li>' + escapeHtml(outcome) + '</li>').join('') + '</ul></div>';
+            html += '<div class="card"><ul class="list">' + currentCapability.outcomes.map(outcome => '<li>' + escapeHtml(outcome) + '</li>').join('') + '</ul></div>';
         }
         html += '</div>';
 
@@ -679,11 +683,11 @@
         html += '</div>';
 
         html += '<div class="group"><div class="section-title">External Systems</div>';
-        if (!((capability.externalSystemsThisCapabilityDependsOn || []).length)) {
+        if (!getCapabilityExternalSystems().length) {
             html += '<div class="muted">No external systems listed.</div>';
         } else {
             html += '<div class="pill-row">';
-            capability.externalSystemsThisCapabilityDependsOn.forEach(system => {
+            getCapabilityExternalSystems().forEach(system => {
                 html += '<span class="pill"><img src="../icons/external-system.png" alt="" onerror="this.onerror=null;this.src=\'../icons/logo.png\'"><span>' + escapeHtml(system.system || 'External System') + '</span></span>';
             });
             html += '</div>';
@@ -736,7 +740,7 @@
                 html += '<div class="card-title">' + escapeHtml(job.jobName || job.jobId) + '</div>';
                 html += '<div class="card-copy">' + escapeHtml(job.jobOutcome || job.jobWhatItIs || '') + '</div>';
                 if (job.supportRationale) {
-                    html += '<div class="card-copy"><strong>Why this experience matters here:</strong> ' + escapeHtml(job.supportRationale) + '</div>';
+                    html += '<div class="card-copy"><strong>Why this capability matters here:</strong> ' + escapeHtml(job.supportRationale) + '</div>';
                 }
                 if ((job.usedInSteps || []).length) {
                     html += '<ul class="list">' + job.usedInSteps.map(step => '<li>' + escapeHtml(step.step || step.description || '') + '</li>').join('') + '</ul>';
@@ -758,7 +762,7 @@
         html += '<div class="activity-summary">';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + flows.length + '</div><div class="activity-stat-label">Flows</div></div>';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + totalSteps + '</div><div class="activity-stat-label">Flow Steps</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + all_capabilities.length + '</div><div class="activity-stat-label">Experiences Compared</div></div>';
+        html += '<div class="activity-stat"><div class="activity-stat-value">' + allCapabilities.length + '</div><div class="activity-stat-label">Capabilities Compared</div></div>';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + related_bricks.length + '</div><div class="activity-stat-label">Supporting Bricks</div></div>';
         html += '</div>';
 
@@ -858,15 +862,15 @@
 
     function renderDependencies() {
         const container = document.getElementById('DependenciesTab');
-        const capabilityId = 'capability_' + (capability.id || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
+        const capabilityId = 'capability_' + (currentCapability.id || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
         let chart = 'flowchart LR\\n';
-        chart += capabilityId + '["' + escapeHtml(capability.name || capability.id) + '"]\\n';
+        chart += capabilityId + '["' + escapeHtml(currentCapability.name || currentCapability.id) + '"]\\n';
         related_bricks.forEach(brick => {
             const brickId = 'brick_' + brick.id.replace(/[^a-zA-Z0-9]/g, '_');
             chart += brickId + '["' + escapeHtml(brick.name || brick.id) + '"]\\n';
             chart += capabilityId + ' --> ' + brickId + '\\n';
         });
-        (capability.externalSystemsThisCapabilityDependsOn || []).forEach((system, index) => {
+        getCapabilityExternalSystems().forEach((system, index) => {
             const systemId = 'external_' + index;
             chart += systemId + '["' + escapeHtml(system.system || 'External System') + '"]\\n';
             chart += capabilityId + ' --> ' + systemId + '\\n';

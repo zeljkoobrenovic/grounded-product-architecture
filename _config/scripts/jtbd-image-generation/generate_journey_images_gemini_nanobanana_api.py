@@ -29,10 +29,7 @@ API_URL_TEMPLATE = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 )
 MIME_TYPE_TO_FORMAT = {
-    "image/png": "png",
-    "image/jpeg": "jpeg",
-    "image/jpg": "jpeg",
-    "image/webp": "webp",
+    "image/png": "png"
 }
 
 
@@ -71,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-format",
         default=DEFAULT_OUTPUT_FORMAT,
-        choices=("png", "jpeg", "webp"),
+        choices=("png"),
         help="Image output format or preferred file extension.",
     )
     parser.add_argument("--background", default="opaque", help="Image background mode, if supported.")
@@ -523,7 +520,7 @@ def call_gemini_nanobanana_api(
                 }
             ],
             "generationConfig": {
-                "responseModalities": ["TEXT", "IMAGE"],
+                "responseModalities": ["IMAGE"],
             },
         }
     ).encode("utf-8")
