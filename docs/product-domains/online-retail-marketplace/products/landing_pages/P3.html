@@ -515,7 +515,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script>
         function initTab() {
-            let tabName = 'HomeTab';
+            let tabName = 'InterfacesTab';
             if (window.location.hash) {
                 const hash = window.location.hash.substring(1);
                 if (document.getElementById('tab_' + hash)) {
@@ -553,12 +553,14 @@
 
     <div style="margin: 0; margin-top: 12px">
         <div class="tab">
-            <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Home</button>
+            <button class="tablinks active" id="tab_InterfacesTab" onclick="openTab('InterfacesTab')"></button>
+            <button class="tablinks" id="tab_ChannelsTab" onclick="openTab('ChannelsTab')"></button>
+            <button class="tablinks" id="tab_BricksTab" onclick="openTab('BricksTab')"></button>
         </div>
 
-        <div id="HomeTab" class="tabcontent" style="padding: 10px">
-            <div id="Home"></div>
-        </div>
+        <div id="InterfacesTab" class="tabcontent" style="padding: 10px"><div id="Interfaces"></div></div>
+        <div id="ChannelsTab" class="tabcontent" style="padding: 10px"><div id="Channels"></div></div>
+        <div id="BricksTab" class="tabcontent" style="padding: 10px"><div id="Bricks"></div></div>
     </div>
 </div>
 
@@ -607,23 +609,29 @@
         document.getElementById('Header').innerHTML = html;
     }
 
-    function addHome() {
-        let html = '';
-        const deploymentChannelGroups = getDeploymentChannelGroups();
+    function addTabLabels() {
+        const interfaceCount = (product.interfaces || []).length;
+        const channelCount = getDeploymentChannelGroups().reduce((sum, group) => sum + (group.channels || []).length, 0);
+        const brickCount = (product.neededBricks || []).length;
 
-        html += '<table style="text-align: center">';
-        html += '<tr>';
-        html += '<td colspan="100" style="text-align: center; padding: 0">';
+        document.getElementById('tab_InterfacesTab').innerText = 'Interfaces (' + interfaceCount + ')';
+        document.getElementById('tab_ChannelsTab').innerText = 'Channels (' + channelCount + ')';
+        document.getElementById('tab_BricksTab').innerText = 'Bricks (' + brickCount + ')';
+    }
+
+    function addInterfaces() {
+        let html = '';
         html += '<div class="home-stage">';
         html += '<div class="home-stage-title">Interfaces</div>';
         html += '<div class="home-stage-subtitle">Customer-facing entry points and touchpoints</div>';
-        product.interfaces.forEach(interface => {
-            html += '<div style="text-align: center; max-width: 200px; vertical-align: bottom; display: inline-block">';
-            html += '<div style="border: 2px solid white; padding: 8px; margin: 5px; margin-bottom: 20px; color: black; display: inline-block">';
-            interface.users.forEach(user => {
+        (product.interfaces || []).forEach(interface => {
+            html += '<div style="text-align: center; max-width: 200px; vertical-align: bottom; display: inline-block; vertical-align: top">';
+            html += '<div style="border: 2px solid white; padding: 8px; margin: 5px; margin-bottom: 4px; color: black; display: inline-block">';
+            (interface.users || []).forEach(user => {
                 html += '<div style="display: inline-block; border: 1px solid grey; padding: 3px; margin: 2px; border-radius: 9px; font-size: 80%">';
                 html += user;
                 html += '</div>';
+                html += "<div>|</div>";
             });
             html += '</div>';
             html += '<div style="text-align: center; max-width: 200px; vertical-align: top">';
@@ -631,17 +639,25 @@
             html += '<img src="../icons/' + interface.type + '.png" style="height: 42px; margin: 0; margin-top: -28px; background-color: rgba(255,255,255,1)">';
             html += '<div style="color: blue; margin-bottom: 0px; height: 2em; margin-top: 0; color: grey; font-size: 80%">' + interface.type + '</div>';
             html += '<div style="color: blue; margin-bottom: 10px; height: 2em; margin-top: 0px">' + interface.name + '</div>';
+            if (interface.availabilityHorizon) {
+                html += '<div style="color: #1d4ed8; margin-bottom: 8px; margin-top: 0; text-align: center; font-size: 75%; text-transform: uppercase; letter-spacing: 0.04em">' + escapeHtml(interface.availabilityHorizon) + '</div>';
+            }
+            if (interface.description) {
+                html += '<div style="color: grey; margin-bottom: 6px; margin-top: 0; text-align: center; font-size: 75%; line-height: 1.4">' + escapeHtml(interface.description) + '</div>';
+            }
+            html += renderInterfaceChannelIcons(interface.type);
             html += '</div>';
             html += '</div>';
             html += '</div>';
 
         });
         html += '</div>';
-        html += '</td>';
-        html += '</tr>';
+        document.getElementById('Interfaces').innerHTML = html;
+    }
 
-        html += '<tr>';
-        html += '<td colspan="100" style="text-align: center; padding: 0">';
+    function addChannels() {
+        let html = '';
+        const deploymentChannelGroups = getDeploymentChannelGroups();
         html += '<div class="home-stage">';
         html += '<div class="home-stage-title">Deployment Channels</div>';
         html += '<div class="home-stage-subtitle">Actual channels used to ship brick parts into runtime surfaces</div>';
@@ -665,11 +681,11 @@
             });
         }
         html += '</div>';
-        html += '</td>';
-        html += '</tr>';
+        document.getElementById('Channels').innerHTML = html;
+    }
 
-        html += '<tr>';
-        html += '<td colspan="100" style="text-align: center; padding: 0">';
+    function addBricks() {
+        let html = '';
         html += '<div class="home-stage">';
         html += '<div class="home-stage-title">Product Bricks</div>';
         html += '<div class="home-stage-subtitle">Brick parts inherit the same channel colors as the lanes above</div>';
@@ -688,13 +704,7 @@
             });
         }
         html += '</div>';
-        html += '</td>';
-        html += '</tr>';
-        html += '</table>';
-
-        html += '</div>';
-
-        document.getElementById('Home').innerHTML = html;
+        document.getElementById('Bricks').innerHTML = html;
     }
 
     function escapeHtml(value) {
@@ -792,6 +802,40 @@
                 bricks: Object.values(channel.bricks).sort((a, b) => (a.brickName || a.brickId).localeCompare(b.brickName || b.brickId))
             })).sort((a, b) => a.name.localeCompare(b.name))
         })).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function getInterfaceChannels(interfaceType) {
+        const channels = {};
+        (product.neededBricks || []).forEach(brick => {
+            (brick.deploymentChannels || []).forEach(channel => {
+                if (!(channel.supportsInterfaces || []).includes(interfaceType)) {
+                    return;
+                }
+                const ref = channel.deploymentChannelRef || channel.channelId || channel.channelName || interfaceType;
+                if (!channels[ref]) {
+                    const groupId = ref.includes('/') ? ref.split('/')[0] : 'other';
+                    channels[ref] = {
+                        ref: ref,
+                        groupId: groupId,
+                        name: channel.channelName || channel.channelId || ref
+                    };
+                }
+            });
+        });
+        return Object.values(channels).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function renderInterfaceChannelIcons(interfaceType) {
+        const channels = getInterfaceChannels(interfaceType);
+        if (!channels.length) {
+            return '';
+        }
+        let html = '<div class="brick-channel-row" style="justify-content:center; margin-top:10px;">';
+        channels.forEach(channel => {
+            html += '<img class="brick-channel-icon" src="../icons/deployment/' + deploymentIconFile(channel) + '" alt="' + escapeHtml(channel.name) + '" title="' + escapeHtml(channel.name) + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+        });
+        html += '</div>';
+        return html;
     }
 
     function renderSmallBrickIcon(brickId, brickName) {
@@ -904,7 +948,10 @@
     }
 
     addHeader();
-    addHome();
+    addTabLabels();
+    addInterfaces();
+    addChannels();
+    addBricks();
 
 </script>
 

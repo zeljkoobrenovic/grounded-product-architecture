@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Products (Internal)</title>
+    <title>Product Deployments (Internal)</title>
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
@@ -120,9 +120,23 @@
 
         .tabcontent {
             display: none;
-            padding: 0;
+            padding: 12px;
             border: 1px solid #ccc;
             border-top: none;
+        }
+
+        .view-toggle {
+            margin: 0;
+            padding: 12px 0 16px 0;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .view-toggle label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
         }
 
         .deployment-panel {
@@ -192,8 +206,8 @@
         }
 
         .deployment-card-title {
-            font-size: 20px;
-            color: #111827;
+            font-size: 32px;
+            color: black;
             margin-bottom: 4px;
         }
 
@@ -285,12 +299,49 @@
 
         .brick-chip {
             display: inline-flex;
-            flex-direction: column;
-            gap: 2px;
+            align-items: flex-start;
+            gap: 8px;
             padding: 8px 10px;
             border-radius: 10px;
             background: #f3f4f6;
             border: 1px solid #e5e7eb;
+        }
+
+        .brick-chip-body {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .chip-icon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 2px;
+            flex: 0 0 auto;
+            margin-top: 1px;
+        }
+
+        .chip-icon-large {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .icon-only-chip {
+            display: inline-flex;
+        }
+
+        .icon-only-chip-link {
+            display: inline-flex;
+        }
+
+        .brick-chip-body.hidden {
+            display: none;
         }
 
         .brick-chip-title {
@@ -367,8 +418,10 @@
         <tr>
             <td class="hero-logo-cell"><img class="hero-logo" src="icons/logo.png" alt="Products"></td>
             <td class="hero-copy-cell">
-                <div class="hero-title">Products</div>
-                <div class="hero-subtitle">Products organize the customer value proposition into concrete offers, journeys, channels, and delivery structures. This page shows an overview of the product landscape and how products are exposed across deployment channels.</div>
+                <div class="hero-title">Product Deployments</div>
+                <div class="hero-subtitle">Products organize the customer value proposition into concrete offers, journeys, channels, and delivery structures. This page shows an overview of the
+                    product landscape and how products are exposed across deployment channels.
+                </div>
             </td>
         </tr>
     </table>
@@ -379,13 +432,18 @@
     <button class="tablinks" id="tab_deployment" onclick="openTab('deployment')">Deployment Channels</button>
 </div>
 <div>
-    <div id="products" class="tabcontent"></div>
+    <div id="products" class="tabcontent">
+        <div class="view-toggle">
+            <label><input type="checkbox" id="show_text_toggle" onchange="update()"> Show text</label>
+        </div>
+        <div id="products_content"></div>
+    </div>
     <div id="deployment" class="tabcontent"></div>
 </div>
 
 <script>
     const products = {"portfolio": {"name": "Internal Portfolio", "version": "1.0", "products": [{"id": "P1", "name": "Revenue Operations Control Tower", "type": "Internal Operations", "primaryCustomers": [{"id": "crov", "name": "Chief Revenue Officer / VP Sales"}], "interfaces": [{"type": "web", "name": "Revenue Operations Control Tower Web Workspace", "description": "Primary browser workspace for Revenue Operations Control Tower.", "users": ["Users"], "availabilityHorizon": "live"}, {"type": "dashboard", "name": "Revenue Operations Control Tower Dashboard", "description": "Operational analytics view for Revenue Operations Control Tower.", "users": ["Managers"], "availabilityHorizon": "1_year"}, {"type": "api", "name": "Revenue Operations Control Tower API", "description": "Integration API for Revenue Operations Control Tower.", "users": ["Internal Systems", "Partners"], "availabilityHorizon": "1_year"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Needed by Revenue Operations Control Tower to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "urdm", "brickName": "Unified revenue data model", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Revenue Operations Control Tower to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "iaam", "brickName": "Identity and account matching", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Revenue Operations Control Tower to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Revenue Operations Control Tower to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}]}, {"id": "P2", "name": "Seller Workflow Workspace", "type": "Internal Productivity", "primaryCustomers": [{"id": "cmmo", "name": "Chief Marketing Officer / VP Marketing"}], "interfaces": [{"type": "web", "name": "Seller Workflow Workspace Web Workspace", "description": "Primary browser workspace for Seller Workflow Workspace.", "users": ["Users"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Seller Workflow Workspace Mobile App", "description": "Mobile surface for Seller Workflow Workspace.", "users": ["Mobile Users"], "availabilityHorizon": "live"}, {"type": "dashboard", "name": "Seller Workflow Workspace Dashboard", "description": "Operational analytics view for Seller Workflow Workspace.", "users": ["Managers"], "availabilityHorizon": "1_year"}, {"type": "api", "name": "Seller Workflow Workspace API", "description": "Integration API for Seller Workflow Workspace.", "users": ["Internal Systems", "Partners"], "availabilityHorizon": "1_year"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Needed by Seller Workflow Workspace to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "mobile_app", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific mobile app module and mobile configuration package", "pipeline": "Build signed mobile binaries, run device validation, and promote through the mobile release pipeline.", "supportsInterfaces": ["mobile_app"], "deploymentChannelRef": "mobile-app-stores/managed-mobile-distribution", "deploymentEnvironmentRef": "mobile-distribution-production", "channelId": "mobile-dist", "channelName": "Managed mobile rollout", "deploymentPart": "mobile", "environmentName": "Managed Mobile Distribution"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Seller Workflow Workspace to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "mobile_app", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific mobile app module and mobile configuration package", "pipeline": "Build signed mobile binaries, run device validation, and promote through the mobile release pipeline.", "supportsInterfaces": ["mobile_app"], "deploymentChannelRef": "mobile-app-stores/managed-mobile-distribution", "deploymentEnvironmentRef": "mobile-distribution-production", "channelId": "mobile-dist", "channelName": "Managed mobile rollout", "deploymentPart": "mobile", "environmentName": "Managed Mobile Distribution"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Seller Workflow Workspace to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "mobile_app", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific mobile app module and mobile configuration package", "pipeline": "Build signed mobile binaries, run device validation, and promote through the mobile release pipeline.", "supportsInterfaces": ["mobile_app"], "deploymentChannelRef": "mobile-app-stores/managed-mobile-distribution", "deploymentEnvironmentRef": "mobile-distribution-production", "channelId": "mobile-dist", "channelName": "Managed mobile rollout", "deploymentPart": "mobile", "environmentName": "Managed Mobile Distribution"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Seller Workflow Workspace to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "mobile_app", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific mobile app module and mobile configuration package", "pipeline": "Build signed mobile binaries, run device validation, and promote through the mobile release pipeline.", "supportsInterfaces": ["mobile_app"], "deploymentChannelRef": "mobile-app-stores/managed-mobile-distribution", "deploymentEnvironmentRef": "mobile-distribution-production", "channelId": "mobile-dist", "channelName": "Managed mobile rollout", "deploymentPart": "mobile", "environmentName": "Managed Mobile Distribution"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}]}, {"id": "P3", "name": "Commercial Intelligence Hub", "type": "Internal Analytics", "primaryCustomers": [{"id": "hsup", "name": "Head of Customer Support / Customer Operations"}], "interfaces": [{"type": "web", "name": "Commercial Intelligence Hub Web Workspace", "description": "Primary browser workspace for Commercial Intelligence Hub.", "users": ["Users"], "availabilityHorizon": "live"}, {"type": "dashboard", "name": "Commercial Intelligence Hub Dashboard", "description": "Operational analytics view for Commercial Intelligence Hub.", "users": ["Managers"], "availabilityHorizon": "1_year"}, {"type": "api", "name": "Commercial Intelligence Hub API", "description": "Integration API for Commercial Intelligence Hub.", "users": ["Internal Systems", "Partners"], "availabilityHorizon": "1_year"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Needed by Commercial Intelligence Hub to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Commercial Intelligence Hub to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "shpa", "brickName": "Structured handoff package", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Commercial Intelligence Hub to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "wote", "brickName": "Workflow telemetry", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Needed by Commercial Intelligence Hub to support a key workflow.", "mappingType": "generated_from_customers", "brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentChannels": [{"deploymentUnit": "Brick-specific backend service, worker, and data migration package", "pipeline": "Build, test, package, and promote the brick service through the standard CI/CD pipeline.", "supportsInterfaces": ["web", "dashboard", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Backend service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Brick-specific web module, page bundle, or micro-frontend", "pipeline": "Build static assets, run UI checks, and deploy the web bundle through the frontend pipeline.", "supportsInterfaces": ["web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web frontend rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}, {"deploymentUnit": "Brick-specific dashboard tiles, KPI models, and visualization assets", "pipeline": "Validate KPI models and publish dashboard assets through the analytics release pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Dashboard workspace rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}, {"deploymentUnit": "Brick-specific API service image, contract, and gateway policy", "pipeline": "Publish the service image, validate contracts, and promote gateway configuration across environments.", "supportsInterfaces": ["api"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "API gateway rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}]}], "deploymentModelRef": "deployment.json"}};
-    const deployment = {"metadata": {"title": "Internal Portfolio Deployment and Operating Surfaces", "description": "Primary deployment, distribution, analytics, operations, and engineering channels used to deliver and operate the Internal Portfolio domain.", "modelVersion": "3.0", "notes": ["This model maps product bricks to the main channels through which they are deployed, distributed, triggered, or operated.", "Products link back to this model through deploymentChannelRef and deploymentEnvironmentRef on delivery paths."]}, "channels": [{"groupId": "runtime-cloud", "groupName": "Cloud Runtime Environments", "groupType": "runtime", "description": "Primary live runtimes where domain backend services, APIs, workers, and orchestration jobs execute.", "channels": [{"subChannelId": "aws-core-runtime", "subChannelName": "Core Cloud Runtime", "channelType": "public-cloud", "description": "Primary production runtime for customer-facing and operational application services.", "environments": [{"environmentId": "cloud-production", "environmentName": "Cloud Production Runtime", "description": "Primary live cloud runtime for deployable domain services.", "links": []}], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}]}]}, {"groupId": "web-edge-delivery", "groupName": "Web and Edge Delivery", "groupType": "distribution", "description": "Primary delivery surface for browser applications, landing pages, and cacheable web assets.", "channels": [{"subChannelId": "web-cdn-edge", "subChannelName": "CDN and Edge Hosting", "channelType": "edge-platform", "description": "Primary production web delivery surface for public or internal browser experiences.", "environments": [{"environmentId": "edge-production", "environmentName": "CDN and Edge Production", "description": "Primary live CDN and edge-delivery surface.", "links": []}], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}]}]}, {"groupId": "api-and-integration", "groupName": "API and Integration Surfaces", "groupType": "integration", "description": "Primary delivery surface for external, partner, or cross-platform API access.", "channels": [{"subChannelId": "api-gateway", "subChannelName": "API Gateway", "channelType": "api-platform", "description": "Primary API exposure surface for domain services and contracts.", "environments": [{"environmentId": "api-gateway-production", "environmentName": "API Gateway Production", "description": "Primary live API gateway and routing surface.", "links": []}], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}]}]}, {"groupId": "mobile-app-stores", "groupName": "Mobile App Distribution", "groupType": "app-store", "description": "Primary mobile distribution surfaces for native applications and managed releases.", "channels": [{"subChannelId": "managed-mobile-distribution", "subChannelName": "Managed Mobile Distribution", "channelType": "mobile-release", "description": "Primary managed mobile distribution surface for coordinated native releases.", "environments": [{"environmentId": "mobile-distribution-production", "environmentName": "Managed Mobile Distribution", "description": "Primary live managed mobile release channel.", "links": []}], "deployedBricks": [{"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}]}]}, {"groupId": "analytics-and-data-platforms", "groupName": "Analytics and Data Platforms", "groupType": "data", "description": "Primary analytical platforms used for BI, reporting, KPIs, and domain insight.", "channels": [{"subChannelId": "analytics-workspace", "subChannelName": "Analytics Workspace", "channelType": "analytics", "description": "Primary analytics and BI workspace for domain reporting and models.", "environments": [{"environmentId": "analytics-production", "environmentName": "Analytics Workspace", "description": "Primary live analytics workspace.", "links": []}], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}]}]}]};
+    const deployment = {"metadata": {"title": "Internal Portfolio Deployment and Operating Surfaces", "description": "Primary deployment, distribution, analytics, operations, and engineering channels used to deliver and operate the Internal Portfolio domain.", "modelVersion": "3.0", "notes": ["This model maps product bricks to the main channels through which they are deployed, distributed, triggered, or operated.", "Products link back to this model through deploymentChannelRef and deploymentEnvironmentRef on delivery paths."]}, "channels": [{"groupId": "runtime-cloud", "groupName": "Cloud Runtime Environments", "groupType": "runtime", "description": "Primary live runtimes where domain backend services, APIs, workers, and orchestration jobs execute.", "channels": [{"subChannelId": "aws-core-runtime", "subChannelName": "Core Cloud Runtime", "channelType": "public-cloud", "description": "Primary production runtime for customer-facing and operational application services.", "environments": [{"environmentId": "cloud-production", "environmentName": "Cloud Production Runtime", "description": "Primary live cloud runtime for deployable domain services.", "links": []}], "supportedInterfaces": ["api", "dashboard", "mobile_app", "web"], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific backend service, worker, and data migration package"}]}]}, {"groupId": "web-edge-delivery", "groupName": "Web and Edge Delivery", "groupType": "distribution", "description": "Primary delivery surface for browser applications, landing pages, and cacheable web assets.", "channels": [{"subChannelId": "web-cdn-edge", "subChannelName": "CDN and Edge Hosting", "channelType": "edge-platform", "description": "Primary production web delivery surface for public or internal browser experiences.", "environments": [{"environmentId": "edge-production", "environmentName": "CDN and Edge Production", "description": "Primary live CDN and edge-delivery surface.", "links": []}], "supportedInterfaces": ["web"], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific web module, page bundle, or micro-frontend"}]}]}, {"groupId": "api-and-integration", "groupName": "API and Integration Surfaces", "groupType": "integration", "description": "Primary delivery surface for external, partner, or cross-platform API access.", "channels": [{"subChannelId": "api-gateway", "subChannelName": "API Gateway", "channelType": "api-platform", "description": "Primary API exposure surface for domain services and contracts.", "environments": [{"environmentId": "api-gateway-production", "environmentName": "API Gateway Production", "description": "Primary live API gateway and routing surface.", "links": []}], "supportedInterfaces": ["api"], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific API service image, contract, and gateway policy"}]}]}, {"groupId": "mobile-app-stores", "groupName": "Mobile App Distribution", "groupType": "app-store", "description": "Primary mobile distribution surfaces for native applications and managed releases.", "channels": [{"subChannelId": "managed-mobile-distribution", "subChannelName": "Managed Mobile Distribution", "channelType": "mobile-release", "description": "Primary managed mobile distribution surface for coordinated native releases.", "environments": [{"environmentId": "mobile-distribution-production", "environmentName": "Managed Mobile Distribution", "description": "Primary live managed mobile release channel.", "links": []}], "supportedInterfaces": ["mobile_app"], "deployedBricks": [{"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific mobile app module and mobile configuration package"}]}]}, {"groupId": "analytics-and-data-platforms", "groupName": "Analytics and Data Platforms", "groupType": "data", "description": "Primary analytical platforms used for BI, reporting, KPIs, and domain insight.", "channels": [{"subChannelId": "analytics-workspace", "subChannelName": "Analytics Workspace", "channelType": "analytics", "description": "Primary analytics and BI workspace for domain reporting and models.", "environments": [{"environmentId": "analytics-production", "environmentName": "Analytics Workspace", "description": "Primary live analytics workspace.", "links": []}], "supportedInterfaces": ["dashboard"], "deployedBricks": [{"brickId": "urdm", "brickName": "Unified revenue data model", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "iaam", "brickName": "Integration adapters and migration toolkit", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "rbre", "brickName": "Rules-based routing engine", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "pads", "brickName": "Propensity and deal scoring", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "sgwo", "brickName": "Stage-gated workflow orchestration", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "cfaw", "brickName": "Cross-functional approval workspace", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "fasp", "brickName": "Forecasting and scenario planning", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "prin", "brickName": "Pipeline risk intelligence", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "otbi", "brickName": "Order-to-booking integration", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "shpa", "brickName": "Structured handoff package", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "wote", "brickName": "Workflow telemetry", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}, {"brickId": "acfs", "brickName": "AI copilot for sales execution", "deploymentRole": "Capability-specific dashboard tiles, KPI models, and visualization assets"}]}]}]};
 
     function escapeHtml(value) {
         return (value || '')
@@ -415,6 +473,47 @@
         return html;
     }
 
+    function buildDeploymentChannelLookup() {
+        const lookup = {};
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
+                lookup[ref] = {
+                    groupId: group.groupId || '',
+                    groupName: group.groupName || '',
+                    channelId: channel.subChannelId || '',
+                    channelName: channel.subChannelName || channel.subChannelId || '',
+                    channelType: channel.channelType || ''
+                };
+            });
+        });
+        return lookup;
+    }
+
+    function collectProductDeliveryChannels(product, deploymentLookup) {
+        const channels = {};
+        (product.neededBricks || []).forEach(brick => {
+            (brick.deploymentChannels || []).forEach(channel => {
+                const ref = channel.deploymentChannelRef;
+                if (!ref) {
+                    return;
+                }
+                if (!channels[ref]) {
+                    const resolved = deploymentLookup[ref] || {};
+                    channels[ref] = {
+                        ref: ref,
+                        channelName: resolved.channelName || channel.channelName || channel.channelId || ref,
+                        groupName: resolved.groupName || '',
+                        channelType: resolved.channelType || '',
+                        interfaces: new Set()
+                    };
+                }
+                (channel.supportsInterfaces || []).forEach(iface => channels[ref].interfaces.add(iface));
+            });
+        });
+        return Object.values(channels).sort((left, right) => left.channelName.localeCompare(right.channelName));
+    }
+
     function renderBrickIcon(brickId, brickName) {
         const safeId = escapeHtml(brickId || '');
         const safeName = escapeHtml(brickName || brickId || 'Product brick');
@@ -426,6 +525,58 @@
         const safeId = escapeHtml(brickId || '');
         const safeName = escapeHtml(brickName || brickId || 'Product brick');
         return '<a target="_blank" href="../product-bricks/landing_pages/' + safeId + '.html" title="' + safeName + '">' + renderBrickIcon(brickId, brickName) + '</a>';
+    }
+
+    function showTextEnabled() {
+        const toggle = document.getElementById('show_text_toggle');
+        return !!(toggle && toggle.checked);
+    }
+
+    function chipIconClass() {
+        return showTextEnabled() ? 'chip-icon' : 'chip-icon chip-icon-large';
+    }
+
+    function interfaceIconFile(iface) {
+        const text = [
+            iface && iface.type,
+            iface && iface.name,
+            iface && iface.description
+        ].join(' ').toLowerCase();
+
+        if (text.includes('partner_api')) {
+            return 'partner_api.png';
+        }
+        if (text.includes('public_api') || text.includes('public api')) {
+            return 'public_api.png';
+        }
+        if (text.includes('api')) {
+            return 'api.png';
+        }
+        if (text.includes('mobile web')) {
+            return 'mobile_web.png';
+        }
+        if (text.includes('mobile') || text.includes('app')) {
+            return 'mobile_app.png';
+        }
+        if (text.includes('dashboard') || text.includes('cockpit')) {
+            return 'dashboard.png';
+        }
+        if (text.includes('notification')) {
+            return 'notification.png';
+        }
+        if (text.includes('search')) {
+            return 'search_engine.png';
+        }
+        if (text.includes('social')) {
+            return 'social_media.png';
+        }
+        return 'web.png';
+    }
+
+    function renderInterfaceIcon(iface) {
+        const fileName = interfaceIconFile(iface);
+        const label = escapeHtml((iface && (iface.name || iface.type)) || 'Interface');
+        return '<img class="' + chipIconClass() + '" src="icons/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/web.png\'">';
     }
 
     function deploymentIconFile(channel, group) {
@@ -459,6 +610,45 @@
         const fileName = deploymentIconFile(channel, group);
         const label = escapeHtml((channel && (channel.subChannelName || channel.subChannelId)) || 'Deployment channel');
         return '<img class="deployment-card-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+    }
+
+    function renderDeploymentChipIcon(channel) {
+        const fileName = deploymentIconFile({
+            subChannelId: channel && channel.channelId,
+            subChannelName: channel && channel.channelName,
+            channelType: channel && channel.channelType
+        }, {
+            groupName: channel && channel.groupName
+        });
+        const label = escapeHtml((channel && channel.channelName) || 'Delivery channel');
+        return '<img class="' + chipIconClass() + '" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+    }
+
+    function renderBrickChipIcon(brickId, brickName) {
+        const safeId = escapeHtml(brickId || '');
+        const safeName = escapeHtml(brickName || brickId || 'Product brick');
+        const fallback = "if(!this.dataset.fallbackStage){this.dataset.fallbackStage='jpeg';this.src='../product-bricks/icons/" + safeId + ".jpeg';}else if(this.dataset.fallbackStage==='jpeg'){this.dataset.fallbackStage='jpg';this.src='../product-bricks/icons/" + safeId + ".jpg';}else{this.onerror=null;this.src='../product-bricks/icons/logo.png';}";
+        return '<img class="' + chipIconClass() + '" src="../product-bricks/icons/' + safeId + '.png" alt="' + safeName + '" title="' + safeName + '" onerror="' + fallback + '">';
+    }
+
+    function renderIconChip(iconHtml, title, copy, href) {
+        const showText = showTextEnabled();
+        const safeTitle = escapeHtml(title || '');
+        const safeCopy = escapeHtml(copy || '');
+        const bodyClass = showText ? 'brick-chip-body' : 'brick-chip-body hidden';
+        let chip = '<div class="' + (showText ? 'brick-chip' : 'icon-only-chip') + '">';
+        chip += iconHtml;
+        chip += '<div class="' + bodyClass + '">';
+        chip += '<div class="brick-chip-title">' + safeTitle + '</div>';
+        if (safeCopy) {
+            chip += '<div class="brick-chip-copy">' + safeCopy + '</div>';
+        }
+        chip += '</div>';
+        chip += '</div>';
+        if (href) {
+            return '<a class="' + (showText ? '' : 'icon-only-chip-link') + '" target="_blank" href="' + href + '" title="' + safeTitle + '">' + chip + '</a>';
+        }
+        return chip;
     }
 
     function renderDeploymentChannels() {
@@ -593,8 +783,10 @@
 
     function update() {
         let html = '';
+        const deploymentLookup = buildDeploymentChannelLookup();
 
         products.portfolio.products.forEach(product => {
+            const deliveryChannels = collectProductDeliveryChannels(product, deploymentLookup);
             html += '<a target="_blank" href="landing_pages/' + product.id + '.html">';
             html += '<div class="deployment-card" style="margin-bottom: 16px">';
             html += '<div class="deployment-card-header">';
@@ -611,10 +803,26 @@
                 html += '<div class="deployment-subtitle">Interfaces</div>';
                 html += '<div class="brick-chip-row">';
                 product.interfaces.forEach(iface => {
-                    html += '<div class="brick-chip">';
-                    html += '<div class="brick-chip-title">' + escapeHtml(iface.name) + '</div>';
-                    html += '<div class="brick-chip-copy">' + escapeHtml(iface.type) + (iface.users && iface.users.length ? ' · ' + escapeHtml(iface.users.join(', ')) : '') + '</div>';
-                    html += '</div>';
+                    html += renderIconChip(
+                        renderInterfaceIcon(iface),
+                        iface.name,
+                        iface.type + (iface.users && iface.users.length ? ' · ' + iface.users.join(', ') : '')
+                    );
+                });
+                html += '</div>';
+            }
+
+            if (deliveryChannels.length) {
+                html += '<div class="deployment-subtitle">Delivery Channels</div>';
+                html += '<div class="brick-chip-row">';
+                deliveryChannels.forEach(channel => {
+                    const interfaceList = Array.from(channel.interfaces).sort().join(', ');
+                    const meta = [channel.groupName, channel.channelType].filter(Boolean).join(' · ');
+                    html += renderIconChip(
+                        renderDeploymentChipIcon(channel),
+                        channel.channelName,
+                        (meta || channel.ref) + (interfaceList ? ' | ' + interfaceList : '')
+                    );
                 });
                 html += '</div>';
             }
@@ -623,7 +831,12 @@
                 html += '<div class="deployment-subtitle">Product Bricks</div>';
                 html += '<div class="brick-chip-row">';
                 product.neededBricks.forEach(brick => {
-                    html += renderBrickIcon(brick.brickId, brick.brickName);
+                    html += renderIconChip(
+                        renderBrickChipIcon(brick.brickId, brick.brickName),
+                        brick.brickName || brick.brickId,
+                        brick.whyNeeded || '',
+                        '../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html'
+                    );
                 });
                 html += '</div>';
             }
@@ -632,7 +845,7 @@
             html += '</a>';
         });
 
-        document.getElementById('products').innerHTML = html;
+        document.getElementById('products_content').innerHTML = html;
     }
 
     update();

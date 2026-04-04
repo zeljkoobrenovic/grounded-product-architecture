@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Products (Premium Long-Haul Airline)</title>
+    <title>Product Deployments (Premium Long-Haul Airline)</title>
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
@@ -120,9 +120,23 @@
 
         .tabcontent {
             display: none;
-            padding: 0;
+            padding: 12px;
             border: 1px solid #ccc;
             border-top: none;
+        }
+
+        .view-toggle {
+            margin: 0;
+            padding: 12px 0 16px 0;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .view-toggle label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
         }
 
         .deployment-panel {
@@ -192,8 +206,8 @@
         }
 
         .deployment-card-title {
-            font-size: 20px;
-            color: #111827;
+            font-size: 32px;
+            color: black;
             margin-bottom: 4px;
         }
 
@@ -285,12 +299,49 @@
 
         .brick-chip {
             display: inline-flex;
-            flex-direction: column;
-            gap: 2px;
+            align-items: flex-start;
+            gap: 8px;
             padding: 8px 10px;
             border-radius: 10px;
             background: #f3f4f6;
             border: 1px solid #e5e7eb;
+        }
+
+        .brick-chip-body {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .chip-icon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 2px;
+            flex: 0 0 auto;
+            margin-top: 1px;
+        }
+
+        .chip-icon-large {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .icon-only-chip {
+            display: inline-flex;
+        }
+
+        .icon-only-chip-link {
+            display: inline-flex;
+        }
+
+        .brick-chip-body.hidden {
+            display: none;
         }
 
         .brick-chip-title {
@@ -367,8 +418,10 @@
         <tr>
             <td class="hero-logo-cell"><img class="hero-logo" src="icons/logo.png" alt="Products"></td>
             <td class="hero-copy-cell">
-                <div class="hero-title">Products</div>
-                <div class="hero-subtitle">Products organize the customer value proposition into concrete offers, journeys, channels, and delivery structures. This page shows an overview of the product landscape and how products are exposed across deployment channels.</div>
+                <div class="hero-title">Product Deployments</div>
+                <div class="hero-subtitle">Products organize the customer value proposition into concrete offers, journeys, channels, and delivery structures. This page shows an overview of the
+                    product landscape and how products are exposed across deployment channels.
+                </div>
             </td>
         </tr>
     </table>
@@ -379,13 +432,18 @@
     <button class="tablinks" id="tab_deployment" onclick="openTab('deployment')">Deployment Channels</button>
 </div>
 <div>
-    <div id="products" class="tabcontent"></div>
+    <div id="products" class="tabcontent">
+        <div class="view-toggle">
+            <label><input type="checkbox" id="show_text_toggle" onchange="update()"> Show text</label>
+        </div>
+        <div id="products_content"></div>
+    </div>
     <div id="deployment" class="tabcontent"></div>
 </div>
 
 <script>
     const products = {"portfolio": {"name": "Premium Long-Haul Airline Portfolio", "version": "1.0", "products": [{"id": "grxp", "name": "Guest Retail and Booking Experience", "type": "B2C Digital Commerce", "primaryCustomers": [{"id": "gffm", "name": "Global Frequent Flyer Member"}], "interfaces": [{"type": "web", "name": "Flight Booking Web Experience", "description": "Primary direct shopping and booking experience for long-haul flights, premium cabins, and ancillaries.", "users": ["Guests", "Logged-in loyalty members"], "availabilityHorizon": "live"}, {"type": "mobile_web", "name": "Mobile Booking Journey", "description": "Responsive booking flow for travellers researching and booking on mobile devices.", "users": ["Guests", "Loyalty members"], "availabilityHorizon": "live"}, {"type": "api", "name": "Retail Offer API", "description": "Offer and order APIs supporting owned channels and controlled commercial integrations.", "users": ["Owned digital channels", "Partner surfaces"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Builds governed fare and availability offers for direct and partner retail channels.", "mappingType": "primary", "brickId": "ofav", "brickName": "Offer, Pricing & Availability Management", "deploymentChannels": [{"deploymentUnit": "Offer service, pricing rules, cache refresh jobs, and inventory connectors", "pipeline": "Build, contract-test, and deploy the retail service through the airline commerce CI/CD pipeline.", "supportsInterfaces": ["web", "mobile_web", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Commerce backend rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Search, results, and offer-detail UI bundles", "pipeline": "Validate UX flows and deploy web assets via the frontend release pipeline.", "supportsInterfaces": ["web", "mobile_web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Web retail rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}]}, {"whyNeeded": "Turns premium differentiation into monetizable seats, extras, and upgrade moments.", "mappingType": "primary", "brickId": "ancm", "brickName": "Ancillary, Seat & Upgrade Merchandising", "deploymentChannels": [{"deploymentUnit": "Ancillary pricing logic, seat-map services, and upgrade offer engines", "pipeline": "Build, test, and deploy ancillary services through the commerce pipeline.", "supportsInterfaces": ["web", "mobile_web", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Ancillary backend rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}, {"deploymentUnit": "Seat, bag, lounge, and upgrade user-interface modules", "pipeline": "Run UI checks and deploy assets through the frontend pipeline.", "supportsInterfaces": ["web", "mobile_web"], "deploymentChannelRef": "web-edge-delivery/web-cdn-edge", "deploymentEnvironmentRef": "edge-production", "channelId": "web-cdn", "channelName": "Ancillary UI rollout", "deploymentPart": "web", "environmentName": "CDN and Edge Production"}]}, {"whyNeeded": "Supports booking creation, changes, cancellations, and ticketing states after the initial purchase.", "mappingType": "primary", "brickId": "ords", "brickName": "Order Servicing & Ticket Lifecycle", "deploymentChannels": [{"deploymentUnit": "Order service, ticketing orchestration, refund jobs, and servicing adapters", "pipeline": "Run end-to-end servicing tests and deploy the order service.", "supportsInterfaces": ["web", "mobile_web", "api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Order servicing rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}]}, {"whyNeeded": "Connects traveller identity and travel-readiness context to retail and pre-travel journeys.", "mappingType": "primary", "brickId": "idpr", "brickName": "Identity, Profile & Document Readiness", "deploymentChannels": [{"deploymentUnit": "Identity APIs, profile services, and document-readiness workflows", "pipeline": "Run security and contract checks, then deploy shared identity services.", "supportsInterfaces": ["web", "mobile_web", "api"], "deploymentChannelRef": "runtime-cloud/shared-platform-runtime", "deploymentEnvironmentRef": "shared-platform-production", "channelId": "shared-service", "channelName": "Identity platform rollout", "deploymentPart": "platform", "environmentName": "Shared Platform Runtime"}]}]}, {"id": "trlo", "name": "Trip Companion and Loyalty Experience", "type": "B2C Loyalty and Servicing", "primaryCustomers": [{"id": "gffm", "name": "Global Frequent Flyer Member"}], "interfaces": [{"type": "mobile_app", "name": "Guest Mobile App", "description": "Native trip companion, loyalty, and disruption-recovery experience.", "users": ["Guests", "Frequent flyers"], "availabilityHorizon": "planned-and-live"}, {"type": "notification", "name": "Proactive Messaging Layer", "description": "Push, email, and SMS notifications for trip-state changes and service prompts.", "users": ["Guests", "Customer care teams"], "availabilityHorizon": "live"}, {"type": "web", "name": "Loyalty Account Workspace", "description": "Member-facing web experience for points, status, redemptions, and trip-linked benefits.", "users": ["Flying Club members"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Owns points, tiers, partner earning, and reward redemption logic.", "mappingType": "primary", "brickId": "loyl", "brickName": "Loyalty, Tier & Partner Rewards", "deploymentChannels": [{"deploymentUnit": "Loyalty services, redemption rules, tier jobs, and partner-account connectors", "pipeline": "Run contract, ledger, and regression tests before deployment.", "supportsInterfaces": ["mobile_app", "web", "notification"], "deploymentChannelRef": "runtime-cloud/shared-platform-runtime", "deploymentEnvironmentRef": "shared-platform-production", "channelId": "shared-service", "channelName": "Loyalty platform rollout", "deploymentPart": "platform", "environmentName": "Shared Platform Runtime"}]}, {"whyNeeded": "Delivers the live state of the journey before, during, and after travel.", "mappingType": "primary", "brickId": "trip", "brickName": "Trip Companion & Proactive Notifications", "deploymentChannels": [{"deploymentUnit": "iOS and Android app modules plus notification templates", "pipeline": "Build, test, and release native app features through mobile CI/CD.", "supportsInterfaces": ["mobile_app", "notification"], "deploymentChannelRef": "mobile-app-stores/managed-mobile-distribution", "deploymentEnvironmentRef": "mobile-distribution-production", "channelId": "mobile-release", "channelName": "Native app rollout", "deploymentPart": "mobile", "environmentName": "Managed Mobile Distribution"}, {"deploymentUnit": "Trip-state services, messaging orchestration, and event consumers", "pipeline": "Run integration and event-driven tests before deployment.", "supportsInterfaces": ["mobile_app", "web", "notification"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Trip backend rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}]}, {"whyNeeded": "Turns disruption into guided digital recovery for guests and agents.", "mappingType": "primary", "brickId": "diss", "brickName": "Disruption Recovery & Self-Service Reaccommodation", "deploymentChannels": [{"deploymentUnit": "Recovery engine, eligibility rules, and reaccommodation decision services", "pipeline": "Run disruption scenario tests and deploy through the servicing pipeline.", "supportsInterfaces": ["mobile_app", "web", "notification"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Recovery service rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}]}]}, {"id": "hols", "name": "Holidays Packaging Platform", "type": "B2C Leisure Commerce", "primaryCustomers": [{"id": "fhpl", "name": "Family Holiday Planner"}], "interfaces": [{"type": "web", "name": "Holidays Search and Booking Experience", "description": "Package discovery, comparison, and booking flow for leisure trips.", "users": ["Holiday shoppers"], "availabilityHorizon": "live"}, {"type": "contact_centre", "name": "Holiday Servicing Workspace", "description": "Agent workspace for package amendments, payment queries, and exception handling.", "users": ["Holiday sales", "Holiday support"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Combines air inventory with accommodation and extras into coherent package products.", "mappingType": "primary", "brickId": "holp", "brickName": "Holidays Packaging & Fulfilment", "deploymentChannels": [{"deploymentUnit": "Package builder, supplier connectors, and fulfilment workflows", "pipeline": "Run supplier and pricing tests, then deploy through the holidays pipeline.", "supportsInterfaces": ["web", "contact_centre"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Holiday packaging rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}]}, {"whyNeeded": "Handles deposits, balance payments, refunds, and partner settlements for packages.", "mappingType": "primary", "brickId": "payt", "brickName": "Payments, Refunds & Revenue Settlement", "deploymentChannels": [{"deploymentUnit": "Payment services, refund workflows, and settlement jobs", "pipeline": "Run finance controls and deploy through the payments pipeline.", "supportsInterfaces": ["web", "contact_centre"], "deploymentChannelRef": "runtime-cloud/shared-platform-runtime", "deploymentEnvironmentRef": "shared-platform-production", "channelId": "shared-service", "channelName": "Payments platform rollout", "deploymentPart": "platform", "environmentName": "Shared Platform Runtime"}]}, {"whyNeeded": "Supports assisted package servicing and exceptions that cannot be resolved in self-service.", "mappingType": "adjacent", "brickId": "care", "brickName": "Customer Care & Case Management", "deploymentChannels": [{"deploymentUnit": "Agent workspace modules, queues, and workflow templates", "pipeline": "Validate workflow rules and deploy the case-management bundle.", "supportsInterfaces": ["contact_centre"], "deploymentChannelRef": "operations-workspaces/agent-workspace", "deploymentEnvironmentRef": "agent-workspace-production", "channelId": "agent-workspace", "channelName": "Case management rollout", "deploymentPart": "operations", "environmentName": "Agent Workspace"}]}]}, {"id": "cpdh", "name": "Corporate and Partner Distribution Hub", "type": "B2B Commercial Platform", "primaryCustomers": [{"id": "ctpm", "name": "Corporate Travel Program Manager"}], "interfaces": [{"type": "partner_api", "name": "NDC and Agency API", "description": "Modern distribution API for agencies, TMCs, and approved commercial partners.", "users": ["Travel management companies", "Agency partners"], "availabilityHorizon": "live"}, {"type": "dashboard", "name": "Commercial Account Workspace", "description": "Commercial dashboard for account health, content controls, and channel performance.", "users": ["Sales teams", "Account managers"], "availabilityHorizon": "planned-and-live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Controls how negotiated offers and servicing content flow through indirect channels.", "mappingType": "primary", "brickId": "dist", "brickName": "Corporate, Agency & NDC Distribution", "deploymentChannels": [{"deploymentUnit": "NDC APIs, contract logic, and agency-serving policies", "pipeline": "Run schema, contract, and policy validation before API promotion.", "supportsInterfaces": ["partner_api", "dashboard"], "deploymentChannelRef": "api-and-integration/api-gateway", "deploymentEnvironmentRef": "api-gateway-production", "channelId": "api-gateway", "channelName": "Distribution API rollout", "deploymentPart": "api", "environmentName": "API Gateway Production"}]}, {"whyNeeded": "Coordinates commercial and servicing continuity across alliance, JV, and codeshare journeys.", "mappingType": "primary", "brickId": "part", "brickName": "Partner & Alliance Journey Orchestration", "deploymentChannels": [{"deploymentUnit": "Partner rules, messaging, and itinerary continuity services", "pipeline": "Run partner integration and exception tests before deployment.", "supportsInterfaces": ["partner_api", "dashboard"], "deploymentChannelRef": "runtime-cloud/shared-platform-runtime", "deploymentEnvironmentRef": "shared-platform-production", "channelId": "shared-service", "channelName": "Partner orchestration rollout", "deploymentPart": "backend", "environmentName": "Shared Platform Runtime"}]}, {"whyNeeded": "Provides account-level performance, leakage, and disruption insight to sales and commercial teams.", "mappingType": "adjacent", "brickId": "odal", "brickName": "Operational Data, Revenue & Personalisation Platform", "deploymentChannels": [{"deploymentUnit": "Account-health models, dashboards, and distribution reporting assets", "pipeline": "Validate KPI logic and publish through the analytics pipeline.", "supportsInterfaces": ["dashboard"], "deploymentChannelRef": "analytics-and-data-platforms/analytics-workspace", "deploymentEnvironmentRef": "analytics-production", "channelId": "dashboard", "channelName": "Commercial analytics rollout", "deploymentPart": "analytics", "environmentName": "Analytics Workspace"}]}]}, {"id": "opst", "name": "Operations and Recovery Control Tower", "type": "Internal Operations Platform", "primaryCustomers": [{"id": "nocc", "name": "Network Operations Control Director"}], "interfaces": [{"type": "operations_console", "name": "Network Control Workspace", "description": "Real-time operations view for flight risk, recovery actions, and priority decisions.", "users": ["Network control", "Station operations", "IOC teams"], "availabilityHorizon": "live"}, {"type": "agent_workspace", "name": "Disruption Servicing Workspace", "description": "Shared workspace for customer care and operational recovery teams handling disrupted guests.", "users": ["Guest care teams", "Airport service teams"], "availabilityHorizon": "planned-and-live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Provides the integrated view of network health and intervention priorities.", "mappingType": "primary", "brickId": "opct", "brickName": "Operational Control Tower", "deploymentChannels": [{"deploymentUnit": "Real-time dashboards, alerting tiles, and intervention workflows", "pipeline": "Run real-time data and scenario tests before deployment.", "supportsInterfaces": ["operations_console"], "deploymentChannelRef": "operations-workspaces/operations-workspace", "deploymentEnvironmentRef": "operations-workspace-production", "channelId": "ops-console", "channelName": "Operations console rollout", "deploymentPart": "operations", "environmentName": "Operations Workspace"}]}, {"whyNeeded": "Supports recovery tradeoffs across aircraft rotations, crew legality, and schedule repair.", "mappingType": "primary", "brickId": "crac", "brickName": "Crew & Aircraft Recovery Optimization", "deploymentChannels": [{"deploymentUnit": "Recovery decision services, optimization jobs, and schedule adapters", "pipeline": "Run scenario-simulation tests and deploy through the operations pipeline.", "supportsInterfaces": ["operations_console", "agent_workspace"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Recovery optimization rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}]}, {"whyNeeded": "Keeps airport execution and baggage recovery connected to flight and guest recovery decisions.", "mappingType": "primary", "brickId": "bagg", "brickName": "Airport, Baggage & Ground Journey Orchestration", "deploymentChannels": [{"deploymentUnit": "Airport and baggage state services plus station-facing workflows", "pipeline": "Run operational acceptance tests and deploy the ground-journey bundle.", "supportsInterfaces": ["operations_console", "agent_workspace"], "deploymentChannelRef": "operations-workspaces/operations-workspace", "deploymentEnvironmentRef": "operations-workspace-production", "channelId": "ops-console", "channelName": "Ground operations rollout", "deploymentPart": "operations", "environmentName": "Operations Workspace"}]}, {"whyNeeded": "Routes high-priority disruption cases with operational context to service teams.", "mappingType": "adjacent", "brickId": "care", "brickName": "Customer Care & Case Management", "deploymentChannels": [{"deploymentUnit": "Case-management queues, service tools, and agent workflows", "pipeline": "Run workflow validations and deploy through the care pipeline.", "supportsInterfaces": ["agent_workspace"], "deploymentChannelRef": "operations-workspaces/agent-workspace", "deploymentEnvironmentRef": "agent-workspace-production", "channelId": "agent-workspace", "channelName": "Service workspace rollout", "deploymentPart": "operations", "environmentName": "Agent Workspace"}]}]}, {"id": "cgdp", "name": "Cargo Digital Booking and Visibility Platform", "type": "B2B Cargo Platform", "primaryCustomers": [{"id": "afwm", "name": "Air Freight Forwarding Manager"}], "interfaces": [{"type": "web", "name": "Cargo Digital Portal", "description": "Digital cargo experience for quoting, booking, tracking, and shipment management.", "users": ["Forwarders", "Cargo customers"], "availabilityHorizon": "live"}, {"type": "partner_api", "name": "Cargo Connectivity API", "description": "API support for customer-system and partner connectivity where cargo workflows warrant automation.", "users": ["Strategic cargo customers", "Partner handlers"], "availabilityHorizon": "planned-and-live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Creates the digital booking path and rate logic behind cargo demand capture.", "mappingType": "primary", "brickId": "carg", "brickName": "Cargo Capacity, Quote & Booking", "deploymentChannels": [{"deploymentUnit": "Cargo quote engines, service-level logic, and booking workflows", "pipeline": "Run cargo booking and rate tests before deployment.", "supportsInterfaces": ["web", "partner_api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Cargo commerce rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}]}, {"whyNeeded": "Provides milestone visibility and proactive handling of shipment exceptions.", "mappingType": "primary", "brickId": "trak", "brickName": "Cargo Tracking & Exception Management", "deploymentChannels": [{"deploymentUnit": "Tracking services, alerting workflows, and milestone event processors", "pipeline": "Run event-driven tracking tests and deploy through the cargo pipeline.", "supportsInterfaces": ["web", "partner_api"], "deploymentChannelRef": "runtime-cloud/aws-core-runtime", "deploymentEnvironmentRef": "cloud-production", "channelId": "be-service", "channelName": "Cargo visibility rollout", "deploymentPart": "backend", "environmentName": "Cloud Production Runtime"}]}, {"whyNeeded": "Supports cargo billing adjustments and financial closure.", "mappingType": "adjacent", "brickId": "payt", "brickName": "Payments, Refunds & Revenue Settlement", "deploymentChannels": [{"deploymentUnit": "Cargo-rated billing and settlement jobs on the shared finance platform", "pipeline": "Run finance validations and deploy through shared finance CI/CD.", "supportsInterfaces": ["web", "partner_api"], "deploymentChannelRef": "runtime-cloud/shared-platform-runtime", "deploymentEnvironmentRef": "shared-platform-production", "channelId": "shared-service", "channelName": "Shared finance rollout", "deploymentPart": "platform", "environmentName": "Shared Platform Runtime"}]}]}], "deploymentModelRef": "deployment.json"}};
-    const deployment = {"metadata": {"title": "Premium Long-Haul Airline Portfolio Deployment and Operating Surfaces", "description": "Primary deployment, distribution, analytics, operations, and engineering channels used to deliver and operate the Premium Long-Haul Airline Portfolio domain.", "modelVersion": "3.0", "notes": ["This model maps product bricks to the main channels through which they are deployed, distributed, triggered, or operated.", "Products link back to this model through deploymentChannelRef and deploymentEnvironmentRef on delivery paths."]}, "channels": [{"groupId": "runtime-cloud", "groupName": "Cloud Runtime Environments", "groupType": "runtime", "description": "Primary live runtimes where domain backend services, APIs, workers, and orchestration jobs execute.", "channels": [{"subChannelId": "aws-core-runtime", "subChannelName": "Core Cloud Runtime", "channelType": "public-cloud", "description": "Primary production runtime for customer-facing and operational application services.", "environments": [{"environmentId": "cloud-production", "environmentName": "Cloud Production Runtime", "description": "Primary live cloud runtime for deployable domain services.", "links": []}], "deployedBricks": [{"brickId": "ofav", "brickName": "Offer, Pricing & Availability Management", "deploymentRole": "Offer service, pricing rules, cache refresh jobs, and inventory connectors"}, {"brickId": "ancm", "brickName": "Ancillary, Seat & Upgrade Merchandising", "deploymentRole": "Ancillary pricing logic, seat-map services, and upgrade offer engines"}, {"brickId": "ords", "brickName": "Order Servicing & Ticket Lifecycle", "deploymentRole": "Order service, ticketing orchestration, refund jobs, and servicing adapters"}, {"brickId": "trip", "brickName": "Trip Companion & Proactive Notifications", "deploymentRole": "Trip-state services, messaging orchestration, and event consumers"}, {"brickId": "diss", "brickName": "Disruption Recovery & Self-Service Reaccommodation", "deploymentRole": "Recovery engine, eligibility rules, and reaccommodation decision services"}, {"brickId": "holp", "brickName": "Holidays Packaging & Fulfilment", "deploymentRole": "Package builder, supplier connectors, and fulfilment workflows"}, {"brickId": "crac", "brickName": "Crew & Aircraft Recovery Optimization", "deploymentRole": "Recovery decision services, optimization jobs, and schedule adapters"}, {"brickId": "carg", "brickName": "Cargo Capacity, Quote & Booking", "deploymentRole": "Cargo quote engines, service-level logic, and booking workflows"}, {"brickId": "trak", "brickName": "Cargo Tracking & Exception Management", "deploymentRole": "Tracking services, alerting workflows, and milestone event processors"}]}, {"subChannelId": "shared-platform-runtime", "subChannelName": "Shared Platform Runtime", "channelType": "public-cloud", "description": "Shared live runtime for cross-product platform services used by the domain.", "environments": [{"environmentId": "shared-platform-production", "environmentName": "Shared Platform Runtime", "description": "Primary live shared-platform runtime.", "links": []}], "deployedBricks": [{"brickId": "idpr", "brickName": "Identity, Profile & Document Readiness", "deploymentRole": "Identity APIs, profile services, and document-readiness workflows"}, {"brickId": "loyl", "brickName": "Loyalty, Tier & Partner Rewards", "deploymentRole": "Loyalty services, redemption rules, tier jobs, and partner-account connectors"}, {"brickId": "payt", "brickName": "Payments, Refunds & Revenue Settlement", "deploymentRole": "Payment services, refund workflows, and settlement jobs / Cargo-rated billing and settlement jobs on the shared finance platform"}, {"brickId": "part", "brickName": "Partner & Alliance Journey Orchestration", "deploymentRole": "Partner rules, messaging, and itinerary continuity services"}]}]}, {"groupId": "web-edge-delivery", "groupName": "Web and Edge Delivery", "groupType": "distribution", "description": "Primary delivery surface for browser applications, landing pages, and cacheable web assets.", "channels": [{"subChannelId": "web-cdn-edge", "subChannelName": "CDN and Edge Hosting", "channelType": "edge-platform", "description": "Primary production web delivery surface for public or internal browser experiences.", "environments": [{"environmentId": "edge-production", "environmentName": "CDN and Edge Production", "description": "Primary live CDN and edge-delivery surface.", "links": []}], "deployedBricks": [{"brickId": "ofav", "brickName": "Offer, Pricing & Availability Management", "deploymentRole": "Search, results, and offer-detail UI bundles"}, {"brickId": "ancm", "brickName": "Ancillary, Seat & Upgrade Merchandising", "deploymentRole": "Seat, bag, lounge, and upgrade user-interface modules"}]}]}, {"groupId": "api-and-integration", "groupName": "API and Integration Surfaces", "groupType": "integration", "description": "Primary delivery surface for external, partner, or cross-platform API access.", "channels": [{"subChannelId": "api-gateway", "subChannelName": "API Gateway", "channelType": "api-platform", "description": "Primary API exposure surface for domain services and contracts.", "environments": [{"environmentId": "api-gateway-production", "environmentName": "API Gateway Production", "description": "Primary live API gateway and routing surface.", "links": []}], "deployedBricks": [{"brickId": "dist", "brickName": "Corporate, Agency & NDC Distribution", "deploymentRole": "NDC APIs, contract logic, and agency-serving policies"}]}]}, {"groupId": "mobile-app-stores", "groupName": "Mobile App Distribution", "groupType": "app-store", "description": "Primary mobile distribution surfaces for native applications and managed releases.", "channels": [{"subChannelId": "managed-mobile-distribution", "subChannelName": "Managed Mobile Distribution", "channelType": "mobile-release", "description": "Primary managed mobile distribution surface for coordinated native releases.", "environments": [{"environmentId": "mobile-distribution-production", "environmentName": "Managed Mobile Distribution", "description": "Primary live managed mobile release channel.", "links": []}], "deployedBricks": [{"brickId": "trip", "brickName": "Trip Companion & Proactive Notifications", "deploymentRole": "iOS and Android app modules plus notification templates"}]}]}, {"groupId": "analytics-and-data-platforms", "groupName": "Analytics and Data Platforms", "groupType": "data", "description": "Primary analytical platforms used for BI, reporting, KPIs, and domain insight.", "channels": [{"subChannelId": "analytics-workspace", "subChannelName": "Analytics Workspace", "channelType": "analytics", "description": "Primary analytics and BI workspace for domain reporting and models.", "environments": [{"environmentId": "analytics-production", "environmentName": "Analytics Workspace", "description": "Primary live analytics workspace.", "links": []}], "deployedBricks": [{"brickId": "odal", "brickName": "Operational Data, Revenue & Personalisation Platform", "deploymentRole": "Account-health models, dashboards, and distribution reporting assets"}]}]}, {"groupId": "operations-workspaces", "groupName": "Operations Workspaces", "groupType": "operations", "description": "Primary operator-facing execution workspaces used to run and recover the domain.", "channels": [{"subChannelId": "operations-workspace", "subChannelName": "Operations Workspace", "channelType": "operations-workspace", "description": "Primary operator-facing production workspace.", "environments": [{"environmentId": "operations-workspace-production", "environmentName": "Operations Workspace", "description": "Primary live operations workspace.", "links": []}], "deployedBricks": [{"brickId": "opct", "brickName": "Operational Control Tower", "deploymentRole": "Real-time dashboards, alerting tiles, and intervention workflows"}, {"brickId": "bagg", "brickName": "Airport, Baggage & Ground Journey Orchestration", "deploymentRole": "Airport and baggage state services plus station-facing workflows"}]}, {"subChannelId": "agent-workspace", "subChannelName": "Agent Workspace", "channelType": "agent-workspace", "description": "Primary agent-facing assisted-service workspace.", "environments": [{"environmentId": "agent-workspace-production", "environmentName": "Agent Workspace", "description": "Primary live agent workspace.", "links": []}], "deployedBricks": [{"brickId": "care", "brickName": "Customer Care & Case Management", "deploymentRole": "Agent workspace modules, queues, and workflow templates / Case-management queues, service tools, and agent workflows"}]}]}]};
+    const deployment = {"metadata": {"title": "Premium Long-Haul Airline Portfolio Deployment and Operating Surfaces", "description": "Primary deployment, distribution, analytics, operations, and engineering channels used to deliver and operate the Premium Long-Haul Airline Portfolio domain.", "modelVersion": "3.0", "notes": ["This model maps product bricks to the main channels through which they are deployed, distributed, triggered, or operated.", "Products link back to this model through deploymentChannelRef and deploymentEnvironmentRef on delivery paths."]}, "channels": [{"groupId": "runtime-cloud", "groupName": "Cloud Runtime Environments", "groupType": "runtime", "description": "Primary live runtimes where domain backend services, APIs, workers, and orchestration jobs execute.", "channels": [{"subChannelId": "aws-core-runtime", "subChannelName": "Core Cloud Runtime", "channelType": "public-cloud", "description": "Primary production runtime for customer-facing and operational application services.", "environments": [{"environmentId": "cloud-production", "environmentName": "Cloud Production Runtime", "description": "Primary live cloud runtime for deployable domain services.", "links": []}], "supportedInterfaces": ["agent_workspace", "api", "contact_centre", "mobile_app", "mobile_web", "notification", "operations_console", "partner_api", "web"], "deployedBricks": [{"brickId": "ofav", "brickName": "Offer, Pricing & Availability Management", "deploymentRole": "Offer service, pricing rules, cache refresh jobs, and inventory connectors"}, {"brickId": "ancm", "brickName": "Ancillary, Seat & Upgrade Merchandising", "deploymentRole": "Ancillary pricing logic, seat-map services, and upgrade offer engines"}, {"brickId": "ords", "brickName": "Order Servicing & Ticket Lifecycle", "deploymentRole": "Order service, ticketing orchestration, refund jobs, and servicing adapters"}, {"brickId": "trip", "brickName": "Trip Companion & Proactive Notifications", "deploymentRole": "Trip-state services, messaging orchestration, and event consumers"}, {"brickId": "diss", "brickName": "Disruption Recovery & Self-Service Reaccommodation", "deploymentRole": "Recovery engine, eligibility rules, and reaccommodation decision services"}, {"brickId": "holp", "brickName": "Holidays Packaging & Fulfilment", "deploymentRole": "Package builder, supplier connectors, and fulfilment workflows"}, {"brickId": "crac", "brickName": "Crew & Aircraft Recovery Optimization", "deploymentRole": "Recovery decision services, optimization jobs, and schedule adapters"}, {"brickId": "carg", "brickName": "Cargo Capacity, Quote & Booking", "deploymentRole": "Cargo quote engines, service-level logic, and booking workflows"}, {"brickId": "trak", "brickName": "Cargo Tracking & Exception Management", "deploymentRole": "Tracking services, alerting workflows, and milestone event processors"}]}, {"subChannelId": "shared-platform-runtime", "subChannelName": "Shared Platform Runtime", "channelType": "public-cloud", "description": "Shared live runtime for cross-product platform services used by the domain.", "environments": [{"environmentId": "shared-platform-production", "environmentName": "Shared Platform Runtime", "description": "Primary live shared-platform runtime.", "links": []}], "supportedInterfaces": ["api", "contact_centre", "dashboard", "mobile_app", "mobile_web", "notification", "partner_api", "web"], "deployedBricks": [{"brickId": "idpr", "brickName": "Identity, Profile & Document Readiness", "deploymentRole": "Identity APIs, profile services, and document-readiness workflows"}, {"brickId": "loyl", "brickName": "Loyalty, Tier & Partner Rewards", "deploymentRole": "Loyalty services, redemption rules, tier jobs, and partner-account connectors"}, {"brickId": "payt", "brickName": "Payments, Refunds & Revenue Settlement", "deploymentRole": "Payment services, refund workflows, and settlement jobs / Cargo-rated billing and settlement jobs on the shared finance platform"}, {"brickId": "part", "brickName": "Partner & Alliance Journey Orchestration", "deploymentRole": "Partner rules, messaging, and itinerary continuity services"}]}]}, {"groupId": "web-edge-delivery", "groupName": "Web and Edge Delivery", "groupType": "distribution", "description": "Primary delivery surface for browser applications, landing pages, and cacheable web assets.", "channels": [{"subChannelId": "web-cdn-edge", "subChannelName": "CDN and Edge Hosting", "channelType": "edge-platform", "description": "Primary production web delivery surface for public or internal browser experiences.", "environments": [{"environmentId": "edge-production", "environmentName": "CDN and Edge Production", "description": "Primary live CDN and edge-delivery surface.", "links": []}], "supportedInterfaces": ["mobile_web", "web"], "deployedBricks": [{"brickId": "ofav", "brickName": "Offer, Pricing & Availability Management", "deploymentRole": "Search, results, and offer-detail UI bundles"}, {"brickId": "ancm", "brickName": "Ancillary, Seat & Upgrade Merchandising", "deploymentRole": "Seat, bag, lounge, and upgrade user-interface modules"}]}]}, {"groupId": "api-and-integration", "groupName": "API and Integration Surfaces", "groupType": "integration", "description": "Primary delivery surface for external, partner, or cross-platform API access.", "channels": [{"subChannelId": "api-gateway", "subChannelName": "API Gateway", "channelType": "api-platform", "description": "Primary API exposure surface for domain services and contracts.", "environments": [{"environmentId": "api-gateway-production", "environmentName": "API Gateway Production", "description": "Primary live API gateway and routing surface.", "links": []}], "supportedInterfaces": ["dashboard", "partner_api"], "deployedBricks": [{"brickId": "dist", "brickName": "Corporate, Agency & NDC Distribution", "deploymentRole": "NDC APIs, contract logic, and agency-serving policies"}]}]}, {"groupId": "mobile-app-stores", "groupName": "Mobile App Distribution", "groupType": "app-store", "description": "Primary mobile distribution surfaces for native applications and managed releases.", "channels": [{"subChannelId": "managed-mobile-distribution", "subChannelName": "Managed Mobile Distribution", "channelType": "mobile-release", "description": "Primary managed mobile distribution surface for coordinated native releases.", "environments": [{"environmentId": "mobile-distribution-production", "environmentName": "Managed Mobile Distribution", "description": "Primary live managed mobile release channel.", "links": []}], "supportedInterfaces": ["mobile_app", "notification"], "deployedBricks": [{"brickId": "trip", "brickName": "Trip Companion & Proactive Notifications", "deploymentRole": "iOS and Android app modules plus notification templates"}]}]}, {"groupId": "analytics-and-data-platforms", "groupName": "Analytics and Data Platforms", "groupType": "data", "description": "Primary analytical platforms used for BI, reporting, KPIs, and domain insight.", "channels": [{"subChannelId": "analytics-workspace", "subChannelName": "Analytics Workspace", "channelType": "analytics", "description": "Primary analytics and BI workspace for domain reporting and models.", "environments": [{"environmentId": "analytics-production", "environmentName": "Analytics Workspace", "description": "Primary live analytics workspace.", "links": []}], "supportedInterfaces": ["dashboard"], "deployedBricks": [{"brickId": "odal", "brickName": "Operational Data, Revenue & Personalisation Platform", "deploymentRole": "Account-health models, dashboards, and distribution reporting assets"}]}]}, {"groupId": "operations-workspaces", "groupName": "Operations Workspaces", "groupType": "operations", "description": "Primary operator-facing execution workspaces used to run and recover the domain.", "channels": [{"subChannelId": "operations-workspace", "subChannelName": "Operations Workspace", "channelType": "operations-workspace", "description": "Primary operator-facing production workspace.", "environments": [{"environmentId": "operations-workspace-production", "environmentName": "Operations Workspace", "description": "Primary live operations workspace.", "links": []}], "supportedInterfaces": ["agent_workspace", "operations_console"], "deployedBricks": [{"brickId": "opct", "brickName": "Operational Control Tower", "deploymentRole": "Real-time dashboards, alerting tiles, and intervention workflows"}, {"brickId": "bagg", "brickName": "Airport, Baggage & Ground Journey Orchestration", "deploymentRole": "Airport and baggage state services plus station-facing workflows"}]}, {"subChannelId": "agent-workspace", "subChannelName": "Agent Workspace", "channelType": "agent-workspace", "description": "Primary agent-facing assisted-service workspace.", "environments": [{"environmentId": "agent-workspace-production", "environmentName": "Agent Workspace", "description": "Primary live agent workspace.", "links": []}], "supportedInterfaces": ["agent_workspace", "contact_centre"], "deployedBricks": [{"brickId": "care", "brickName": "Customer Care & Case Management", "deploymentRole": "Agent workspace modules, queues, and workflow templates / Case-management queues, service tools, and agent workflows"}]}]}]};
 
     function escapeHtml(value) {
         return (value || '')
@@ -415,6 +473,47 @@
         return html;
     }
 
+    function buildDeploymentChannelLookup() {
+        const lookup = {};
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
+                lookup[ref] = {
+                    groupId: group.groupId || '',
+                    groupName: group.groupName || '',
+                    channelId: channel.subChannelId || '',
+                    channelName: channel.subChannelName || channel.subChannelId || '',
+                    channelType: channel.channelType || ''
+                };
+            });
+        });
+        return lookup;
+    }
+
+    function collectProductDeliveryChannels(product, deploymentLookup) {
+        const channels = {};
+        (product.neededBricks || []).forEach(brick => {
+            (brick.deploymentChannels || []).forEach(channel => {
+                const ref = channel.deploymentChannelRef;
+                if (!ref) {
+                    return;
+                }
+                if (!channels[ref]) {
+                    const resolved = deploymentLookup[ref] || {};
+                    channels[ref] = {
+                        ref: ref,
+                        channelName: resolved.channelName || channel.channelName || channel.channelId || ref,
+                        groupName: resolved.groupName || '',
+                        channelType: resolved.channelType || '',
+                        interfaces: new Set()
+                    };
+                }
+                (channel.supportsInterfaces || []).forEach(iface => channels[ref].interfaces.add(iface));
+            });
+        });
+        return Object.values(channels).sort((left, right) => left.channelName.localeCompare(right.channelName));
+    }
+
     function renderBrickIcon(brickId, brickName) {
         const safeId = escapeHtml(brickId || '');
         const safeName = escapeHtml(brickName || brickId || 'Product brick');
@@ -426,6 +525,58 @@
         const safeId = escapeHtml(brickId || '');
         const safeName = escapeHtml(brickName || brickId || 'Product brick');
         return '<a target="_blank" href="../product-bricks/landing_pages/' + safeId + '.html" title="' + safeName + '">' + renderBrickIcon(brickId, brickName) + '</a>';
+    }
+
+    function showTextEnabled() {
+        const toggle = document.getElementById('show_text_toggle');
+        return !!(toggle && toggle.checked);
+    }
+
+    function chipIconClass() {
+        return showTextEnabled() ? 'chip-icon' : 'chip-icon chip-icon-large';
+    }
+
+    function interfaceIconFile(iface) {
+        const text = [
+            iface && iface.type,
+            iface && iface.name,
+            iface && iface.description
+        ].join(' ').toLowerCase();
+
+        if (text.includes('partner_api')) {
+            return 'partner_api.png';
+        }
+        if (text.includes('public_api') || text.includes('public api')) {
+            return 'public_api.png';
+        }
+        if (text.includes('api')) {
+            return 'api.png';
+        }
+        if (text.includes('mobile web')) {
+            return 'mobile_web.png';
+        }
+        if (text.includes('mobile') || text.includes('app')) {
+            return 'mobile_app.png';
+        }
+        if (text.includes('dashboard') || text.includes('cockpit')) {
+            return 'dashboard.png';
+        }
+        if (text.includes('notification')) {
+            return 'notification.png';
+        }
+        if (text.includes('search')) {
+            return 'search_engine.png';
+        }
+        if (text.includes('social')) {
+            return 'social_media.png';
+        }
+        return 'web.png';
+    }
+
+    function renderInterfaceIcon(iface) {
+        const fileName = interfaceIconFile(iface);
+        const label = escapeHtml((iface && (iface.name || iface.type)) || 'Interface');
+        return '<img class="' + chipIconClass() + '" src="icons/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/web.png\'">';
     }
 
     function deploymentIconFile(channel, group) {
@@ -459,6 +610,45 @@
         const fileName = deploymentIconFile(channel, group);
         const label = escapeHtml((channel && (channel.subChannelName || channel.subChannelId)) || 'Deployment channel');
         return '<img class="deployment-card-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+    }
+
+    function renderDeploymentChipIcon(channel) {
+        const fileName = deploymentIconFile({
+            subChannelId: channel && channel.channelId,
+            subChannelName: channel && channel.channelName,
+            channelType: channel && channel.channelType
+        }, {
+            groupName: channel && channel.groupName
+        });
+        const label = escapeHtml((channel && channel.channelName) || 'Delivery channel');
+        return '<img class="' + chipIconClass() + '" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+    }
+
+    function renderBrickChipIcon(brickId, brickName) {
+        const safeId = escapeHtml(brickId || '');
+        const safeName = escapeHtml(brickName || brickId || 'Product brick');
+        const fallback = "if(!this.dataset.fallbackStage){this.dataset.fallbackStage='jpeg';this.src='../product-bricks/icons/" + safeId + ".jpeg';}else if(this.dataset.fallbackStage==='jpeg'){this.dataset.fallbackStage='jpg';this.src='../product-bricks/icons/" + safeId + ".jpg';}else{this.onerror=null;this.src='../product-bricks/icons/logo.png';}";
+        return '<img class="' + chipIconClass() + '" src="../product-bricks/icons/' + safeId + '.png" alt="' + safeName + '" title="' + safeName + '" onerror="' + fallback + '">';
+    }
+
+    function renderIconChip(iconHtml, title, copy, href) {
+        const showText = showTextEnabled();
+        const safeTitle = escapeHtml(title || '');
+        const safeCopy = escapeHtml(copy || '');
+        const bodyClass = showText ? 'brick-chip-body' : 'brick-chip-body hidden';
+        let chip = '<div class="' + (showText ? 'brick-chip' : 'icon-only-chip') + '">';
+        chip += iconHtml;
+        chip += '<div class="' + bodyClass + '">';
+        chip += '<div class="brick-chip-title">' + safeTitle + '</div>';
+        if (safeCopy) {
+            chip += '<div class="brick-chip-copy">' + safeCopy + '</div>';
+        }
+        chip += '</div>';
+        chip += '</div>';
+        if (href) {
+            return '<a class="' + (showText ? '' : 'icon-only-chip-link') + '" target="_blank" href="' + href + '" title="' + safeTitle + '">' + chip + '</a>';
+        }
+        return chip;
     }
 
     function renderDeploymentChannels() {
@@ -593,8 +783,10 @@
 
     function update() {
         let html = '';
+        const deploymentLookup = buildDeploymentChannelLookup();
 
         products.portfolio.products.forEach(product => {
+            const deliveryChannels = collectProductDeliveryChannels(product, deploymentLookup);
             html += '<a target="_blank" href="landing_pages/' + product.id + '.html">';
             html += '<div class="deployment-card" style="margin-bottom: 16px">';
             html += '<div class="deployment-card-header">';
@@ -611,10 +803,26 @@
                 html += '<div class="deployment-subtitle">Interfaces</div>';
                 html += '<div class="brick-chip-row">';
                 product.interfaces.forEach(iface => {
-                    html += '<div class="brick-chip">';
-                    html += '<div class="brick-chip-title">' + escapeHtml(iface.name) + '</div>';
-                    html += '<div class="brick-chip-copy">' + escapeHtml(iface.type) + (iface.users && iface.users.length ? ' · ' + escapeHtml(iface.users.join(', ')) : '') + '</div>';
-                    html += '</div>';
+                    html += renderIconChip(
+                        renderInterfaceIcon(iface),
+                        iface.name,
+                        iface.type + (iface.users && iface.users.length ? ' · ' + iface.users.join(', ') : '')
+                    );
+                });
+                html += '</div>';
+            }
+
+            if (deliveryChannels.length) {
+                html += '<div class="deployment-subtitle">Delivery Channels</div>';
+                html += '<div class="brick-chip-row">';
+                deliveryChannels.forEach(channel => {
+                    const interfaceList = Array.from(channel.interfaces).sort().join(', ');
+                    const meta = [channel.groupName, channel.channelType].filter(Boolean).join(' · ');
+                    html += renderIconChip(
+                        renderDeploymentChipIcon(channel),
+                        channel.channelName,
+                        (meta || channel.ref) + (interfaceList ? ' | ' + interfaceList : '')
+                    );
                 });
                 html += '</div>';
             }
@@ -623,7 +831,12 @@
                 html += '<div class="deployment-subtitle">Product Bricks</div>';
                 html += '<div class="brick-chip-row">';
                 product.neededBricks.forEach(brick => {
-                    html += renderBrickIcon(brick.brickId, brick.brickName);
+                    html += renderIconChip(
+                        renderBrickChipIcon(brick.brickId, brick.brickName),
+                        brick.brickName || brick.brickId,
+                        brick.whyNeeded || '',
+                        '../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html'
+                    );
                 });
                 html += '</div>';
             }
@@ -632,7 +845,7 @@
             html += '</a>';
         });
 
-        document.getElementById('products').innerHTML = html;
+        document.getElementById('products_content').innerHTML = html;
     }
 
     update();

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Products (${domain_name})</title>
+    <title>Product Deployments (${domain_name})</title>
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
@@ -120,9 +120,23 @@
 
         .tabcontent {
             display: none;
-            padding: 0;
+            padding: 12px;
             border: 1px solid #ccc;
             border-top: none;
+        }
+
+        .view-toggle {
+            margin: 0;
+            padding: 12px 0 16px 0;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .view-toggle label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
         }
 
         .deployment-panel {
@@ -192,8 +206,8 @@
         }
 
         .deployment-card-title {
-            font-size: 20px;
-            color: #111827;
+            font-size: 32px;
+            color: black;
             margin-bottom: 4px;
         }
 
@@ -285,12 +299,49 @@
 
         .brick-chip {
             display: inline-flex;
-            flex-direction: column;
-            gap: 2px;
+            align-items: flex-start;
+            gap: 8px;
             padding: 8px 10px;
             border-radius: 10px;
             background: #f3f4f6;
             border: 1px solid #e5e7eb;
+        }
+
+        .brick-chip-body {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .chip-icon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 2px;
+            flex: 0 0 auto;
+            margin-top: 1px;
+        }
+
+        .chip-icon-large {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .icon-only-chip {
+            display: inline-flex;
+        }
+
+        .icon-only-chip-link {
+            display: inline-flex;
+        }
+
+        .brick-chip-body.hidden {
+            display: none;
         }
 
         .brick-chip-title {
@@ -367,8 +418,10 @@
         <tr>
             <td class="hero-logo-cell"><img class="hero-logo" src="icons/logo.png" alt="Products"></td>
             <td class="hero-copy-cell">
-                <div class="hero-title">Products</div>
-                <div class="hero-subtitle">Products organize the customer value proposition into concrete offers, journeys, channels, and delivery structures. This page shows an overview of the product landscape and how products are exposed across deployment channels.</div>
+                <div class="hero-title">Product Deployments</div>
+                <div class="hero-subtitle">Products organize the customer value proposition into concrete offers, journeys, channels, and delivery structures. This page shows an overview of the
+                    product landscape and how products are exposed across deployment channels.
+                </div>
             </td>
         </tr>
     </table>
@@ -379,7 +432,12 @@
     <button class="tablinks" id="tab_deployment" onclick="openTab('deployment')">Deployment Channels</button>
 </div>
 <div>
-    <div id="products" class="tabcontent"></div>
+    <div id="products" class="tabcontent">
+        <div class="view-toggle">
+            <label><input type="checkbox" id="show_text_toggle" onchange="update()"> Show text</label>
+        </div>
+        <div id="products_content"></div>
+    </div>
     <div id="deployment" class="tabcontent"></div>
 </div>
 
@@ -415,6 +473,47 @@
         return html;
     }
 
+    function buildDeploymentChannelLookup() {
+        const lookup = {};
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
+                lookup[ref] = {
+                    groupId: group.groupId || '',
+                    groupName: group.groupName || '',
+                    channelId: channel.subChannelId || '',
+                    channelName: channel.subChannelName || channel.subChannelId || '',
+                    channelType: channel.channelType || ''
+                };
+            });
+        });
+        return lookup;
+    }
+
+    function collectProductDeliveryChannels(product, deploymentLookup) {
+        const channels = {};
+        (product.neededBricks || []).forEach(brick => {
+            (brick.deploymentChannels || []).forEach(channel => {
+                const ref = channel.deploymentChannelRef;
+                if (!ref) {
+                    return;
+                }
+                if (!channels[ref]) {
+                    const resolved = deploymentLookup[ref] || {};
+                    channels[ref] = {
+                        ref: ref,
+                        channelName: resolved.channelName || channel.channelName || channel.channelId || ref,
+                        groupName: resolved.groupName || '',
+                        channelType: resolved.channelType || '',
+                        interfaces: new Set()
+                    };
+                }
+                (channel.supportsInterfaces || []).forEach(iface => channels[ref].interfaces.add(iface));
+            });
+        });
+        return Object.values(channels).sort((left, right) => left.channelName.localeCompare(right.channelName));
+    }
+
     function renderBrickIcon(brickId, brickName) {
         const safeId = escapeHtml(brickId || '');
         const safeName = escapeHtml(brickName || brickId || 'Product brick');
@@ -426,6 +525,58 @@
         const safeId = escapeHtml(brickId || '');
         const safeName = escapeHtml(brickName || brickId || 'Product brick');
         return '<a target="_blank" href="../product-bricks/landing_pages/' + safeId + '.html" title="' + safeName + '">' + renderBrickIcon(brickId, brickName) + '</a>';
+    }
+
+    function showTextEnabled() {
+        const toggle = document.getElementById('show_text_toggle');
+        return !!(toggle && toggle.checked);
+    }
+
+    function chipIconClass() {
+        return showTextEnabled() ? 'chip-icon' : 'chip-icon chip-icon-large';
+    }
+
+    function interfaceIconFile(iface) {
+        const text = [
+            iface && iface.type,
+            iface && iface.name,
+            iface && iface.description
+        ].join(' ').toLowerCase();
+
+        if (text.includes('partner_api')) {
+            return 'partner_api.png';
+        }
+        if (text.includes('public_api') || text.includes('public api')) {
+            return 'public_api.png';
+        }
+        if (text.includes('api')) {
+            return 'api.png';
+        }
+        if (text.includes('mobile web')) {
+            return 'mobile_web.png';
+        }
+        if (text.includes('mobile') || text.includes('app')) {
+            return 'mobile_app.png';
+        }
+        if (text.includes('dashboard') || text.includes('cockpit')) {
+            return 'dashboard.png';
+        }
+        if (text.includes('notification')) {
+            return 'notification.png';
+        }
+        if (text.includes('search')) {
+            return 'search_engine.png';
+        }
+        if (text.includes('social')) {
+            return 'social_media.png';
+        }
+        return 'web.png';
+    }
+
+    function renderInterfaceIcon(iface) {
+        const fileName = interfaceIconFile(iface);
+        const label = escapeHtml((iface && (iface.name || iface.type)) || 'Interface');
+        return '<img class="' + chipIconClass() + '" src="icons/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/web.png\'">';
     }
 
     function deploymentIconFile(channel, group) {
@@ -459,6 +610,45 @@
         const fileName = deploymentIconFile(channel, group);
         const label = escapeHtml((channel && (channel.subChannelName || channel.subChannelId)) || 'Deployment channel');
         return '<img class="deployment-card-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+    }
+
+    function renderDeploymentChipIcon(channel) {
+        const fileName = deploymentIconFile({
+            subChannelId: channel && channel.channelId,
+            subChannelName: channel && channel.channelName,
+            channelType: channel && channel.channelType
+        }, {
+            groupName: channel && channel.groupName
+        });
+        const label = escapeHtml((channel && channel.channelName) || 'Delivery channel');
+        return '<img class="' + chipIconClass() + '" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+    }
+
+    function renderBrickChipIcon(brickId, brickName) {
+        const safeId = escapeHtml(brickId || '');
+        const safeName = escapeHtml(brickName || brickId || 'Product brick');
+        const fallback = "if(!this.dataset.fallbackStage){this.dataset.fallbackStage='jpeg';this.src='../product-bricks/icons/" + safeId + ".jpeg';}else if(this.dataset.fallbackStage==='jpeg'){this.dataset.fallbackStage='jpg';this.src='../product-bricks/icons/" + safeId + ".jpg';}else{this.onerror=null;this.src='../product-bricks/icons/logo.png';}";
+        return '<img class="' + chipIconClass() + '" src="../product-bricks/icons/' + safeId + '.png" alt="' + safeName + '" title="' + safeName + '" onerror="' + fallback + '">';
+    }
+
+    function renderIconChip(iconHtml, title, copy, href) {
+        const showText = showTextEnabled();
+        const safeTitle = escapeHtml(title || '');
+        const safeCopy = escapeHtml(copy || '');
+        const bodyClass = showText ? 'brick-chip-body' : 'brick-chip-body hidden';
+        let chip = '<div class="' + (showText ? 'brick-chip' : 'icon-only-chip') + '">';
+        chip += iconHtml;
+        chip += '<div class="' + bodyClass + '">';
+        chip += '<div class="brick-chip-title">' + safeTitle + '</div>';
+        if (safeCopy) {
+            chip += '<div class="brick-chip-copy">' + safeCopy + '</div>';
+        }
+        chip += '</div>';
+        chip += '</div>';
+        if (href) {
+            return '<a class="' + (showText ? '' : 'icon-only-chip-link') + '" target="_blank" href="' + href + '" title="' + safeTitle + '">' + chip + '</a>';
+        }
+        return chip;
     }
 
     function renderDeploymentChannels() {
@@ -593,8 +783,10 @@
 
     function update() {
         let html = '';
+        const deploymentLookup = buildDeploymentChannelLookup();
 
         products.portfolio.products.forEach(product => {
+            const deliveryChannels = collectProductDeliveryChannels(product, deploymentLookup);
             html += '<a target="_blank" href="landing_pages/' + product.id + '.html">';
             html += '<div class="deployment-card" style="margin-bottom: 16px">';
             html += '<div class="deployment-card-header">';
@@ -611,10 +803,26 @@
                 html += '<div class="deployment-subtitle">Interfaces</div>';
                 html += '<div class="brick-chip-row">';
                 product.interfaces.forEach(iface => {
-                    html += '<div class="brick-chip">';
-                    html += '<div class="brick-chip-title">' + escapeHtml(iface.name) + '</div>';
-                    html += '<div class="brick-chip-copy">' + escapeHtml(iface.type) + (iface.users && iface.users.length ? ' · ' + escapeHtml(iface.users.join(', ')) : '') + '</div>';
-                    html += '</div>';
+                    html += renderIconChip(
+                        renderInterfaceIcon(iface),
+                        iface.name,
+                        iface.type + (iface.users && iface.users.length ? ' · ' + iface.users.join(', ') : '')
+                    );
+                });
+                html += '</div>';
+            }
+
+            if (deliveryChannels.length) {
+                html += '<div class="deployment-subtitle">Delivery Channels</div>';
+                html += '<div class="brick-chip-row">';
+                deliveryChannels.forEach(channel => {
+                    const interfaceList = Array.from(channel.interfaces).sort().join(', ');
+                    const meta = [channel.groupName, channel.channelType].filter(Boolean).join(' · ');
+                    html += renderIconChip(
+                        renderDeploymentChipIcon(channel),
+                        channel.channelName,
+                        (meta || channel.ref) + (interfaceList ? ' | ' + interfaceList : '')
+                    );
                 });
                 html += '</div>';
             }
@@ -623,7 +831,12 @@
                 html += '<div class="deployment-subtitle">Product Bricks</div>';
                 html += '<div class="brick-chip-row">';
                 product.neededBricks.forEach(brick => {
-                    html += renderBrickIcon(brick.brickId, brick.brickName);
+                    html += renderIconChip(
+                        renderBrickChipIcon(brick.brickId, brick.brickName),
+                        brick.brickName || brick.brickId,
+                        brick.whyNeeded || '',
+                        '../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html'
+                    );
                 });
                 html += '</div>';
             }
@@ -632,7 +845,7 @@
             html += '</a>';
         });
 
-        document.getElementById('products').innerHTML = html;
+        document.getElementById('products_content').innerHTML = html;
     }
 
     update();
