@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import datetime
+import json
+import shutil
+from pathlib import Path
+
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+CONFIG_DIR = ROOT_DIR / "_config" / "data" / "slack"
+TEMPLATES_DIR = ROOT_DIR / "_templates" / "evidence" / "slack"
+OUTPUT_DIR = ROOT_DIR / "docs" / "evidence" / "slack"
+DATA_FILE = CONFIG_DIR / "data" / "slack.json"
+ASSETS_DIR = CONFIG_DIR / "assets"
+TEMPLATE_FILE = TEMPLATES_DIR / "slack.html"
+
+
+def copy_assets() -> None:
+    target = OUTPUT_DIR / "assets"
+    if target.exists():
+        shutil.rmtree(target)
+    if ASSETS_DIR.exists():
+        shutil.copytree(ASSETS_DIR, target)
+
+
+def main() -> None:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    copy_assets()
+
+    data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    template = TEMPLATE_FILE.read_text(encoding="utf-8")
+    date_string = datetime.date.today().strftime("%Y-%m-%d")
+
+    for source in data["data"]:
+        content = template.replace("${date}", date_string).replace("${data}", json.dumps(source["data"]))
+        (OUTPUT_DIR / f"{source['source']}.html").write_text(content, encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()
