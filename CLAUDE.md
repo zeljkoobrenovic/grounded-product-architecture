@@ -12,20 +12,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running Generators
 
-Generators must be run from their own directory (they use relative paths like `../../_config/`):
+Generators should be run from `_wiring/`:
 
 ```bash
 # Regenerate product domain pages
-cd docs/product-domains && python3 generate-customers-docs.py
-cd docs/product-domains && python3 generate-product-bricks-docs.py
-cd docs/product-domains && python3 generate-delivery-docs.py
-cd docs/product-domains && python3 generate-products-docs.py
-cd docs/product-domains && python3 generate-objectives-docs.py
-cd docs/product-domains && python3 generate-teams-docs.py
+cd _wiring/product-domains && python3 generate-customers-docs.py
+cd _wiring/product-domains && python3 generate-product-bricks-docs.py
+cd _wiring/product-domains && python3 generate-delivery-docs.py
+cd _wiring/product-domains && python3 generate-products-docs.py
+cd _wiring/product-domains && python3 generate-objectives-docs.py
+cd _wiring/product-domains && python3 generate-teams-docs.py
 
 # Regenerate standards/evidence pages
-cd docs/standards && python3 generate-rituals-docs.py
-cd docs/evidence  && python3 generate-aws-docs.py
+cd _wiring/standards && python3 generate-rituals-docs.py
+cd _wiring/evidence  && python3 generate-aws-docs.py
 
 # JTBD image generation (requires API key)
 export OPENAI_API_KEY=...
@@ -40,8 +40,8 @@ There is no Makefile or top-level build script. Run generators individually as n
 
 ### Generation Pipeline
 
-1. `_config/product-domains/config.json` defines all 10 product domains
-2. Each generator iterates over domains, loads domain JSON from `_config/product-domains/<domain>/`
+1. `_wiring/product-domains/run.sh` defines the domain list and invokes each product-domain generator with `<domain_id> <domain_name> <domain_description>`
+2. Each generator handles one domain, loading domain JSON from `_config/product-domains/<domain>/`
 3. Data is injected into an HTML template via string replacement (e.g., `.replace('${customers}', json.dumps(data))`)
 4. Self-contained HTML files are written to `docs/product-domains/<domain>/`
 5. Icons and media are copied from `_config/` to `docs/` alongside the HTML

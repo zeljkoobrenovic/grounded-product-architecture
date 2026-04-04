@@ -340,7 +340,7 @@ Creating or extending source data under `_config/product-domains/<domain-id>/` d
 
 Use a scoped workflow:
 
-1. Read and preserve the original `_config/product-domains/config.json`
+1. Read and preserve the domain definitions embedded in `_wiring/product-domains/run.sh`
 2. Temporarily rewrite it to include only the target domain
 3. Run the needed generator scripts
 4. Restore the original config in a `finally` block
@@ -349,7 +349,7 @@ This was the safest pattern used for `bike-mobility`.
 
 ### Generators commonly used
 
-From `docs/product-domains/`:
+From `_wiring/product-domains/`:
 
 - `python3 generate-start-docs.py`
 - `python3 generate-customers-docs.py`
@@ -359,7 +359,7 @@ From `docs/product-domains/`:
 - `python3 generate-delivery-docs.py`
 - `python3 generate-teams-docs.py`
 
-From `docs/standards/`:
+From `_wiring/standards/`:
 
 - `python3 generate-rituals-docs.py`
 

@@ -467,8 +467,6 @@
     const linked_products = ${linked_products};
     const related_teams = ${related_teams};
     const supported_jobs = ${supported_jobs};
-    const initiatives = ${initiatives};
-    const releases = ${releases};
 
     mermaid.initialize({
         startOnLoad: false,
@@ -505,14 +503,13 @@
         return currentCapability.flows || [];
     }
 
-    function getCapabilityExternalSystems() {
-        return currentCapability.externalSystemsThisCapabilityDependsOn || [];
-    }
-
     function getFlowDependencies(flow) {
         const dependencyIndex = new Map();
         (flow.steps || []).forEach(step => {
             (step.dependencies || []).forEach(dependency => {
+                if ((dependency.type || 'brick') !== 'brick') {
+                    return;
+                }
                 const key = [dependency.type || 'dependency', dependency.id || dependency.name || 'unknown'].join('::');
                 if (!dependencyIndex.has(key)) {
                     dependencyIndex.set(key, dependency);
@@ -558,7 +555,7 @@
 
         return '<div class="flow-step-dependencies">' + dependencies.map(dep => {
             const label = dep.name || dep.id || 'Dependency';
-            const kind = dep.type === 'external-system' ? 'External' : 'Brick';
+            const kind = 'Brick';
             return '<span class="flow-cell-brick">' + escapeHtml(kind + ': ' + label) + '</span>';
         }).join('') + '</div>';
     }
@@ -586,6 +583,20 @@
 </div>
 
 <script>
+    function capabilityMetaPath(capability) {
+        const parts = [];
+        if (capability.group) {
+            parts.push(capability.group);
+        }
+        if (capability.rootGroup && capability.rootGroup !== capability.group) {
+            parts.push(capability.rootGroup);
+        }
+        if (!parts.length) {
+            parts.push('Capability');
+        }
+        return parts.join(' / ');
+    }
+
     let headerHtml = '<div class="nav-strip">';
     allCapabilities.forEach(item => {
         headerHtml += '<a class="nav-link" href="' + escapeHtml(item.id) + '.html">';
@@ -598,7 +609,7 @@
     headerHtml += '<div class="header">';
     headerHtml += '<img class="header-icon" src="../icons/' + escapeHtml(currentCapability.icon || 'capability.png') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/capability.png\'">';
     headerHtml += '<div>';
-    headerHtml += '<div class="header-meta">' + escapeHtml(currentCapability.group || 'Capability') + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentCapability.id || '').toUpperCase()) + '</span></div>';
+    headerHtml += '<div class="header-meta">' + escapeHtml(capabilityMetaPath(currentCapability)) + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentCapability.id || '').toUpperCase()) + '</span></div>';
     headerHtml += '<div class="header-title">' + escapeHtml(currentCapability.name || currentCapability.id) + '</div>';
     headerHtml += '<div class="header-copy">' + escapeHtml(currentCapability.description || '') + '</div>';
     headerHtml += '</div></div></div>';
@@ -615,7 +626,6 @@
         html += '<div class="activity-stat"><div class="activity-stat-value">' + totalSteps + '</div><div class="activity-stat-label">Flow Steps</div></div>';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + (currentCapability.outcomes || []).length + '</div><div class="activity-stat-label">Outcomes</div></div>';
         html += '<div class="activity-stat"><div class="activity-stat-value">' + related_bricks.length + '</div><div class="activity-stat-label">Supporting Bricks</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + getCapabilityExternalSystems().length + '</div><div class="activity-stat-label">External Systems</div></div>';
         html += '</div>';
 
         html += '<div class="group"><div class="section-title">Why This Capability Matters</div>';
@@ -636,7 +646,7 @@
             flows.forEach(flow => {
                 const summary = summarizeFlow(flow);
                 html += '<div class="card">';
-                html += '<div class="card-meta">' + escapeHtml(currentCapability.group || 'Flow') + '</div>';
+                html += '<div class="card-meta">' + escapeHtml(capabilityMetaPath(currentCapability)) + '</div>';
                 html += '<div class="card-title">' + escapeHtml(flow.title || flow.id) + '</div>';
                 html += '<div class="card-copy">' + escapeHtml(flow.description || '') + '</div>';
                 html += '<div class="muted">' + ((flow.steps || []).length) + ' steps</div>';
@@ -677,18 +687,6 @@
                 html += '</div>';
                 html += '<div class="card-copy">' + escapeHtml(brick.description || '') + '</div>';
                 html += '</a>';
-            });
-            html += '</div>';
-        }
-        html += '</div>';
-
-        html += '<div class="group"><div class="section-title">External Systems</div>';
-        if (!getCapabilityExternalSystems().length) {
-            html += '<div class="muted">No external systems listed.</div>';
-        } else {
-            html += '<div class="pill-row">';
-            getCapabilityExternalSystems().forEach(system => {
-                html += '<span class="pill"><img src="../icons/external-system.png" alt="" onerror="this.onerror=null;this.src=\'../icons/logo.png\'"><span>' + escapeHtml(system.system || 'External System') + '</span></span>';
             });
             html += '</div>';
         }
@@ -823,14 +821,10 @@
             html += '</thead><tbody>';
 
             dependenciesInFlow.forEach(dependency => {
-                const dependencyTypeLabel = dependency.type === 'external-system' ? 'External System' : 'Product Brick';
+                const dependencyTypeLabel = 'Product Brick';
                 html += '<tr>';
                 html += '<td>';
-                if (dependency.type === 'brick') {
-                    html += '<a class="flow-dependency-name" href="../landing_pages/' + escapeHtml(dependency.id) + '.html">' + escapeHtml(dependency.name || dependency.id) + '</a>';
-                } else {
-                    html += '<span class="flow-dependency-name">' + escapeHtml(dependency.name || dependency.id) + '</span>';
-                }
+                html += '<a class="flow-dependency-name" href="../landing_pages/' + escapeHtml(dependency.id) + '.html">' + escapeHtml(dependency.name || dependency.id) + '</a>';
                 html += '<div class="muted">' + escapeHtml(dependencyTypeLabel) + '</div>';
                 if (dependency.interface) {
                     html += '<div class="muted">' + escapeHtml(dependency.interface) + '</div>';
@@ -844,9 +838,6 @@
                     }
                     html += '<td class="flow-cell-active">';
                     html += '<div class="flow-cell-copy">' + escapeHtml(simplifySupportCopy(stepDependency.how || stepDependency.description || 'Supports this step.')) + '</div>';
-                    if (stepDependency.type === 'external-system' && stepDependency.interface) {
-                        html += '<div class="flow-cell-bricks"><span class="flow-cell-brick">' + escapeHtml(stepDependency.interface) + '</span></div>';
-                    }
                     html += '</td>';
                 });
                 html += '</tr>';
@@ -869,11 +860,6 @@
             const brickId = 'brick_' + brick.id.replace(/[^a-zA-Z0-9]/g, '_');
             chart += brickId + '["' + escapeHtml(brick.name || brick.id) + '"]\\n';
             chart += capabilityId + ' --> ' + brickId + '\\n';
-        });
-        getCapabilityExternalSystems().forEach((system, index) => {
-            const systemId = 'external_' + index;
-            chart += systemId + '["' + escapeHtml(system.system || 'External System') + '"]\\n';
-            chart += capabilityId + ' --> ' + systemId + '\\n';
         });
         container.innerHTML = '<div class="dependency-diagram"><div class="mermaid">' + chart + '</div></div>';
         mermaid.run({querySelector: '#DependenciesTab .mermaid'}).catch(error => console.error('Failed to render dependency diagram', error));

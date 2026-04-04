@@ -34,6 +34,8 @@ All generated HTML files are intended to be self-contained and easy to publish a
   - Source-of-truth data for product domains, product bricks, customers, delivery/product definitions, targets, documents, and roadmap data.
 - `_templates/`
   - HTML templates used to generate the static site.
+- `_wiring/`
+  - Python generator scripts that wire `_config/...` and `_templates/...` into `docs/...`.
 - `docs/`
   - Generated static website output.
 - `_prompts/`
@@ -43,7 +45,7 @@ All generated HTML files are intended to be self-contained and easy to publish a
 
 ### 1. Product domains
 
-`_config/product-domains/config.json` defines the set of modeled domains and links to supporting spreadsheets.
+`_wiring/product-domains/run.sh` defines the set of modeled domains and invokes the product-domain generators with explicit domain parameters.
 
 Each domain typically contains:
 
@@ -73,13 +75,17 @@ Product bricks are the implementation-facing units that connect strategy to exec
 
 ### 3. Static site generation
 
-Generation scripts live under `docs/product/`:
+Generation scripts live under `_wiring/`:
 
-- `generate-customer-docs.py`
-- `generate-product-docs.py`
+- `generate-customers-docs.py`
+- `generate-products-docs.py`
+- `generate-delivery-docs.py`
+- `generate-objectives-docs.py`
+- `generate-start-docs.py`
+- `generate-teams-docs.py`
 - `generate-product-bricks-docs.py`
 
-These scripts read from `_config/...` and `_templates/...` and write generated pages into `docs/product/<domain>/...`.
+These scripts read from `_config/...` and `_templates/...` and write generated pages into `docs/...`.
 
 ## Working Rules For Agents
 
@@ -94,7 +100,7 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 
 - If the user asks to change strategic content, start in `_config/product-domains/**`.
 - If the user asks to change presentation or navigation, start in `_templates/**`.
-- If the user asks to regenerate the website, run the Python generators from `docs/product/`.
+- If the user asks to regenerate the website, run the relevant Python generators from `_wiring/**`.
 - Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first.
 - Some product modeling files appear to be evolving from `products.json` to `delivery.json`. Before regenerating product pages, verify the current generator expects the same source file names present in the domain folder.
 

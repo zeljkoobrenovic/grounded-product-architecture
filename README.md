@@ -20,9 +20,9 @@ The core idea is to describe product strategy from a customer-centric perspectiv
 
 This repository uses:
 
-- JSON as the source-of-truth authoring format
+- JSON as the source-of-truth authoring format under `_config/`
 - HTML templates under `_templates/`
-- Python generators under `docs/product-domains/`
+- Python generators under `_wiring/`
 - self-contained generated HTML output under `docs/`
 
 There is no frontend framework, build system, or external JavaScript runtime dependency. Generated pages are plain static assets intended for simple publishing, including GitHub Pages.
@@ -30,11 +30,13 @@ There is no frontend framework, build system, or external JavaScript runtime dep
 ## Repository Structure
 
 - `_config/`
-  Source-of-truth data for product domains, customers, delivery models, product bricks, roadmap overlays, evidence, and supporting documents.
+  Source-of-truth data for product domains, customers, delivery models, product bricks, roadmap overlays, data sources, evidence metadata, and supporting documents.
 - `_templates/`
   HTML templates used by the generators.
 - `docs/`
-  Generated static website output plus the Python generation scripts under `docs/product-domains/`.
+  Generated static website output only.
+- `_wiring/`
+  Python generation scripts that wire `_config/` and `_templates/` into `docs/`.
 - `_prompts/`
   Prompt assets used to create or extend strategic and customer models.
 
@@ -42,7 +44,7 @@ There is no frontend framework, build system, or external JavaScript runtime dep
 
 ### Product Domains
 
-`_config/product-domains/config.json` defines the modeled domains.
+`_wiring/product-domains/run.sh` defines the modeled domains and invokes the product-domain generators with explicit domain parameters.
 
 Each domain typically contains:
 
@@ -61,15 +63,22 @@ Each domain typically contains:
 - `product-bricks/roadmap/roadmap.json`
   Roadmap timing and effort data.
 
+### Data And Evidence
+
+- `_config/data/`
+  Source data used by evidence and reporting generators such as AWS, GCP, budget, incidents, history, brands, and Slack.
+- `_config/evidence-db/`
+  Cached evidence fragment metadata used to enrich generated product-brick documentation.
+
 ### Product Bricks
 
 Product bricks connect strategy to execution. They bridge customer and business needs with systems, services, APIs, delivery work, and architecture.
 
 ## Generation
 
-Generation scripts live in `docs/product-domains/`.
+Generation scripts live under `_wiring/`.
 
-Common generators:
+Product-domain generators:
 
 - `generate-customers-docs.py`
 - `generate-products-docs.py`
@@ -79,24 +88,37 @@ Common generators:
 - `generate-start-docs.py`
 - `generate-teams-docs.py`
 
-Run them from the generator folder so their relative paths resolve correctly:
+Run them from the generator folder, either domain-by-domain or via the wrapper script:
 
 ```bash
-cd docs/product-domains
-python3 generate-customers-docs.py
-python3 generate-products-docs.py
-python3 generate-product-bricks-docs.py
-python3 generate-delivery-docs.py
-python3 generate-objectives-docs.py
-python3 generate-start-docs.py
-python3 generate-teams-docs.py
+cd _wiring/product-domains
+./run.sh
 ```
+
+```bash
+python3 generate-customers-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-products-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-product-bricks-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-delivery-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-objectives-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-start-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-teams-docs.py <domain_id> <domain_name> <domain_description>
+```
+
+Other generator groups live under:
+
+- `_wiring/evidence/`
+- `_wiring/standards/`
+- `_wiring/controls/`
+- `_wiring/enterprise-domains/`
+- `_wiring/generate-start-apps-docs.py`
 
 ## Editing Guidance
 
 - Change strategy or domain content in `_config/**`.
 - Change presentation in `_templates/**`.
 - Treat `docs/**` as generated output unless you intentionally want to patch generated files directly.
+- Treat `_wiring/**` as the place for generator logic and script maintenance.
 - Preserve the repository's no-framework approach.
 - Keep generated pages self-contained.
 - Before regenerating, inspect the worktree if there are existing uncommitted changes.
