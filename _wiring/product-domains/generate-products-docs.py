@@ -29,6 +29,53 @@ def copy_icons(icons_path, docs_folder):
                     shutil.copy2(src, dst)
 
 
+def normalize_icon_name(icon_name, fallback='customer.png'):
+    value = (icon_name or fallback).strip()
+    if not value:
+        value = fallback
+    while value.endswith('.png.png'):
+        value = value[:-4]
+    while value.endswith('.svg.png'):
+        value = value[:-4]
+    if '.' in value:
+        return value
+    return value + '.png'
+
+
+def build_customers_lookup(customers):
+    customer_icon_map = {
+        'house-search': 'seeker.png',
+        'owner-key': 'owner.png',
+        'briefcase-building': 'intermediary.png'
+    }
+
+    lookup = {}
+    for group in customers:
+        for customer in group.get('customers', []):
+            lookup[customer['id']] = {
+                'id': customer['id'],
+                'name': customer.get('name', customer['id']),
+                'icon': normalize_icon_name(customer_icon_map.get(customer.get('icon', ''), customer.get('icon', 'customer.png')))
+            }
+    return lookup
+
+
+def enrich_products_with_customers(products, customers_lookup):
+    enriched = json.loads(json.dumps(products))
+    for product in enriched.get('portfolio', {}).get('products', []):
+        primary_customers = []
+        for customer in product.get('primaryCustomers', []):
+            customer_id = customer.get('id', '')
+            info = customers_lookup.get(customer_id, {})
+            primary_customers.append({
+                'id': customer_id,
+                'name': customer.get('name', info.get('name', customer_id)),
+                'icon': info.get('icon', 'customer.png')
+            })
+        product['primaryCustomers'] = primary_customers
+    return enriched
+
+
 def create_overview_docs(domain, docs_folder):
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
@@ -73,7 +120,14 @@ print(products_file_path)
 if not os.path.exists(products_file_path):
     raise SystemExit(f"Missing products config for domain '{domain_id}'")
 
-products = json.load(open(products_file_path))
+customers_path = domains_root + domain_id + '/customers/customers.json'
+if not os.path.exists(customers_path):
+    customers_path = domains_root + domain_id + '/product/customers.json'
+
+customers = json.load(open(customers_path)) if os.path.exists(customers_path) else []
+customers_lookup = build_customers_lookup(customers)
+
+products = enrich_products_with_customers(json.load(open(products_file_path)), customers_lookup)
 activity_data = load_domain_activity(domains_root, domain_id)
 
 docs_folder = domain_id + '/products/'

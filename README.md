@@ -65,9 +65,9 @@ Each domain typically contains:
 
 ### Data And Evidence
 
-- `_config/data/`
+- `_data/data/`
   Source data used by evidence and reporting generators such as AWS, GCP, budget, incidents, history, brands, and Slack.
-- `_config/evidence-db/`
+- `_data/evidence-db/`
   Cached evidence fragment metadata used to enrich generated product-brick documentation.
 
 ### Product Bricks

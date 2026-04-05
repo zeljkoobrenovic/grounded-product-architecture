@@ -36,7 +36,7 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 domains_root = '../../_config/product-domains/'
 root_templates = '../../_templates/product-bricks/'
 domain, site_config = load_domain_args()
-evidence_fragments_cache = load_json_if_exists('../../_config/evidence-db/database/all-evidence.json', [])
+evidence_fragments_cache = load_json_if_exists('../../_data/evidence-db/database/all-evidence.json', [])
 
 
 def build_evidence_lookup(cache_groups):
@@ -430,7 +430,7 @@ evidence_items = load_json_if_exists(root_domain + 'brick-evidence.json', [])
 
 copy_icons(root_templates + 'icons', docs_folder)
 copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)
-copy_icons('../../_config/evidence-db/icons', docs_folder)
+copy_icons('../../_data/evidence-db/icons', docs_folder)
 
 with open(docs_folder + 'index.html', 'w') as html_file:
     template = open(root_templates + 'index.html').read()
