@@ -38,6 +38,8 @@ root_templates = '../../_templates/product-bricks/'
 domain, site_config = load_domain_args()
 evidence_fragments_cache = load_json_if_exists('../../_data/evidence-db/database/all-evidence.json', [])
 
+evidence_rendering_style = open(root_templates + '../_imports/evidence/style.html').read()
+evidence_rendering_code = open(root_templates + '../_imports/evidence/rendering.html').read()
 
 def build_evidence_lookup(cache_groups):
     lookup = {}
@@ -163,12 +165,12 @@ def build_brick_team_context(brick, teams_payload):
         for team in group.get('teams', []):
             role = None
             for owned in team.get('ownedProductBricks', []):
-                if str(owned.get('brickId', '')).strip() == brick_id:
+                if str(owned.get('objectId', '')).strip() == brick_id:
                     role = 'owner'
                     break
             if role is None:
                 for supported in team.get('supportingProductBricks', []):
-                    if str(supported.get('brickId', '')).strip() == brick_id:
+                    if str(supported.get('objectId', '')).strip() == brick_id:
                         role = 'supporting'
                         break
             if role is None:
@@ -188,10 +190,10 @@ def build_brick_team_context(brick, teams_payload):
     return related_teams
 
 
-def build_brick_evidence(brick_id, evidence_items):
-    matched_item = next((item for item in evidence_items if str(item.get('brick-id', '')).strip() == str(brick_id).strip()), None)
+def build_evidence(object_id, evidence_items):
+    matched_item = next((item for item in evidence_items if str(item.get('object-id', '')).strip() == str(object_id).strip()), None)
     if not matched_item:
-        return {'brickId': brick_id, 'tabs': []}
+        return {'objectId': object_id, 'tabs': []}
 
     tabs_payload = matched_item.get('tabs', [])
     if not tabs_payload and matched_item.get('evidence-groups'):
@@ -244,7 +246,7 @@ def build_brick_evidence(brick_id, evidence_items):
             'groups': groups
         })
 
-    return {'brickId': brick_id, 'tabs': tabs}
+    return {'objectId': object_id, 'tabs': tabs}
 
 
 def dedupe_by(items, key_builder):
@@ -334,7 +336,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
         name = brick['name']
         linked_products, supported_jobs = build_brick_context(brick, products, customers)
         related_teams = build_brick_team_context(brick, teams_payload)
-        evidence = build_brick_evidence(brick['id'], evidence_items)
+        evidence = build_evidence(brick['id'], evidence_items)
 
         htmlFile = docs_folder + 'landing_pages/' + str(brick['id']) + '.html'
         with open(htmlFile, 'w') as html_file:
@@ -345,6 +347,8 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${all_capabilities}', json.dumps(flat_capabilities))
                             .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${brick_data}', json.dumps(brick))
+                            .replace('${evidence_rendering_style}', evidence_rendering_style)
+                            .replace('${evidence_rendering_code}', evidence_rendering_code)
                             .replace('${evidence}', json.dumps(evidence))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${linked_products}', json.dumps(linked_products))
@@ -353,7 +357,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${releases}', json.dumps(filter_for_brick(activity_data['releases'], brick['id']))))
 
 
-def create_capability_landing_pages(capabilities, bricks, activity_data, products, customers, teams_payload):
+def create_capability_landing_pages(capabilities, bricks, activity_data, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'capability_landing_page.html').read();
     brick_lookup = {brick['id']: brick for brick in bricks}
 
@@ -366,7 +370,7 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
         releases = list(capability.get('relatedReleases', []))
 
         for dep in capability.get('brickDependencies', []):
-            brick_id = dep.get('targetBrickId', '')
+            brick_id = dep.get('targetobjectId', '')
             if not brick_id or brick_id not in brick_lookup:
                 continue
             brick = brick_lookup[brick_id]
@@ -385,6 +389,7 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
         initiatives = dedupe_by(initiatives, lambda item: json.dumps(item, sort_keys=True))
         releases = dedupe_by(releases, lambda item: json.dumps(item, sort_keys=True))
 
+        evidence = build_evidence(capability['id'], evidence_items)
         htmlFile = docs_folder + 'capability_pages/' + str(capability['id']) + '.html'
         with open(htmlFile, 'w') as html_file:
             html_file.write(landing_page_template
@@ -394,6 +399,9 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
                             .replace('${capability_name}', capability.get('name', capability.get('id', '')).replace('&', '&amp;'))
                             .replace('${capability_data}', json.dumps(capability))
                             .replace('${related_bricks}', json.dumps(related_bricks))
+                            .replace('${evidence_rendering_style}', evidence_rendering_style)
+                            .replace('${evidence_rendering_code}', evidence_rendering_code)
+                            .replace('${evidence}', json.dumps(evidence))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${supported_jobs}', json.dumps(supported_jobs))
@@ -401,8 +409,6 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
                             .replace('${releases}', json.dumps(releases)))
 
 domain_id = domain['id']
-domain_name = domain['name']
-
 docs_folder = domain_id + '/product-bricks/'
 root_domain = domains_root + docs_folder
 product_bricks_config_path = root_domain + 'product-bricks.json'
@@ -426,7 +432,8 @@ activity_data = load_domain_activity(domains_root, domain_id)
 products = load_json_if_exists(domains_root + domain_id + '/products/products.json', {'portfolio': {'products': []}})
 customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
 teams_payload = load_json_if_exists(domains_root + domain_id + '/teams/teams.json', {'groups': []})
-evidence_items = load_json_if_exists(root_domain + 'brick-evidence.json', [])
+bricks_evidence_items = load_json_if_exists(root_domain + 'bricks-evidence.json', [])
+capabilities_evidence_items = load_json_if_exists(root_domain + 'capabilities-evidence.json', [])
 
 copy_icons(root_templates + 'icons', docs_folder)
 copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)
@@ -434,8 +441,7 @@ copy_icons('../../_data/evidence-db/icons', docs_folder)
 
 with open(docs_folder + 'index.html', 'w') as html_file:
     template = open(root_templates + 'index.html').read()
-    content = template.replace('${domain_name}', domain_name)
-    content = content.replace('${domain_description}', domain['description'])
+    content = template.replace('${domain_description}', domain['description'])
     content = content.replace('${bricks}', json.dumps(data))
     content = content.replace('${product_capabilities}', json.dumps({
         'metadata': capabilities_payload.get('metadata', {}),
@@ -445,5 +451,5 @@ with open(docs_folder + 'index.html', 'w') as html_file:
     }))
     html_file.write(content)
 
-create_landing_pages(flat_bricks, activity_data, products, customers, evidence_items, teams_payload)
-create_capability_landing_pages(flat_capabilities, flat_bricks, activity_data, products, customers, teams_payload)
+create_landing_pages(flat_bricks, activity_data, products, customers, bricks_evidence_items, teams_payload)
+create_capability_landing_pages(flat_capabilities, flat_bricks, activity_data, products, customers, capabilities_evidence_items, teams_payload)

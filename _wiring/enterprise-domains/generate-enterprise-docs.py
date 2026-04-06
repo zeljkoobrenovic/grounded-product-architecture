@@ -332,7 +332,6 @@ def render_section(domain, section_def):
                            .replace('${meeting}', json.dumps(raw)))
             else:
                 landing = render_template("entity_landing.html", {
-                    "domain_name": domain["name"],
                     "section_title": group["title"],
                     "entity_title": item["title"],
                     "entity": json.dumps(item),

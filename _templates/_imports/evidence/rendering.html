@@ -1,0 +1,188 @@
+<script>
+    const evidence = ${evidence};
+    tabsNavigationId = 'PrimaryTabs';
+    tabsContentId = 'EvidenceTabContents';
+</script>
+
+<script>
+    function buildEvidenceTabId(label, index) {
+        const normalized = (label || 'Evidence')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        return 'EvidenceTab_' + (normalized || 'tab') + '_' + index;
+    }
+
+    function setupEvidenceTabs() {
+        const tabs = (evidence && evidence.tabs) ? evidence.tabs : [];
+        const tabBar = document.getElementById(tabsNavigationId);
+        const tabContents = document.getElementById(tabsContentId);
+        if (!tabBar || !tabContents) {
+            return;
+        }
+
+        tabs.forEach((tab, index) => {
+            const tabId = buildEvidenceTabId(tab.label, index);
+            tab.id = tabId;
+            const fragmentCount = (tab.groups || []).reduce((sum, group) => sum + ((group.fragments || []).length), 0);
+
+            const button = document.createElement('button');
+            button.className = 'tablinks';
+            button.id = 'tab_' + tabId;
+            button.textContent = (tab.label || 'Evidence') + ' (' + fragmentCount + ')';
+            button.onclick = function() { openTab(tabId); };
+            tabBar.appendChild(button);
+
+            const content = document.createElement('div');
+            content.id = tabId;
+            content.className = 'tabcontent';
+            content.style.padding = '10px';
+            content.innerHTML = '<div id="' + tabId + '_content"></div>';
+            tabContents.appendChild(content);
+        });
+    }
+
+    setupEvidenceTabs();
+</script>
+
+<script>
+    function escapeEvidenceHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function renderEvidenceLinks(links) {
+        if (!links || !links.length) return '';
+
+        let html = '<div style="font-size: 80%; border-top: 1px solid grey; margin-top: 10px">';
+        html += '<div style="padding-left: 0; padding-top: 6px; padding-bottom: 0; margin: 0">';
+        (links || []).forEach(link => {
+            const label = escapeEvidenceHtml(link.label || 'Open link');
+            const url = link.url || '';
+            html += '<div style="display: inline-block; border: 1px solid lightgrey; border-radius: 999px; padding: 4px 6px; margin: 3px">';
+            html += '<a class="evidence-link" target="_blank" rel="noopener noreferrer" href="' + escapeEvidenceHtml(url) + '">' + label + '</a>';
+            html += '<img src="../icons/new-window.png" style="height: 10px; vertical-align: top; margin: 2px;">';
+            html += '</div>';
+        });
+        html += '</div>';
+        html += '</div>';
+        return html;
+    }
+
+    function renderEvidenceIcon(fragment) {
+        const icon = escapeEvidenceHtml(fragment.icon || 'evidence.png');
+        return '<img class="evidence-card-icon" src="../icons/' + icon + '" onerror="this.onerror=null;this.src=\'../icons/evidence.png\'">';
+    }
+
+    function aggregateSummableFacts(fragments) {
+        const totals = {};
+        (fragments || []).forEach(fragment => {
+            (fragment.facts || []).forEach(fact => {
+                if (!fact || fact.summable !== true) {
+                    return;
+                }
+                const numericValue = Number(fact.value);
+                if (!Number.isFinite(numericValue)) {
+                    return;
+                }
+                const label = fact.label || 'Value';
+                totals[label] = (totals[label] || 0) + numericValue;
+            });
+        });
+        return Object.entries(totals).map(([label, value]) => ({label, value}));
+    }
+
+    function renderSummableFactsSummary(fragments) {
+        const totals = aggregateSummableFacts(fragments);
+        if (!totals.length) {
+            return '';
+        }
+
+        let html = '<div class="evidence-summary">';
+        totals.forEach(item => {
+            html += '<div class="evidence-summary-chip">';
+            html += '<span class="evidence-summary-value">' + escapeEvidenceHtml(item.value + '') + '</span>';
+            html += '<span>' + escapeEvidenceHtml(item.label) + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderEvidenceContent(groups, containerId) {
+        let html = '';
+
+        if (!groups.length) {
+            html += '<div class="group" style="margin-top:0">No evidence linked for this object.</div>';
+            document.getElementById(containerId).innerHTML = html;
+            return;
+        }
+
+        const tabFragments = [];
+        groups.forEach(group => {
+            (group.fragments || []).forEach(fragment => tabFragments.push(fragment));
+        });
+        html += renderSummableFactsSummary(tabFragments);
+
+        groups.forEach(group => {
+            const groupFragmentCount = (group.fragments || []).length;
+            html += '<div class="evidence-group">';
+            html += '<div class="evidence-group-title">' + escapeEvidenceHtml(group.name) + ' (' + groupFragmentCount + ')</div>';
+            if (group.description) {
+                html += '<div class="evidence-group-description">' + escapeEvidenceHtml(group.description) + '</div>';
+            }
+            html += renderSummableFactsSummary(group.fragments || []);
+
+            (group.fragments || []).forEach(fragment => {
+                html += '<div class="evidence-card">';
+                html += '<div class="evidence-card-header">';
+                html += '<div class="evidence-card-header-top">';
+                html += renderEvidenceIcon(fragment);
+                html += '<div>';
+                html += '<div class="evidence-card-meta">' + escapeEvidenceHtml(fragment.evidenceGroupTitle || fragment.type || 'Evidence fragment') + '</div>';
+                html += '<div class="evidence-card-title">' + escapeEvidenceHtml(fragment.title || fragment.id) + '</div>';
+                html += '</div>';
+                html += '</div>';
+                if (fragment.note) {
+                    html += '<div class="evidence-card-note">' + escapeEvidenceHtml(fragment.note) + '</div>';
+                }
+                html += '</div>';
+                if (fragment.description) {
+                    html += '<div class="evidence-card-summary">' + escapeEvidenceHtml(fragment.description) + '</div>';
+                }
+                if (fragment.facts && fragment.facts.length) {
+                    html += '<div class="evidence-card-summary" style="color: black;">';
+                    fragment.facts.forEach(fact => {
+                        html += '<div><span style="border: 1px solid lightgrey; background-color: lightyellow">&nbsp;' + escapeEvidenceHtml(fact.value + '') + '&nbsp;</span> ' + escapeEvidenceHtml(fact.label) + '</div>';
+                    });
+                    html += '</div>';
+                }
+                if (fragment.tags && fragment.tags.length) {
+                    fragment.tags.forEach(tag => {
+                        html += '<div class="tag" style="margin-bottom:10px;">' + escapeEvidenceHtml(tag) + '</div>';
+                    });
+                }
+                html += '<div class="evidence-links">' + renderEvidenceLinks(fragment.links) + '</div>';
+                html += '</div>';
+            });
+
+            html += '</div>';
+        });
+
+        document.getElementById(containerId).innerHTML = html;
+    }
+
+    function renderEvidence() {
+        const tabs = (evidence && evidence.tabs) ? evidence.tabs : [];
+        tabs.forEach((tab, index) => {
+            const tabId = tab.id || buildEvidenceTabId(tab.label, index);
+            renderEvidenceContent(tab.groups || [], tabId + '_content');
+        });
+    }
+
+    renderEvidence();
+</script>

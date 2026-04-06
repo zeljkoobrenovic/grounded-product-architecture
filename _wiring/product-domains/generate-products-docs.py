@@ -136,7 +136,6 @@ def create_deployment_landing_pages(domain, products, docs_folder):
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
                                 .replace('${date}', date_string)
-                                .replace('${domain_name}', domain['name'])
                                 .replace('${domain_description}', domain['description'])
                                 .replace('${products}', json.dumps(products))
                                 .replace('${deployment}', json.dumps(deployment))
