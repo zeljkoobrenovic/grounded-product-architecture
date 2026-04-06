@@ -38,8 +38,13 @@ root_templates = '../../_templates/product-bricks/'
 domain, site_config = load_domain_args()
 evidence_fragments_cache = load_json_if_exists('../../_data/evidence-db/database/all-evidence.json', [])
 
-evidence_rendering_style = open(root_templates + '../_imports/evidence/style.html').read()
-evidence_rendering_code = open(root_templates + '../_imports/evidence/rendering.html').read()
+common_style = open(root_templates + '../_imports/common/style.html').read()
+
+evidence_style = open(root_templates + '../_imports/evidence/style.html').read()
+evidence_script = open(root_templates + '../_imports/evidence/script.html').read()
+
+tabs_style = open(root_templates + '../_imports/tabs/style.html').read()
+tabs_script = open(root_templates + '../_imports/tabs/script.html').read()
 
 def build_evidence_lookup(cache_groups):
     lookup = {}
@@ -347,8 +352,11 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${all_capabilities}', json.dumps(flat_capabilities))
                             .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${brick_data}', json.dumps(brick))
-                            .replace('${evidence_rendering_style}', evidence_rendering_style)
-                            .replace('${evidence_rendering_code}', evidence_rendering_code)
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
+                            .replace('${common_style}', common_style)
+                            .replace('${evidence_style}', evidence_style)
+                            .replace('${evidence_script}', evidence_script)
                             .replace('${evidence}', json.dumps(evidence))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${linked_products}', json.dumps(linked_products))
@@ -390,8 +398,8 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
         releases = dedupe_by(releases, lambda item: json.dumps(item, sort_keys=True))
 
         evidence = build_evidence(capability['id'], evidence_items)
-        htmlFile = docs_folder + 'capability_pages/' + str(capability['id']) + '.html'
-        with open(htmlFile, 'w') as html_file:
+        html_file = docs_folder + 'capability_pages/' + str(capability['id']) + '.html'
+        with open(html_file, 'w') as html_file:
             html_file.write(landing_page_template
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
@@ -399,8 +407,11 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
                             .replace('${capability_name}', capability.get('name', capability.get('id', '')).replace('&', '&amp;'))
                             .replace('${capability_data}', json.dumps(capability))
                             .replace('${related_bricks}', json.dumps(related_bricks))
-                            .replace('${evidence_rendering_style}', evidence_rendering_style)
-                            .replace('${evidence_rendering_code}', evidence_rendering_code)
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
+                            .replace('${common_style}', common_style)
+                            .replace('${evidence_style}', evidence_style)
+                            .replace('${evidence_script}', evidence_script)
                             .replace('${evidence}', json.dumps(evidence))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${related_teams}', json.dumps(related_teams))

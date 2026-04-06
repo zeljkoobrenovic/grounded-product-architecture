@@ -14,6 +14,9 @@ domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/customers/'
 domain, site_config = load_domain_args()
 
+tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
+
 
 def load_insights(domain_id):
     insights_file_path = domains_root + domain_id + '/customers/insights.json'
@@ -52,6 +55,8 @@ def create_overview_docs(domain, docs_folder, customers, insights):
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()
         html_file.write(template
+                        .replace('${tabs_style}', tabs_style)
+                        .replace('${tabs_script}', tabs_script)
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])

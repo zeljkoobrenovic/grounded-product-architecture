@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>${capability_name}</title>
 
+    ${common_style}
+    ${tabs_style}
+    ${evidence_style}
+
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
@@ -15,38 +19,6 @@
 
         .page {
             margin: 20px;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .nav-strip {
@@ -109,7 +81,7 @@
         }
 
         .activity-summary {
-            margin: 14px 0 24px 0;
+            margin: 0;
             padding: 14px 16px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
@@ -428,39 +400,13 @@
         }
     </style>
 
-    ${evidence_rendering_style}
-
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-    <script>
-        function initTab() {
-            let tabName = 'HomeTab';
-            if (window.location.hash) {
-                const candidate = window.location.hash.substring(1);
-                if (document.getElementById(candidate)) {
-                    tabName = candidate;
-                }
-            }
-            openTab(tabName);
-        }
 
-        function openTab(tabName) {
-            let i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            history.replaceState({}, "", '#' + tabName);
-            document.getElementById(tabName).style.display = "block";
-            document.getElementById('tab_' + tabName).className += " active";
-        }
-    </script>
+    ${tabs_script}
+
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home')" onhashchange="initTab()">
 <script>
     const config = ${config};
     const all_bricks = ${all_bricks};
@@ -576,15 +522,15 @@
 <div id="Header"></div>
 
 <div class="page">
-    <div class="tab" id="PrimaryTabs">
-        <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Home</button>
-        <button class="tablinks" id="tab_FlowsTab" onclick="openTab('FlowsTab')">Flows</button>
+    <div class="tab" id="primary_tabs">
+        <button class="tablinks active" id="tab_home" onclick="openTab('home')">Home</button>
+        <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows</button>
     </div>
 
-    <div id="HomeTab" class="tabcontent" style="display: block;"></div>
-    <div id="FlowsTab" class="tabcontent"></div>
+    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_flows" class="tabcontent"></div>
 
-    <div id="EvidenceTabContents"></div>
+    <div id="tab_content_evidence"></div>
 
 </div>
 
@@ -615,7 +561,9 @@
     headerHtml += '<div class="header">';
     headerHtml += '<img class="header-icon" src="../icons/' + escapeHtml(currentCapability.icon || 'capability.png') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/capability.png\'">';
     headerHtml += '<div>';
-    headerHtml += '<div class="header-meta">' + escapeHtml(capabilityMetaPath(currentCapability)) + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentCapability.id || '').toUpperCase()) + '</span></div>';
+    headerHtml += '<div class="header-meta">';
+    headerHtml += '<div class="page-type-badge">Capability</div>';
+    headerHtml += escapeHtml(capabilityMetaPath(currentCapability)) + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentCapability.id || '').toUpperCase()) + '</span></div>';
     headerHtml += '<div class="header-title">' + escapeHtml(currentCapability.name || currentCapability.id) + '</div>';
     headerHtml += '<div class="header-copy">' + escapeHtml(currentCapability.description || '') + '</div>';
     headerHtml += '</div></div></div>';
@@ -755,7 +703,7 @@
         }
         html += '</div>';
 
-        document.getElementById('HomeTab').innerHTML = html;
+        document.getElementById('tab_content_home').innerHTML = html;
     }
 
     function renderFlows() {
@@ -854,39 +802,7 @@
             html += '</div>';
         });
 
-        document.getElementById('FlowsTab').innerHTML = html;
-    }
-
-    function renderDependencies() {
-        const container = document.getElementById('DependenciesTab');
-        const capabilityId = 'capability_' + (currentCapability.id || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
-        let chart = 'flowchart LR\\n';
-        chart += capabilityId + '["' + escapeHtml(currentCapability.name || currentCapability.id) + '"]\\n';
-        related_bricks.forEach(brick => {
-            const brickId = 'brick_' + brick.id.replace(/[^a-zA-Z0-9]/g, '_');
-            chart += brickId + '["' + escapeHtml(brick.name || brick.id) + '"]\\n';
-            chart += capabilityId + ' --> ' + brickId + '\\n';
-        });
-        container.innerHTML = '<div class="dependency-diagram"><div class="mermaid">' + chart + '</div></div>';
-        mermaid.run({querySelector: '#DependenciesTab .mermaid'}).catch(error => console.error('Failed to render dependency diagram', error));
-    }
-
-    function renderActivityTab(elementId, items, emptyText) {
-        let html = '';
-        if (!items.length) {
-            html = '<div class="group"><div class="muted">' + emptyText + '</div></div>';
-        } else {
-            html = '<div class="group"><div class="card-grid">';
-            items.forEach(item => {
-                html += '<div class="card">';
-                html += '<div class="card-meta">' + escapeHtml(item.date || item.timeline || item.status || '') + '</div>';
-                html += '<div class="card-title">' + escapeHtml(item.name || item.title || item.description || 'Item') + '</div>';
-                html += '<div class="card-copy">' + escapeHtml(item.description || item.summary || '') + '</div>';
-                html += '</div>';
-            });
-            html += '</div></div>';
-        }
-        document.getElementById(elementId).innerHTML = html;
+        document.getElementById('tab_content_flows').innerHTML = html;
     }
 
     renderHome();
@@ -894,7 +810,7 @@
 </script>
 
 
-${evidence_rendering_code}
+${evidence_script}
 
 
 </body>
