@@ -321,7 +321,7 @@
                 tablinks[i].className = tablinks[i].className.replace(' active', '');
             }
             history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
+            document.getElementById('content_' + tabName).style.display = 'block';
             document.getElementById('tab_' + tabName).className += ' active';
         }
     </script>
@@ -345,13 +345,20 @@
     <button class="tablinks" id="tab_insights" onclick="openTab('insights')">Insights</button>
 </div>
 <div>
-    <div id="customers" class="tabcontent"></div>
-    <div id="insights" class="tabcontent"></div>
+    <div id="content_customers" class="tabcontent"></div>
+    <div id="content_insights" class="tabcontent"></div>
 </div>
 
 <script>
     const customers = ${customers};
     const insights = ${insights};
+    const customerCount = customers.reduce((total, group) => total + ((group.customers || []).length), 0);
+    const insightCount = (insights.items || []).length;
+
+    function updateTabLabels() {
+        document.getElementById('tab_customers').textContent = 'Customers (' + customerCount + ')';
+        document.getElementById('tab_insights').textContent = 'Insights (' + insightCount + ')';
+    }
 
     function topCustomerKpi(customer) {
         return (((customer || {}).kpiPyramids || {}).customerOutcomes || {}).top || null;
@@ -423,14 +430,14 @@
         });
 
         html += '</div>';
-        document.getElementById('customers').innerHTML = html;
+        document.getElementById('content_customers').innerHTML = html;
     }
 
     function renderInsights() {
         const lookup = customerLookup();
 
         if (!insights.items || insights.items.length === 0) {
-            document.getElementById('insights').innerHTML = '<div style="padding:16px;color:#6b7280">No customer insights defined for this domain yet.</div>';
+            document.getElementById('content_insights').innerHTML = '<div style="padding:16px;color:#6b7280">No customer insights defined for this domain yet.</div>';
             return;
         }
 
@@ -480,11 +487,12 @@
             html += '</div>';
         });
         html += '</div>';
-        document.getElementById('insights').innerHTML = html;
+        document.getElementById('content_insights').innerHTML = html;
     }
 
     update();
     renderInsights();
+    updateTabLabels();
 </script>
 </body>
 </html>
