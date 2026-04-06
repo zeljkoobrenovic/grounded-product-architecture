@@ -144,6 +144,36 @@
             background: white;
         }
 
+        .deployment-icon-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .deployment-icon-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 74px;
+            height: 74px;
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 4px 12px;
+        }
+
+        .deployment-icon-link:hover {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+
+        .deployment-grid-icon {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+        }
+
         .deployment-summary {
             display: flex;
             flex-wrap: wrap;
@@ -890,6 +920,14 @@
         return '<img class="deployment-card-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
     }
 
+    function renderDeploymentChannelLink(channel, group) {
+        const fileName = deploymentIconFile(channel, group);
+        const label = escapeHtml((channel && (channel.subChannelName || channel.subChannelId)) || 'Deployment channel');
+        return '<a class="deployment-icon-link" href="deployment/' + escapeHtml(channel.subChannelId || '') + '.html" title="' + label + '">' +
+            '<img class="deployment-grid-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">' +
+            '</a>';
+    }
+
     function renderDeploymentChipIcon(channel) {
         const fileName = deploymentIconFile({
             subChannelId: channel && channel.channelId,
@@ -1322,73 +1360,10 @@
             if (group.description) {
                 html += '<div class="deployment-group-copy">' + escapeHtml(group.description) + '</div>';
             }
-            html += '<div class="deployment-grid">';
+            html += '<div class="deployment-icon-grid">';
 
             (group.channels || []).forEach(channel => {
-                html += '<article class="deployment-card">';
-                html += '<div class="deployment-card-header">';
-                html += renderDeploymentIcon(channel, group);
-                html += '<div><div class="deployment-card-title">' + escapeHtml(channel.subChannelName || channel.subChannelId) + '</div>';
-                html += '<div class="deployment-card-meta">' + escapeHtml(channel.channelType || 'channel') + '</div>';
-                html += '</div></div>';
-                if (channel.description) {
-                    html += '<div class="deployment-card-copy">' + escapeHtml(channel.description) + '</div>';
-                }
-
-                html += '<div class="deployment-subtitle">Environment</div>';
-                if ((channel.environments || []).length) {
-                    channel.environments.forEach(environment => {
-                        html += '<div class="deployment-environment">';
-                        html += '<div class="deployment-environment-name">' + escapeHtml(environment.environmentName || environment.environmentId) + '</div>';
-                        if (environment.description) {
-                            html += '<div class="deployment-environment-copy">' + escapeHtml(environment.description) + '</div>';
-                        }
-                        if ((environment.links || []).length) {
-                            html += '<div class="deployment-link-row">';
-                            environment.links.forEach(link => {
-                                html += '<a class="deployment-link" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(link.url) + '">' + escapeHtml(link.linkName || link.url) + '</a>';
-                            });
-                            html += '</div>';
-                        }
-                        html += '</div>';
-                    });
-                } else {
-                    html += '<div class="deployment-muted">No environment listed.</div>';
-                }
-
-                const channelRef = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                const relatedProducts = Object.values(productChannelMap[channelRef] || {});
-
-                html += '<div class="deployment-subtitle">Products Using This Channel</div>';
-                if (relatedProducts.length) {
-                    html += '<div class="entity-chip-row">';
-                    relatedProducts.forEach(product => {
-                        const interfaceList = Array.from(product.interfaces).sort().join(', ');
-                        const capabilityCount = product.capabilities.size;
-                        html += '<a target="_blank" href="landing_pages/' + escapeHtml(product.id) + '.html">';
-                        html += '<div class="product-chip">';
-                        html += '<div class="product-chip-title">' + escapeHtml(product.name || product.id) + '</div>';
-                        html += '<div class="product-chip-copy">' + escapeHtml(capabilityCount + ' bricks') + (interfaceList ? ' | ' + escapeHtml(interfaceList) : '') + '</div>';
-                        html += '</div>';
-                        html += '</a>';
-                    });
-                    html += '</div>';
-                } else {
-                    html += '<div class="deployment-muted">No products currently reference this channel.</div>';
-                }
-
-                html += '<div class="deployment-subtitle">Deployed Bricks</div>';
-                if ((channel.deployedBricks || []).length) {
-                    html += '<div class="brick-chip-row">';
-                    channel.deployedBricks.forEach(brick => {
-                        html += renderBrickLandingLink(brick.brickId, brick.brickName || brick.deploymentRole);
-                    });
-                    html += '</div>';
-                } else {
-                    html += '<div class="deployment-muted">No bricks mapped to this channel.</div>';
-                }
-
-                html += '</article>';
+                html += renderDeploymentChannelLink(channel, group);
             });
 
             html += '</div>';

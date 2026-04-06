@@ -114,6 +114,34 @@ def create_landing_pages(products, docs_folder, activity_data):
                                 .replace('${initiatives}', json.dumps(filter_for_product(activity_data['initiatives'], product['id'])))
                                 .replace('${releases}', json.dumps(filter_for_product(activity_data['releases'], product['id']))))
 
+
+def create_deployment_landing_pages(domain, products, docs_folder):
+    deployment_path = domains_root + domain['id'] + '/products/deployment.json'
+    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+
+    target_folder = os.path.join(docs_folder, 'deployment')
+    os.makedirs(target_folder, exist_ok=True)
+
+    template = open(templates_root + 'deployment_landing_page.html').read()
+
+    for group in deployment.get('channels', []):
+        group_id = group.get('groupId', '')
+        for channel in group.get('channels', []):
+            channel_id = channel.get('subChannelId', '')
+            if not group_id or not channel_id:
+                continue
+
+            channel_ref = group_id + '/' + channel_id
+            landing_page_file = os.path.join(target_folder, channel_id + '.html')
+            with open(landing_page_file, 'w') as html_file:
+                html_file.write(template
+                                .replace('${date}', date_string)
+                                .replace('${domain_name}', domain['name'])
+                                .replace('${domain_description}', domain['description'])
+                                .replace('${products}', json.dumps(products))
+                                .replace('${deployment}', json.dumps(deployment))
+                                .replace('${channel_ref}', json.dumps(channel_ref)))
+
 domain_id = domain['id']
 products_file_path = domains_root + domain_id + '/products/products.json'
 print(products_file_path)
@@ -133,3 +161,4 @@ activity_data = load_domain_activity(domains_root, domain_id)
 docs_folder = domain_id + '/products/'
 create_overview_docs(domain, docs_folder)
 create_landing_pages(products, docs_folder, activity_data)
+create_deployment_landing_pages(domain, products, docs_folder)
