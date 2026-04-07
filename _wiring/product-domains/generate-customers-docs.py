@@ -16,6 +16,7 @@ domain, site_config = load_domain_args()
 
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
 tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
+common_style = open(templates_root + '../_imports/common/style.html').read()
 breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
 breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
 
@@ -115,6 +116,7 @@ def create_landing_pages(customers, docs_folder, activity_data, insights):
             landing_page_file = docs_folder + '/landing_pages/' + str(customer['id']) + '.html'
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
+                                .replace('${common_style}', common_style)
                                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                                 .replace('${breadcrumbs_script}', breadcrumbs_script)
                                 .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {

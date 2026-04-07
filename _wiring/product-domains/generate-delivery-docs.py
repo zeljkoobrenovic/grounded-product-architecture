@@ -20,6 +20,7 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 domains_root = '../../_config/product-domains/'
 domain, _ = load_domain_args()
 imports_root = '../../_templates/_imports/'
+common_style = open(imports_root + 'common/style.html').read()
 breadcrumbs_style = open(imports_root + 'breadcrumbs/style.html').read()
 breadcrumbs_script = open(imports_root + 'breadcrumbs/script.html').read()
 
@@ -291,6 +292,7 @@ def render_landing_pages(template_root, docs_folder, template_placeholder, templ
         landing_page_file = os.path.join(docs_folder, 'landing_pages', str(index) + '.html')
         with open(landing_page_file, 'w') as html_file:
             html_file.write(template
+                            .replace('${common_style}', common_style)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
                             .replace('${breadcrumbs}', render_breadcrumbs(template_root, 'landing_page_breadcrumbs.json', {

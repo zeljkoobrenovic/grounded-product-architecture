@@ -19,6 +19,7 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/teams/'
 domain, _ = load_domain_args()
+common_style = open(templates_root + '../_imports/common/style.html').read()
 breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
 breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
 
@@ -306,6 +307,7 @@ def create_landing_pages(domain, docs_folder, teams_payload):
             landing_page_file = os.path.join(docs_folder, 'landing_pages', str(team['id']) + '.html')
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
+                                .replace('${common_style}', common_style)
                                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                                 .replace('${breadcrumbs_script}', breadcrumbs_script)
                                 .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {
