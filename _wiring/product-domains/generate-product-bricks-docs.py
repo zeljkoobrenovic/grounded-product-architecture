@@ -16,6 +16,7 @@ from product_bricks_support import (
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
 
+
 def load_json_if_exists(path, default_value):
     if os.path.exists(path):
         return json.load(open(path))
@@ -40,11 +41,15 @@ evidence_fragments_cache = load_json_if_exists('../../_data/evidence-db/database
 
 common_style = open(root_templates + '../_imports/common/style.html').read()
 
+breadcrumbs_style = open(root_templates + '../_imports/breadcrumbs/style.html').read()
+breadcrumbs_script = open(root_templates + '../_imports/breadcrumbs/script.html').read()
+
 evidence_style = open(root_templates + '../_imports/evidence/style.html').read()
 evidence_script = open(root_templates + '../_imports/evidence/script.html').read()
 
 tabs_style = open(root_templates + '../_imports/tabs/style.html').read()
 tabs_script = open(root_templates + '../_imports/tabs/script.html').read()
+
 
 def build_evidence_lookup(cache_groups):
     lookup = {}
@@ -326,6 +331,7 @@ def merge_named_records(items, id_field, list_fields=None):
 
 def create_landing_pages(bricks, activity_data, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'brick_landing_page.html').read();
+    breadcrumbs = open(root_templates + 'brick_landing_page_breadcrumbs.json').read();
 
     capabilities_map = {}
     for brick in bricks:
@@ -350,14 +356,18 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
                             .replace('${all_capabilities}', json.dumps(flat_capabilities))
-                            .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${brick_data}', json.dumps(brick))
                             .replace('${tabs_style}', tabs_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${common_style}', common_style)
+                            .replace('${breadcrumbs_style}', breadcrumbs_style)
+                            .replace('${breadcrumbs_script}', breadcrumbs_script)
+                            .replace('${breadcrumbs}', breadcrumbs)
+                            .replace('${domain_name}', domain['name'])
                             .replace('${evidence_style}', evidence_style)
                             .replace('${evidence_script}', evidence_script)
                             .replace('${evidence}', json.dumps(evidence))
+                            .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${supported_jobs}', json.dumps(supported_jobs))
@@ -368,6 +378,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
 def create_capability_landing_pages(capabilities, bricks, activity_data, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'capability_landing_page.html').read();
     brick_lookup = {brick['id']: brick for brick in bricks}
+    breadcrumbs = open(root_templates + 'capability_landing_page_breadcrumbs.json').read();
 
     for capability in capabilities:
         related_bricks = []
@@ -404,20 +415,27 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
                             .replace('${all_capabilities}', json.dumps(capabilities))
-                            .replace('${capability_name}', capability.get('name', capability.get('id', '')).replace('&', '&amp;'))
                             .replace('${capability_data}', json.dumps(capability))
                             .replace('${related_bricks}', json.dumps(related_bricks))
                             .replace('${tabs_style}', tabs_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${common_style}', common_style)
+                            .replace('${breadcrumbs_style}', breadcrumbs_style)
+                            .replace('${breadcrumbs_script}', breadcrumbs_script)
+                            .replace('${breadcrumbs}', breadcrumbs)
+                            .replace('${domain_name}', domain['name'])
                             .replace('${evidence_style}', evidence_style)
                             .replace('${evidence_script}', evidence_script)
+                            .replace('${breadcrumbs_style}', breadcrumbs_style)
+                            .replace('${breadcrumbs_script}', breadcrumbs_script)
+                            .replace('${capability_name}', capability.get('name', capability.get('id', '')).replace('&', '&amp;'))
                             .replace('${evidence}', json.dumps(evidence))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${supported_jobs}', json.dumps(supported_jobs))
                             .replace('${initiatives}', json.dumps(initiatives))
                             .replace('${releases}', json.dumps(releases)))
+
 
 domain_id = domain['id']
 docs_folder = domain_id + '/product-bricks/'
@@ -452,8 +470,16 @@ copy_icons('../../_data/evidence-db/icons', docs_folder)
 
 with open(docs_folder + 'index.html', 'w') as html_file:
     template = open(root_templates + 'index.html').read()
+
+    breadcrumbs = open(root_templates + 'index_breadcrumbs.json').read();
+
     content = template.replace('${domain_description}', domain['description'])
-    content = content.replace('${bricks}', json.dumps(data))
+    content = content.replace('${bricks}', json.dumps(data)) \
+        .replace('${breadcrumbs_style}', breadcrumbs_style) \
+        .replace('${breadcrumbs_script}', breadcrumbs_script) \
+        .replace('${breadcrumbs}', breadcrumbs) \
+        .replace('${domain_name}', domain['name'])
+
     content = content.replace('${product_capabilities}', json.dumps({
         'metadata': capabilities_payload.get('metadata', {}),
         'rootGroups': sanitize_product_capability_root_groups(capabilities_payload.get('rootGroups', [])),
