@@ -19,6 +19,9 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 
 domains_root = '../../_config/product-domains/'
 domain, _ = load_domain_args()
+imports_root = '../../_templates/_imports/'
+breadcrumbs_style = open(imports_root + 'breadcrumbs/style.html').read()
+breadcrumbs_script = open(imports_root + 'breadcrumbs/script.html').read()
 
 
 def copy_icons(icons_path, docs_folder):
@@ -28,6 +31,13 @@ def copy_icons(icons_path, docs_folder):
             dst = os.path.join(docs_folder, 'icons', filename)
             if os.path.isfile(src):
                 shutil.copy2(src, dst)
+
+
+def render_breadcrumbs(template_root, template_name, replacements):
+    breadcrumbs = open(os.path.join(template_root, template_name)).read()
+    for key, value in replacements.items():
+        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
+    return breadcrumbs
 
 
 def normalize_icon_name(icon_name, fallback='customer.png'):
@@ -236,7 +246,7 @@ def enrich_items(data, customers_lookup, kpi_lookup, bricks_lookup, channels_loo
     return {'items': enriched}
 
 
-def render_list(template_root, template_name, docs_folder, domain, placeholder_name, data):
+def render_list(template_root, template_name, docs_folder, domain, placeholder_name, data, breadcrumbs_template_name='index_breadcrumbs.json'):
     if os.path.exists(docs_folder):
         shutil.rmtree(docs_folder)
 
@@ -250,6 +260,11 @@ def render_list(template_root, template_name, docs_folder, domain, placeholder_n
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         html_file.write(template
+                        .replace('${breadcrumbs_style}', breadcrumbs_style)
+                        .replace('${breadcrumbs_script}', breadcrumbs_script)
+                        .replace('${breadcrumbs}', render_breadcrumbs(template_root, breadcrumbs_template_name, {
+                            'domain_name': domain['name']
+                        }))
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])
@@ -272,9 +287,18 @@ def render_landing_pages(template_root, docs_folder, template_placeholder, templ
     template = open(os.path.join(template_root, template_name)).read()
 
     for index, item in enumerate(items):
+        item_title = item.get('title') or item.get('name') or item.get('description') or 'Item'
         landing_page_file = os.path.join(docs_folder, 'landing_pages', str(index) + '.html')
         with open(landing_page_file, 'w') as html_file:
             html_file.write(template
+                            .replace('${breadcrumbs_style}', breadcrumbs_style)
+                            .replace('${breadcrumbs_script}', breadcrumbs_script)
+                            .replace('${breadcrumbs}', render_breadcrumbs(template_root, 'landing_page_breadcrumbs.json', {
+                                'domain_name': domain['name'],
+                                'initiative_name': item_title,
+                                'discovery_name': item_title,
+                                'release_name': item_title
+                            }))
                             .replace('${date}', date_string)
                             .replace('${domain_name}', domain['name'])
                             .replace('${' + template_placeholder + '}', json.dumps(item)))
@@ -372,12 +396,22 @@ for item in initiatives_enriched.get('items', []):
 if initiatives_enriched.get('items'):
     initiatives_docs_folder = domain_id + '/initiatives/'
     initiatives_template_root = '../../_templates/initiatives/'
-    render_landing_pages_only(initiatives_template_root, initiatives_docs_folder, 'initiative', 'landing_page.html', domain, initiatives_enriched['items'])
+    initiative_items = render_list(
+        initiatives_template_root,
+        'initiatives.html',
+        initiatives_docs_folder,
+        domain,
+        'initiatives',
+        initiatives_enriched,
+        'initiatives_breadcrumbs.json'
+    )
+    render_landing_pages(initiatives_template_root, initiatives_docs_folder, 'initiative', 'landing_page.html', domain, initiative_items)
 
 if discoveries_enriched.get('items'):
     discoveries_docs_folder = domain_id + '/discoveries/'
     discoveries_template_root = '../../_templates/discoveries/'
-    render_landing_pages_only(discoveries_template_root, discoveries_docs_folder, 'discovery', 'landing_page.html', domain, discoveries_enriched['items'])
+    discovery_items = render_list(discoveries_template_root, 'index.html', discoveries_docs_folder, domain, 'discoveries', discoveries_enriched)
+    render_landing_pages(discoveries_template_root, discoveries_docs_folder, 'discovery', 'landing_page.html', domain, discovery_items)
 
 if os.path.exists(releases_path):
     releases = json.load(open(releases_path))

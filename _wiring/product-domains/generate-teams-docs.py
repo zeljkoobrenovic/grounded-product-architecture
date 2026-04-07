@@ -19,6 +19,15 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/teams/'
 domain, _ = load_domain_args()
+breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
+breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
+
+
+def render_breadcrumbs(template_name, replacements):
+    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
+    for key, value in replacements.items():
+        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
+    return breadcrumbs
 
 
 def copy_icons(icons_path, docs_folder):
@@ -278,6 +287,11 @@ def create_overview_docs(domain, docs_folder, teams_payload):
     template = open(os.path.join(templates_root, 'index.html')).read()
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         html_file.write(template
+                        .replace('${breadcrumbs_style}', breadcrumbs_style)
+                        .replace('${breadcrumbs_script}', breadcrumbs_script)
+                        .replace('${breadcrumbs}', render_breadcrumbs('index_breadcrumbs.json', {
+                            'domain_name': domain['name']
+                        }))
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])
@@ -292,6 +306,12 @@ def create_landing_pages(domain, docs_folder, teams_payload):
             landing_page_file = os.path.join(docs_folder, 'landing_pages', str(team['id']) + '.html')
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
+                                .replace('${breadcrumbs_style}', breadcrumbs_style)
+                                .replace('${breadcrumbs_script}', breadcrumbs_script)
+                                .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {
+                                    'domain_name': domain['name'],
+                                    'team_name': team.get('name', team['id'])
+                                }))
                                 .replace('${date}', date_string)
                                 .replace('${domain_name}', domain['name'])
                                 .replace('${team_name}', team.get('name', team['id']))

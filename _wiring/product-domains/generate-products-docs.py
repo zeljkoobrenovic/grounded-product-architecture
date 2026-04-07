@@ -13,6 +13,15 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/products/'
 domain, site_config = load_domain_args()
+breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
+breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
+
+
+def render_breadcrumbs(template_name, replacements):
+    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
+    for key, value in replacements.items():
+        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
+    return breadcrumbs
 
 
 def copy_icons(icons_path, docs_folder):
@@ -88,6 +97,11 @@ def create_overview_docs(domain, docs_folder):
         deployment_path = domains_root + domain['id'] + '/products/deployment.json'
         deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
         html_file.write(template
+                        .replace('${breadcrumbs_style}', breadcrumbs_style)
+                        .replace('${breadcrumbs_script}', breadcrumbs_script)
+                        .replace('${breadcrumbs}', render_breadcrumbs('index_breadcrumbs.json', {
+                            'domain_name': domain['name']
+                        }))
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])
@@ -106,6 +120,12 @@ def create_landing_pages(products, docs_folder, activity_data):
             landing_page_file = docs_folder + '/landing_pages/' + str(product['id']) + '.html'
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
+                                .replace('${breadcrumbs_style}', breadcrumbs_style)
+                                .replace('${breadcrumbs_script}', breadcrumbs_script)
+                                .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {
+                                    'domain_name': domain['name'],
+                                    'product_name': product['name']
+                                }))
                                 .replace('${date}', date_string)
                                 .replace('${config}', json.dumps(site_config))
                                 .replace('${all_products}', json.dumps(products['portfolio']['products']))
@@ -135,6 +155,12 @@ def create_deployment_landing_pages(domain, products, docs_folder):
             landing_page_file = os.path.join(target_folder, channel_id + '.html')
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
+                                .replace('${breadcrumbs_style}', breadcrumbs_style)
+                                .replace('${breadcrumbs_script}', breadcrumbs_script)
+                                .replace('${breadcrumbs}', render_breadcrumbs('deployment_landing_page_breadcrumbs.json', {
+                                    'domain_name': domain['name'],
+                                    'channel_name': channel.get('name', channel_id)
+                                }))
                                 .replace('${date}', date_string)
                                 .replace('${domain_description}', domain['description'])
                                 .replace('${products}', json.dumps(products))

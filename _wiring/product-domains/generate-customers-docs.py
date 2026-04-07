@@ -16,6 +16,15 @@ domain, site_config = load_domain_args()
 
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
 tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
+breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
+breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
+
+
+def render_breadcrumbs(template_name, replacements):
+    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
+    for key, value in replacements.items():
+        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
+    return breadcrumbs
 
 
 def load_insights(domain_id):
@@ -55,6 +64,11 @@ def create_overview_docs(domain, docs_folder, customers, insights):
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()
         html_file.write(template
+                        .replace('${breadcrumbs_style}', breadcrumbs_style)
+                        .replace('${breadcrumbs_script}', breadcrumbs_script)
+                        .replace('${breadcrumbs}', render_breadcrumbs('index_breadcrumbs.json', {
+                            'domain_name': domain['name']
+                        }))
                         .replace('${tabs_style}', tabs_style)
                         .replace('${tabs_script}', tabs_script)
                         .replace('${date}', date_string)
@@ -101,6 +115,12 @@ def create_landing_pages(customers, docs_folder, activity_data, insights):
             landing_page_file = docs_folder + '/landing_pages/' + str(customer['id']) + '.html'
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
+                                .replace('${breadcrumbs_style}', breadcrumbs_style)
+                                .replace('${breadcrumbs_script}', breadcrumbs_script)
+                                .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {
+                                    'domain_name': domain['name'],
+                                    'customer_name': customer['name']
+                                }))
                                 .replace('${date}', dateString)
                                 .replace('${config}', json.dumps(site_config))
                                 .replace('${all_customers}', json.dumps(all_customers))
