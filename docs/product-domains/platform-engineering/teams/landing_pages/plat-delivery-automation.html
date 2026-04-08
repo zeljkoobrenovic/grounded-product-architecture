@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "plat-delivery-automation", "name": "Platform Delivery Automation", "teamType": "platform", "teamFamilyId": "runtime", "teamFamilyName": "Runtime and Delivery Foundation", "orgLayer": "team", "mission": "Own the shared delivery path, including build, test, deploy, promotion, rollback, and release evidence workflows.", "primaryCustomers": [{"customerId": "swen", "customerName": "Software Engineer", "relatedKPIs": ["Time from repo creation to first production deployment", "Bespoke pipeline maintenance effort"], "icon": "code.png"}, {"customerId": "swtl", "customerName": "Staff Software Engineer / Tech Lead", "relatedKPIs": ["Time from repo creation to first production deployment", "Bespoke pipeline maintenance effort"], "icon": "code.png"}], "ownedProductBricks": [{"brickId": "cicd", "brickName": "Delivery Pipelines and Release Automation", "brick": {"id": "cicd", "name": "Delivery Pipelines and Release Automation", "type": "service", "description": "Reusable build, test, deploy, promote, and rollback workflows that encode the expected delivery path.", "domain": "runtime_foundation", "group": "artifact-and-delivery-chain", "internalModules": [{"title": "Pipeline Library", "description": "Stores reusable CI/CD workflows and quality gates.", "type": "automation"}, {"title": "Release Evidence Store", "description": "Captures deployment, promotion, and rollback evidence.", "type": "service"}], "interfaces": [{"title": "Pipeline Actions", "description": "Workflow actions used by teams to build, test, and deploy software.", "type": "workflow"}, {"title": "Release API", "description": "API for promotion, rollback, and release evidence.", "type": "api"}], "brickDependencies": [{"targetBrickId": "arti", "type": "supply-chain", "interface": "Artifact Registry API", "description": "Depends on trusted artifacts and provenance for secure releases."}, {"targetBrickId": "vccs", "type": "source-control", "interface": "Repository APIs and Webhooks", "description": "Uses repository and merge-state events from Version Control and Code Collaboration to trigger and govern CI workflows."}, {"targetBrickId": "regy", "type": "registry", "interface": "Registry API", "description": "Publishes build outputs and release artifacts into the standard artifact distribution path."}, {"targetBrickId": "poli", "type": "governance", "interface": "Policy Check API", "description": "Runs required controls as part of the normal delivery path."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "cicd.png"}}], "supportingProductBricks": [{"brickId": "arti", "brickName": "Artifact Supply Chain and Base Images", "brick": {"id": "arti", "name": "Artifact Supply Chain and Base Images", "type": "service", "description": "Manages trusted build artifacts, base images, provenance, and update workflows for secure software delivery.", "domain": "platform_controls", "group": "source-quality-and-policy-control", "internalModules": [{"title": "Trusted Base Image Factory", "description": "Builds, scans, and publishes approved runtime bases.", "type": "automation"}, {"title": "Artifact Provenance Service", "description": "Stores signatures, attestations, and lineage for released artifacts.", "type": "security"}], "interfaces": [{"title": "Artifact Registry API", "description": "Registry access for trusted images, packages, and provenance metadata.", "type": "api"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "arti.png"}}, {"brickId": "poli", "brickName": "Policy as Code and Compliance Controls", "brick": {"id": "poli", "name": "Policy as Code and Compliance Controls", "type": "service", "description": "Encodes engineering, security, and compliance requirements into reusable checks, evidence, and exception workflows.", "domain": "platform_controls", "group": "source-quality-and-policy-control", "internalModules": [{"title": "Policy Engine", "description": "Evaluates delivery and runtime policies against declared platform standards.", "type": "service"}, {"title": "Exception Workflow Manager", "description": "Tracks, approves, expires, and audits policy exceptions.", "type": "workflow"}, {"title": "Evidence Collector", "description": "Aggregates automated compliance evidence from pipelines and runtime systems.", "type": "analytics"}], "interfaces": [{"title": "Policy Check API", "description": "API used by templates, pipelines, and provisioning workflows.", "type": "api"}, {"title": "Control Evidence Dashboard", "description": "Dashboard for control coverage and exception posture.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "poli.png"}}], "dependsOnTeamIds": ["plat-identity-guardrails", "plat-observability-reliability"], "defaultSupportingTeamIds": ["plat-golden-paths"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Needs strong automation depth and enough customer contact to keep pipeline standards usable.", "roles": [{"role": "Platform Product Manager", "count": 1, "responsibility": "Own the common delivery path and release workflow priorities."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution and team health."}, {"role": "Staff Platform Engineer", "count": 1, "responsibility": "Set technical direction for CI/CD architecture and controls."}, {"role": "Platform Engineer", "count": 4, "responsibility": "Build and maintain delivery automation, shared runners, and release tooling."}, {"role": "QA / Release Engineer", "count": 1, "responsibility": "Validate the delivery path through reference-service testing and rollout checks."}]}, "groupId": "plat-runtime", "groupName": "Runtime and Delivery Foundation", "groupLeadership": {}, "dependsOnTeams": [{"id": "plat-identity-guardrails", "name": "Platform Identity and Guardrails", "teamType": "platform", "groupId": "plat-controls", "groupName": "Platform Security and Reliability"}, {"id": "plat-observability-reliability", "name": "Platform Observability and Reliability", "teamType": "platform", "groupId": "plat-controls", "groupName": "Platform Security and Reliability"}], "defaultSupportingTeams": [{"id": "plat-golden-paths", "name": "Platform Golden Paths", "teamType": "platform", "groupId": "plat-devex", "groupName": "Developer Experience Platform"}], "relatedInitiatives": [{"date": "2026-05-14", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-02-12", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-11-12", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "4", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-11", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-03-08", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-12-06", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "4", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [{"date": "2026-01-31 -> 2026-03-14", "description": "Runtime Delivery Self-Service: operating discovery", "landingPageKey": "1", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2026-04-21 -> 2026-05-23", "description": "Runtime Delivery Self-Service: operating discovery", "landingPageKey": "3", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2025-10-27 -> 2025-11-24", "description": "Runtime Delivery Self-Service: operating discovery", "landingPageKey": "4", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}], "dependencyData": {"sharedProductBricks": [{"teamId": "plat-golden-paths", "teamName": "Platform Golden Paths", "sharedBrickIds": ["arti", "poli"], "sharedBrickNames": ["Artifact Supply Chain and Base Images", "Policy as Code and Compliance Controls"]}, {"teamId": "plat-identity-guardrails", "teamName": "Platform Identity and Guardrails", "sharedBrickIds": ["arti", "poli"], "sharedBrickNames": ["Artifact Supply Chain and Base Images", "Policy as Code and Compliance Controls"]}], "sharedInitiatives": [{"teamId": "plat-environment-provisioning", "teamName": "Platform Environment Provisioning", "sharedInitiativeKeys": ["0", "2", "4"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "plat-runtime-connectivity", "teamName": "Platform Runtime Connectivity", "sharedInitiativeKeys": ["0", "2", "4"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "plat-identity-guardrails", "teamName": "Platform Identity and Guardrails", "sharedInitiativeKeys": ["0", "2", "4"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}], "sharedReleases": [{"teamId": "plat-environment-provisioning", "teamName": "Platform Environment Provisioning", "sharedReleaseKeys": ["0", "2", "4"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "plat-runtime-connectivity", "teamName": "Platform Runtime Connectivity", "sharedReleaseKeys": ["0", "2", "4"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "plat-identity-guardrails", "teamName": "Platform Identity and Guardrails", "sharedReleaseKeys": ["0", "2", "4"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Runtime Delivery Self-Service exists to Shorten the path from repo to production by making the standard runtime and delivery path more complete, visible, and self-service. The quarter concentrates on paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}], "explicitRelationships": [{"teamId": "plat-identity-guardrails", "teamName": "Platform Identity and Guardrails", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "plat-observability-reliability", "teamName": "Platform Observability and Reliability", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "plat-golden-paths", "teamName": "Platform Golden Paths", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

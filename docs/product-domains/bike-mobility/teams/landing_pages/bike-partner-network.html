@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "bike-partner-network", "name": "Bike Partner Network", "teamType": "stream-aligned", "teamFamilyId": "partner-service", "teamFamilyName": "Partner and Service", "orgLayer": "team", "mission": "Own dealer onboarding, coverage, stock readiness, and handover planning.", "primaryCustomers": [{"customerId": "dealer_network_operator", "customerName": "Multi-location Dealer and Service Network Operator", "relatedKPIs": ["Order completeness rate", "Handover lead time", "Active partner coverage"], "icon": "storefront.png"}], "ownedProductBricks": [{"brickId": "dnet", "brickName": "Dealer & Service Partner Network Management", "brick": {"id": "dnet", "name": "Dealer & Service Partner Network Management", "type": "service", "description": "Onboards and governs dealer and service partners, manages coverage, credentials, SLAs, and partner performance.", "domain": "partner_operations", "group": "dealer-and-service-ecosystem", "internalModules": [{"title": "Partner and Network Registry", "description": "Maintains partner profiles, capabilities, and relationship data used by Dealer & Service Partner Network Management.", "type": "data"}, {"title": "Onboarding and Performance Workflows", "description": "Handles partner onboarding, qualification, and ongoing operating workflows in Dealer & Service Partner Network Management.", "type": "operations"}, {"title": "Commercial and Compliance Controls", "description": "Applies network policies, SLAs, and compliance checks managed by Dealer & Service Partner Network Management.", "type": "policy"}], "interfaces": [{"title": "Partner API", "description": "API used by partners or internal systems to exchange operational data with Dealer & Service Partner Network Management.", "type": "api"}, {"title": "Partner Portal", "description": "User interface for onboarding, servicing, and monitoring partner activity in Dealer & Service Partner Network Management.", "type": "ui"}, {"title": "Partner Lifecycle Events", "description": "Event stream carrying onboarding, status, and performance changes from Dealer & Service Partner Network Management.", "type": "event"}], "brickDependencies": [{"targetBrickId": "ride", "type": "identity", "interface": "Authentication API", "description": "Depends on Rider Identity, Wallet & App Experience to provide identity capabilities required by Dealer & Service Partner Network Management."}, {"targetBrickId": "orde", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Order Orchestration & Checkout to provide operations capabilities required by Dealer & Service Partner Network Management."}, {"targetBrickId": "elpy", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on Eligibility, Payroll & HRIS Sync to provide integration capabilities required by Dealer & Service Partner Network Management."}], "externalSystemsThisBrickDependsOn": [{"system": "Partner and Dealer Systems", "type": "partner-network", "interface": "Partner API", "description": "Dealer & Service Partner Network Management depends on external partner systems for onboarding, operations, and performance exchange."}, {"system": "Contract and SLA Management Tools", "type": "governance", "interface": "Document / Status Interface", "description": "Dealer & Service Partner Network Management exchanges network obligations and status signals with external governance tooling."}], "externalSystemsDependingOnThisBrick": [{"system": "Internal Partner Operations Teams", "type": "partner-consumer", "interface": "Partner Portal / API", "description": "Internal teams depend on Dealer & Service Partner Network Management to onboard, manage, and monitor partner relationships."}, {"system": "External Partner Ecosystem", "type": "ecosystem-consumer", "interface": "Partner Data Interface", "description": "External partners depend on Dealer & Service Partner Network Management to exchange operational status, onboarding data, and performance signals."}], "icon": "dnet.png"}}, {"brickId": "stav", "brickName": "Stock, Availability & Handover Planning", "brick": {"id": "stav", "name": "Stock, Availability & Handover Planning", "type": "service", "description": "Tracks inventory, reservations, appointment capacity, and fulfillment readiness across dealers and service partners.", "domain": "partner_operations", "group": "dealer-and-service-ecosystem", "internalModules": [{"title": "Workflow and State Engine", "description": "Orchestrates the main lifecycle, state transitions, and task flow handled by Stock, Availability & Handover Planning.", "type": "service"}, {"title": "Capacity and Exception Management", "description": "Manages inventory, reservations, workload, and exception handling inside Stock, Availability & Handover Planning.", "type": "operations"}, {"title": "Operations Console Logic", "description": "Supports operator actions, escalations, and manual interventions required by Stock, Availability & Handover Planning.", "type": "full-stack"}], "interfaces": [{"title": "Workflow API", "description": "API for starting, updating, or querying operational workflows managed by Stock, Availability & Handover Planning.", "type": "api"}, {"title": "Operator Console", "description": "User interface for task handling, interventions, and operational control within Stock, Availability & Handover Planning.", "type": "ui"}, {"title": "Lifecycle Status Events", "description": "Event stream exposing state changes and exceptions produced by Stock, Availability & Handover Planning.", "type": "event"}], "brickDependencies": [{"targetBrickId": "eppm", "type": "decisioning", "interface": "Decision API", "description": "Depends on Employer Policy & Program Management to provide policy capabilities required by Stock, Availability & Handover Planning."}, {"targetBrickId": "ride", "type": "event-subscription", "interface": "Audit Event Stream", "description": "Depends on Rider Identity, Wallet & App Experience to provide identity capabilities required by Stock, Availability & Handover Planning."}, {"targetBrickId": "elpy", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on Eligibility, Payroll & HRIS Sync to provide integration capabilities required by Stock, Availability & Handover Planning."}], "externalSystemsThisBrickDependsOn": [{"system": "ERP and Operational Systems", "type": "back-office", "interface": "Operational API", "description": "Stock, Availability & Handover Planning coordinates execution with external ERP, servicing, or operations platforms."}, {"system": "CRM and Case Management Tools", "type": "workflow", "interface": "Case Interface", "description": "Stock, Availability & Handover Planning exchanges tasks, statuses, or escalations with customer and operations tooling."}], "externalSystemsDependingOnThisBrick": [{"system": "Operator Workflows", "type": "workflow-consumer", "interface": "Workflow / Status API", "description": "Operational teams and services depend on Stock, Availability & Handover Planning to coordinate task flow, status, and exception handling."}, {"system": "Customer and Partner Touchpoints", "type": "journey-consumer", "interface": "Lifecycle Event Interface", "description": "Customer and partner-facing journeys depend on Stock, Availability & Handover Planning to advance fulfillment, servicing, or case progress."}], "icon": "stav.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["bike-service-orchestration", "bike-claims-operations"], "defaultSupportingTeamIds": ["bike-service-orchestration"], "staffing": {"suggestedHeadcount": 9, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own partner coverage and order readiness outcomes."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead partner-platform delivery and operations coordination."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build partner workflow and inventory services."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build partner portal workflows."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own partner workflow quality."}, {"role": "Product Designer", "count": 1, "responsibility": "Design efficient partner operations journeys."}, {"role": "Partner Operations Specialist", "count": 1, "responsibility": "Bring operational partner reality into roadmap decisions."}]}, "groupId": "bike-partner-and-service", "groupName": "Bike Partner and Service Operations", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architecture coherence, and operating leadership for partner, service, and claims workflows.", "leadershipModel": "Directors own the portfolio and service posture while group-level staff roles align partner operations, service flows, and claims architecture across teams.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own strategy, service tradeoffs, and outcome accountability across partner and post-order operations.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, staffing quality, and system health across partner and service teams.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Staff Engineer", "count": 1, "responsibility": "Provide cross-team technical direction for partner connectivity, service orchestration, and claims workflows.", "reportsTo": "Engineering Director"}, {"role": "Principal Service Designer", "count": 1, "responsibility": "Drive workflow coherence across dealer, repair, support, and claims experiences.", "reportsTo": "Product Director"}, {"role": "Principal Operations / Domain Architect", "count": 1, "responsibility": "Shape the shared partner-service operating model, case semantics, and operational handoff standards used by the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "bike-service-orchestration", "name": "Bike Service Orchestration", "teamType": "stream-aligned", "groupId": "bike-partner-and-service", "groupName": "Bike Partner and Service Operations"}, {"id": "bike-claims-operations", "name": "Bike Claims Operations", "teamType": "stream-aligned", "groupId": "bike-partner-and-service", "groupName": "Bike Partner and Service Operations"}], "defaultSupportingTeams": [{"id": "bike-service-orchestration", "name": "Bike Service Orchestration", "teamType": "stream-aligned", "groupId": "bike-partner-and-service", "groupName": "Bike Partner and Service Operations"}], "relatedInitiatives": [{"date": "2026-05-14", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-02-12", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedReleases": [{"date": "2026-06-11", "description": "Release of Rider conversion and trust improvements aimed at moving Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-03-08", "description": "Release of Rider conversion and trust improvements aimed at moving Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedDiscoveries": [{"date": "2026-01-31 -> 2026-03-14", "description": "Rider conversion and trust: operating discovery", "landingPageKey": "1", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2026-04-21 -> 2026-05-23", "description": "Rider conversion and trust: operating discovery", "landingPageKey": "3", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}], "dependencyData": {"sharedProductBricks": [], "sharedInitiatives": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "sharedInitiativeKeys": ["0", "2"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}]}, {"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "sharedInitiativeKeys": ["0", "2"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}]}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "sharedInitiativeKeys": ["0", "2"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}]}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "sharedInitiativeKeys": ["0", "2"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Rider conversion and trust Initiative is the quarter's focused investment to move Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling.. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}]}], "sharedReleases": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}]}, {"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}]}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}]}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Active commuting days per rider and Renewal and upgrade rate, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Rider conversion and trust improvements aimed at moving Quote-to-order conversion and Active riders, anchored in employer launch repeatability across markets while keeping service economics under control and led through Bike Catalog & Recommendation with commute-oriented package guidance and better local-availability signaling. The quarter concentrates on multi-country employer launch repeatability, rider conversion quality, and dealer-service economics so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}]}], "explicitRelationships": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "bike-claims-operations", "teamName": "Bike Claims Operations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

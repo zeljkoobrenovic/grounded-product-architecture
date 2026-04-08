@@ -16,6 +16,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -41,38 +82,6 @@
 
         a {
             text-decoration: none;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .review-image {
@@ -526,35 +535,69 @@
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'InterfacesTab';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('InterfacesTab')" onhashchange="initTab('InterfacesTab')">
+<div id="breadcrumbs" style="margin-left: 20px"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs" style="margin-left: 20px"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 
 <script>
     const config = {"domains": [{"id": "platform-engineering", "name": "Platform Engineering", "description": "The Platform Engineering domain covers the internal developer platforms, golden paths, runtime foundations, delivery guardrails, and reliability workflows used by product and technology teams to ship software faster, safer, and with lower cognitive load."}]};
@@ -572,9 +615,9 @@
             <button class="tablinks" id="tab_BricksTab" onclick="openTab('BricksTab')"></button>
         </div>
 
-        <div id="InterfacesTab" class="tabcontent" style="padding: 10px"><div id="Interfaces"></div></div>
-        <div id="ChannelsTab" class="tabcontent" style="padding: 10px"><div id="Channels"></div></div>
-        <div id="BricksTab" class="tabcontent" style="padding: 10px"><div id="Bricks"></div></div>
+        <div id="tab_content_InterfacesTab" class="tabcontent" style="padding: 10px"><div id="Interfaces"></div></div>
+        <div id="tab_content_ChannelsTab" class="tabcontent" style="padding: 10px"><div id="Channels"></div></div>
+        <div id="tab_content_BricksTab" class="tabcontent" style="padding: 10px"><div id="Bricks"></div></div>
     </div>
 </div>
 

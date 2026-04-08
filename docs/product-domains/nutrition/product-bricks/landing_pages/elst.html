@@ -43,7 +43,7 @@
 
     .tabcontent {
         display: none;
-        padding: 0;
+        padding: 20px;
         border: 1px solid #ccc;
         border-top: none;
     }
@@ -625,17 +625,41 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 
     <script>
-    function initTab(tabName) {
+    function resolveHashTabName() {
         if (window.location.hash) {
             const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
         }
-        openTab(tabName);
+
+        return '';
     }
 
-    function openTab(tabName) {
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
         const tabcontent = document.getElementsByClassName('tabcontent');
         for (let i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = 'none';
@@ -644,15 +668,25 @@
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
         }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById('tab_content_' + tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
     }
 </script>
 
 
 </head>
-<body onload="initTab('overview')" onhashchange="initTab()">
+<body onload="initBrickTab('overview')" onhashchange="initBrickTab()">
 
 <div id="breadcrumbs" style="margin-left: 24px;"></div>
 
@@ -683,14 +717,28 @@
             console.error('Failed to render dependency diagram', error);
         });
     }
+
+    function initBrickTab(tabName) {
+        const resolvedTabName = openTab(tabName, { updateHistory: false });
+        if (resolvedTabName === 'dependencies') {
+            renderDependenciesDiagramIfNeeded();
+        }
+    }
+
+    function openBrickTab(tabName) {
+        openTab(tabName);
+        if (tabName === 'dependencies') {
+            renderDependenciesDiagramIfNeeded();
+        }
+    }
 </script>
 <div id="Header"></div>
 
 <div style="margin: 20px;">
     <div class="tab" id="primary_tabs">
-        <button class="tablinks active" id="tab_overview" onclick="openTab('overview')">Overview</button>
-        <button class="tablinks" id="tab_modules" onclick="openTab('modules')">Modules</button>
-        <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
+        <button class="tablinks active" id="tab_overview" onclick="openBrickTab('overview')">Overview</button>
+        <button class="tablinks" id="tab_modules" onclick="openBrickTab('modules')">Modules</button>
+        <button class="tablinks" id="tab_dependencies" onclick="openBrickTab('dependencies')">Dependencies</button>
     </div>
 
     <div id="tab_content_overview" class="tabcontent" style="padding: 10px">

@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "ptsu", "name": "Arrive Partner Success", "teamType": "platform-enabling", "teamFamilyId": "bpcg", "teamFamilyName": "Business Mobility and Ecosystem", "orgLayer": "team", "mission": "Own partner enablement, launch operations, and partner performance reporting.", "primaryCustomers": [{"customerId": "mppm", "customerName": "Mobility Platform Partner Manager", "relatedKPIs": ["Time to launch a new market", "Active partners"], "icon": "mppm.png"}], "ownedProductBricks": [{"brickId": "pana", "brickName": "Partner Analytics & Revenue Reporting", "brick": {"id": "pana", "name": "Partner Analytics & Revenue Reporting", "type": "service", "description": "Tracks partner transaction quality, attach, revenue mix, and onboarding performance.", "domain": "partner_ecosystem", "group": "partner-onboarding-and-monetization", "internalModules": [{"title": "Transaction and Ledger Core", "description": "Records the core financial or commercial transactions handled by Partner Analytics & Revenue Reporting.", "type": "finance"}, {"title": "Settlement and Reconciliation", "description": "Matches external outcomes, balances, and exceptions flowing through Partner Analytics & Revenue Reporting.", "type": "operations"}, {"title": "Billing Rules and Controls", "description": "Applies pricing, billing, tax, or financial control logic inside Partner Analytics & Revenue Reporting.", "type": "policy"}], "interfaces": [{"title": "Transaction API", "description": "API surface for submitting or retrieving financial transactions handled by Partner Analytics & Revenue Reporting.", "type": "api"}, {"title": "Finance Operations Workspace", "description": "User interface for reconciliation, exception handling, and financial oversight in Partner Analytics & Revenue Reporting.", "type": "ui"}, {"title": "Settlement and Ledger Events", "description": "Event stream carrying posting, settlement, and status changes from Partner Analytics & Revenue Reporting.", "type": "event"}], "brickDependencies": [{"targetBrickId": "resv", "type": "workflow", "interface": "Workflow API", "description": "Depends on Reservations & Permit Inventory to provide operations capabilities required by Partner Analytics & Revenue Reporting."}, {"targetBrickId": "acce", "type": "event-subscription", "interface": "Audit Event Stream", "description": "Depends on Access, Permit & LPR Control to provide identity capabilities required by Partner Analytics & Revenue Reporting."}, {"targetBrickId": "part", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on Partner API, Sandbox & Certification to provide integration capabilities required by Partner Analytics & Revenue Reporting."}], "externalSystemsThisBrickDependsOn": [{"system": "Payment Schemes and PSPs", "type": "financial-network", "interface": "Payment APIs", "description": "Partner Analytics & Revenue Reporting depends on external payment or banking networks to authorize and settle transactions."}, {"system": "Accounting or ERP Systems", "type": "back-office", "interface": "ERP Interface", "description": "Partner Analytics & Revenue Reporting exchanges postings, reconciliations, or settlement outcomes with finance back-office systems."}], "externalSystemsDependingOnThisBrick": [{"system": "Checkout and Billing Flows", "type": "transaction-consumer", "interface": "Payment / Posting API", "description": "Commercial flows depend on Partner Analytics & Revenue Reporting to authorize, post, reconcile, or settle financial transactions."}, {"system": "Finance and Reporting Systems", "type": "finance-consumer", "interface": "Ledger / Settlement Feed", "description": "Back-office finance consumers depend on Partner Analytics & Revenue Reporting for accounting, settlement, and reconciliation outputs."}], "icon": "pana.png"}}], "supportingProductBricks": [{"brickId": "mark", "brickName": "Market Catalog & Operator Rules", "brick": {"id": "mark", "name": "Market Catalog & Operator Rules", "type": "service", "description": "Publishes market availability, operator-specific rules, and integration constraints in one controlled catalog.", "domain": "partner_ecosystem", "group": "partner-onboarding-and-monetization", "internalModules": [{"title": "Catalog and Index Pipeline", "description": "Builds and refreshes the searchable corpus, facets, and metadata used by Market Catalog & Operator Rules.", "type": "data"}, {"title": "Ranking and Recommendation Engine", "description": "Ranks results or recommendations surfaced by Market Catalog & Operator Rules.", "type": "analytics"}, {"title": "Merchandising and Tuning Controls", "description": "Lets operators tune relevance, boosts, and presentation behavior in Market Catalog & Operator Rules.", "type": "operations"}], "interfaces": [{"title": "Search and Query API", "description": "API used to query results, recommendations, or catalog slices from Market Catalog & Operator Rules.", "type": "api"}, {"title": "Search Experience Interface", "description": "User-facing search or browse experience rendered by Market Catalog & Operator Rules.", "type": "ui"}, {"title": "Catalog Update Feed", "description": "Event or ingestion feed used to refresh searchable content inside Market Catalog & Operator Rules.", "type": "event"}], "brickDependencies": [{"targetBrickId": "opal", "type": "data-feed", "interface": "Metrics and Query API", "description": "Depends on Operator Analytics & Control Tower to provide analytics capabilities required by Market Catalog & Operator Rules."}, {"targetBrickId": "cmns", "type": "identity-context", "interface": "Authentication API", "description": "Depends on Communications & Notifications to provide experience capabilities required by Market Catalog & Operator Rules."}, {"targetBrickId": "part", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on Partner API, Sandbox & Certification to provide integration capabilities required by Market Catalog & Operator Rules."}], "externalSystemsThisBrickDependsOn": [{"system": "Content and Listing Feeds", "type": "data-source", "interface": "Batch / Event Feed", "description": "Market Catalog & Operator Rules depends on upstream content or listing feeds to keep searchable inventory current."}, {"system": "Search Infrastructure", "type": "platform", "interface": "Indexing APIs", "description": "Market Catalog & Operator Rules relies on external search or indexing infrastructure to serve discovery use cases."}], "externalSystemsDependingOnThisBrick": [{"system": "Consumer Experience Surfaces", "type": "experience-consumer", "interface": "Search / Recommendation API", "description": "User-facing products depend on Market Catalog & Operator Rules to retrieve ranked results, recommendations, or navigable inventory."}, {"system": "Merchandising and Growth Tools", "type": "business-consumer", "interface": "Query / Ranking Controls", "description": "Growth and merchandising tools depend on Market Catalog & Operator Rules to tune discovery outcomes and exposure."}], "icon": "mark.png"}}], "dependsOnTeamIds": ["ptpl", "stld"], "defaultSupportingTeamIds": ["ptpl", "stld"], "staffing": {"suggestedHeadcount": 8, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own partner success tooling and metrics."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead tooling delivery and partner-operations alignment."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build reporting, launch-tracking, and operational services."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build partner-operating and reporting surfaces."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own reporting quality and release confidence."}, {"role": "Partner Operations Specialist", "count": 1, "responsibility": "Bring launch and partner-management detail into roadmap choices."}]}, "groupId": "bpcg", "groupName": "Arrive Business Mobility and Ecosystem", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architecture coherence, and ecosystem leadership for business mobility, partner, and automotive workflows.", "leadershipModel": "Directors own the group portfolio while group-level staff roles align partner integrations, automotive services, and commercial workflow standards across teams.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own strategy, partnership tradeoffs, and outcome accountability across business mobility and ecosystem teams.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, interoperability quality, and staffing across the ecosystem group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Staff Engineer", "count": 1, "responsibility": "Provide cross-team technical direction for partner integrations, automotive data services, and shared workflow patterns.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive coherence across partner, fleet, and automotive service journeys.", "reportsTo": "Product Director"}, {"role": "Principal Ecosystem Architect", "count": 1, "responsibility": "Shape the common partner-domain model, onboarding standards, and operating semantics across the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "ptpl", "name": "Arrive Partner Platform", "teamType": "stream-aligned", "groupId": "bpcg", "groupName": "Arrive Business Mobility and Ecosystem"}, {"id": "stld", "name": "Arrive Settlement and Ledger", "teamType": "pltg", "groupId": "pltg", "groupName": "Arrive Platform, Data and Reliability"}], "defaultSupportingTeams": [{"id": "ptpl", "name": "Arrive Partner Platform", "teamType": "stream-aligned", "groupId": "bpcg", "groupName": "Arrive Business Mobility and Ecosystem"}, {"id": "stld", "name": "Arrive Settlement and Ledger", "teamType": "pltg", "groupId": "pltg", "groupName": "Arrive Platform, Data and Reliability"}], "relatedInitiatives": [], "relatedReleases": [], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "ptpl", "teamName": "Arrive Partner Platform", "sharedBrickIds": ["mark", "pana"], "sharedBrickNames": ["Market Catalog & Operator Rules", "Partner Analytics & Revenue Reporting"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "ptpl", "teamName": "Arrive Partner Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "stld", "teamName": "Arrive Settlement and Ledger", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "ptpl", "teamName": "Arrive Partner Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "stld", "teamName": "Arrive Settlement and Ledger", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

@@ -4,6 +4,47 @@
     <meta charset="UTF-8">
     <title>Initiatives (Audio Streaming Platform)</title>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -102,39 +143,6 @@
             margin-bottom: 14px;
             max-width: 960px;
             line-height: 1.4;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -424,35 +432,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Table';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Table')" onhashchange="initTab('Table')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -481,9 +523,9 @@
     <button class="tablinks" id="tab_Overview" onclick="openTab('Overview')">Overview</button>
 </div>
 
-<div id="Table" class="tabcontent"></div>
-<div id="Cards" class="tabcontent"></div>
-<div id="Overview" class="tabcontent"></div>
+<div id="tab_content_Table" class="tabcontent"></div>
+<div id="tab_content_Cards" class="tabcontent"></div>
+<div id="tab_content_Overview" class="tabcontent"></div>
 
 <script>
     const initiatives = {"items": [{"title": "Cross-format Discovery Initiative", "date": "2026-07-10", "description": "Planned initiative to improve how Spotify introduces listeners to adjacent audio formats without reducing relevance.", "customerImpact": [], "productBricks": [{"brickId": "home", "change": "Introduce stronger cross-format recirculation logic.", "brick": {"id": "home", "name": "Home Personalization & Feed", "type": "full-stack", "description": "The personalized home feed that assembles recommendations, recirculation modules, and context-aware entry points.", "domain": "Listener Experience", "group": "Discovery and selection", "internalModules": [{"title": "Home ranking orchestration", "description": "Builds personalized modules and order for each session.", "type": "service"}], "interfaces": [{"title": "Home feed UI", "description": "Listener-facing home surface across app, desktop, and web.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "reco", "type": "composition", "interface": "Recommendation bundle API", "description": "Uses recommendation candidates and confidence scores."}, {"targetBrickId": "edit", "type": "composition", "interface": "Editorial rails feed", "description": "Mixes editorial programming into personalized home."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "home.png"}}, {"brickId": "cata", "change": "Improve multi-format relationship metadata.", "brick": {"id": "cata", "name": "Catalog & Metadata Graph", "type": "full-stack", "description": "Canonical graph for tracks, artists, albums, episodes, shows, audiobooks, rights entities, and content relationships.", "domain": "Monetization and Foundations", "group": "Platform core", "internalModules": [{"title": "Canonical metadata graph", "description": "Stores and resolves content entities, relationships, and availability state.", "type": "service"}], "interfaces": [{"title": "Catalog APIs", "description": "Shared metadata and relationship APIs for product surfaces.", "type": "api"}], "brickDependencies": [{"targetBrickId": "righ", "type": "governance", "interface": "Availability and rights rules", "description": "Uses territory and rights constraints."}], "externalSystemsThisBrickDependsOn": [{"name": "Label and publisher feeds", "description": "External metadata and delivery feeds from content partners."}], "externalSystemsDependingOnThisBrick": [], "icon": "cata.png"}}], "deliveryChannels": [], "teams": {"primaryTeamIds": ["personalization-discovery"], "supportingTeamIds": ["catalog-rights-core"]}, "initiativeId": "initiative-audio-streaming-platform-2026-07-10-01", "discoveryIds": [], "priority": "p2", "keyResultId": "audio-streaming-platform-2026-q3-cross-format/kr-1", "landingPageIndex": 0, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Creator Monetization Confidence Initiative", "date": "2026-05-08", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "customerImpact": [{"customerId": "cg3-p1", "customer": {"id": "cg3-p1", "name": "Podcast / Video Creator", "group": "Podcast and Video Creators", "icon": "creator.png"}, "customerKPIs": [{"kpi": "Monthly monetizable consumption hours", "expectedImpact": "Increase the amount of creator inventory eligible for monetization.", "description": "Increase monetizable listening or viewing hours by 25% year over year in priority creator cohorts.", "unit": "hours per active show", "currentValue": "13.9", "link": "https://dashboard.example.com/audio-streaming-platform/customers/cg3-p1/kpis/co-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Creator payout predictability", "expectedImpact": "Increase creator trust in the platform's earnings model.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Partner Program eligibility rate", "expectedImpact": "Increase creator participation in platform-native monetization.", "description": "Increase the share of active shows that reach eligibility for on-platform monetization participation to 42%.", "unit": "% of active eligible shows", "currentValue": "89.5", "link": "https://dashboard.example.com/audio-streaming-platform/customers/cg3-p1/kpis/bo-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}, {"customerId": "cg4-p1", "customer": {"id": "cg4-p1", "name": "Brand Media Buyer", "group": "Advertisers and Agencies", "icon": "advertiser.png"}, "customerKPIs": [{"kpi": "Measured lift coverage", "expectedImpact": "Increase the share of ad spend with trusted outcome reporting.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Advertising revenue growth", "expectedImpact": "Increase advertiser confidence and repeat spend.", "description": "Sustain advertising revenue growth at 17% year over year in the modeled domain.", "unit": "% growth", "currentValue": "50.2", "link": "https://dashboard.example.com/audio-streaming-platform/customers/cg4-p1/kpis/bo-cg4-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "monet", "change": "Improve creator earnings explanation and onboarding.", "brick": {"id": "monet", "name": "Creator Monetization", "type": "full-stack", "description": "Creator-side monetization across subscriptions, ad participation, Premium video revenue, and payout eligibility.", "domain": "Creator Growth", "group": "Creator publishing and monetization", "internalModules": [{"title": "Creator earnings orchestration", "description": "Calculates monetization eligibility, earnings state, and payout configuration.", "type": "service"}], "interfaces": [{"title": "Monetization manager UI", "description": "Creator-facing monetization setup and earnings views.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "bill", "type": "financial", "interface": "Revenue settlement", "description": "Uses financial ledger and payout workflows."}, {"targetBrickId": "camp", "type": "inventory", "interface": "Ad delivery participation", "description": "Depends on ad demand and monetizable inventory state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "monet.png"}}, {"brickId": "crea", "change": "Improve creator funnel and revenue reporting.", "brick": {"id": "crea", "name": "Creator Audience Analytics", "type": "full-stack", "description": "Audience funnel, conversion, plays, and monetization analytics for podcasters, video creators, and publishers.", "domain": "Creator Growth", "group": "Creator publishing and monetization", "internalModules": [{"title": "Creator funnel analytics service", "description": "Aggregates discovery, consumption, and conversion views for creators.", "type": "service"}], "interfaces": [{"title": "Creator analytics UI", "description": "Dashboards for audience growth, retention, and monetization performance.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "intel", "type": "data", "interface": "Shared analytics layer", "description": "Depends on shared event processing and experiment data."}, {"targetBrickId": "play", "type": "events", "interface": "Consumption telemetry", "description": "Uses listen and watch activity streams."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "crea.png"}}, {"brickId": "meas", "change": "Improve campaign-outcome reporting for advertisers.", "brick": {"id": "meas", "name": "Measurement & Attribution", "type": "full-stack", "description": "Reach, frequency, lift, conversion, and partner measurement for advertiser outcomes.", "domain": "Monetization and Foundations", "group": "Advertising and commerce", "internalModules": [{"title": "Campaign measurement pipeline", "description": "Computes delivery, attention, and business outcome views.", "type": "service"}], "interfaces": [{"title": "Measurement reporting UI", "description": "Advertiser and agency reporting, exports, and partner connections.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "camp", "type": "events", "interface": "Campaign delivery events", "description": "Uses delivery and impression telemetry."}, {"targetBrickId": "intel", "type": "analytics", "interface": "Analytics models", "description": "Uses shared analytics infrastructure and lift methods."}], "externalSystemsThisBrickDependsOn": [{"name": "Third-party measurement partners", "description": "External attribution and brand-lift partners."}], "externalSystemsDependingOnThisBrick": [], "icon": "meas.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release updated creator monetization and reporting surfaces.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}, {"channelId": "partner-api-gateway", "change": "Release stronger reporting outputs for partner integrations.", "channel": {"productId": "partner", "productName": "", "name": "partner-api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["creator-publishing-monetization", "measurement-and-insights"], "supportingTeamIds": ["ad-platform", "revenue-systems"]}, "initiativeId": "initiative-audio-streaming-platform-2026-05-08-04", "discoveryIds": ["discovery-audio-streaming-platform-2026-04-18-04-creator-monetization"], "priority": "p1", "keyResultId": "audio-streaming-platform-2026-q2-cg3-p1/kr-1", "landingPageIndex": 1, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Artist Fan Conversion Initiative", "date": "2026-05-01", "description": "Focused investment to improve release readiness, targeting, and fan-conversion feedback for artist and label teams.", "customerImpact": [{"customerId": "cg2-p1", "customer": {"id": "cg2-p1", "name": "Artist Team / Label Marketer", "group": "Music Creators and Rights Holders", "icon": "artist.png"}, "customerKPIs": [{"kpi": "Release campaign conversion", "expectedImpact": "Increase post-campaign listening conversion for targeted fans.", "description": "Increase the share of targeted listeners who stream the promoted release within 14 days to 22%.", "unit": "% of targeted listeners", "currentValue": "64", "link": "https://dashboard.example.com/audio-streaming-platform/customers/cg2-p1/kpis/co-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Release readiness SLA attainment", "expectedImpact": "Reduce preventable launch friction and metadata delays.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Artist team monthly active campaign rate", "expectedImpact": "Increase recurring usage of artist growth tooling.", "description": "Increase the share of eligible artist teams using Spotify campaign or launch tools monthly to 34%.", "unit": "% of eligible teams", "currentValue": "91.1", "link": "https://dashboard.example.com/audio-streaming-platform/customers/cg2-p1/kpis/bo-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "rele", "change": "Improve launch readiness checks and launch-state guidance.", "brick": {"id": "rele", "name": "Release Operations", "type": "full-stack", "description": "Release readiness, metadata checks, pitching, launch-state orchestration, and release calendars.", "domain": "Creator Growth", "group": "Music creator tools", "internalModules": [{"title": "Release readiness workflow", "description": "Coordinates metadata, schedule, and eligibility checks before launch.", "type": "service"}], "interfaces": [{"title": "Release planning UI", "description": "Artist-facing launch and pre-release preparation tools.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "righ", "type": "governance", "interface": "Rights and availability rules", "description": "Uses rights and territory state to validate launches."}, {"targetBrickId": "cata", "type": "metadata", "interface": "Release metadata graph", "description": "Depends on normalized catalog metadata."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "rele.png"}}, {"brickId": "fdev", "change": "Improve listener targeting and campaign creation flow.", "brick": {"id": "fdev", "name": "Fan Activation & Campaigns", "type": "full-stack", "description": "Release campaigns such as Marquee-style promotions, showcase placements, and high-intent fan activation.", "domain": "Creator Growth", "group": "Music creator tools", "internalModules": [{"title": "Campaign eligibility and targeting service", "description": "Finds the right listeners for artist release campaigns.", "type": "service"}], "interfaces": [{"title": "Campaign manager UI", "description": "Artist and team interface for launching fan campaigns.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "adsg", "type": "audience", "interface": "Audience segment API", "description": "Uses audience eligibility and fan propensity segments."}, {"targetBrickId": "musa", "type": "feedback", "interface": "Music analytics", "description": "Uses performance insight to tune campaigns."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "fdev.png"}}, {"brickId": "musa", "change": "Improve fan-source reporting and release conversion views.", "brick": {"id": "musa", "name": "Audience Analytics for Music", "type": "full-stack", "description": "Artist and team analytics for audience growth, release performance, geography, sources, and fan cohorts.", "domain": "Creator Growth", "group": "Music creator tools", "internalModules": [{"title": "Music insights warehouse views", "description": "Aggregates audience, release, and source-of-stream metrics.", "type": "service"}], "interfaces": [{"title": "Artist analytics UI", "description": "Spotify for Artists reporting and insights surfaces.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "intel", "type": "data", "interface": "Analytics model layer", "description": "Uses shared experimentation and analytics foundations."}, {"targetBrickId": "play", "type": "events", "interface": "Consumption telemetry", "description": "Depends on reliable playback event streams."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "musa.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release updated Spotify for Artists campaign flow.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["artist-growth-tools"], "supportingTeamIds": ["platform-intelligence", "catalog-rights-core"]}, "initiativeId": "initiative-audio-streaming-platform-2026-05-01-03", "discoveryIds": ["discovery-audio-streaming-platform-2026-04-15-03-artist-fan-conversion"], "priority": "p1", "keyResultId": "audio-streaming-platform-2026-q2-cg2-p1/kr-1", "landingPageIndex": 2, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Premium Value Clarity Initiative", "date": "2026-04-24", "description": "Focused investment to improve entitlement clarity, plan comparison, and purchase reliability around Spotify Premium plans.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Everyday Audio Listener", "group": "Listeners", "icon": "listener.png"}, "customerKPIs": [{"kpi": "Premium conversion rate", "expectedImpact": "Increase plan adoption by making Premium value and plan fit easier to understand.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}, {"kpi": "90-day listener retention", "expectedImpact": "Reduce plan-related churn caused by entitlement and billing confusion.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Premium gross retention", "expectedImpact": "Reduce avoidable plan churn.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "business"}]}], "productBricks": [{"brickId": "subs", "change": "Improve plan comparison, upsell timing, and lifecycle messaging.", "brick": {"id": "subs", "name": "Subscription & Plan Experience", "type": "full-stack", "description": "Plan selection, upsell, household management, trials, entitlements, and plan lifecycle changes.", "domain": "Listener Experience", "group": "Listening and retention", "internalModules": [{"title": "Entitlements and plan orchestration", "description": "Controls plan state, trials, eligibility, and upsell logic.", "type": "service"}], "interfaces": [{"title": "Premium plan UI", "description": "Plan comparison, purchase, and account-management experiences.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "bill", "type": "financial", "interface": "Subscription billing service", "description": "Depends on billing, invoicing, and payment state."}, {"targetBrickId": "iden", "type": "identity", "interface": "Account ownership model", "description": "Uses account and household state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "subs.png"}}, {"brickId": "bill", "change": "Improve subscription billing visibility and failure recovery.", "brick": {"id": "bill", "name": "Billing & Revenue Operations", "type": "full-stack", "description": "Subscription billing, advertiser invoicing, creator settlements, credits, and core revenue ledger operations.", "domain": "Monetization and Foundations", "group": "Advertising and commerce", "internalModules": [{"title": "Revenue ledger and settlement engine", "description": "Maintains billable events, invoices, settlements, and adjustment state.", "type": "service"}], "interfaces": [{"title": "Billing operations UI", "description": "Internal and customer-facing billing views for subscriptions and campaigns.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "identity", "interface": "Account billing ownership", "description": "Uses account and organization ownership models."}, {"targetBrickId": "righ", "type": "rights", "interface": "Royalty and entitlement rules", "description": "Uses rights and royalty rules for settlements."}], "externalSystemsThisBrickDependsOn": [{"name": "Payment processors", "description": "External payment and settlement providers."}], "externalSystemsDependingOnThisBrick": [], "icon": "bill.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release updated plan selection and account flows.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["playback-premium"], "supportingTeamIds": ["revenue-systems", "identity-trust-platform"]}, "initiativeId": "initiative-audio-streaming-platform-2026-04-24-02", "discoveryIds": ["discovery-audio-streaming-platform-2026-04-10-02-premium-value"], "priority": "p1", "keyResultId": "audio-streaming-platform-2026-q2-cg1-p1/kr-2", "landingPageIndex": 3, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Personalized Home Quality Initiative", "date": "2026-04-17", "description": "Focused investment to improve Spotify's first-session impression by tightening home ranking quality, cross-format recirculation, and faster play starts.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Everyday Audio Listener", "group": "Listeners", "icon": "listener.png"}, "customerKPIs": [{"kpi": "Weekly intentional listening hours", "expectedImpact": "Increase deliberate listening by improving discovery confidence earlier in the session.", "description": "Increase average weekly hours of active listening to 13.5 in focus cohorts by improving discovery and continuity.", "unit": "hours per WAU", "currentValue": "3.7", "link": "https://dashboard.example.com/audio-streaming-platform/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Home-to-play conversion", "expectedImpact": "Increase the share of home opens that turn into immediate plays.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Premium conversion rate", "expectedImpact": "Improve perceived product value for free and paid listeners.", "description": "Increase Premium conversion to 39% of monthly active users in mature markets.", "unit": "% of MAUs", "currentValue": "59.7", "link": "https://dashboard.example.com/audio-streaming-platform/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "home", "change": "Improve ranking orchestration and session-context handling.", "brick": {"id": "home", "name": "Home Personalization & Feed", "type": "full-stack", "description": "The personalized home feed that assembles recommendations, recirculation modules, and context-aware entry points.", "domain": "Listener Experience", "group": "Discovery and selection", "internalModules": [{"title": "Home ranking orchestration", "description": "Builds personalized modules and order for each session.", "type": "service"}], "interfaces": [{"title": "Home feed UI", "description": "Listener-facing home surface across app, desktop, and web.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "reco", "type": "composition", "interface": "Recommendation bundle API", "description": "Uses recommendation candidates and confidence scores."}, {"targetBrickId": "edit", "type": "composition", "interface": "Editorial rails feed", "description": "Mixes editorial programming into personalized home."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "home.png"}}, {"brickId": "reco", "change": "Improve recommendation freshness and cross-format candidate selection.", "brick": {"id": "reco", "name": "Recommendations & Mixes", "type": "full-stack", "description": "Personalized recommendations, mixes, radios, and taste-shaping suggestions across formats.", "domain": "Listener Experience", "group": "Discovery and selection", "internalModules": [{"title": "Recommendation model serving", "description": "Produces personalized candidates and next-best listening options.", "type": "service"}], "interfaces": [{"title": "Recommendation APIs", "description": "Serves recommendations to home, search, and playlist surfaces.", "type": "api"}], "brickDependencies": [{"targetBrickId": "intel", "type": "insight", "interface": "Experiment and model features", "description": "Uses experimentation and ranking intelligence."}, {"targetBrickId": "play", "type": "feedback", "interface": "Playback event stream", "description": "Learns from playback and skip behavior."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "reco.png"}}], "deliveryChannels": [{"channelId": "ios-app-store", "change": "Release updated home feed treatments to iOS.", "channel": {"productId": "ios", "productName": "", "name": "ios-app-store", "type": "product", "icon": "product.png"}}, {"channelId": "android-play-store", "change": "Release updated home feed treatments to Android.", "channel": {"productId": "android", "productName": "", "name": "android-play-store", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["personalization-discovery"], "supportingTeamIds": ["platform-intelligence", "catalog-rights-core"]}, "initiativeId": "initiative-audio-streaming-platform-2026-04-17-01", "discoveryIds": ["discovery-audio-streaming-platform-2026-04-08-01-home-quality"], "priority": "p1", "keyResultId": "audio-streaming-platform-2026-q2-cg1-p1/kr-1", "landingPageIndex": 4, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Creator Payout Visibility Initiative", "date": "2026-02-14", "description": "Archived initiative to improve earnings visibility during the initial creator monetization rollout.", "customerImpact": [], "productBricks": [{"brickId": "monet", "change": "Improved creator earnings explanation.", "brick": {"id": "monet", "name": "Creator Monetization", "type": "full-stack", "description": "Creator-side monetization across subscriptions, ad participation, Premium video revenue, and payout eligibility.", "domain": "Creator Growth", "group": "Creator publishing and monetization", "internalModules": [{"title": "Creator earnings orchestration", "description": "Calculates monetization eligibility, earnings state, and payout configuration.", "type": "service"}], "interfaces": [{"title": "Monetization manager UI", "description": "Creator-facing monetization setup and earnings views.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "bill", "type": "financial", "interface": "Revenue settlement", "description": "Uses financial ledger and payout workflows."}, {"targetBrickId": "camp", "type": "inventory", "interface": "Ad delivery participation", "description": "Depends on ad demand and monetizable inventory state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "monet.png"}}], "deliveryChannels": [], "teams": {"primaryTeamIds": ["creator-publishing-monetization"], "supportingTeamIds": ["revenue-systems"]}, "initiativeId": "initiative-audio-streaming-platform-2026-02-14-archived-01", "discoveryIds": [], "priority": "p2", "keyResultId": "audio-streaming-platform-2026-q1-creator-foundations/kr-1", "landingPageIndex": 5, "discoveryLinks": [], "objectiveLandingPageUrl": ""}]};

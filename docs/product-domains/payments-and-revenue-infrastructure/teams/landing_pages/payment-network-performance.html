@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "payment-network-performance", "name": "Payment Network Performance", "teamType": "stream-aligned", "teamFamilyId": "payments-experience", "teamFamilyName": "Payments Experience", "orgLayer": "team", "mission": "Own payment methods, authorization optimization, and omnichannel payment performance.", "primaryCustomers": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "relatedKPIs": ["Issuer authorization rate", "Terminal attach on omnichannel accounts"], "icon": "commerce_gm.png"}], "ownedProductBricks": [{"brickId": "pmtd", "brickName": "Payment Method Orchestration", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}, {"brickId": "auth", "brickName": "Authorization Optimization", "brick": {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}, {"brickId": "term", "brickName": "Terminal and Reader Operations", "brick": {"id": "term", "name": "Terminal and Reader Operations", "type": "full-stack", "description": "Reader provisioning, card-present payment acceptance, and in-person operational control.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Reader fleet management", "description": "Manages reader lifecycle, connectivity, and configuration.", "type": "service"}], "interfaces": [{"title": "Reader operations UI", "description": "Operator workflow for reader assignment and health.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "ledg", "type": "context", "interface": "Unified payment state model", "description": "Uses shared money-state logic across online and in-person flows."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "term.png"}}], "supportingProductBricks": [{"brickId": "ledg", "brickName": "Balances and Internal Ledger", "brick": {"id": "ledg", "name": "Balances and Internal Ledger", "type": "full-stack", "description": "Shared money-state ledger across charges, invoices, transfers, refunds, and payouts.", "domain": "Shared Financial Foundations", "group": "Trust and financial operations", "internalModules": [{"title": "Financial event ledger", "description": "Records and reconciles money-state transitions across product lines.", "type": "service"}], "interfaces": [{"title": "Balance state UI", "description": "Operator views into balances and money movement state.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "ledg.png"}}], "dependsOnTeamIds": ["trust-ops", "finance-ops"], "defaultSupportingTeamIds": ["trust-ops", "finance-ops"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Keep payment-method rollout and approval-rate optimization in the same operating loop.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own network performance roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build payment orchestration and authorization services."}, {"role": "Frontend / Device Engineer", "count": 1, "responsibility": "Build operator and device-facing surfaces."}, {"role": "Product Designer", "count": 1, "responsibility": "Design performance and operator workflows."}, {"role": "Data Scientist", "count": 1, "responsibility": "Improve approval and method performance models."}]}, "groupId": "payments-experience", "groupName": "Payments Experience", "groupLeadership": [], "dependsOnTeams": [{"id": "trust-ops", "name": "Trust Operations", "teamType": "stream-aligned", "groupId": "trust-finance-ops", "groupName": "Trust and Finance Operations"}, {"id": "finance-ops", "name": "Finance Operations", "teamType": "stream-aligned", "groupId": "trust-finance-ops", "groupName": "Trust and Finance Operations"}], "defaultSupportingTeams": [{"id": "trust-ops", "name": "Trust Operations", "teamType": "stream-aligned", "groupId": "trust-finance-ops", "groupName": "Trust and Finance Operations"}, {"id": "finance-ops", "name": "Finance Operations", "teamType": "stream-aligned", "groupId": "trust-finance-ops", "groupName": "Trust and Finance Operations"}], "relatedInitiatives": [{"date": "2026-04-18", "description": "Focused investment to improve recurring collections, failed-payment recovery, and pricing-model operability.", "landingPageKey": "4", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-04-12", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "landingPageKey": "5", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-05-14", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "landingPageKey": "3", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "checkout-conversion", "teamName": "Checkout Conversion", "sharedBrickIds": ["pmtd"], "sharedBrickNames": ["Payment Method Orchestration"]}, {"teamId": "billing-growth", "teamName": "Billing Growth", "sharedBrickIds": ["auth"], "sharedBrickNames": ["Authorization Optimization"]}, {"teamId": "funds-movement", "teamName": "Funds Movement", "sharedBrickIds": ["ledg"], "sharedBrickNames": ["Balances and Internal Ledger"]}, {"teamId": "finance-ops", "teamName": "Finance Operations", "sharedBrickIds": ["ledg"], "sharedBrickNames": ["Balances and Internal Ledger"]}], "sharedInitiatives": [{"teamId": "checkout-conversion", "teamName": "Checkout Conversion", "sharedInitiativeKeys": ["5"], "sharedInitiatives": [{"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "date": "2026-04-12"}]}, {"teamId": "billing-growth", "teamName": "Billing Growth", "sharedInitiativeKeys": ["4"], "sharedInitiatives": [{"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Focused investment to improve recurring collections, failed-payment recovery, and pricing-model operability.", "date": "2026-04-18"}]}, {"teamId": "trust-ops", "teamName": "Trust Operations", "sharedInitiativeKeys": ["5"], "sharedInitiatives": [{"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "date": "2026-04-12"}]}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "sharedInitiativeKeys": ["4", "5"], "sharedInitiatives": [{"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Focused investment to improve recurring collections, failed-payment recovery, and pricing-model operability.", "date": "2026-04-18"}, {"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "date": "2026-04-12"}]}], "sharedReleases": [{"teamId": "checkout-conversion", "teamName": "Checkout Conversion", "sharedReleaseKeys": ["3"], "sharedReleases": [{"landingPageKey": "3", "sectionFolder": "releases", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "date": "2026-05-14"}]}, {"teamId": "trust-ops", "teamName": "Trust Operations", "sharedReleaseKeys": ["3"], "sharedReleases": [{"landingPageKey": "3", "sectionFolder": "releases", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "date": "2026-05-14"}]}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "sharedReleaseKeys": ["3"], "sharedReleases": [{"landingPageKey": "3", "sectionFolder": "releases", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "date": "2026-05-14"}]}], "explicitRelationships": [{"teamId": "trust-ops", "teamName": "Trust Operations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "finance-ops", "teamName": "Finance Operations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-ops", "teamName": "Trust Operations", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "finance-ops", "teamName": "Finance Operations", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

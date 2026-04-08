@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -238,39 +279,6 @@
             margin-bottom: 8px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
-        }
-
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -424,8 +432,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onhashchange="initTab('HomeTab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 8px">
     <tr>
         <td style="vertical-align: top; padding-top: 0px">
@@ -441,13 +509,13 @@
 
 <div style="margin-left: 12px">
     <div class="tab" id="TabBar"></div>
-    <div id="HomeTab" class="tabcontent"></div>
+    <div id="tab_content_HomeTab" class="tabcontent"></div>
     <div id="KRTabsContainer"></div>
-    <div id="DiscoveriesTab" class="tabcontent"></div>
+    <div id="tab_content_DiscoveriesTab" class="tabcontent"></div>
 </div>
 
 <script>
-    const pageData = {"id": "hosted-stays-marketplace-2026-q2-cg2-p1", "title": "2026-Q2 Everyday Home Host outcome goal", "objective": "Reduce time to first booking by simplifying activation, listing quality, and pricing guidance for new hosts.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg2-p1", "customerName": "Everyday Home Host", "customerGroup": "Supply-Side Hosts"}], "linkedCustomerKPIs": [{"customerId": "cg2-p1", "customerName": "Everyday Home Host", "kpiId": "CO-CG2-TOP", "kpiName": "Time to first booking", "description": "Median time from live listing to first confirmed booking.", "unit": "days", "kind": "customer", "targetDirection": "decrease"}, {"customerId": "cg2-p1", "customerName": "Everyday Home Host", "kpiId": "CO-CG2-B1-C1", "kpiName": "Host activation rate", "description": "Share of setup starts that become live listings.", "unit": "% of started setups", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg2-p1", "customerName": "Everyday Home Host", "kpiId": "BO-CG2-TOP", "kpiName": "Active listing quality rate", "description": "Share of active listings meeting booking, quality, and trust thresholds.", "unit": "% of live listings", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Time to first booking", "kind": "customer", "targetDirection": "decrease", "target": "Reduce median to 21 days", "baseline": "Q1 2026 host cohort baseline", "statement": "Reduce time to first booking during the quarter.", "executingTeams": [{"teamId": "host-activation-quality", "teamName": "Host Activation & Listing Quality", "role": "executing", "intent": "Lead onboarding and listing launch improvements."}], "supportingTeams": [{"teamId": "host-performance-pricing", "teamName": "Host Performance & Pricing", "role": "supporting", "intent": "Improve first-booking pricing and availability guidance."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}, {"id": "kr-2", "metric": "Host activation rate", "kind": "customer", "targetDirection": "increase", "target": "Reach 61%", "baseline": "Q1 2026 host activation funnel baseline", "statement": "Increase the share of setup starts that become live listings.", "executingTeams": [{"teamId": "host-activation-quality", "teamName": "Host Activation & Listing Quality", "role": "executing", "intent": "Reduce activation friction and improve listing completeness."}], "supportingTeams": [{"teamId": "policy-compliance-controls", "teamName": "Policy & Compliance Controls", "role": "supporting", "intent": "Reduce avoidable drop-off caused by unclear policy requirements."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}], "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "title": "New Host Fast Activation Initiative"}], "linkedReleases": [], "landingPageId": "hosted-stays-marketplace-2026-q2-cg2-p1", "inspiredByInsights": [], "companyObjectiveRefs": [], "enrichedInitiatives": [{"title": "New Host Fast Activation Initiative", "date": "2026-04-22", "description": "Focused investment to reduce host setup friction with simpler authoring, more useful defaults, and better first-booking pricing guidance.", "customerImpact": [{"customerId": "cg2-p1", "customer": {"id": "cg2-p1", "name": "Everyday Home Host", "group": "Supply-Side Hosts", "icon": "host.png"}, "customerKPIs": [{"kpi": "Time to first booking", "expectedImpact": "Reduce time to first booking by launching better-prepared listings sooner.", "description": "Reduce median time from published listing to first confirmed booking to 21 days in focus markets.", "unit": "days", "currentValue": "6", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/co-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Host activation rate", "expectedImpact": "Increase live-listing conversion from setup starts.", "description": "Share of started host setups that become live, targeted at 61%.", "unit": "% of started setups", "currentValue": "40.6", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Active listing quality rate", "expectedImpact": "Increase quality of new active supply by improving setup completeness.", "description": "Increase the share of live listings meeting booking, quality, and trust thresholds to 74%.", "unit": "% of live listings", "currentValue": "73.4", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/bo-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "hono", "change": "Reduce activation steps and clarify readiness.", "brick": {"id": "hono", "name": "Host Onboarding & Verification", "type": "full-stack", "description": "Host signup, onboarding, readiness checks, and verification before a listing goes live.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Host activation flow", "description": "Guides new hosts through setup and eligibility tasks.", "type": "full-stack"}, {"title": "Host readiness service", "description": "Evaluates whether listing, identity, and policy prerequisites are complete.", "type": "service"}], "interfaces": [{"title": "Host onboarding UI", "description": "Host-facing activation and setup workflow.", "type": "ui"}, {"title": "Readiness API", "description": "API for activation status and verification steps.", "type": "api"}], "brickDependencies": [{"targetBrickId": "idvr", "type": "identity", "interface": "Verification API", "description": "Uses identity verification to confirm host legitimacy."}, {"targetBrickId": "comp", "type": "policy", "interface": "Market rule API", "description": "Uses local market policy eligibility and restrictions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "hono.png"}}, {"brickId": "lista", "change": "Improve setup quality prompts and content guidance.", "brick": {"id": "lista", "name": "Listing Authoring & Content", "type": "full-stack", "description": "Listing setup, content editing, photo guidance, policy selection, and amenity configuration.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Listing editor", "description": "Supports content authoring for titles, descriptions, photos, and house rules.", "type": "full-stack"}, {"title": "Content quality service", "description": "Scores listing completeness and merchandising quality.", "type": "service"}], "interfaces": [{"title": "Listing editor UI", "description": "Host-facing content editing workflow.", "type": "ui"}, {"title": "Listing content API", "description": "API for listing content state and validation.", "type": "api"}], "brickDependencies": [{"targetBrickId": "list", "type": "consumption", "interface": "Listing detail API", "description": "Provides listing data consumed by guest-facing listing pages."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "lista.png"}}, {"brickId": "pric", "change": "Improve launch pricing suggestions.", "brick": {"id": "pric", "name": "Pricing & Discounts", "type": "full-stack", "description": "Nightly pricing, discount programs, stay rules, and monetization guidance for hosts and operators.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Pricing rules engine", "description": "Applies host-defined pricing, discounts, and length-of-stay rules.", "type": "service"}, {"title": "Pricing guidance layer", "description": "Surfaces marketplace-informed pricing suggestions and discount prompts.", "type": "full-stack"}], "interfaces": [{"title": "Pricing UI", "description": "Host-facing pricing and promotion controls.", "type": "ui"}, {"title": "Pricing API", "description": "API for prices, discounts, and price recommendations.", "type": "api"}], "brickDependencies": [{"targetBrickId": "data", "type": "insight", "interface": "Demand and market signal service", "description": "Uses demand and search insight to inform pricing suggestions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pric.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release improved host setup and authoring flows.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["host-activation-quality"], "supportingTeamIds": ["host-performance-pricing", "policy-compliance-controls"]}, "initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "discoveryIds": ["discovery-hosted-stays-marketplace-2026-04-10-02-host-activation"], "priority": "p1", "keyResultId": "hosted-stays-marketplace-2026-q2-cg2-p1/kr-1", "landingPageIndex": 2}], "enrichedReleases": [{"title": "New Host Fast Activation Release", "date": "2026-05-30", "description": "Release focused on reducing host setup friction by simplifying listing authoring, availability defaults, and first-booking pricing guidance.", "customerImpact": [{"customerId": "cg2-p1", "customer": {"id": "cg2-p1", "name": "Everyday Home Host", "group": "Supply-Side Hosts", "icon": "host.png"}, "customerKPIs": [{"kpi": "Time to first booking", "expectedImpact": "Reduce days to first booking by getting hosts live faster with better pricing defaults.", "description": "Reduce median time from published listing to first confirmed booking to 21 days in focus markets.", "unit": "days", "currentValue": "6", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/co-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Host activation rate", "expectedImpact": "Increase the share of setup starts that become live listings.", "description": "Share of started host setups that become live, targeted at 61%.", "unit": "% of started setups", "currentValue": "40.6", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Active listing quality rate", "expectedImpact": "Increase active supply quality by improving setup completeness and accuracy.", "description": "Increase the share of live listings meeting booking, quality, and trust thresholds to 74%.", "unit": "% of live listings", "currentValue": "73.4", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/bo-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "hono", "change": "Simplify host activation and readiness checks.", "brick": {"id": "hono", "name": "Host Onboarding & Verification", "type": "full-stack", "description": "Host signup, onboarding, readiness checks, and verification before a listing goes live.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Host activation flow", "description": "Guides new hosts through setup and eligibility tasks.", "type": "full-stack"}, {"title": "Host readiness service", "description": "Evaluates whether listing, identity, and policy prerequisites are complete.", "type": "service"}], "interfaces": [{"title": "Host onboarding UI", "description": "Host-facing activation and setup workflow.", "type": "ui"}, {"title": "Readiness API", "description": "API for activation status and verification steps.", "type": "api"}], "brickDependencies": [{"targetBrickId": "idvr", "type": "identity", "interface": "Verification API", "description": "Uses identity verification to confirm host legitimacy."}, {"targetBrickId": "comp", "type": "policy", "interface": "Market rule API", "description": "Uses local market policy eligibility and restrictions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "hono.png"}}, {"brickId": "lista", "change": "Improve listing setup guidance and content quality prompts.", "brick": {"id": "lista", "name": "Listing Authoring & Content", "type": "full-stack", "description": "Listing setup, content editing, photo guidance, policy selection, and amenity configuration.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Listing editor", "description": "Supports content authoring for titles, descriptions, photos, and house rules.", "type": "full-stack"}, {"title": "Content quality service", "description": "Scores listing completeness and merchandising quality.", "type": "service"}], "interfaces": [{"title": "Listing editor UI", "description": "Host-facing content editing workflow.", "type": "ui"}, {"title": "Listing content API", "description": "API for listing content state and validation.", "type": "api"}], "brickDependencies": [{"targetBrickId": "list", "type": "consumption", "interface": "Listing detail API", "description": "Provides listing data consumed by guest-facing listing pages."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "lista.png"}}, {"brickId": "pric", "change": "Improve first-booking pricing and discount recommendations.", "brick": {"id": "pric", "name": "Pricing & Discounts", "type": "full-stack", "description": "Nightly pricing, discount programs, stay rules, and monetization guidance for hosts and operators.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Pricing rules engine", "description": "Applies host-defined pricing, discounts, and length-of-stay rules.", "type": "service"}, {"title": "Pricing guidance layer", "description": "Surfaces marketplace-informed pricing suggestions and discount prompts.", "type": "full-stack"}], "interfaces": [{"title": "Pricing UI", "description": "Host-facing pricing and promotion controls.", "type": "ui"}, {"title": "Pricing API", "description": "API for prices, discounts, and price recommendations.", "type": "api"}], "brickDependencies": [{"targetBrickId": "data", "type": "insight", "interface": "Demand and market signal service", "description": "Uses demand and search insight to inform pricing suggestions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pric.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Launch improved host web onboarding and listing-editing flow.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}, {"channelId": "ios-app-store", "change": "Release host mobile setup improvements on iOS.", "channel": {"productId": "ios", "productName": "", "name": "ios-app-store", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["host-activation-quality"], "supportingTeamIds": ["host-performance-pricing", "policy-compliance-controls"]}, "initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "landingPageIndex": 1}]};
+    const pageData = {"id": "hosted-stays-marketplace-2026-q2-cg2-p1", "title": "2026-Q2 Everyday Home Host outcome goal", "objective": "Reduce time to first booking by simplifying activation, listing quality, and pricing guidance for new hosts.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg2-p1", "customerName": "Everyday Home Host", "customerGroup": "Supply-Side Hosts"}], "linkedCustomerKPIs": [{"customerId": "cg2-p1", "customerName": "Everyday Home Host", "kpiId": "co-cg2-top", "kpiName": "Time to first booking", "description": "Median time from live listing to first confirmed booking.", "unit": "days", "kind": "customer", "targetDirection": "decrease"}, {"customerId": "cg2-p1", "customerName": "Everyday Home Host", "kpiId": "co-cg2-b1-c1", "kpiName": "Host activation rate", "description": "Share of setup starts that become live listings.", "unit": "% of started setups", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg2-p1", "customerName": "Everyday Home Host", "kpiId": "bo-cg2-top", "kpiName": "Active listing quality rate", "description": "Share of active listings meeting booking, quality, and trust thresholds.", "unit": "% of live listings", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Time to first booking", "kind": "customer", "targetDirection": "decrease", "target": "Reduce median to 21 days", "baseline": "Q1 2026 host cohort baseline", "statement": "Reduce time to first booking during the quarter.", "executingTeams": [{"teamId": "host-activation-quality", "teamName": "Host Activation & Listing Quality", "role": "executing", "intent": "Lead onboarding and listing launch improvements."}], "supportingTeams": [{"teamId": "host-performance-pricing", "teamName": "Host Performance & Pricing", "role": "supporting", "intent": "Improve first-booking pricing and availability guidance."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}, {"id": "kr-2", "metric": "Host activation rate", "kind": "customer", "targetDirection": "increase", "target": "Reach 61%", "baseline": "Q1 2026 host activation funnel baseline", "statement": "Increase the share of setup starts that become live listings.", "executingTeams": [{"teamId": "host-activation-quality", "teamName": "Host Activation & Listing Quality", "role": "executing", "intent": "Reduce activation friction and improve listing completeness."}], "supportingTeams": [{"teamId": "policy-compliance-controls", "teamName": "Policy & Compliance Controls", "role": "supporting", "intent": "Reduce avoidable drop-off caused by unclear policy requirements."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}], "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "title": "New Host Fast Activation Initiative"}], "linkedReleases": [], "landingPageId": "hosted-stays-marketplace-2026-q2-cg2-p1", "inspiredByInsights": [], "companyObjectiveRefs": [], "enrichedInitiatives": [{"title": "New Host Fast Activation Initiative", "date": "2026-04-22", "description": "Focused investment to reduce host setup friction with simpler authoring, more useful defaults, and better first-booking pricing guidance.", "customerImpact": [{"customerId": "cg2-p1", "customer": {"id": "cg2-p1", "name": "Everyday Home Host", "group": "Supply-Side Hosts", "icon": "host.png"}, "customerKPIs": [{"kpi": "Time to first booking", "expectedImpact": "Reduce time to first booking by launching better-prepared listings sooner.", "description": "Reduce median time from published listing to first confirmed booking to 21 days in focus markets.", "unit": "days", "currentValue": "6", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/co-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Host activation rate", "expectedImpact": "Increase live-listing conversion from setup starts.", "description": "Share of started host setups that become live, targeted at 61%.", "unit": "% of started setups", "currentValue": "40.6", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Active listing quality rate", "expectedImpact": "Increase quality of new active supply by improving setup completeness.", "description": "Increase the share of live listings meeting booking, quality, and trust thresholds to 74%.", "unit": "% of live listings", "currentValue": "73.4", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/bo-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "hono", "change": "Reduce activation steps and clarify readiness.", "brick": {"id": "hono", "name": "Host Onboarding & Verification", "type": "full-stack", "description": "Host signup, onboarding, readiness checks, and verification before a listing goes live.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Host activation flow", "description": "Guides new hosts through setup and eligibility tasks.", "type": "full-stack"}, {"title": "Host readiness service", "description": "Evaluates whether listing, identity, and policy prerequisites are complete.", "type": "service"}], "interfaces": [{"title": "Host onboarding UI", "description": "Host-facing activation and setup workflow.", "type": "ui"}, {"title": "Readiness API", "description": "API for activation status and verification steps.", "type": "api"}], "brickDependencies": [{"targetBrickId": "idvr", "type": "identity", "interface": "Verification API", "description": "Uses identity verification to confirm host legitimacy."}, {"targetBrickId": "comp", "type": "policy", "interface": "Market rule API", "description": "Uses local market policy eligibility and restrictions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "hono.png"}}, {"brickId": "lista", "change": "Improve setup quality prompts and content guidance.", "brick": {"id": "lista", "name": "Listing Authoring & Content", "type": "full-stack", "description": "Listing setup, content editing, photo guidance, policy selection, and amenity configuration.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Listing editor", "description": "Supports content authoring for titles, descriptions, photos, and house rules.", "type": "full-stack"}, {"title": "Content quality service", "description": "Scores listing completeness and merchandising quality.", "type": "service"}], "interfaces": [{"title": "Listing editor UI", "description": "Host-facing content editing workflow.", "type": "ui"}, {"title": "Listing content API", "description": "API for listing content state and validation.", "type": "api"}], "brickDependencies": [{"targetBrickId": "list", "type": "consumption", "interface": "Listing detail API", "description": "Provides listing data consumed by guest-facing listing pages."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "lista.png"}}, {"brickId": "pric", "change": "Improve launch pricing suggestions.", "brick": {"id": "pric", "name": "Pricing & Discounts", "type": "full-stack", "description": "Nightly pricing, discount programs, stay rules, and monetization guidance for hosts and operators.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Pricing rules engine", "description": "Applies host-defined pricing, discounts, and length-of-stay rules.", "type": "service"}, {"title": "Pricing guidance layer", "description": "Surfaces marketplace-informed pricing suggestions and discount prompts.", "type": "full-stack"}], "interfaces": [{"title": "Pricing UI", "description": "Host-facing pricing and promotion controls.", "type": "ui"}, {"title": "Pricing API", "description": "API for prices, discounts, and price recommendations.", "type": "api"}], "brickDependencies": [{"targetBrickId": "data", "type": "insight", "interface": "Demand and market signal service", "description": "Uses demand and search insight to inform pricing suggestions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pric.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release improved host setup and authoring flows.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["host-activation-quality"], "supportingTeamIds": ["host-performance-pricing", "policy-compliance-controls"]}, "initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "discoveryIds": ["discovery-hosted-stays-marketplace-2026-04-10-02-host-activation"], "priority": "p1", "keyResultId": "hosted-stays-marketplace-2026-q2-cg2-p1/kr-1", "landingPageIndex": 2}], "enrichedReleases": [{"title": "New Host Fast Activation Release", "date": "2026-05-30", "description": "Release focused on reducing host setup friction by simplifying listing authoring, availability defaults, and first-booking pricing guidance.", "customerImpact": [{"customerId": "cg2-p1", "customer": {"id": "cg2-p1", "name": "Everyday Home Host", "group": "Supply-Side Hosts", "icon": "host.png"}, "customerKPIs": [{"kpi": "Time to first booking", "expectedImpact": "Reduce days to first booking by getting hosts live faster with better pricing defaults.", "description": "Reduce median time from published listing to first confirmed booking to 21 days in focus markets.", "unit": "days", "currentValue": "6", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/co-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Host activation rate", "expectedImpact": "Increase the share of setup starts that become live listings.", "description": "Share of started host setups that become live, targeted at 61%.", "unit": "% of started setups", "currentValue": "40.6", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Active listing quality rate", "expectedImpact": "Increase active supply quality by improving setup completeness and accuracy.", "description": "Increase the share of live listings meeting booking, quality, and trust thresholds to 74%.", "unit": "% of live listings", "currentValue": "73.4", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/bo-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "hono", "change": "Simplify host activation and readiness checks.", "brick": {"id": "hono", "name": "Host Onboarding & Verification", "type": "full-stack", "description": "Host signup, onboarding, readiness checks, and verification before a listing goes live.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Host activation flow", "description": "Guides new hosts through setup and eligibility tasks.", "type": "full-stack"}, {"title": "Host readiness service", "description": "Evaluates whether listing, identity, and policy prerequisites are complete.", "type": "service"}], "interfaces": [{"title": "Host onboarding UI", "description": "Host-facing activation and setup workflow.", "type": "ui"}, {"title": "Readiness API", "description": "API for activation status and verification steps.", "type": "api"}], "brickDependencies": [{"targetBrickId": "idvr", "type": "identity", "interface": "Verification API", "description": "Uses identity verification to confirm host legitimacy."}, {"targetBrickId": "comp", "type": "policy", "interface": "Market rule API", "description": "Uses local market policy eligibility and restrictions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "hono.png"}}, {"brickId": "lista", "change": "Improve listing setup guidance and content quality prompts.", "brick": {"id": "lista", "name": "Listing Authoring & Content", "type": "full-stack", "description": "Listing setup, content editing, photo guidance, policy selection, and amenity configuration.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Listing editor", "description": "Supports content authoring for titles, descriptions, photos, and house rules.", "type": "full-stack"}, {"title": "Content quality service", "description": "Scores listing completeness and merchandising quality.", "type": "service"}], "interfaces": [{"title": "Listing editor UI", "description": "Host-facing content editing workflow.", "type": "ui"}, {"title": "Listing content API", "description": "API for listing content state and validation.", "type": "api"}], "brickDependencies": [{"targetBrickId": "list", "type": "consumption", "interface": "Listing detail API", "description": "Provides listing data consumed by guest-facing listing pages."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "lista.png"}}, {"brickId": "pric", "change": "Improve first-booking pricing and discount recommendations.", "brick": {"id": "pric", "name": "Pricing & Discounts", "type": "full-stack", "description": "Nightly pricing, discount programs, stay rules, and monetization guidance for hosts and operators.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Pricing rules engine", "description": "Applies host-defined pricing, discounts, and length-of-stay rules.", "type": "service"}, {"title": "Pricing guidance layer", "description": "Surfaces marketplace-informed pricing suggestions and discount prompts.", "type": "full-stack"}], "interfaces": [{"title": "Pricing UI", "description": "Host-facing pricing and promotion controls.", "type": "ui"}, {"title": "Pricing API", "description": "API for prices, discounts, and price recommendations.", "type": "api"}], "brickDependencies": [{"targetBrickId": "data", "type": "insight", "interface": "Demand and market signal service", "description": "Uses demand and search insight to inform pricing suggestions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pric.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Launch improved host web onboarding and listing-editing flow.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}, {"channelId": "ios-app-store", "change": "Release host mobile setup improvements on iOS.", "channel": {"productId": "ios", "productName": "", "name": "ios-app-store", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["host-activation-quality"], "supportingTeamIds": ["host-performance-pricing", "policy-compliance-controls"]}, "initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "landingPageIndex": 1}]};
     const pageKind = 'source-objective';
     const pagePeriod = 'current';
 
@@ -469,31 +537,6 @@
         if (!pageLogo) return;
         pageLogo.src = '../icons/' + periodIconName(pagePeriod);
         pageLogo.alt = (pagePeriod ? pagePeriod.charAt(0).toUpperCase() + pagePeriod.slice(1) + ' ' : '') + 'Objectives';
-    }
-
-    function initTab() {
-        let tabName = 'HomeTab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
     }
 
     function escapeHtml(value) {
@@ -782,7 +825,7 @@
     if (!isCompany && keyResults.length) {
         let krDivsHtml = '';
         keyResults.forEach((kr, i) => {
-            krDivsHtml += '<div id="KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
+            krDivsHtml += '<div id="tab_content_KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
         });
         document.getElementById('KRTabsContainer').innerHTML = krDivsHtml;
     }
@@ -1024,7 +1067,7 @@
         return html;
     }
 
-    document.getElementById('HomeTab').innerHTML = isCompany
+    document.getElementById('tab_content_HomeTab').innerHTML = isCompany
         ? renderCompanyObjectiveHome(pageData)
         : renderSourceObjectiveHome(pageData);
 
@@ -1032,7 +1075,7 @@
 
     if (!isCompany && keyResults.length) {
         keyResults.forEach((item, i) => {
-            document.getElementById('KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
+            document.getElementById('tab_content_KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
         });
     }
 
@@ -1052,11 +1095,11 @@
             }
             discHtml += '</div>';
         });
-        document.getElementById('DiscoveriesTab').innerHTML = discHtml;
+        document.getElementById('tab_content_DiscoveriesTab').innerHTML = discHtml;
     }
 
     initPageLogo();
-    initTab();
+    initTab('HomeTab');
 
     mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {fontSize: '14px'}});
 </script>

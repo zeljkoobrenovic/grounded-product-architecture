@@ -351,6 +351,52 @@ def flatten_product_bricks(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return flat
 
 
+def collect_bricks(payload: Any) -> list[dict[str, Any]]:
+    flat: list[dict[str, Any]] = []
+
+    def walk_group(group: Any) -> None:
+        if not isinstance(group, dict):
+            return
+        for brick in group.get("bricks", []) or []:
+            if isinstance(brick, dict):
+                flat.append(brick)
+        for subgroup in group.get("subGroups", []) or []:
+            walk_group(subgroup)
+
+    if not isinstance(payload, dict):
+        return flat
+
+    # Support both legacy flat schemas and the current rootGroups/subGroups structure.
+    flat.extend(flatten_product_bricks(payload.get("bricks", [])))
+    for group in payload.get("rootGroups", []) or []:
+        walk_group(group)
+    return flat
+
+
+def collect_capabilities(payload: Any) -> list[dict[str, Any]]:
+    flat: list[dict[str, Any]] = []
+
+    def walk_group(group: Any) -> None:
+        if not isinstance(group, dict):
+            return
+        for capability in group.get("capabilities", []) or []:
+            if isinstance(capability, dict):
+                flat.append(capability)
+        for subgroup in group.get("subGroups", []) or []:
+            walk_group(subgroup)
+
+    if not isinstance(payload, dict):
+        return flat
+
+    # Support both legacy flat schemas and the current rootGroups/subGroups structure.
+    for capability in payload.get("capabilities", []) or []:
+        if isinstance(capability, dict):
+            flat.append(capability)
+    for group in payload.get("rootGroups", []) or []:
+        walk_group(group)
+    return flat
+
+
 def call_gemini_nanobanana_api(api_key: str, prompt: str, model: str) -> bytes:
     request_url = API_URL_TEMPLATE.format(
         model=urllib.parse.quote(model, safe=""),
@@ -686,7 +732,7 @@ def main() -> int:
         product_bricks_path = domain_dir / "product-bricks" / "product-bricks.json"
         if product_bricks_path.exists():
             bricks_payload = load_json(product_bricks_path)
-            bricks = flatten_product_bricks(bricks_payload.get("bricks", [])) if isinstance(bricks_payload, dict) else []
+            bricks = collect_bricks(bricks_payload)
 
             for brick in bricks:
                 brick_id = str(brick.get("id") or "").strip()
@@ -710,11 +756,7 @@ def main() -> int:
             capabilities_payload = load_json(product_capabilities_path)
             original_text = json.dumps(capabilities_payload, indent=2, ensure_ascii=False)
             json_changed = False
-            capabilities = (
-                capabilities_payload.get("capabilities", [])
-                if isinstance(capabilities_payload, dict)
-                else []
-            )
+            capabilities = collect_capabilities(capabilities_payload)
 
             for capability in capabilities:
                 if not isinstance(capability, dict):

@@ -5,6 +5,47 @@
     <title>Discoveries (Hosted Stays Marketplace)</title>
 
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -101,39 +142,6 @@
             color: #6b7280;
             font-size: 18px;
             margin-bottom: 14px;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -271,35 +279,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Ongoing';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Ongoing')" onhashchange="initTab('Ongoing')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -327,8 +369,8 @@
     <button class="tablinks" id="tab_Archived" onclick="openTab('Archived')">Archived</button>
 </div>
 
-<div id="Ongoing" class="tabcontent"></div>
-<div id="Archived" class="tabcontent"></div>
+<div id="tab_content_Ongoing" class="tabcontent"></div>
+<div id="tab_content_Archived" class="tabcontent"></div>
 
 <script>
     const discoveries = {"ongoing": [{"title": "Guest Trust Clarity discovery", "id": "discovery-hosted-stays-marketplace-2026-04-08-01-guest-trust", "name": "Guest Trust Clarity discovery", "status": "ongoing", "lastUpdated": "2026-04-30", "summary": "Discovery work is testing whether clearer price, policy, and listing-trust presentation improves booking conversion without increasing support burden.", "opportunity": "Clarify how much decision drop-off is caused by price ambiguity and listing-trust uncertainty versus supply relevance alone.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-04-18-01", "description": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation at the moment of decision."}], "teams": {"leadTeamId": "guest-discovery-ranking", "supportingTeamIds": ["guest-booking-trip", "payments-and-ledger"]}, "riskFocus": [{"riskType": "valuable", "question": "Will guests book more often if price and cancellation terms are clearer earlier?", "hypothesis": "High-intent guests abandon less when total price and cancellation consequences are legible before checkout.", "methods": ["Funnel analysis", "Guest interviews", "Listing-page comprehension tests"]}], "plannedActivities": ["Compare abandonment across fee-heavy and fee-light listings.", "Test revised listing and checkout trust treatments.", "Review support contacts linked to pricing and cancellation confusion."], "decisionToMake": "Decide whether to standardize guest price and policy explanation patterns across all focus markets in Q2.", "startDate": "2026-04-08", "endDate": "2026-04-30", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "New Host Fast Activation discovery", "id": "discovery-hosted-stays-marketplace-2026-04-10-02-host-activation", "name": "New Host Fast Activation discovery", "status": "ongoing", "lastUpdated": "2026-05-02", "summary": "Discovery work is testing which setup steps and missing defaults most delay time to first booking for new hosts.", "opportunity": "Clarify whether friction sits more in activation complexity, listing content quality, or launch pricing uncertainty.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "description": "Focused investment to reduce host setup friction with simpler authoring, more useful defaults, and better first-booking pricing guidance.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to reduce host setup friction with simpler authoring, more useful defaults, and better first-booking pricing guidance."}], "teams": {"leadTeamId": "host-activation-quality", "supportingTeamIds": ["host-performance-pricing", "policy-compliance-controls"]}, "riskFocus": [{"riskType": "valuable", "question": "Which activation changes materially improve time to first booking?", "hypothesis": "Fewer required setup decisions plus better pricing defaults improve launch quality enough to reduce first-booking time.", "methods": ["Activation funnel analysis", "Host interviews", "Prototype walkthroughs"]}], "plannedActivities": ["Map host setup drop-off points.", "Test simpler listing setup defaults.", "Compare first-booking outcomes across launch-pricing cohorts."], "decisionToMake": "Decide which activation steps can be deferred without harming listing quality or compliance.", "startDate": "2026-04-10", "endDate": "2026-05-02", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-10", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Operator Control and Recovery discovery", "id": "discovery-hosted-stays-marketplace-2026-04-12-03-operator-control", "name": "Operator Control and Recovery discovery", "status": "ongoing", "lastUpdated": "2026-05-08", "summary": "Discovery work is testing where professional hosts lose time across delegated permissions, turnover workflows, and support-case handoffs.", "opportunity": "Clarify which portfolio workflows most constrain operator scale and retention.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-05-01-03", "description": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows.", "landingPageIndex": 1, "initiativeDescription": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows."}], "teams": {"leadTeamId": "portfolio-operations", "supportingTeamIds": ["trust-aircover-support", "payments-and-ledger"]}, "riskFocus": [{"riskType": "usable", "question": "Can operators understand and trust delegated permission boundaries?", "hypothesis": "Operators act faster and with fewer errors when permissions are explicit and auditable at listing level.", "methods": ["Operator workflow interviews", "Permission-model prototype testing"]}], "plannedActivities": ["Review top operator support complaints.", "Map end-to-end portfolio issue resolution flows.", "Prototype clearer permission and case-status views."], "decisionToMake": "Decide which operator controls should be treated as first-class portfolio workflows this quarter.", "startDate": "2026-04-12", "endDate": "2026-05-08", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-04-12", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Repeat guest confidence discovery", "id": "discovery-hosted-stays-marketplace-2026-06-20-01-repeat-confidence", "name": "Repeat guest confidence discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery into which post-stay and issue-recovery improvements most increase repeat booking behavior.", "opportunity": "Clarify the strongest causal links between trust, recovery quality, and next-trip retention.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-07-12-01", "description": "Planned initiative to turn better trip confidence and issue recovery into stronger repeat booking behavior.", "landingPageIndex": 0, "initiativeDescription": "Planned initiative to turn better trip confidence and issue recovery into stronger repeat booking behavior."}], "teams": {"leadTeamId": "guest-booking-trip", "supportingTeamIds": ["guest-discovery-ranking", "marketplace-intelligence"]}, "riskFocus": [], "plannedActivities": ["Analyze repeat booking cohorts after issue incidents.", "Interview guests who churn after a disrupted stay."], "decisionToMake": "Decide which retention loops deserve investment in Q3.", "startDate": "2026-06-20", "endDate": "2026-07-10", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-06-20", "customerImpact": [], "productBricks": [], "deliveryChannels": []}], "archived": [{"title": "Booking and payout reliability discovery", "id": "discovery-hosted-stays-marketplace-2026-01-15-01-booking-payout", "name": "Booking and payout reliability discovery", "status": "archived", "lastUpdated": "2026-03-15", "summary": "Archived discovery into failure modes in reservation creation and payout timing.", "opportunity": "Improve the reliability foundation before pushing more conversion and activation work.", "linkedInitiatives": [], "teams": {"leadTeamId": "payments-and-ledger", "supportingTeamIds": ["guest-booking-trip"]}, "riskFocus": [], "plannedActivities": [], "decisionToMake": "Decide which reliability fixes had to land before Q2 growth work.", "startDate": "2026-01-15", "endDate": "2026-03-15", "statusLabel": "Archived", "landingPageIndex": 4, "date": "2026-01-15", "customerImpact": [], "productBricks": [], "deliveryChannels": []}], "items": [{"title": "Guest Trust Clarity discovery", "id": "discovery-hosted-stays-marketplace-2026-04-08-01-guest-trust", "name": "Guest Trust Clarity discovery", "status": "ongoing", "lastUpdated": "2026-04-30", "summary": "Discovery work is testing whether clearer price, policy, and listing-trust presentation improves booking conversion without increasing support burden.", "opportunity": "Clarify how much decision drop-off is caused by price ambiguity and listing-trust uncertainty versus supply relevance alone.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-04-18-01", "description": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation at the moment of decision."}], "teams": {"leadTeamId": "guest-discovery-ranking", "supportingTeamIds": ["guest-booking-trip", "payments-and-ledger"]}, "riskFocus": [{"riskType": "valuable", "question": "Will guests book more often if price and cancellation terms are clearer earlier?", "hypothesis": "High-intent guests abandon less when total price and cancellation consequences are legible before checkout.", "methods": ["Funnel analysis", "Guest interviews", "Listing-page comprehension tests"]}], "plannedActivities": ["Compare abandonment across fee-heavy and fee-light listings.", "Test revised listing and checkout trust treatments.", "Review support contacts linked to pricing and cancellation confusion."], "decisionToMake": "Decide whether to standardize guest price and policy explanation patterns across all focus markets in Q2.", "startDate": "2026-04-08", "endDate": "2026-04-30", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "New Host Fast Activation discovery", "id": "discovery-hosted-stays-marketplace-2026-04-10-02-host-activation", "name": "New Host Fast Activation discovery", "status": "ongoing", "lastUpdated": "2026-05-02", "summary": "Discovery work is testing which setup steps and missing defaults most delay time to first booking for new hosts.", "opportunity": "Clarify whether friction sits more in activation complexity, listing content quality, or launch pricing uncertainty.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "description": "Focused investment to reduce host setup friction with simpler authoring, more useful defaults, and better first-booking pricing guidance.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to reduce host setup friction with simpler authoring, more useful defaults, and better first-booking pricing guidance."}], "teams": {"leadTeamId": "host-activation-quality", "supportingTeamIds": ["host-performance-pricing", "policy-compliance-controls"]}, "riskFocus": [{"riskType": "valuable", "question": "Which activation changes materially improve time to first booking?", "hypothesis": "Fewer required setup decisions plus better pricing defaults improve launch quality enough to reduce first-booking time.", "methods": ["Activation funnel analysis", "Host interviews", "Prototype walkthroughs"]}], "plannedActivities": ["Map host setup drop-off points.", "Test simpler listing setup defaults.", "Compare first-booking outcomes across launch-pricing cohorts."], "decisionToMake": "Decide which activation steps can be deferred without harming listing quality or compliance.", "startDate": "2026-04-10", "endDate": "2026-05-02", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-10", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Operator Control and Recovery discovery", "id": "discovery-hosted-stays-marketplace-2026-04-12-03-operator-control", "name": "Operator Control and Recovery discovery", "status": "ongoing", "lastUpdated": "2026-05-08", "summary": "Discovery work is testing where professional hosts lose time across delegated permissions, turnover workflows, and support-case handoffs.", "opportunity": "Clarify which portfolio workflows most constrain operator scale and retention.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-05-01-03", "description": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows.", "landingPageIndex": 1, "initiativeDescription": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows."}], "teams": {"leadTeamId": "portfolio-operations", "supportingTeamIds": ["trust-aircover-support", "payments-and-ledger"]}, "riskFocus": [{"riskType": "usable", "question": "Can operators understand and trust delegated permission boundaries?", "hypothesis": "Operators act faster and with fewer errors when permissions are explicit and auditable at listing level.", "methods": ["Operator workflow interviews", "Permission-model prototype testing"]}], "plannedActivities": ["Review top operator support complaints.", "Map end-to-end portfolio issue resolution flows.", "Prototype clearer permission and case-status views."], "decisionToMake": "Decide which operator controls should be treated as first-class portfolio workflows this quarter.", "startDate": "2026-04-12", "endDate": "2026-05-08", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-04-12", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Repeat guest confidence discovery", "id": "discovery-hosted-stays-marketplace-2026-06-20-01-repeat-confidence", "name": "Repeat guest confidence discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery into which post-stay and issue-recovery improvements most increase repeat booking behavior.", "opportunity": "Clarify the strongest causal links between trust, recovery quality, and next-trip retention.", "linkedInitiatives": [{"initiativeId": "initiative-hosted-stays-marketplace-2026-07-12-01", "description": "Planned initiative to turn better trip confidence and issue recovery into stronger repeat booking behavior.", "landingPageIndex": 0, "initiativeDescription": "Planned initiative to turn better trip confidence and issue recovery into stronger repeat booking behavior."}], "teams": {"leadTeamId": "guest-booking-trip", "supportingTeamIds": ["guest-discovery-ranking", "marketplace-intelligence"]}, "riskFocus": [], "plannedActivities": ["Analyze repeat booking cohorts after issue incidents.", "Interview guests who churn after a disrupted stay."], "decisionToMake": "Decide which retention loops deserve investment in Q3.", "startDate": "2026-06-20", "endDate": "2026-07-10", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-06-20", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Booking and payout reliability discovery", "id": "discovery-hosted-stays-marketplace-2026-01-15-01-booking-payout", "name": "Booking and payout reliability discovery", "status": "archived", "lastUpdated": "2026-03-15", "summary": "Archived discovery into failure modes in reservation creation and payout timing.", "opportunity": "Improve the reliability foundation before pushing more conversion and activation work.", "linkedInitiatives": [], "teams": {"leadTeamId": "payments-and-ledger", "supportingTeamIds": ["guest-booking-trip"]}, "riskFocus": [], "plannedActivities": [], "decisionToMake": "Decide which reliability fixes had to land before Q2 growth work.", "startDate": "2026-01-15", "endDate": "2026-03-15", "statusLabel": "Archived", "landingPageIndex": 4, "date": "2026-01-15", "customerImpact": [], "productBricks": [], "deliveryChannels": []}]};

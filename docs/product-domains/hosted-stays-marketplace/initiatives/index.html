@@ -4,6 +4,47 @@
     <meta charset="UTF-8">
     <title>Initiatives (Hosted Stays Marketplace)</title>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -102,39 +143,6 @@
             margin-bottom: 14px;
             max-width: 960px;
             line-height: 1.4;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -424,35 +432,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Table';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Table')" onhashchange="initTab('Table')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -481,9 +523,9 @@
     <button class="tablinks" id="tab_Overview" onclick="openTab('Overview')">Overview</button>
 </div>
 
-<div id="Table" class="tabcontent"></div>
-<div id="Cards" class="tabcontent"></div>
-<div id="Overview" class="tabcontent"></div>
+<div id="tab_content_Table" class="tabcontent"></div>
+<div id="tab_content_Cards" class="tabcontent"></div>
+<div id="tab_content_Overview" class="tabcontent"></div>
 
 <script>
     const initiatives = {"items": [{"title": "Repeat Guest Confidence Initiative", "date": "2026-07-12", "description": "Planned initiative to turn better trip confidence and issue recovery into stronger repeat booking behavior.", "initiativeId": "initiative-hosted-stays-marketplace-2026-07-12-01", "priority": "p2", "landingPageIndex": 0, "customerImpact": [], "productBricks": [], "deliveryChannels": [], "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Operator Control and Recovery Initiative", "date": "2026-05-01", "description": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows.", "customerImpact": [{"customerId": "cg3-p1", "customer": {"id": "cg3-p1", "name": "Professional Host / Co-host Operator", "group": "Professional Supply Operators", "icon": "operator.png"}, "customerKPIs": [{"kpi": "Operational SLA attainment", "expectedImpact": "Increase on-time readiness and check-in quality.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}, {"kpi": "Resolution cycle time", "expectedImpact": "Reduce time spent waiting on case closure and financial reconciliation.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "High-quality professional supply growth", "expectedImpact": "Improve retention and growth of professional operators.", "description": "Grow professionally operated active listings meeting trust and quality thresholds by 12% annually.", "unit": "% growth", "currentValue": "35.8", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg3-p1/kpis/bo-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "coho", "change": "Improve delegated permissions and accountability.", "brick": {"id": "coho", "name": "Co-host Network & Permissions", "type": "full-stack", "description": "Delegated operations, listing-level permissions, and portfolio collaboration across hosts and co-hosts.", "domain": "Host Success", "group": "Host operations and economics", "internalModules": [{"title": "Role and permission service", "description": "Stores delegated permissions and audit trails.", "type": "service"}, {"title": "Co-host collaboration UI", "description": "Supports multi-user listing and reservation operations.", "type": "full-stack"}], "interfaces": [{"title": "Co-host management UI", "description": "Host-facing permission and delegation workflow.", "type": "ui"}, {"title": "Permissions API", "description": "API for role-based access and delegated actions.", "type": "api"}], "brickDependencies": [{"targetBrickId": "host", "type": "portfolio", "interface": "Host dashboard API", "description": "Shares portfolio and performance context with operator surfaces."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "coho.png"}}, {"brickId": "opco", "change": "Improve turnover coordination and reservation visibility.", "brick": {"id": "opco", "name": "Turnover & Operations Coordination", "type": "full-stack", "description": "Changeover, cleaning, readiness, and reservation-level operating coordination.", "domain": "Host Success", "group": "Host operations and economics", "internalModules": [{"title": "Turnover task engine", "description": "Tracks readiness and changeover tasks before and after stays.", "type": "service"}, {"title": "Ops coordination UI", "description": "Supports operators and co-hosts managing stay-readiness workflows.", "type": "full-stack"}], "interfaces": [{"title": "Operations UI", "description": "Reservation-linked operations task view.", "type": "ui"}, {"title": "Operations API", "description": "API for turnover tasks and readiness status.", "type": "api"}], "brickDependencies": [{"targetBrickId": "trip", "type": "reservation", "interface": "Trip state service", "description": "Uses reservation timing and itinerary details."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "opco.png"}}, {"brickId": "reso", "change": "Improve portfolio issue tracking.", "brick": {"id": "reso", "name": "Resolutions & Support", "type": "full-stack", "description": "Structured support, claims, refund, dispute, and service-recovery workflows.", "domain": "Marketplace Foundations", "group": "Trust, payments, and policy", "internalModules": [{"title": "Case orchestration", "description": "Coordinates cases across guests, hosts, trust teams, and payouts.", "type": "service"}, {"title": "Resolution center", "description": "Guest- and host-facing issue and claim management surfaces.", "type": "full-stack"}], "interfaces": [{"title": "Resolution UI", "description": "User-facing and internal support workflows.", "type": "ui"}, {"title": "Support case API", "description": "API for claims, disputes, and issue-case state.", "type": "api"}], "brickDependencies": [{"targetBrickId": "paym", "type": "financial", "interface": "Payments API", "description": "Uses refund and payout state during case handling."}, {"targetBrickId": "trst", "type": "incident", "interface": "Trust decision API", "description": "Uses trust signals for incident-aware case handling."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "reso.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release updated portfolio operations console.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}, {"channelId": "partner-api-gateway", "change": "Release supporting operator integration updates.", "channel": {"productId": "partner", "productName": "", "name": "partner-api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["portfolio-operations"], "supportingTeamIds": ["trust-aircover-support", "payments-and-ledger"]}, "initiativeId": "initiative-hosted-stays-marketplace-2026-05-01-03", "discoveryIds": ["discovery-hosted-stays-marketplace-2026-04-12-03-operator-control"], "priority": "p1", "keyResultId": "hosted-stays-marketplace-2026-q2-cg3-p1/kr-2", "landingPageIndex": 1, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "New Host Fast Activation Initiative", "date": "2026-04-22", "description": "Focused investment to reduce host setup friction with simpler authoring, more useful defaults, and better first-booking pricing guidance.", "customerImpact": [{"customerId": "cg2-p1", "customer": {"id": "cg2-p1", "name": "Everyday Home Host", "group": "Supply-Side Hosts", "icon": "host.png"}, "customerKPIs": [{"kpi": "Time to first booking", "expectedImpact": "Reduce time to first booking by launching better-prepared listings sooner.", "description": "Reduce median time from published listing to first confirmed booking to 21 days in focus markets.", "unit": "days", "currentValue": "6", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/co-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Host activation rate", "expectedImpact": "Increase live-listing conversion from setup starts.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Active listing quality rate", "expectedImpact": "Increase quality of new active supply by improving setup completeness.", "description": "Increase the share of live listings meeting booking, quality, and trust thresholds to 74%.", "unit": "% of live listings", "currentValue": "73.4", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg2-p1/kpis/bo-cg2-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "hono", "change": "Reduce activation steps and clarify readiness.", "brick": {"id": "hono", "name": "Host Onboarding & Verification", "type": "full-stack", "description": "Host signup, onboarding, readiness checks, and verification before a listing goes live.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Host activation flow", "description": "Guides new hosts through setup and eligibility tasks.", "type": "full-stack"}, {"title": "Host readiness service", "description": "Evaluates whether listing, identity, and policy prerequisites are complete.", "type": "service"}], "interfaces": [{"title": "Host onboarding UI", "description": "Host-facing activation and setup workflow.", "type": "ui"}, {"title": "Readiness API", "description": "API for activation status and verification steps.", "type": "api"}], "brickDependencies": [{"targetBrickId": "idvr", "type": "identity", "interface": "Verification API", "description": "Uses identity verification to confirm host legitimacy."}, {"targetBrickId": "comp", "type": "policy", "interface": "Market rule API", "description": "Uses local market policy eligibility and restrictions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "hono.png"}}, {"brickId": "lista", "change": "Improve setup quality prompts and content guidance.", "brick": {"id": "lista", "name": "Listing Authoring & Content", "type": "full-stack", "description": "Listing setup, content editing, photo guidance, policy selection, and amenity configuration.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Listing editor", "description": "Supports content authoring for titles, descriptions, photos, and house rules.", "type": "full-stack"}, {"title": "Content quality service", "description": "Scores listing completeness and merchandising quality.", "type": "service"}], "interfaces": [{"title": "Listing editor UI", "description": "Host-facing content editing workflow.", "type": "ui"}, {"title": "Listing content API", "description": "API for listing content state and validation.", "type": "api"}], "brickDependencies": [{"targetBrickId": "list", "type": "consumption", "interface": "Listing detail API", "description": "Provides listing data consumed by guest-facing listing pages."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "lista.png"}}, {"brickId": "pric", "change": "Improve launch pricing suggestions.", "brick": {"id": "pric", "name": "Pricing & Discounts", "type": "full-stack", "description": "Nightly pricing, discount programs, stay rules, and monetization guidance for hosts and operators.", "domain": "Host Success", "group": "Host activation and optimization", "internalModules": [{"title": "Pricing rules engine", "description": "Applies host-defined pricing, discounts, and length-of-stay rules.", "type": "service"}, {"title": "Pricing guidance layer", "description": "Surfaces marketplace-informed pricing suggestions and discount prompts.", "type": "full-stack"}], "interfaces": [{"title": "Pricing UI", "description": "Host-facing pricing and promotion controls.", "type": "ui"}, {"title": "Pricing API", "description": "API for prices, discounts, and price recommendations.", "type": "api"}], "brickDependencies": [{"targetBrickId": "data", "type": "insight", "interface": "Demand and market signal service", "description": "Uses demand and search insight to inform pricing suggestions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pric.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release improved host setup and authoring flows.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["host-activation-quality"], "supportingTeamIds": ["host-performance-pricing", "policy-compliance-controls"]}, "initiativeId": "initiative-hosted-stays-marketplace-2026-04-22-02", "discoveryIds": ["discovery-hosted-stays-marketplace-2026-04-10-02-host-activation"], "priority": "p1", "keyResultId": "hosted-stays-marketplace-2026-q2-cg2-p1/kr-1", "landingPageIndex": 2, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Guest Trust Clarity Initiative", "date": "2026-04-18", "description": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation at the moment of decision.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Guest Stay Booker", "group": "Demand-Side Guests", "icon": "guest.png"}, "customerKPIs": [{"kpi": "Guest booking conversion", "expectedImpact": "Increase conversion by reducing trust and pricing ambiguity before booking.", "description": "Increase guest search-session to booking conversion to about 4.7% in priority markets by improving listing trust and checkout clarity.", "unit": "% of high-intent sessions", "currentValue": "96.5", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Price transparency score", "expectedImpact": "Increase guest clarity about fees and cancellation tradeoffs.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Booked nights per active guest", "expectedImpact": "Increase repeat guest behavior through stronger first-booking confidence.", "description": "Grow repeat booked nights per active guest above 2.3 annually in focus cohorts.", "unit": "nights per active guest", "currentValue": "49", "link": "https://dashboard.example.com/hosted-stays-marketplace/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "list", "change": "Improve host trust, review summary, and policy clarity on listing pages.", "brick": {"id": "list", "name": "Listing Detail & Review Trust", "type": "full-stack", "description": "Listing page, review presentation, amenity clarity, host reputation, and policy explanation before booking.", "domain": "Guest Experience", "group": "Discovery and consideration", "internalModules": [{"title": "Listing content renderer", "description": "Builds listing detail views with media, amenities, and house rules.", "type": "full-stack"}, {"title": "Review and trust evidence service", "description": "Provides review summaries, quality signals, and host credibility surfaces.", "type": "service"}], "interfaces": [{"title": "Listing detail UI", "description": "Guest-facing listing page and trust presentation.", "type": "ui"}, {"title": "Listing detail API", "description": "API for listing, host, and review detail.", "type": "api"}], "brickDependencies": [{"targetBrickId": "trst", "type": "trust", "interface": "Protection and policy surfaces", "description": "Uses marketplace trust context to reduce booking anxiety."}, {"targetBrickId": "grev", "type": "feedback", "interface": "Review data service", "description": "Uses validated review signals after completed stays."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "list.png"}}, {"brickId": "book", "change": "Clarify fee and cancellation language in checkout.", "brick": {"id": "book", "name": "Booking & Checkout", "type": "full-stack", "description": "Reservation creation, fee and policy explanation, payment choice, and booking confirmation.", "domain": "Guest Experience", "group": "Booking and stay management", "internalModules": [{"title": "Reservation orchestration", "description": "Validates listing state, guest details, and policy conditions at booking time.", "type": "service"}, {"title": "Checkout experience", "description": "Drives guest booking flows across web and mobile.", "type": "full-stack"}], "interfaces": [{"title": "Checkout UI", "description": "Guest-facing booking and confirmation flow.", "type": "ui"}, {"title": "Reservation API", "description": "API for creating and confirming reservations.", "type": "api"}], "brickDependencies": [{"targetBrickId": "paym", "type": "payment", "interface": "Payment and fee service", "description": "Uses payment, fee, and refund logic."}, {"targetBrickId": "trst", "type": "risk", "interface": "Booking risk decision", "description": "Checks trust and screening state before confirmation."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "book.png"}}], "deliveryChannels": [{"channelId": "web-cdn-edge", "change": "Release updated listing and checkout treatments.", "channel": {"productId": "web", "productName": "", "name": "web-cdn-edge", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["guest-discovery-ranking", "guest-booking-trip"], "supportingTeamIds": ["payments-and-ledger", "trust-aircover-support"]}, "initiativeId": "initiative-hosted-stays-marketplace-2026-04-18-01", "discoveryIds": ["discovery-hosted-stays-marketplace-2026-04-08-01-guest-trust"], "priority": "p1", "keyResultId": "hosted-stays-marketplace-2026-q2-cg1-p1/kr-1", "landingPageIndex": 3, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Booking and payout reliability initiative", "date": "2026-02-10", "description": "Archived initiative focused on booking-state and payout-state stabilization.", "initiativeId": "initiative-hosted-stays-marketplace-2026-02-10-01", "priority": "p1", "landingPageIndex": 4, "customerImpact": [], "productBricks": [], "deliveryChannels": [], "discoveryLinks": [], "objectiveLandingPageUrl": ""}]};

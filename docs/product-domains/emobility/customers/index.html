@@ -51,7 +51,7 @@
 
     .tabcontent {
         display: none;
-        padding: 0;
+        padding: 20px;
         border: 1px solid #ccc;
         border-top: none;
     }
@@ -202,7 +202,7 @@
             display: block;
             width: 120px;
             height: 120px;
-            object-fit: cover;
+            object-fit: contain;
             border-radius: 50%;
             border: 1px solid #d1d5db;
             box-shadow: rgba(99, 99, 99, 0.2) 0 2px 8px 0;
@@ -318,17 +318,41 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
 
     <script>
-    function initTab(tabName) {
+    function resolveHashTabName() {
         if (window.location.hash) {
             const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
         }
-        openTab(tabName);
+
+        return '';
     }
 
-    function openTab(tabName) {
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
         const tabcontent = document.getElementsByClassName('tabcontent');
         for (let i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = 'none';
@@ -337,9 +361,19 @@
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
         }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById('tab_content_' + tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
     }
 </script>
 

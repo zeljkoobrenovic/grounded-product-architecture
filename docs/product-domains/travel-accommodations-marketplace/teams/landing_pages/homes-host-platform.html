@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "homes-host-platform", "name": "Homes Host Platform", "teamType": "stream-aligned", "teamFamilyId": "partner-growth", "teamFamilyName": "Partner Growth", "orgLayer": "team", "mission": "Own low-friction onboarding, setup, and operating flows for smaller hosts and alternative accommodation supply.", "primaryCustomers": [{"customerId": "cg4-p1", "customerName": "Independent Host / Holiday Rental Operator", "relatedKPIs": ["First-booking speed", "Host setup time", "Issue-free stay share"], "icon": "host.png"}], "ownedProductBricks": [{"brickId": "extr", "brickName": "Partner Extranet", "brick": {"id": "extr", "name": "Partner Extranet", "type": "full-stack", "description": "Partner-facing control surface for listing setup, policies, reservation operations, finance visibility, and performance management.", "domain": "Partner Operations", "group": "Supply onboarding and content", "internalModules": [{"title": "Partner Control UI", "description": "Primary browser workspace for property partners and hosts.", "type": "full-stack"}, {"title": "Operational Workbench", "description": "Brings together reservations, finance, and quality actions for partners.", "type": "service"}], "interfaces": [{"title": "Partner UI", "description": "Partner-facing operational interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "idam", "type": "identity", "interface": "Partner authentication API", "description": "Uses shared identity and access controls for partner authentication."}, {"targetBrickId": "paym", "type": "finance", "interface": "Finance reporting API", "description": "Shows payment, payout, and adjustment detail."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "extr.png"}}, {"brickId": "onbo", "brickName": "Partner Onboarding & Verification", "brick": {"id": "onbo", "name": "Partner Onboarding & Verification", "type": "full-stack", "description": "Property-partner and host onboarding workflows covering business identity, property legitimacy, operating readiness, and first-booking activation.", "domain": "Partner Operations", "group": "Supply onboarding and content", "internalModules": [{"title": "Partner Eligibility and Setup Workflow", "description": "Guides new partners through onboarding milestones and required setup steps.", "type": "full-stack"}, {"title": "Verification and Activation Controls", "description": "Runs verification, activation checks, and risk gating before a property becomes bookable.", "type": "service"}], "interfaces": [{"title": "Onboarding UI", "description": "Partner-facing onboarding and activation interface.", "type": "ui"}, {"title": "Activation API", "description": "API for partner onboarding, activation state, and task completion.", "type": "api"}], "brickDependencies": [{"targetBrickId": "trst", "type": "verification", "interface": "Verification API", "description": "Uses trust and verification services to validate partner legitimacy."}, {"targetBrickId": "cont", "type": "setup-completion", "interface": "Content readiness API", "description": "Uses content and policy readiness as an activation gate."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "onbo.png"}}, {"brickId": "invt", "brickName": "Inventory, Rates & Reservations", "brick": {"id": "invt", "name": "Inventory, Rates & Reservations", "type": "service", "description": "Rate, availability, room, reservation, and booking-state backbone for accommodation supply.", "domain": "Partner Operations", "group": "Inventory and commercial performance", "internalModules": [{"title": "Rate and Availability Core", "description": "Stores and resolves rate and availability conditions.", "type": "service"}, {"title": "Reservation State Machine", "description": "Tracks reservation status and operational transitions.", "type": "service"}, {"title": "Supply Integrity Controls", "description": "Applies validation and conflict rules to prevent inconsistent bookable inventory.", "type": "service"}], "interfaces": [{"title": "Supply Core API", "description": "API for rates, availability, and reservations.", "type": "api"}, {"title": "Reservation Event Feed", "description": "Event stream for reservation and availability changes across systems.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Property Management Systems", "type": "partner-system", "interface": "Availability and reservation sync", "description": "Consumes and emits reservation state to PMS and channel manager systems."}], "externalSystemsDependingOnThisBrick": [], "icon": "invt.png"}}, {"brickId": "cald", "brickName": "Calendar & Availability Controls", "brick": {"id": "cald", "name": "Calendar & Availability Controls", "type": "full-stack", "description": "Partner-facing control of calendar state, stay restrictions, booking windows, and inventory closures across hotel and homes supply.", "domain": "Partner Operations", "group": "Inventory and commercial performance", "internalModules": [{"title": "Availability Editing Workspace", "description": "Lets partners set open, closed, restricted, and special-condition dates.", "type": "full-stack"}, {"title": "Restriction Policy Engine", "description": "Applies minimum-stay, arrival, departure, and booking-window controls.", "type": "service"}], "interfaces": [{"title": "Calendar Control UI", "description": "Partner-facing calendar and availability control experience.", "type": "ui"}, {"title": "Availability Control API", "description": "API for calendar state and booking restriction changes.", "type": "api"}], "brickDependencies": [{"targetBrickId": "invt", "type": "inventory-state", "interface": "Supply core API", "description": "Uses supply state as the underlying source of truth for calendar actions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "cald.png"}}], "supportingProductBricks": [{"brickId": "prom", "brickName": "Partner Merchandising & Programs", "brick": {"id": "prom", "name": "Partner Merchandising & Programs", "type": "full-stack", "description": "Promotions, member rates, preferred programs, merchandising choices, and partner-facing commercial optimization tools.", "domain": "Partner Operations", "group": "Inventory and commercial performance", "internalModules": [{"title": "Program Eligibility and Enrollment", "description": "Handles participation and rule logic for partner programs.", "type": "service"}, {"title": "Promotion Authoring", "description": "Lets partners create and manage discount and merchandising constructs.", "type": "full-stack"}, {"title": "Program Impact Feedback", "description": "Explains how participation and promotions affect visibility and booked volume.", "type": "service"}], "interfaces": [{"title": "Commercial Controls UI", "description": "Partner-facing merchandising and program management interface.", "type": "ui"}, {"title": "Promotion Rules API", "description": "API for promotion definitions, eligibility, and rollout logic.", "type": "api"}], "brickDependencies": [{"targetBrickId": "mkli", "type": "insight", "interface": "Performance insight feed", "description": "Uses performance signals to guide commercial decisions."}, {"targetBrickId": "rate", "type": "guidance", "interface": "Pricing guidance API", "description": "Uses recommendation support when presenting commercial actions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "prom.png"}}, {"brickId": "medi", "brickName": "Property Media Pipeline", "brick": {"id": "medi", "name": "Property Media Pipeline", "type": "service", "description": "Image upload, moderation, enhancement, categorization, and distribution pipeline for property and room media assets.", "domain": "Partner Operations", "group": "Supply onboarding and content", "internalModules": [{"title": "Media Ingestion and Transformation", "description": "Handles upload, transformation, resizing, and quality checks for partner media.", "type": "service"}, {"title": "Media Moderation and Categorization", "description": "Classifies and validates images before they are shown to travelers.", "type": "service"}], "interfaces": [{"title": "Media Asset API", "description": "API for media upload, retrieval, and moderation state.", "type": "api"}, {"title": "Media Processing Feed", "description": "Event stream for media-processing and moderation outcomes.", "type": "event"}], "brickDependencies": [{"targetBrickId": "trst", "type": "moderation-policy", "interface": "Risk policy API", "description": "Uses trust controls for risky or policy-sensitive media cases."}], "externalSystemsThisBrickDependsOn": [{"system": "Media Storage and CDN Platforms", "type": "asset-platform", "interface": "Object storage and delivery APIs", "description": "Depends on storage and CDN platforms for serving transformed media assets."}], "externalSystemsDependingOnThisBrick": [], "icon": "medi.png"}}, {"brickId": "trst", "brickName": "Trust, Verification & Risk Controls", "brick": {"id": "trst", "name": "Trust, Verification & Risk Controls", "type": "service", "description": "Host verification, fraud checks, abuse prevention, incident handling, and risk scoring across bookings, reviews, and messaging.", "domain": "Marketplace Foundations", "group": "Trust, connectivity, and intelligence", "internalModules": [{"title": "Identity and Verification", "description": "Handles partner and host verification requirements.", "type": "service"}, {"title": "Fraud and Abuse Controls", "description": "Scores risky booking, payment, and interaction patterns.", "type": "service"}, {"title": "Integrity Operations Layer", "description": "Supports manual review and policy handling for high-risk marketplace incidents.", "type": "service"}], "interfaces": [{"title": "Trust API", "description": "Trust and risk decision service.", "type": "api"}, {"title": "Risk Signal Feed", "description": "Event stream carrying risk and marketplace integrity signals.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "trst.png"}}], "dependsOnTeamIds": ["trust-and-marketplace-integrity", "payments-and-financial-operations", "platform-core-services"], "defaultSupportingTeamIds": ["trust-and-marketplace-integrity", "payments-and-financial-operations", "platform-core-services"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Optimize for clarity and defaults rather than copying hotel-style workflow complexity.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own host activation and retention roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead team execution."}, {"role": "Backend Engineer", "count": 2, "responsibility": "Build host setup, booking preference, and calendar services."}, {"role": "Frontend Engineer", "count": 2, "responsibility": "Build host-facing browser flows."}, {"role": "Product Designer", "count": 1, "responsibility": "Design simple onboarding and hosting-control UX."}, {"role": "Operations / UX Researcher", "count": 1, "responsibility": "Keep the team close to new-host pain points."}]}, "groupId": "partner-growth", "groupName": "Partner Growth", "groupLeadership": [], "dependsOnTeams": [{"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "payments-and-financial-operations", "name": "Payments & Financial Operations", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "payments-and-financial-operations", "name": "Payments & Financial Operations", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [], "relatedReleases": [{"date": "2026-06-12", "description": "Release focused on reducing setup friction for smaller hosts through clearer defaults, policy explanations, and first-booking guidance.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "hotel-partner-success", "teamName": "Hotel Partner Success", "sharedBrickIds": ["extr", "onbo", "prom"], "sharedBrickNames": ["Partner Extranet", "Partner Onboarding & Verification", "Partner Merchandising & Programs"]}, {"teamId": "connectivity-ecosystem", "teamName": "Connectivity Ecosystem", "sharedBrickIds": ["invt"], "sharedBrickNames": ["Inventory, Rates & Reservations"]}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "sharedBrickIds": ["trst"], "sharedBrickNames": ["Trust, Verification & Risk Controls"]}], "sharedInitiatives": [], "sharedReleases": [{"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing setup friction for smaller hosts through clearer defaults, policy explanations, and first-booking guidance.", "date": "2026-06-12"}]}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing setup friction for smaller hosts through clearer defaults, policy explanations, and first-booking guidance.", "date": "2026-06-12"}]}], "explicitRelationships": [{"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "payments-and-financial-operations", "teamName": "Payments & Financial Operations", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

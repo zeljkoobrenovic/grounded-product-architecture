@@ -32,6 +32,8 @@ domains=(
   "ride-sharing-marketplace|Ride Sharing Marketplace|The Ride Sharing Marketplace domain covers the rider, driver, fleet, business-travel, and marketplace-operations workflows required to run an on-demand and scheduled rides platform with dynamic pricing, dispatch, trust, and multimodal extensions."
   "audio-streaming-platform|Audio Streaming Platform|The Audio Streaming Platform domain covers the listener, creator, rights-holder, and advertiser workflows required to run a global audio platform spanning music, podcasts, video podcasts, audiobooks, subscriptions, creator growth, and advertising monetization."
   "online-retail-marketplace|Online Retail Marketplace|The Online Retail Marketplace domain covers the shopper, Prime, seller, fulfillment, retail-media, trust, and shared-commerce workflows required to run a scaled digital retail marketplace across first-party retail, third-party supply, subscriptions, and advertising."
+  "municipal-public-space-enforcement|Municipal Public Space Enforcement|..."
+  "travel-and-expense-management|Travel and Expense Management|Expense management, travel expense flows, mileage, per diem, approvals, policy, card reconciliation, and finance integrations"
 )
 
 for script in "${scripts[@]}"; do

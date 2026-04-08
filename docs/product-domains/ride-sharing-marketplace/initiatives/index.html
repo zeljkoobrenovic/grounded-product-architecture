@@ -4,6 +4,47 @@
     <meta charset="UTF-8">
     <title>Initiatives (Ride Sharing Marketplace)</title>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -102,39 +143,6 @@
             margin-bottom: 14px;
             max-width: 960px;
             line-height: 1.4;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -424,35 +432,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Table';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Table')" onhashchange="initTab('Table')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -481,9 +523,9 @@
     <button class="tablinks" id="tab_Overview" onclick="openTab('Overview')">Overview</button>
 </div>
 
-<div id="Table" class="tabcontent"></div>
-<div id="Cards" class="tabcontent"></div>
-<div id="Overview" class="tabcontent"></div>
+<div id="tab_content_Table" class="tabcontent"></div>
+<div id="tab_content_Cards" class="tabcontent"></div>
+<div id="tab_content_Overview" class="tabcontent"></div>
 
 <script>
     const initiatives = {"items": [{"title": "Shared and scheduled choice architecture Initiative", "date": "2026-07-10", "description": "Planned investment to make tradeoffs across standard, shared, reserve, and airport products more legible to riders.", "initiativeId": "initiative-ride-sharing-marketplace-2026-07-10-00", "priority": "p2", "keyResultId": "next-shared-scheduled/kr-n1", "landingPageIndex": 0, "customerImpact": [], "productBricks": [], "deliveryChannels": [], "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Driver trust and earnings clarity Initiative", "date": "2026-04-24", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust.", "customerImpact": [{"customerId": "drvu", "customer": {"id": "drvu", "name": "Flexible Driver Earner", "group": "Driver Supply", "icon": "customer.png"}, "customerKPIs": [{"kpi": "Driver earnings per active hour", "expectedImpact": "Increase productive earnings and reduce wasted active time.", "description": "Net earnings quality from time spent actively driving and serving trips.", "unit": "USD/hour", "currentValue": "274", "link": "https://dashboard.example.com/ride-sharing-marketplace/customers/drvu/kpis/dpea", "linkLabel": "Open KPI dashboard", "kind": "customer"}], "businessKPIs": [{"kpi": "Healthy driver supply availability", "expectedImpact": "Improve supply resilience in priority markets.", "description": "Enough active, high-quality supply to meet rider demand without destabilizing earnings.", "unit": "%", "currentValue": "79.3", "link": "https://dashboard.example.com/ride-sharing-marketplace/customers/drvu/kpis/dsup", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "earn", "change": "Extend fare-breakdown and payout explanation flows.", "brick": {"id": "earn", "name": "Driver Earnings and Incentive Management", "type": "service", "description": "Calculates and explains driver earnings, incentives, adjustments, cash-out, and payout visibility.", "domain": "Driver Supply and Operations", "group": "earnings-and-partner-control", "internalModules": [{"title": "Fare Breakdown Calculator", "description": "Converts trip activity into driver-visible earnings statements.", "type": "service"}, {"title": "Incentive Ledger", "description": "Stores bonus, quest, and other incentive state.", "type": "service"}, {"title": "Payout and Cash-out Controls", "description": "Handles payout timing and cash-out workflow control.", "type": "operations"}], "interfaces": [{"title": "Earnings API", "description": "API for driver-facing earnings views and payout actions.", "type": "api"}], "brickDependencies": [{"targetBrickId": "pric", "type": "pricing", "interface": "Marketplace Pricing Events", "description": "Depends on Dynamic Pricing and Incentives for fare and incentive logic."}], "externalSystemsThisBrickDependsOn": [{"system": "Payout partners", "type": "financial-partner", "interface": "Disbursement API", "description": "Executes payout and cash-out movement."}], "externalSystemsDependingOnThisBrick": [], "icon": "earn.png"}}, {"brickId": "driv", "change": "Extend compliance status and document workflow clarity.", "brick": {"id": "driv", "name": "Driver Onboarding and Compliance", "type": "full-stack", "description": "Supports driver signup, screening, document verification, and eligibility management across markets.", "domain": "Driver Supply and Operations", "group": "onboarding-and-eligibility", "internalModules": [{"title": "Driver Profile and Status Model", "description": "Tracks account state, eligibility, and market permissions.", "type": "service"}, {"title": "Document and Screening Workflow", "description": "Processes licenses, vehicle documents, and background checks.", "type": "operations"}, {"title": "Compliance Rules Engine", "description": "Applies local legal and policy requirements to driver status.", "type": "policy"}], "interfaces": [{"title": "Driver Eligibility API", "description": "Returns account and vehicle eligibility decisions.", "type": "api"}], "brickDependencies": [{"targetBrickId": "safe", "type": "trust", "interface": "Trust Verification API", "description": "Depends on Safety and Trust Operations for identity and trust signals."}], "externalSystemsThisBrickDependsOn": [{"system": "Background screening vendors", "type": "compliance", "interface": "Verification API", "description": "Provides screening and verification checks."}], "externalSystemsDependingOnThisBrick": [], "icon": "driv.png"}}, {"brickId": "safe", "change": "Extend trust and support routing for driver incidents.", "brick": {"id": "safe", "name": "Safety and Trust Operations", "type": "full-stack", "description": "Provides identity assurance, trip safety tooling, trust controls, incident workflows, and abuse or fraud prevention.", "domain": "Platform Foundation", "group": "trust-and-identity", "internalModules": [{"title": "Identity and Verification Controls", "description": "Supports driver identity, PIN verification, and risk controls.", "type": "service"}, {"title": "On-trip Safety Toolkit", "description": "Exposes emergency, tracking, and incident-help features.", "type": "full-stack"}, {"title": "Incident and Trust Workflow Engine", "description": "Routes support, fraud, and safety events into operational case handling.", "type": "operations"}], "interfaces": [{"title": "Safety Toolkit API", "description": "API for rider and driver safety features.", "type": "api"}, {"title": "Trust Operations Workspace", "description": "Operator interface for incident and trust workflows.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Emergency and security partners", "type": "partner", "interface": "Escalation API", "description": "Supports live safety escalation and emergency workflows."}], "externalSystemsDependingOnThisBrick": [], "icon": "safe.png"}}], "deliveryChannels": [{"channelId": "mobile-app", "change": "Introduce updated driver app earnings and support experiences.", "channel": {"productId": "mobile", "productName": "", "name": "mobile-app", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["driver-growth", "trust-ops"], "supportingTeamIds": ["marketplace-dispatch"]}, "initiativeId": "initiative-ride-sharing-marketplace-2026-04-24-01", "discoveryIds": ["discovery-ride-sharing-marketplace-2026-04-08-01-driver-trust-and-earnings"], "priority": "p1", "keyResultId": "driver-trust/kr-d1", "landingPageIndex": 1, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Airport and reserve reliability Initiative", "date": "2026-04-10", "description": "Focused investment to improve airport and reserve trip predictability by strengthening constrained-zone dispatch, pickup guidance, and scheduled-trip orchestration.", "customerImpact": [{"customerId": "ridu", "customer": {"id": "ridu", "name": "Urban Time-Sensitive Rider", "group": "Rider Demand", "icon": "customer.png"}, "customerKPIs": [{"kpi": "ETA accuracy", "expectedImpact": "Reduce ETA error on airport and reserve trips.", "description": "", "unit": "", "currentValue": "", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Mobility gross bookings quality", "expectedImpact": "Increase higher-confidence premium and airport trip mix.", "description": "Healthy ride volume and price realization without eroding trust or repeat use.", "unit": "USD", "currentValue": "140", "link": "https://dashboard.example.com/ride-sharing-marketplace/customers/ridu/kpis/mgbk", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "orch", "change": "Extend scheduling and constrained-zone orchestration logic.", "brick": {"id": "orch", "name": "Reserve, Share and Airport Orchestration", "type": "full-stack", "description": "Handles scheduled trips, shared-ride routing logic, and constrained pickup or drop-off operations such as airports and shuttles.", "domain": "Marketplace Controls and Special Flows", "group": "special-trip-orchestration", "internalModules": [{"title": "Scheduled Trip Planner", "description": "Manages future trips, supply reservation, and pre-trip reminders.", "type": "service"}, {"title": "Shared Ride Orchestrator", "description": "Coordinates pooled routing, rider sequencing, and detour controls.", "type": "service"}, {"title": "Airport and Venue Operations Rules", "description": "Applies pickup-lane, queue, and access logic for constrained environments.", "type": "operations"}], "interfaces": [{"title": "Special Trip Rules API", "description": "Returns reserve, pooling, and location-specific operating rules.", "type": "api"}, {"title": "Operations Workspace", "description": "Operator interface for constrained trip flows and scheduling controls.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "disp", "type": "dispatch", "interface": "Dispatch Decision API", "description": "Depends on Dispatch and Matching Engine to allocate supply to special trip flows."}, {"targetBrickId": "etar", "type": "routing", "interface": "ETA and Routing API", "description": "Depends on ETA, Maps and Routing Intelligence for scheduling and pooled routing logic."}], "externalSystemsThisBrickDependsOn": [{"system": "Airports and venue operating systems", "type": "partner", "interface": "Access and rules feeds", "description": "Provides local operating constraints, queue rules, and pickup-zone definitions."}], "externalSystemsDependingOnThisBrick": [], "icon": "orch.png"}}, {"brickId": "etar", "change": "Improve pickup guidance and ETA models.", "brick": {"id": "etar", "name": "ETA, Maps and Routing Intelligence", "type": "service", "description": "Provides route estimation, pickup guidance, airport geofencing, and live map context for riders and drivers.", "domain": "Rider Demand and Trip Experience", "group": "live-trip-and-confidence", "internalModules": [{"title": "ETA Prediction Models", "description": "Predicts pickup and trip arrival timing.", "type": "service"}, {"title": "Pickup and Drop-off Guidance", "description": "Optimizes exact meeting points and constrained-zone handoffs.", "type": "service"}, {"title": "Geofence and Zone Rules", "description": "Maintains airport, venue, and city-specific navigation constraints.", "type": "policy"}], "interfaces": [{"title": "ETA and Routing API", "description": "Returns routes, ETAs, and pickup guidance.", "type": "api"}, {"title": "Live Location Events", "description": "Emits location and route progress events.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Maps and traffic providers", "type": "data", "interface": "Routing APIs", "description": "Provides road network, traffic, and geospatial context."}], "externalSystemsDependingOnThisBrick": [], "icon": "etar.png"}}, {"brickId": "disp", "change": "Improve rematch and supply allocation for reserve and airport flows.", "brick": {"id": "disp", "name": "Dispatch and Matching Engine", "type": "service", "description": "Matches rider demand to the best available driver or fleet supply while honoring geography, product rules, and trip quality constraints.", "domain": "Marketplace Controls and Special Flows", "group": "liquidity-and-pricing", "internalModules": [{"title": "Real-time Supply Selector", "description": "Chooses candidate drivers or fleet supply for each request.", "type": "service"}, {"title": "Rematch and Cancellation Logic", "description": "Handles driver declines, rider cancellations, and rematch conditions.", "type": "service"}, {"title": "Liquidity and Queue Controls", "description": "Balances supply and demand in constrained environments such as airports.", "type": "operations"}], "interfaces": [{"title": "Dispatch Decision API", "description": "API for dispatching and rematching trips.", "type": "api"}, {"title": "Supply Offer Feed", "description": "Driver-facing offer and assignment event stream.", "type": "event"}], "brickDependencies": [{"targetBrickId": "etar", "type": "routing", "interface": "ETA API", "description": "Depends on ETA, Maps and Routing Intelligence to evaluate pickup feasibility and time."}, {"targetBrickId": "pric", "type": "pricing", "interface": "Price Signal API", "description": "Depends on Dynamic Pricing and Incentives for supply-demand balancing signals."}, {"targetBrickId": "orch", "type": "workflow", "interface": "Reserve and Zone Rules API", "description": "Depends on Reserve, Share and Airport Orchestration for special flow handling."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [{"system": "Driver applications", "type": "channel-consumer", "interface": "Supply Offer Feed", "description": "Driver clients depend on dispatch offers and trip assignment updates."}], "icon": "disp.png"}}], "deliveryChannels": [{"channelId": "mobile-app", "change": "Introduce reserve and airport flow updates in rider and driver apps.", "channel": {"productId": "mobile", "productName": "", "name": "mobile-app", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["reserve-airport", "marketplace-dispatch"], "supportingTeamIds": ["fleet-programs"]}, "initiativeId": "initiative-ride-sharing-marketplace-2026-04-10-00", "discoveryIds": ["discovery-ride-sharing-marketplace-2026-04-03-00-airport-reserve-reliability"], "priority": "p1", "keyResultId": "airport-reserve/kr-a1", "landingPageIndex": 2, "discoveryLinks": [], "objectiveLandingPageUrl": ""}, {"title": "Family and rider safety visibility Initiative", "date": "2025-10-10", "description": "Archived investment focused on clearer safety and supervised-travel signaling in the rider experience.", "initiativeId": "initiative-ride-sharing-marketplace-2025-10-10-00", "priority": "p2", "keyResultId": "archived-safety-rollout/kr-ar1", "landingPageIndex": 3, "customerImpact": [], "productBricks": [], "deliveryChannels": [], "discoveryLinks": [], "objectiveLandingPageUrl": ""}]};

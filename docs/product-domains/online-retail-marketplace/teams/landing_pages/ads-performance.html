@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "ads-performance", "name": "Ads Performance", "teamType": "stream-aligned", "teamFamilyId": "retail-media", "teamFamilyName": "Retail Media", "orgLayer": "team", "mission": "Own Sponsored Ads, retail-aware optimization, and advertiser campaign outcomes.", "primaryCustomers": [{"customerId": "cg3-p1", "customerName": "Performance Brand Marketer", "relatedKPIs": ["Attributed incremental sales ROAS", "Sponsored campaign purchase conversion"], "icon": "advertiser.png"}], "ownedProductBricks": [{"brickId": "spon", "brickName": "Sponsored Ads & Retail Media", "brick": {"id": "spon", "name": "Sponsored Ads & Retail Media", "type": "full-stack", "description": "Sponsored Products, Sponsored Brands, Sponsored Display, and related retail-intent ad products.", "domain": "Seller Growth", "group": "Operations and demand generation", "internalModules": [{"title": "Retail media serving and optimization", "description": "Handles campaign delivery, bidding, and placement optimization.", "type": "service"}], "interfaces": [{"title": "Ads console UI", "description": "Campaign setup and optimization workflow.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "price", "type": "context", "interface": "Offer health feed", "description": "Uses buyability context to avoid poor retail outcomes."}, {"targetBrickId": "invn", "type": "context", "interface": "Inventory availability feed", "description": "Uses availability context to limit wasted spend."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "spon.png"}}, {"brickId": "dspm", "brickName": "DSP Audiences & Programmatic Media", "brick": {"id": "dspm", "name": "DSP Audiences & Programmatic Media", "type": "full-stack", "description": "Audience building, programmatic buying, retargeting, and off-surface media orchestration.", "domain": "Seller Growth", "group": "Operations and demand generation", "internalModules": [{"title": "Audience and programmatic orchestration", "description": "Builds addressable audiences and media controls for DSP workflows.", "type": "service"}], "interfaces": [{"title": "DSP workflow UI", "description": "Audience planning and media control surface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "anal", "type": "insight", "interface": "Measurement features", "description": "Uses advanced measurement and experimentation context."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "dspm.png"}}], "supportingProductBricks": [{"brickId": "price", "brickName": "Pricing & Offer Health", "brick": {"id": "price", "name": "Pricing & Offer Health", "type": "full-stack", "description": "Price competitiveness, buy box monitoring, offer health, and suppression awareness.", "domain": "Seller Growth", "group": "Commercial control", "internalModules": [{"title": "Offer health monitoring", "description": "Tracks buyability, competitiveness, and suppression issues.", "type": "service"}], "interfaces": [{"title": "Offer health UI", "description": "Seller-facing offer competitiveness and buyability console.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "repr", "type": "feedback", "interface": "Retail performance analytics", "description": "Uses performance feedback for commercial prioritization."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "price.png"}}, {"brickId": "invn", "brickName": "Inventory Planning & Availability", "brick": {"id": "invn", "name": "Inventory Planning & Availability", "type": "full-stack", "description": "Forecasting, replenishment, availability control, and stock-risk management across Amazon and merchant nodes.", "domain": "Seller Growth", "group": "Operations and demand generation", "internalModules": [{"title": "Forecast and replenishment engine", "description": "Predicts availability risks and replenishment needs.", "type": "service"}], "interfaces": [{"title": "Inventory planning UI", "description": "Seller-facing stock health and replenishment workflow.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "repr", "type": "feedback", "interface": "Demand analytics feed", "description": "Uses traffic and sales signals for forecasting."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "invn.png"}}], "dependsOnTeamIds": ["seller-growth", "commerce-intelligence"], "defaultSupportingTeamIds": ["seller-growth", "commerce-intelligence"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Keep campaign performance tied to retail readiness signals.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own ads performance roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build ad serving and optimization services."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build campaign management workflows."}, {"role": "Data Scientist / Analyst", "count": 1, "responsibility": "Own bid and budget diagnostics."}, {"role": "Product Designer", "count": 1, "responsibility": "Design advertiser workflows."}]}, "groupId": "retail-media", "groupName": "Retail Media", "groupLeadership": [], "dependsOnTeams": [{"id": "seller-growth", "name": "Seller Growth", "teamType": "stream-aligned", "groupId": "seller-platform", "groupName": "Seller Platform"}, {"id": "commerce-intelligence", "name": "Commerce Intelligence", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "seller-growth", "name": "Seller Growth", "teamType": "stream-aligned", "groupId": "seller-platform", "groupName": "Seller Platform"}, {"id": "commerce-intelligence", "name": "Commerce Intelligence", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [{"date": "2026-05-08", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-27", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "seller-growth", "teamName": "Seller Growth", "sharedBrickIds": ["price"], "sharedBrickNames": ["Pricing & Offer Health"]}, {"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "sharedBrickIds": ["invn"], "sharedBrickNames": ["Inventory Planning & Availability"]}], "sharedInitiatives": [{"teamId": "seller-growth", "teamName": "Seller Growth", "sharedInitiativeKeys": ["0"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "date": "2026-05-08"}]}, {"teamId": "measurement-insights", "teamName": "Measurement and Insights", "sharedInitiativeKeys": ["0"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "date": "2026-05-08"}]}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "sharedInitiativeKeys": ["0"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "date": "2026-05-08"}]}], "sharedReleases": [{"teamId": "seller-growth", "teamName": "Seller Growth", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "date": "2026-06-27"}]}, {"teamId": "measurement-insights", "teamName": "Measurement and Insights", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "date": "2026-06-27"}]}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "date": "2026-06-27"}]}], "explicitRelationships": [{"teamId": "seller-growth", "teamName": "Seller Growth", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "seller-growth", "teamName": "Seller Growth", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

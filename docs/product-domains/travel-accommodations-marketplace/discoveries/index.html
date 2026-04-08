@@ -5,6 +5,47 @@
     <title>Discoveries (Travel Accommodations Marketplace)</title>
 
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -101,39 +142,6 @@
             color: #6b7280;
             font-size: 18px;
             margin-bottom: 14px;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -271,35 +279,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Ongoing';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Ongoing')" onhashchange="initTab('Ongoing')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -327,8 +369,8 @@
     <button class="tablinks" id="tab_Archived" onclick="openTab('Archived')">Archived</button>
 </div>
 
-<div id="Ongoing" class="tabcontent"></div>
-<div id="Archived" class="tabcontent"></div>
+<div id="tab_content_Ongoing" class="tabcontent"></div>
+<div id="tab_content_Archived" class="tabcontent"></div>
 
 <script>
     const discoveries = {"ongoing": [{"title": "Traveler Checkout Clarity discovery", "id": "discovery-travel-accommodations-marketplace-2026-04-05-01-checkout-clarity", "name": "Traveler Checkout Clarity discovery", "status": "ongoing", "lastUpdated": "2026-04-30", "summary": "Discovery work is testing whether clearer payment, cancellation, and confirmation-state explanations can improve conversion without increasing support burden.", "opportunity": "Clarify how much of traveler abandonment comes from policy and payment ambiguity versus property-price or relevance concerns.", "linkedInitiatives": [{"initiativeId": "initiative-travel-accommodations-marketplace-2026-04-15-01", "description": "Focused investment to improve traveler booking confidence by clarifying cancellation terms, payment timing, and booking-state visibility across high-intent accommodation checkout flows.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve traveler booking confidence by clarifying cancellation terms, payment timing, and booking-state visibility across high-intent accommodation checkout flows."}], "teams": {"leadTeamId": "booking-and-trip-confidence", "supportingTeamIds": ["payments-and-financial-operations", "trust-and-marketplace-integrity"]}, "riskFocus": [{"riskType": "valuable", "question": "Will travelers change booking behavior if policy and payment clarity improve?", "hypothesis": "High-intent travelers drop less when they understand exactly when they pay and what happens if plans change.", "methods": ["Funnel analysis", "Checkout interviews", "Copy and policy comprehension testing"]}, {"riskType": "usable", "question": "Can travelers understand the booking-state model without extra support?", "hypothesis": "Simpler confirmation and change-state messaging reduces post-booking confusion.", "methods": ["Task-based usability testing", "Support transcript review"]}], "plannedActivities": ["Compare abandonment across pay-now, pay-later, and pay-at-property cohorts.", "Test simplified booking confirmation and change-state prototypes.", "Review support contacts linked to payment ambiguity."], "decisionToMake": "Decide whether to standardize payment and policy explanation patterns across property types before larger checkout redesign work.", "startDate": "2026-04-05", "endDate": "2026-04-30", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-05", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Partner Visibility Control discovery", "id": "discovery-travel-accommodations-marketplace-2026-04-08-02-partner-visibility", "name": "Partner Visibility Control discovery", "status": "ongoing", "lastUpdated": "2026-05-06", "summary": "Discovery work is testing whether clearer visibility, promotion, and quality explanations help partners improve profitable occupancy rather than just chasing volume.", "opportunity": "Clarify where partners currently feel the marketplace is opaque and which commercial levers are trusted enough to scale.", "linkedInitiatives": [{"initiativeId": "initiative-travel-accommodations-marketplace-2026-04-22-02", "description": "Focused investment to help accommodation partners understand and improve visibility, occupancy quality, and promotion tradeoffs without relying on opaque manual heuristics.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to help accommodation partners understand and improve visibility, occupancy quality, and promotion tradeoffs without relying on opaque manual heuristics."}], "teams": {"leadTeamId": "hotel-partner-success", "supportingTeamIds": ["marketplace-intelligence", "connectivity-ecosystem"]}, "riskFocus": [{"riskType": "valuable", "question": "Will partners act differently if visibility drivers become clearer?", "hypothesis": "Partners will make better pricing and program decisions when visibility drivers are explained in partner language rather than algorithmic abstractions.", "methods": ["Partner interviews", "Dashboard walkthroughs", "Commercial action analysis"]}, {"riskType": "viable", "question": "Can the marketplace expose more explanation without creating gaming or support load?", "hypothesis": "Explanation can increase trust without materially harming ranking-system resilience if presented as bounded guidance.", "methods": ["Business case review", "Abuse-risk workshop", "Experiment design review"]}], "plannedActivities": ["Review partner support contacts about visibility and promotion complaints.", "Prototype clearer commercial action guidance in partner dashboards.", "Compare hotel and homes partner needs for visibility explanation depth."], "decisionToMake": "Decide which ranking and program factors should be made more explicit in partner tooling during Q2.", "startDate": "2026-04-08", "endDate": "2026-05-06", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Trip Change Self-Service discovery", "id": "discovery-travel-accommodations-marketplace-2026-07-01-01-trip-change", "name": "Trip Change Self-Service discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to determine how much traveler servicing can shift into self-service trip changes.", "decisionToMake": "Decide which change flows should become fully self-serve in Q3.", "startDate": "2026-07-01", "endDate": "2026-07-31", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-07-01", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}, {"title": "Homes Activation Guidance discovery", "id": "discovery-travel-accommodations-marketplace-2026-07-08-02-homes-activation", "name": "Homes Activation Guidance discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to understand which onboarding and early-demand interventions most improve first-booking speed for hosts.", "decisionToMake": "Decide which host activation surfaces should become more guided or automated in Q3.", "startDate": "2026-07-08", "endDate": "2026-08-05", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-07-08", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}], "archived": [{"title": "Reservation Accuracy discovery", "id": "discovery-travel-accommodations-marketplace-2026-01-15-01-reservation-accuracy", "name": "Reservation Accuracy discovery", "status": "archived", "lastUpdated": "2026-03-20", "summary": "Archived discovery that examined where reservation-sync mismatches were creating overbooking and payout adjustment problems.", "decisionToMake": "Completed decision to prioritize partner-sync reliability and exception handling.", "statusLabel": "Archived", "landingPageIndex": 4, "date": "2026-03-20", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}], "items": [{"title": "Traveler Checkout Clarity discovery", "id": "discovery-travel-accommodations-marketplace-2026-04-05-01-checkout-clarity", "name": "Traveler Checkout Clarity discovery", "status": "ongoing", "lastUpdated": "2026-04-30", "summary": "Discovery work is testing whether clearer payment, cancellation, and confirmation-state explanations can improve conversion without increasing support burden.", "opportunity": "Clarify how much of traveler abandonment comes from policy and payment ambiguity versus property-price or relevance concerns.", "linkedInitiatives": [{"initiativeId": "initiative-travel-accommodations-marketplace-2026-04-15-01", "description": "Focused investment to improve traveler booking confidence by clarifying cancellation terms, payment timing, and booking-state visibility across high-intent accommodation checkout flows.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve traveler booking confidence by clarifying cancellation terms, payment timing, and booking-state visibility across high-intent accommodation checkout flows."}], "teams": {"leadTeamId": "booking-and-trip-confidence", "supportingTeamIds": ["payments-and-financial-operations", "trust-and-marketplace-integrity"]}, "riskFocus": [{"riskType": "valuable", "question": "Will travelers change booking behavior if policy and payment clarity improve?", "hypothesis": "High-intent travelers drop less when they understand exactly when they pay and what happens if plans change.", "methods": ["Funnel analysis", "Checkout interviews", "Copy and policy comprehension testing"]}, {"riskType": "usable", "question": "Can travelers understand the booking-state model without extra support?", "hypothesis": "Simpler confirmation and change-state messaging reduces post-booking confusion.", "methods": ["Task-based usability testing", "Support transcript review"]}], "plannedActivities": ["Compare abandonment across pay-now, pay-later, and pay-at-property cohorts.", "Test simplified booking confirmation and change-state prototypes.", "Review support contacts linked to payment ambiguity."], "decisionToMake": "Decide whether to standardize payment and policy explanation patterns across property types before larger checkout redesign work.", "startDate": "2026-04-05", "endDate": "2026-04-30", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-05", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Partner Visibility Control discovery", "id": "discovery-travel-accommodations-marketplace-2026-04-08-02-partner-visibility", "name": "Partner Visibility Control discovery", "status": "ongoing", "lastUpdated": "2026-05-06", "summary": "Discovery work is testing whether clearer visibility, promotion, and quality explanations help partners improve profitable occupancy rather than just chasing volume.", "opportunity": "Clarify where partners currently feel the marketplace is opaque and which commercial levers are trusted enough to scale.", "linkedInitiatives": [{"initiativeId": "initiative-travel-accommodations-marketplace-2026-04-22-02", "description": "Focused investment to help accommodation partners understand and improve visibility, occupancy quality, and promotion tradeoffs without relying on opaque manual heuristics.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to help accommodation partners understand and improve visibility, occupancy quality, and promotion tradeoffs without relying on opaque manual heuristics."}], "teams": {"leadTeamId": "hotel-partner-success", "supportingTeamIds": ["marketplace-intelligence", "connectivity-ecosystem"]}, "riskFocus": [{"riskType": "valuable", "question": "Will partners act differently if visibility drivers become clearer?", "hypothesis": "Partners will make better pricing and program decisions when visibility drivers are explained in partner language rather than algorithmic abstractions.", "methods": ["Partner interviews", "Dashboard walkthroughs", "Commercial action analysis"]}, {"riskType": "viable", "question": "Can the marketplace expose more explanation without creating gaming or support load?", "hypothesis": "Explanation can increase trust without materially harming ranking-system resilience if presented as bounded guidance.", "methods": ["Business case review", "Abuse-risk workshop", "Experiment design review"]}], "plannedActivities": ["Review partner support contacts about visibility and promotion complaints.", "Prototype clearer commercial action guidance in partner dashboards.", "Compare hotel and homes partner needs for visibility explanation depth."], "decisionToMake": "Decide which ranking and program factors should be made more explicit in partner tooling during Q2.", "startDate": "2026-04-08", "endDate": "2026-05-06", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Trip Change Self-Service discovery", "id": "discovery-travel-accommodations-marketplace-2026-07-01-01-trip-change", "name": "Trip Change Self-Service discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to determine how much traveler servicing can shift into self-service trip changes.", "decisionToMake": "Decide which change flows should become fully self-serve in Q3.", "startDate": "2026-07-01", "endDate": "2026-07-31", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-07-01", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}, {"title": "Homes Activation Guidance discovery", "id": "discovery-travel-accommodations-marketplace-2026-07-08-02-homes-activation", "name": "Homes Activation Guidance discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to understand which onboarding and early-demand interventions most improve first-booking speed for hosts.", "decisionToMake": "Decide which host activation surfaces should become more guided or automated in Q3.", "startDate": "2026-07-08", "endDate": "2026-08-05", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-07-08", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}, {"title": "Reservation Accuracy discovery", "id": "discovery-travel-accommodations-marketplace-2026-01-15-01-reservation-accuracy", "name": "Reservation Accuracy discovery", "status": "archived", "lastUpdated": "2026-03-20", "summary": "Archived discovery that examined where reservation-sync mismatches were creating overbooking and payout adjustment problems.", "decisionToMake": "Completed decision to prioritize partner-sync reliability and exception handling.", "statusLabel": "Archived", "landingPageIndex": 4, "date": "2026-03-20", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}]};

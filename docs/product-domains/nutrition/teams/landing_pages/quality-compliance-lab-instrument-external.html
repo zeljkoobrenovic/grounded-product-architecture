@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "quality-compliance-lab-instrument-external", "name": "Quality & Compliance - Lab Instrument External", "teamType": "stream-aligned", "teamFamilyId": "quality-compliance", "teamFamilyName": "Quality & Compliance", "orgLayer": "team", "mission": "Own lab, traceability, labeling, release, and audit workflows for regulated nutrition operations. This team specifically focuses on lab instrument external.", "primaryCustomers": [{"customerId": "qcmn", "customerName": "Quality & Compliance Manager", "relatedKPIs": ["Right-first-time release rate", "Testing & results velocity", "Traceability & evidence readiness", "ARR"], "icon": "quality-manager.png"}, {"customerId": "moth", "customerName": "Mother Earth (Environmental Stakeholder)", "relatedKPIs": ["CO\u2082e per ton produced", "Ingredient footprint drivers", "Process & waste drivers", "ARR"], "icon": "mother-earth.png"}, {"customerId": "exec", "customerName": "Executive / Economic Buyer (CEO, COO, GM)", "relatedKPIs": ["Gross margin stability", "Cost-to-serve visibility", "Speed of mitigation", "ARR"], "icon": "executive.png"}], "ownedProductBricks": [{"brickId": "liel", "brickName": "Lab Instrument & External Lab Integration", "brick": {"id": "liel", "name": "Lab Instrument & External Lab Integration", "type": "integration", "description": "Automated intake of test results from instruments/LIS and external labs, with validation.", "domain": "Core Business Applications", "group": "Quality & Laboratory (LIMS / QC)", "internalModules": [{"title": "Contract and Mapping Layer", "description": "Maintains schemas, field mappings, and versioned contracts used by Lab Instrument & External Lab Integration.", "type": "integration"}, {"title": "Transformation and Routing Engine", "description": "Transforms messages and routes requests or events through Lab Instrument & External Lab Integration.", "type": "service"}, {"title": "Access and Observability Controls", "description": "Applies authentication, throttling, retry handling, and monitoring for Lab Instrument & External Lab Integration.", "type": "platform"}], "interfaces": [{"title": "Inbound API", "description": "API entry point used to submit requests or payloads into Lab Instrument & External Lab Integration.", "type": "api"}, {"title": "Outbound Event Feed", "description": "Event or webhook surface used by Lab Instrument & External Lab Integration to publish downstream updates.", "type": "event"}, {"title": "Partner Connector Surface", "description": "Connector interface for external systems exchanging data through Lab Instrument & External Lab Integration.", "type": "integration"}], "brickDependencies": [{"targetBrickId": "cmac", "type": "identity", "interface": "Authentication API", "description": "Depends on Costing & Margin Accounting to provide identity capabilities required by Lab Instrument & External Lab Integration."}, {"targetBrickId": "otca", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Order-to-Cash to provide operations capabilities required by Lab Instrument & External Lab Integration."}, {"targetBrickId": "dpfo", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Demand Planning & Forecasting to provide analytics capabilities required by Lab Instrument & External Lab Integration."}], "externalSystemsThisBrickDependsOn": [{"system": "Partner Platforms", "type": "external-integration", "interface": "Partner API", "description": "Lab Instrument & External Lab Integration exchanges operational data with external partner platforms and adjacent systems."}, {"system": "Event Broker or Messaging Infrastructure", "type": "platform", "interface": "Event / Queue Interface", "description": "Lab Instrument & External Lab Integration depends on messaging infrastructure to route and buffer integration traffic."}], "externalSystemsDependingOnThisBrick": [{"system": "Internal Domain Services", "type": "integration-consumer", "interface": "API / Event Gateway", "description": "Internal services depend on Lab Instrument & External Lab Integration to connect reliably with partner systems and adjacent platforms."}, {"system": "Partner Operations", "type": "partner-consumer", "interface": "Connector Interface", "description": "Partner-facing workflows depend on Lab Instrument & External Lab Integration to exchange data and synchronize state with external parties."}], "icon": "liel.png"}}, {"brickId": "cqdo", "brickName": "COA & Quality Documentation", "brick": {"id": "cqdo", "name": "COA & Quality Documentation", "type": "full-stack", "description": "Certificate of Analysis generation, attachments, customer templates and controlled distribution.", "domain": "Core Business Applications", "group": "Quality & Laboratory (LIMS / QC)", "internalModules": [{"title": "Canonical Data Model", "description": "Defines the core entities, relationships, and schemas managed by COA & Quality Documentation.", "type": "data"}, {"title": "Quality and Governance Controls", "description": "Validates, governs, and curates the information maintained by COA & Quality Documentation.", "type": "governance"}, {"title": "Distribution and Access Services", "description": "Serves trusted data products and downstream access patterns from COA & Quality Documentation.", "type": "service"}], "interfaces": [{"title": "Data Access API", "description": "API for retrieving or maintaining the canonical data exposed by COA & Quality Documentation.", "type": "api"}, {"title": "Data Stewardship Console", "description": "User interface for governing, curating, and reviewing information in COA & Quality Documentation.", "type": "ui"}, {"title": "Data Distribution Feed", "description": "Event or export interface for distributing changes originating in COA & Quality Documentation.", "type": "event"}], "brickDependencies": [{"targetBrickId": "liel", "type": "integration", "interface": "Inbound API", "description": "Depends on Lab Instrument & External Lab Integration to provide integration capabilities required by COA & Quality Documentation."}, {"targetBrickId": "rlgo", "type": "operations-control", "interface": "Operations Workspace", "description": "Depends on Recipe Lifecycle & Governance to provide service capabilities required by COA & Quality Documentation."}, {"targetBrickId": "dpfo", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Demand Planning & Forecasting to provide analytics capabilities required by COA & Quality Documentation."}], "externalSystemsThisBrickDependsOn": [{"system": "Master Data Sources", "type": "data-source", "interface": "Ingestion Interface", "description": "COA & Quality Documentation depends on upstream master data or source systems to maintain canonical records."}, {"system": "Data Lake and Reporting Platforms", "type": "analytics-platform", "interface": "Export Interface", "description": "COA & Quality Documentation distributes curated data to downstream reporting and analytical consumers."}], "externalSystemsDependingOnThisBrick": [{"system": "Downstream Domain Services", "type": "data-consumer", "interface": "Data Access API", "description": "Downstream domain services depend on COA & Quality Documentation as a trusted source of canonical entities and shared data."}, {"system": "Analytics and Reporting Platforms", "type": "analytics-consumer", "interface": "Data Distribution Feed", "description": "Analytics consumers depend on COA & Quality Documentation to distribute governed datasets and reference information."}], "icon": "cqdo.png"}}, {"brickId": "atem", "brickName": "Audit Trail & Evidence Management", "brick": {"id": "atem", "name": "Audit Trail & Evidence Management", "type": "service", "description": "Traceable record of spec/label changes, approvals, linked lab evidence, and distribution logs.", "domain": "Core Business Applications", "group": "Compliance & Labeling Intelligence", "internalModules": [{"title": "Identity and Policy Engine", "description": "Authenticates actors, evaluates access policies, and manages trust rules for Audit Trail & Evidence Management.", "type": "identity"}, {"title": "Entitlements and Lifecycle Management", "description": "Manages roles, permissions, account state, and lifecycle changes within Audit Trail & Evidence Management.", "type": "service"}, {"title": "Audit and Compliance Controls", "description": "Records security-relevant actions and compliance evidence produced by Audit Trail & Evidence Management.", "type": "compliance"}], "interfaces": [{"title": "Authentication API", "description": "Programmatic interface for authentication, authorization, or account checks exposed by Audit Trail & Evidence Management.", "type": "api"}, {"title": "Administration Console", "description": "Operational interface for managing identity settings and access policies in Audit Trail & Evidence Management.", "type": "ui"}, {"title": "Audit Event Stream", "description": "Event interface that publishes security and compliance signals from Audit Trail & Evidence Management.", "type": "event"}], "brickDependencies": [{"targetBrickId": "rlgo", "type": "service-api", "interface": "Service API", "description": "Depends on Recipe Lifecycle & Governance to provide service capabilities required by Audit Trail & Evidence Management."}, {"targetBrickId": "liel", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Lab Instrument & External Lab Integration to provide integration capabilities required by Audit Trail & Evidence Management."}, {"targetBrickId": "dpfo", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Demand Planning & Forecasting to provide analytics capabilities required by Audit Trail & Evidence Management."}], "externalSystemsThisBrickDependsOn": [{"system": "Corporate Identity Provider", "type": "identity", "interface": "OIDC / SAML", "description": "Audit Trail & Evidence Management integrates with an external identity provider for authentication and federation."}, {"system": "Compliance Screening Services", "type": "compliance", "interface": "Screening API", "description": "Audit Trail & Evidence Management may call external screening or verification services to enforce trust and compliance checks."}], "externalSystemsDependingOnThisBrick": [{"system": "Customer and Operator Applications", "type": "identity-consumer", "interface": "Authentication / Authorization Interface", "description": "Internal and external applications depend on Audit Trail & Evidence Management for authentication, authorization, and trusted account state."}, {"system": "Audit and Risk Systems", "type": "control-consumer", "interface": "Audit / Event Interface", "description": "Governance and risk systems depend on Audit Trail & Evidence Management to emit trust, access, and compliance events."}], "icon": "atem.png"}}], "supportingProductBricks": [{"brickId": "sods", "brickName": "Segregation of Duties (SoD) & Approvals", "brick": {"id": "sods", "name": "Segregation of Duties (SoD) & Approvals", "type": "full-stack", "description": "Enforce SoD, approval chains for recipes, purchases, releases, and compliance changes.", "domain": "Infrastructure, Trust & Operations", "group": "Security, Roles & Governance", "internalModules": [{"title": "Experience Shell and Navigation", "description": "Provides the primary user flow, navigation, and page composition for Segregation of Duties (SoD) & Approvals.", "type": "full-stack"}, {"title": "Session and Personalization State", "description": "Manages user context, preferences, and personalized behavior within Segregation of Duties (SoD) & Approvals.", "type": "service"}, {"title": "Content and Interaction Orchestration", "description": "Coordinates the content blocks, tasks, and interaction logic shown by Segregation of Duties (SoD) & Approvals.", "type": "content"}], "interfaces": [{"title": "User Experience Interface", "description": "Primary user-facing interface delivered by Segregation of Duties (SoD) & Approvals.", "type": "ui"}, {"title": "Experience Backend API", "description": "API surface used to assemble state and content for Segregation of Duties (SoD) & Approvals.", "type": "api"}, {"title": "Interaction Event Stream", "description": "Event interface capturing user actions and journey signals from Segregation of Duties (SoD) & Approvals.", "type": "event"}], "brickDependencies": [{"targetBrickId": "cmac", "type": "identity", "interface": "Authentication API", "description": "Depends on Costing & Margin Accounting to provide identity capabilities required by Segregation of Duties (SoD) & Approvals."}, {"targetBrickId": "cspc", "type": "event-subscription", "interface": "Catalog Update Feed", "description": "Depends on Customer-Specific Product Catalog & Specs to provide discovery capabilities required by Segregation of Duties (SoD) & Approvals."}, {"targetBrickId": "otca", "type": "operator-control", "interface": "Operator Console", "description": "Depends on Order-to-Cash to provide operations capabilities required by Segregation of Duties (SoD) & Approvals."}], "externalSystemsThisBrickDependsOn": [{"system": "Web and Mobile Clients", "type": "channel", "interface": "UI", "description": "User-facing clients consume Segregation of Duties (SoD) & Approvals through browser or app experiences."}, {"system": "Notification Delivery Platforms", "type": "communication", "interface": "Email / Push APIs", "description": "Segregation of Duties (SoD) & Approvals depends on outbound communication systems to notify users and continue journeys."}], "externalSystemsDependingOnThisBrick": [{"system": "Web and Mobile Clients", "type": "channel-consumer", "interface": "UI", "description": "Web and mobile clients rely on Segregation of Duties (SoD) & Approvals as the user-facing surface for discovery, interaction, or task completion."}, {"system": "Marketing and Acquisition Platforms", "type": "traffic-source", "interface": "Deep Link / Landing Page Interface", "description": "Acquisition and campaign systems drive traffic into Segregation of Duties (SoD) & Approvals to convert or retain users."}], "icon": "sods.png"}}], "dependsOnTeamIds": ["data-integration-platform-kpi-dashboards", "trust-governance-platform-identity-sso-mfa"], "defaultSupportingTeamIds": ["trust-governance-platform-identity-sso-mfa"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Each customer-facing team is intentionally kept near 10 FTE so it can own a narrow journey or capability slice with clear accountability and fast decision-making.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own the roadmap, prioritization, and KPI tradeoffs for this team scope."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution, staffing, and engineering health for the team."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction and guard long-term architecture quality across the team scope."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build and evolve backend services, business logic, and integration points."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build user-facing workflows and maintain a high-quality interaction model."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own regression depth, release confidence, and automated quality coverage."}, {"role": "Product Designer", "count": 1, "responsibility": "Shape the end-to-end workflow, information architecture, and UX quality."}]}, "relatedDiscoveries": [], "groupId": "value-streams-quality-compliance", "groupName": "Value Streams / Quality & Compliance", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architectural coherence, and craft leadership for the teams in this group.", "leadershipModel": "Directors own the operating cadence and people leadership for the group; principal roles work as group-level individual contributors who coach teams and shape standards.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own the strategy, portfolio tradeoffs, and outcome accountability across the team group.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, system health, and staffing quality across the team group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Principal Engineer", "count": 1, "responsibility": "Provide cross-team architecture leadership and coach senior engineers across the group.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive cross-team UX coherence, workflow quality, and design standards across the group.", "reportsTo": "Product Director"}, {"role": "Principal Data / Domain Architect", "count": 1, "responsibility": "Shape the shared domain model, KPI semantics, and analytical consistency used by the teams in the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "data-integration-platform-kpi-dashboards", "name": "Data & Integration Platform - Kpi Dashboards", "teamType": "platform", "groupId": "platform-enablement-data-integration-platform", "groupName": "Platform Enablement / Data & Integration Platform"}, {"id": "trust-governance-platform-identity-sso-mfa", "name": "Trust & Governance Platform - Identity Sso Mfa", "teamType": "platform", "groupId": "platform-enablement-trust-governance-platform", "groupName": "Platform Enablement / Trust & Governance Platform"}], "defaultSupportingTeams": [{"id": "trust-governance-platform-identity-sso-mfa", "name": "Trust & Governance Platform - Identity Sso Mfa", "teamType": "platform", "groupId": "platform-enablement-trust-governance-platform", "groupName": "Platform Enablement / Trust & Governance Platform"}], "relatedInitiatives": [], "relatedReleases": [], "dependencyData": {"sharedProductBricks": [{"teamId": "trust-governance-platform-identity-sso-mfa", "teamName": "Trust & Governance Platform - Identity Sso Mfa", "sharedBrickIds": ["sods"], "sharedBrickNames": ["Segregation of Duties (SoD) & Approvals"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "data-integration-platform-kpi-dashboards", "teamName": "Data & Integration Platform - Kpi Dashboards", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-governance-platform-identity-sso-mfa", "teamName": "Trust & Governance Platform - Identity Sso Mfa", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-governance-platform-identity-sso-mfa", "teamName": "Trust & Governance Platform - Identity Sso Mfa", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

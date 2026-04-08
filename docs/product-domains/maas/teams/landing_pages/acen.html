@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "acen", "name": "Arrive Access and Enforcement", "teamType": "stream-aligned", "teamFamilyId": "pkcg", "teamFamilyName": "Parking and Curb Operations", "orgLayer": "team", "mission": "Own permits, access-control, LPR, and parking-compliance workflows across channels and sites.", "primaryCustomers": [{"customerId": "mpdu", "customerName": "Municipal Parking Director", "relatedKPIs": ["Barrier queue time", "Violation resolution cycle time"], "icon": "mpdu.png"}], "ownedProductBricks": [{"brickId": "acce", "brickName": "Access, Permit & LPR Control", "brick": {"id": "acce", "name": "Access, Permit & LPR Control", "type": "full-stack", "description": "Manages barrier access, permit validation, LPR flows, and access-event control across parking environments.", "domain": "parking_operations", "group": "parking-and-curb-control", "internalModules": [{"title": "Identity and Policy Engine", "description": "Authenticates actors, evaluates access policies, and manages trust rules for Access, Permit & LPR Control.", "type": "identity"}, {"title": "Entitlements and Lifecycle Management", "description": "Manages roles, permissions, account state, and lifecycle changes within Access, Permit & LPR Control.", "type": "service"}, {"title": "Audit and Compliance Controls", "description": "Records security-relevant actions and compliance evidence produced by Access, Permit & LPR Control.", "type": "compliance"}], "interfaces": [{"title": "Authentication API", "description": "Programmatic interface for authentication, authorization, or account checks exposed by Access, Permit & LPR Control.", "type": "api"}, {"title": "Administration Console", "description": "Operational interface for managing identity settings and access policies in Access, Permit & LPR Control.", "type": "ui"}, {"title": "Audit Event Stream", "description": "Event interface that publishes security and compliance signals from Access, Permit & LPR Control.", "type": "event"}], "brickDependencies": [{"targetBrickId": "devi", "type": "service-api", "interface": "Service API", "description": "Depends on Device & Validator Management to provide service capabilities required by Access, Permit & LPR Control."}, {"targetBrickId": "part", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Partner API, Sandbox & Certification to provide integration capabilities required by Access, Permit & LPR Control."}, {"targetBrickId": "opal", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Operator Analytics & Control Tower to provide analytics capabilities required by Access, Permit & LPR Control."}], "externalSystemsThisBrickDependsOn": [{"system": "Corporate Identity Provider", "type": "identity", "interface": "OIDC / SAML", "description": "Access, Permit & LPR Control integrates with an external identity provider for authentication and federation."}, {"system": "Compliance Screening Services", "type": "compliance", "interface": "Screening API", "description": "Access, Permit & LPR Control may call external screening or verification services to enforce trust and compliance checks."}], "externalSystemsDependingOnThisBrick": [{"system": "Customer and Operator Applications", "type": "identity-consumer", "interface": "Authentication / Authorization Interface", "description": "Internal and external applications depend on Access, Permit & LPR Control for authentication, authorization, and trusted account state."}, {"system": "Audit and Risk Systems", "type": "control-consumer", "interface": "Audit / Event Interface", "description": "Governance and risk systems depend on Access, Permit & LPR Control to emit trust, access, and compliance events."}], "icon": "acce.png"}}, {"brickId": "enfw", "brickName": "Enforcement & Compliance Workflows", "brick": {"id": "enfw", "name": "Enforcement & Compliance Workflows", "type": "service", "description": "Coordinates parking enforcement, exemptions, citations, evidence, and dispute or compliance workflows.", "domain": "parking_operations", "group": "parking-and-curb-control", "internalModules": [{"title": "Identity and Policy Engine", "description": "Authenticates actors, evaluates access policies, and manages trust rules for Enforcement & Compliance Workflows.", "type": "identity"}, {"title": "Entitlements and Lifecycle Management", "description": "Manages roles, permissions, account state, and lifecycle changes within Enforcement & Compliance Workflows.", "type": "service"}, {"title": "Audit and Compliance Controls", "description": "Records security-relevant actions and compliance evidence produced by Enforcement & Compliance Workflows.", "type": "compliance"}], "interfaces": [{"title": "Authentication API", "description": "Programmatic interface for authentication, authorization, or account checks exposed by Enforcement & Compliance Workflows.", "type": "api"}, {"title": "Administration Console", "description": "Operational interface for managing identity settings and access policies in Enforcement & Compliance Workflows.", "type": "ui"}, {"title": "Audit Event Stream", "description": "Event interface that publishes security and compliance signals from Enforcement & Compliance Workflows.", "type": "event"}], "brickDependencies": [{"targetBrickId": "devi", "type": "service-api", "interface": "Service API", "description": "Depends on Device & Validator Management to provide service capabilities required by Enforcement & Compliance Workflows."}, {"targetBrickId": "part", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Partner API, Sandbox & Certification to provide integration capabilities required by Enforcement & Compliance Workflows."}, {"targetBrickId": "opal", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Operator Analytics & Control Tower to provide analytics capabilities required by Enforcement & Compliance Workflows."}], "externalSystemsThisBrickDependsOn": [{"system": "Corporate Identity Provider", "type": "identity", "interface": "OIDC / SAML", "description": "Enforcement & Compliance Workflows integrates with an external identity provider for authentication and federation."}, {"system": "Compliance Screening Services", "type": "compliance", "interface": "Screening API", "description": "Enforcement & Compliance Workflows may call external screening or verification services to enforce trust and compliance checks."}], "externalSystemsDependingOnThisBrick": [{"system": "Customer and Operator Applications", "type": "identity-consumer", "interface": "Authentication / Authorization Interface", "description": "Internal and external applications depend on Enforcement & Compliance Workflows for authentication, authorization, and trusted account state."}, {"system": "Audit and Risk Systems", "type": "control-consumer", "interface": "Audit / Event Interface", "description": "Governance and risk systems depend on Enforcement & Compliance Workflows to emit trust, access, and compliance events."}], "icon": "enfw.png"}}], "supportingProductBricks": [{"brickId": "wfcm", "brickName": "Workflow, Case & Exception Management", "brick": {"id": "wfcm", "name": "Workflow, Case & Exception Management", "type": "service", "description": "Supports multi-step back-office workflows, SLA tracking, and coordinated exception handling.", "domain": "platform_foundation", "group": "shared-platform-services", "internalModules": [{"title": "Workflow and State Engine", "description": "Orchestrates the main lifecycle, state transitions, and task flow handled by Workflow, Case & Exception Management.", "type": "service"}, {"title": "Capacity and Exception Management", "description": "Manages inventory, reservations, workload, and exception handling inside Workflow, Case & Exception Management.", "type": "operations"}, {"title": "Operations Console Logic", "description": "Supports operator actions, escalations, and manual interventions required by Workflow, Case & Exception Management.", "type": "full-stack"}], "interfaces": [{"title": "Workflow API", "description": "API for starting, updating, or querying operational workflows managed by Workflow, Case & Exception Management.", "type": "api"}, {"title": "Operator Console", "description": "User interface for task handling, interventions, and operational control within Workflow, Case & Exception Management.", "type": "ui"}, {"title": "Lifecycle Status Events", "description": "Event stream exposing state changes and exceptions produced by Workflow, Case & Exception Management.", "type": "event"}], "brickDependencies": [{"targetBrickId": "pcon", "type": "decisioning", "interface": "Decision API", "description": "Depends on Parking Configuration & Policy Management to provide policy capabilities required by Workflow, Case & Exception Management."}, {"targetBrickId": "acce", "type": "event-subscription", "interface": "Audit Event Stream", "description": "Depends on Access, Permit & LPR Control to provide identity capabilities required by Workflow, Case & Exception Management."}, {"targetBrickId": "part", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on Partner API, Sandbox & Certification to provide integration capabilities required by Workflow, Case & Exception Management."}], "externalSystemsThisBrickDependsOn": [{"system": "ERP and Operational Systems", "type": "back-office", "interface": "Operational API", "description": "Workflow, Case & Exception Management coordinates execution with external ERP, servicing, or operations platforms."}, {"system": "CRM and Case Management Tools", "type": "workflow", "interface": "Case Interface", "description": "Workflow, Case & Exception Management exchanges tasks, statuses, or escalations with customer and operations tooling."}], "externalSystemsDependingOnThisBrick": [{"system": "Operator Workflows", "type": "workflow-consumer", "interface": "Workflow / Status API", "description": "Operational teams and services depend on Workflow, Case & Exception Management to coordinate task flow, status, and exception handling."}, {"system": "Customer and Partner Touchpoints", "type": "journey-consumer", "interface": "Lifecycle Event Interface", "description": "Customer and partner-facing journeys depend on Workflow, Case & Exception Management to advance fulfillment, servicing, or case progress."}], "icon": "wfcm.png"}}], "dependsOnTeamIds": ["wkfl", "plre"], "defaultSupportingTeamIds": ["wkfl"], "staffing": {"suggestedHeadcount": 8, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own access and compliance outcomes."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery and team health."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build permit, access, and enforcement services."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build operational access and compliance tools."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own reliability and regression coverage."}, {"role": "Operations Domain Specialist", "count": 1, "responsibility": "Bring enforcement and permit-process knowledge into delivery."}]}, "groupId": "pkcg", "groupName": "Arrive Parking and Curb Operations", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architecture coherence, and operating leadership for parking and curb workflows.", "leadershipModel": "Product and engineering directors run the operating cadence for the group while group-level staff roles shape architecture, design consistency, and municipal operations fit across teams.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own strategy, portfolio tradeoffs, and outcome accountability across parking and curb teams.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, staffing quality, and system health across the parking group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Staff Engineer", "count": 1, "responsibility": "Provide cross-team architecture leadership for pricing, access, compliance, and event flows.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive UX coherence across operator, enforcement, and field workflows.", "reportsTo": "Product Director"}, {"role": "Principal Operations / Domain Architect", "count": 1, "responsibility": "Shape the shared parking operations model, policy semantics, and rollout standards used by the teams.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "wkfl", "name": "Arrive Workflow Platform", "teamType": "pltg", "groupId": "pltg", "groupName": "Arrive Platform, Data and Reliability"}, {"id": "plre", "name": "Arrive Platform Reliability", "teamType": "pltg", "groupId": "pltg", "groupName": "Arrive Platform, Data and Reliability"}], "defaultSupportingTeams": [{"id": "wkfl", "name": "Arrive Workflow Platform", "teamType": "pltg", "groupId": "pltg", "groupName": "Arrive Platform, Data and Reliability"}], "relatedInitiatives": [{"date": "2026-05-14", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-01-15", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "3", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-11-12", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "4", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-11", "description": "Release of Parking control tower convergence improvements aimed at moving Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-02-07", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "3", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-12-06", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "4", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [{"date": "2026-01-03 -> 2026-02-07", "description": "Parking control tower convergence: operating discovery", "landingPageKey": "0", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2026-04-21 -> 2026-05-23", "description": "Parking control tower convergence: operating discovery", "landingPageKey": "3", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2025-10-27 -> 2025-11-24", "description": "Parking control tower convergence: operating discovery", "landingPageKey": "4", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}], "dependencyData": {"sharedProductBricks": [{"teamId": "wkfl", "teamName": "Arrive Workflow Platform", "sharedBrickIds": ["wfcm"], "sharedBrickNames": ["Workflow, Case & Exception Management"]}], "sharedInitiatives": [{"teamId": "pkor", "teamName": "Arrive Parking Core", "sharedInitiativeKeys": ["0", "3", "4"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "stld", "teamName": "Arrive Settlement and Ledger", "sharedInitiativeKeys": ["0", "3", "4"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "wkfl", "teamName": "Arrive Workflow Platform", "sharedInitiativeKeys": ["0", "3", "4"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "dtpl", "teamName": "Arrive Data Platform", "sharedInitiativeKeys": ["0", "3", "4"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Parking control tower convergence Initiative is the quarter's focused investment to move Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models.. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}], "sharedReleases": [{"teamId": "pkor", "teamName": "Arrive Parking Core", "sharedReleaseKeys": ["0", "3", "4"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "stld", "teamName": "Arrive Settlement and Ledger", "sharedReleaseKeys": ["0", "3", "4"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "wkfl", "teamName": "Arrive Workflow Platform", "sharedReleaseKeys": ["0", "3", "4"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "dtpl", "teamName": "Arrive Data Platform", "sharedReleaseKeys": ["0", "3", "4"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Receipts per employee and Business and fleet ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Parking control tower convergence improvements aimed at moving Paid session conversion rate and Parking platform ARR, anchored in multimodal interoperability, ticketing consistency, and settlement clarity across city partners and led through Parking Configuration & Policy Management with reusable tariff and permit models. The quarter concentrates on account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}], "explicitRelationships": [{"teamId": "wkfl", "teamName": "Arrive Workflow Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "plre", "teamName": "Arrive Platform Reliability", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "wkfl", "teamName": "Arrive Workflow Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

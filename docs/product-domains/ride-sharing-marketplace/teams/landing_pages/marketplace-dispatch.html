@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "marketplace-dispatch", "name": "Marketplace Dispatch and Pricing", "teamType": "platform", "teamFamilyId": "marketplace-controls", "teamFamilyName": "Marketplace and Trust Controls", "orgLayer": "team", "mission": "Own matching, liquidity, surge, and pricing guardrails across the marketplace.", "primaryCustomers": [{"customerId": "ridu", "customerName": "Urban Time-Sensitive Rider", "relatedKPIs": ["Request-to-trip conversion", "ETA accuracy"], "icon": "customer.png"}, {"customerId": "drvu", "customerName": "Flexible Driver Earner", "relatedKPIs": ["Utilization rate", "Driver earnings per active hour"], "icon": "customer.png"}], "ownedProductBricks": [{"brickId": "disp", "brickName": "Dispatch and Matching Engine", "brick": {"id": "disp", "name": "Dispatch and Matching Engine", "type": "service", "description": "Matches rider demand to the best available driver or fleet supply while honoring geography, product rules, and trip quality constraints.", "domain": "Marketplace Controls and Special Flows", "group": "liquidity-and-pricing", "internalModules": [{"title": "Real-time Supply Selector", "description": "Chooses candidate drivers or fleet supply for each request.", "type": "service"}, {"title": "Rematch and Cancellation Logic", "description": "Handles driver declines, rider cancellations, and rematch conditions.", "type": "service"}, {"title": "Liquidity and Queue Controls", "description": "Balances supply and demand in constrained environments such as airports.", "type": "operations"}], "interfaces": [{"title": "Dispatch Decision API", "description": "API for dispatching and rematching trips.", "type": "api"}, {"title": "Supply Offer Feed", "description": "Driver-facing offer and assignment event stream.", "type": "event"}], "brickDependencies": [{"targetBrickId": "etar", "type": "routing", "interface": "ETA API", "description": "Depends on ETA, Maps and Routing Intelligence to evaluate pickup feasibility and time."}, {"targetBrickId": "pric", "type": "pricing", "interface": "Price Signal API", "description": "Depends on Dynamic Pricing and Incentives for supply-demand balancing signals."}, {"targetBrickId": "orch", "type": "workflow", "interface": "Reserve and Zone Rules API", "description": "Depends on Reserve, Share and Airport Orchestration for special flow handling."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [{"system": "Driver applications", "type": "channel-consumer", "interface": "Supply Offer Feed", "description": "Driver clients depend on dispatch offers and trip assignment updates."}], "icon": "disp.png"}}, {"brickId": "pric", "brickName": "Dynamic Pricing and Incentives", "brick": {"id": "pric", "name": "Dynamic Pricing and Incentives", "type": "service", "description": "Calculates upfront fares, surge multipliers, discounts, and driver incentives based on demand, supply, market rules, and product type.", "domain": "Marketplace Controls and Special Flows", "group": "liquidity-and-pricing", "internalModules": [{"title": "Quote and Fare Engine", "description": "Calculates rider-facing pricing and fee composition.", "type": "service"}, {"title": "Incentive and Surge Logic", "description": "Adjusts driver and rider economics based on marketplace conditions.", "type": "policy"}, {"title": "Experimentation and Guardrails", "description": "Applies pricing experiments and policy limits without losing operator control.", "type": "operations"}], "interfaces": [{"title": "Quote API", "description": "Returns fares, expected wait, and available product options.", "type": "api"}, {"title": "Marketplace Pricing Events", "description": "Broadcasts pricing and incentive state changes.", "type": "event"}], "brickDependencies": [{"targetBrickId": "data", "type": "analytics", "interface": "Marketplace Signal Feed", "description": "Depends on Marketplace Intelligence and Analytics for demand and conversion feedback."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pric.png"}}], "supportingProductBricks": [{"brickId": "etar", "brickName": "ETA, Maps and Routing Intelligence", "brick": {"id": "etar", "name": "ETA, Maps and Routing Intelligence", "type": "service", "description": "Provides route estimation, pickup guidance, airport geofencing, and live map context for riders and drivers.", "domain": "Rider Demand and Trip Experience", "group": "live-trip-and-confidence", "internalModules": [{"title": "ETA Prediction Models", "description": "Predicts pickup and trip arrival timing.", "type": "service"}, {"title": "Pickup and Drop-off Guidance", "description": "Optimizes exact meeting points and constrained-zone handoffs.", "type": "service"}, {"title": "Geofence and Zone Rules", "description": "Maintains airport, venue, and city-specific navigation constraints.", "type": "policy"}], "interfaces": [{"title": "ETA and Routing API", "description": "Returns routes, ETAs, and pickup guidance.", "type": "api"}, {"title": "Live Location Events", "description": "Emits location and route progress events.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Maps and traffic providers", "type": "data", "interface": "Routing APIs", "description": "Provides road network, traffic, and geospatial context."}], "externalSystemsDependingOnThisBrick": [], "icon": "etar.png"}}, {"brickId": "orch", "brickName": "Reserve, Share and Airport Orchestration", "brick": {"id": "orch", "name": "Reserve, Share and Airport Orchestration", "type": "full-stack", "description": "Handles scheduled trips, shared-ride routing logic, and constrained pickup or drop-off operations such as airports and shuttles.", "domain": "Marketplace Controls and Special Flows", "group": "special-trip-orchestration", "internalModules": [{"title": "Scheduled Trip Planner", "description": "Manages future trips, supply reservation, and pre-trip reminders.", "type": "service"}, {"title": "Shared Ride Orchestrator", "description": "Coordinates pooled routing, rider sequencing, and detour controls.", "type": "service"}, {"title": "Airport and Venue Operations Rules", "description": "Applies pickup-lane, queue, and access logic for constrained environments.", "type": "operations"}], "interfaces": [{"title": "Special Trip Rules API", "description": "Returns reserve, pooling, and location-specific operating rules.", "type": "api"}, {"title": "Operations Workspace", "description": "Operator interface for constrained trip flows and scheduling controls.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "disp", "type": "dispatch", "interface": "Dispatch Decision API", "description": "Depends on Dispatch and Matching Engine to allocate supply to special trip flows."}, {"targetBrickId": "etar", "type": "routing", "interface": "ETA and Routing API", "description": "Depends on ETA, Maps and Routing Intelligence for scheduling and pooled routing logic."}], "externalSystemsThisBrickDependsOn": [{"system": "Airports and venue operating systems", "type": "partner", "interface": "Access and rules feeds", "description": "Provides local operating constraints, queue rules, and pickup-zone definitions."}], "externalSystemsDependingOnThisBrick": [], "icon": "orch.png"}}], "dependsOnTeamIds": ["data-platform"], "defaultSupportingTeamIds": ["data-platform"], "staffing": {"suggestedHeadcount": 10, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own marketplace quality and liquidity outcomes."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead real-time systems delivery."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build dispatch, rematch, and pricing services."}, {"role": "Applied Scientist", "count": 2, "responsibility": "Improve marketplace models and experiments."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own reliability and rollout confidence."}, {"role": "Product Designer", "count": 1, "responsibility": "Design marketplace transparency in rider and driver flows."}]}, "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls", "groupLeadership": {}, "dependsOnTeams": [{"id": "data-platform", "name": "Marketplace Intelligence Platform", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}], "defaultSupportingTeams": [{"id": "data-platform", "name": "Marketplace Intelligence Platform", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}], "relatedInitiatives": [{"date": "2026-04-24", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-04-10", "description": "Focused investment to improve airport and reserve trip predictability by strengthening constrained-zone dispatch, pickup guidance, and scheduled-trip orchestration.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-18", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-05-14", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "landingPageKey": "1", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "rider-core", "teamName": "Rider Core Experience", "sharedBrickIds": ["etar"], "sharedBrickNames": ["ETA, Maps and Routing Intelligence"]}, {"teamId": "reserve-airport", "teamName": "Reserve and Airport Experience", "sharedBrickIds": ["disp", "etar", "orch"], "sharedBrickNames": ["Dispatch and Matching Engine", "ETA, Maps and Routing Intelligence", "Reserve, Share and Airport Orchestration"]}, {"teamId": "driver-growth", "teamName": "Driver Growth and Earnings", "sharedBrickIds": ["pric"], "sharedBrickNames": ["Dynamic Pricing and Incentives"]}, {"teamId": "fleet-programs", "teamName": "Business and Fleet Programs", "sharedBrickIds": ["orch"], "sharedBrickNames": ["Reserve, Share and Airport Orchestration"]}], "sharedInitiatives": [{"teamId": "reserve-airport", "teamName": "Reserve and Airport Experience", "sharedInitiativeKeys": ["2"], "sharedInitiatives": [{"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Focused investment to improve airport and reserve trip predictability by strengthening constrained-zone dispatch, pickup guidance, and scheduled-trip orchestration.", "date": "2026-04-10"}]}, {"teamId": "driver-growth", "teamName": "Driver Growth and Earnings", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust.", "date": "2026-04-24"}]}, {"teamId": "fleet-programs", "teamName": "Business and Fleet Programs", "sharedInitiativeKeys": ["2"], "sharedInitiatives": [{"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Focused investment to improve airport and reserve trip predictability by strengthening constrained-zone dispatch, pickup guidance, and scheduled-trip orchestration.", "date": "2026-04-10"}]}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust.", "date": "2026-04-24"}]}], "sharedReleases": [{"teamId": "reserve-airport", "teamName": "Reserve and Airport Experience", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "date": "2026-05-14"}]}, {"teamId": "driver-growth", "teamName": "Driver Growth and Earnings", "sharedReleaseKeys": ["0", "1"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "date": "2026-06-18"}, {"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "date": "2026-05-14"}]}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "date": "2026-06-18"}]}, {"teamId": "data-platform", "teamName": "Marketplace Intelligence Platform", "sharedReleaseKeys": ["0", "1"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "date": "2026-06-18"}, {"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "date": "2026-05-14"}]}], "explicitRelationships": [{"teamId": "data-platform", "teamName": "Marketplace Intelligence Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "data-platform", "teamName": "Marketplace Intelligence Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "driver-growth", "name": "Driver Growth and Earnings", "teamType": "stream-aligned", "teamFamilyId": "supply-growth", "teamFamilyName": "Driver and Fleet Supply", "orgLayer": "team", "mission": "Own onboarding, earnings transparency, and driver retention.", "primaryCustomers": [{"customerId": "drvu", "customerName": "Flexible Driver Earner", "relatedKPIs": ["Driver earnings per active hour", "Utilization rate", "Driver 7-day retention"], "icon": "customer.png"}], "ownedProductBricks": [{"brickId": "driv", "brickName": "Driver Onboarding and Compliance", "brick": {"id": "driv", "name": "Driver Onboarding and Compliance", "type": "full-stack", "description": "Supports driver signup, screening, document verification, and eligibility management across markets.", "domain": "Driver Supply and Operations", "group": "onboarding-and-eligibility", "internalModules": [{"title": "Driver Profile and Status Model", "description": "Tracks account state, eligibility, and market permissions.", "type": "service"}, {"title": "Document and Screening Workflow", "description": "Processes licenses, vehicle documents, and background checks.", "type": "operations"}, {"title": "Compliance Rules Engine", "description": "Applies local legal and policy requirements to driver status.", "type": "policy"}], "interfaces": [{"title": "Driver Eligibility API", "description": "Returns account and vehicle eligibility decisions.", "type": "api"}], "brickDependencies": [{"targetBrickId": "safe", "type": "trust", "interface": "Trust Verification API", "description": "Depends on Safety and Trust Operations for identity and trust signals."}], "externalSystemsThisBrickDependsOn": [{"system": "Background screening vendors", "type": "compliance", "interface": "Verification API", "description": "Provides screening and verification checks."}], "externalSystemsDependingOnThisBrick": [], "icon": "driv.png"}}, {"brickId": "earn", "brickName": "Driver Earnings and Incentive Management", "brick": {"id": "earn", "name": "Driver Earnings and Incentive Management", "type": "service", "description": "Calculates and explains driver earnings, incentives, adjustments, cash-out, and payout visibility.", "domain": "Driver Supply and Operations", "group": "earnings-and-partner-control", "internalModules": [{"title": "Fare Breakdown Calculator", "description": "Converts trip activity into driver-visible earnings statements.", "type": "service"}, {"title": "Incentive Ledger", "description": "Stores bonus, quest, and other incentive state.", "type": "service"}, {"title": "Payout and Cash-out Controls", "description": "Handles payout timing and cash-out workflow control.", "type": "operations"}], "interfaces": [{"title": "Earnings API", "description": "API for driver-facing earnings views and payout actions.", "type": "api"}], "brickDependencies": [{"targetBrickId": "pric", "type": "pricing", "interface": "Marketplace Pricing Events", "description": "Depends on Dynamic Pricing and Incentives for fare and incentive logic."}], "externalSystemsThisBrickDependsOn": [{"system": "Payout partners", "type": "financial-partner", "interface": "Disbursement API", "description": "Executes payout and cash-out movement."}], "externalSystemsDependingOnThisBrick": [], "icon": "earn.png"}}], "supportingProductBricks": [{"brickId": "pric", "brickName": "Dynamic Pricing and Incentives", "brick": {"id": "pric", "name": "Dynamic Pricing and Incentives", "type": "service", "description": "Calculates upfront fares, surge multipliers, discounts, and driver incentives based on demand, supply, market rules, and product type.", "domain": "Marketplace Controls and Special Flows", "group": "liquidity-and-pricing", "internalModules": [{"title": "Quote and Fare Engine", "description": "Calculates rider-facing pricing and fee composition.", "type": "service"}, {"title": "Incentive and Surge Logic", "description": "Adjusts driver and rider economics based on marketplace conditions.", "type": "policy"}, {"title": "Experimentation and Guardrails", "description": "Applies pricing experiments and policy limits without losing operator control.", "type": "operations"}], "interfaces": [{"title": "Quote API", "description": "Returns fares, expected wait, and available product options.", "type": "api"}, {"title": "Marketplace Pricing Events", "description": "Broadcasts pricing and incentive state changes.", "type": "event"}], "brickDependencies": [{"targetBrickId": "data", "type": "analytics", "interface": "Marketplace Signal Feed", "description": "Depends on Marketplace Intelligence and Analytics for demand and conversion feedback."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pric.png"}}, {"brickId": "safe", "brickName": "Safety and Trust Operations", "brick": {"id": "safe", "name": "Safety and Trust Operations", "type": "full-stack", "description": "Provides identity assurance, trip safety tooling, trust controls, incident workflows, and abuse or fraud prevention.", "domain": "Platform Foundation", "group": "trust-and-identity", "internalModules": [{"title": "Identity and Verification Controls", "description": "Supports driver identity, PIN verification, and risk controls.", "type": "service"}, {"title": "On-trip Safety Toolkit", "description": "Exposes emergency, tracking, and incident-help features.", "type": "full-stack"}, {"title": "Incident and Trust Workflow Engine", "description": "Routes support, fraud, and safety events into operational case handling.", "type": "operations"}], "interfaces": [{"title": "Safety Toolkit API", "description": "API for rider and driver safety features.", "type": "api"}, {"title": "Trust Operations Workspace", "description": "Operator interface for incident and trust workflows.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Emergency and security partners", "type": "partner", "interface": "Escalation API", "description": "Supports live safety escalation and emergency workflows."}], "externalSystemsDependingOnThisBrick": [], "icon": "safe.png"}}], "dependsOnTeamIds": ["marketplace-dispatch", "trust-ops", "data-platform"], "defaultSupportingTeamIds": ["marketplace-dispatch", "trust-ops"], "staffing": {"suggestedHeadcount": 9, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own driver productivity and retention outcomes."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery and team health."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build compliance, earnings, and payout systems."}, {"role": "Mobile Engineer", "count": 1, "responsibility": "Build driver app flows."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own release quality."}, {"role": "Product Designer", "count": 1, "responsibility": "Design driver trust and earnings visibility."}, {"role": "Data Scientist / Analyst", "count": 1, "responsibility": "Track earnings quality and supply response."}]}, "groupId": "supply-growth", "groupName": "Driver and Fleet Supply", "groupLeadership": {}, "dependsOnTeams": [{"id": "marketplace-dispatch", "name": "Marketplace Dispatch and Pricing", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}, {"id": "trust-ops", "name": "Safety and Trust Operations", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}, {"id": "data-platform", "name": "Marketplace Intelligence Platform", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}], "defaultSupportingTeams": [{"id": "marketplace-dispatch", "name": "Marketplace Dispatch and Pricing", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}, {"id": "trust-ops", "name": "Safety and Trust Operations", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}], "relatedInitiatives": [{"date": "2026-04-24", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-18", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-05-14", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "landingPageKey": "1", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedDiscoveries": [{"date": "2026-04-08 -> 2026-05-09", "description": "Driver trust and earnings discovery", "landingPageKey": "1", "sectionFolder": "discoveries", "teamRole": "lead", "teamRoleLabel": "Lead discovery team", "how": "Leads driver problem framing and prioritization."}], "dependencyData": {"sharedProductBricks": [{"teamId": "rider-core", "teamName": "Rider Core Experience", "sharedBrickIds": ["safe"], "sharedBrickNames": ["Safety and Trust Operations"]}, {"teamId": "fleet-programs", "teamName": "Business and Fleet Programs", "sharedBrickIds": ["driv"], "sharedBrickNames": ["Driver Onboarding and Compliance"]}, {"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "sharedBrickIds": ["pric"], "sharedBrickNames": ["Dynamic Pricing and Incentives"]}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "sharedBrickIds": ["driv", "safe"], "sharedBrickNames": ["Driver Onboarding and Compliance", "Safety and Trust Operations"]}], "sharedInitiatives": [{"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust.", "date": "2026-04-24"}]}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust.", "date": "2026-04-24"}]}], "sharedReleases": [{"teamId": "reserve-airport", "teamName": "Reserve and Airport Experience", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "date": "2026-05-14"}]}, {"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "sharedReleaseKeys": ["0", "1"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "date": "2026-06-18"}, {"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "date": "2026-05-14"}]}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "date": "2026-06-18"}]}, {"teamId": "data-platform", "teamName": "Marketplace Intelligence Platform", "sharedReleaseKeys": ["0", "1"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of driver earnings clarity and trust improvements aimed at moving driver earnings per active hour and driver retention through cleaner earnings explanations, lower compliance surprises, and faster support routing.", "date": "2026-06-18"}, {"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of airport and reserve reliability improvements aimed at moving ETA accuracy and request-to-trip conversion, anchored in better constrained-location dispatch, scheduling confidence, and trip-state communication across rider and driver surfaces.", "date": "2026-05-14"}]}], "explicitRelationships": [{"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "data-platform", "teamName": "Marketplace Intelligence Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

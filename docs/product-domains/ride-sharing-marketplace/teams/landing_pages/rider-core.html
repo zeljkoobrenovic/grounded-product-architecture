@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "rider-core", "name": "Rider Core Experience", "teamType": "stream-aligned", "teamFamilyId": "rider-growth", "teamFamilyName": "Rider Growth and Trip Experience", "orgLayer": "team", "mission": "Own request flow, trip tracking, receipts, and core rider conversion.", "primaryCustomers": [{"customerId": "ridu", "customerName": "Urban Time-Sensitive Rider", "relatedKPIs": ["Reliable on-time trip completion", "Request-to-trip conversion", "Repeat rider frequency"], "icon": "customer.png"}], "ownedProductBricks": [{"brickId": "trip", "brickName": "Trip Request and Intent Capture", "brick": {"id": "trip", "name": "Trip Request and Intent Capture", "type": "full-stack", "description": "Captures rider pickup, destination, timing, ride type, account context, and trip intent before dispatch begins.", "domain": "Rider Demand and Trip Experience", "group": "request-and-choice", "internalModules": [{"title": "Request Capture and Validation", "description": "Validates trip inputs, eligibility, and account context.", "type": "service"}, {"title": "Product Selection Logic", "description": "Determines which ride products and variants are offered for the requested trip.", "type": "policy"}, {"title": "Request State Management", "description": "Stores request lifecycle state before, during, and after dispatch.", "type": "service"}], "interfaces": [{"title": "Trip Request API", "description": "API for creating and updating ride requests.", "type": "api"}, {"title": "Request UX Surface", "description": "Rider-facing request flow in mobile surfaces.", "type": "ui"}, {"title": "Request Events", "description": "Event stream for request creation, update, and cancellation.", "type": "event"}], "brickDependencies": [{"targetBrickId": "pric", "type": "pricing", "interface": "Quote API", "description": "Depends on Dynamic Pricing and Incentives for upfront fare and offer packaging."}, {"targetBrickId": "ridp", "type": "identity", "interface": "Profile and Payment API", "description": "Depends on Rider Identity, Wallet and Payments for account, wallet, and billing context."}], "externalSystemsThisBrickDependsOn": [{"system": "Maps and geocoding providers", "type": "data", "interface": "Location API", "description": "Supports address normalization and pickup or destination interpretation."}], "externalSystemsDependingOnThisBrick": [{"system": "Rider applications", "type": "channel-consumer", "interface": "Trip Request API", "description": "Rider clients depend on request capture to start trips."}], "icon": "trip.png"}}, {"brickId": "ridp", "brickName": "Rider Identity, Wallet and Payments", "brick": {"id": "ridp", "name": "Rider Identity, Wallet and Payments", "type": "full-stack", "description": "Manages rider identity, family or business profiles, payment methods, receipts, refunds, and billing context.", "domain": "Rider Demand and Trip Experience", "group": "live-trip-and-confidence", "internalModules": [{"title": "Identity and Account Graph", "description": "Stores rider, family, and business profile relationships.", "type": "service"}, {"title": "Wallet and Billing Controls", "description": "Manages payment instruments, billing preferences, and receipts.", "type": "service"}, {"title": "Receipts and Adjustments", "description": "Supports refunds, credits, and post-trip billing corrections.", "type": "operations"}], "interfaces": [{"title": "Identity and Billing API", "description": "API for profile, payment, and receipt workflows.", "type": "api"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Payment processors", "type": "financial-partner", "interface": "Payments API", "description": "Handles charge authorization, settlement, and refund execution."}], "externalSystemsDependingOnThisBrick": [], "icon": "ridp.png"}}], "supportingProductBricks": [{"brickId": "etar", "brickName": "ETA, Maps and Routing Intelligence", "brick": {"id": "etar", "name": "ETA, Maps and Routing Intelligence", "type": "service", "description": "Provides route estimation, pickup guidance, airport geofencing, and live map context for riders and drivers.", "domain": "Rider Demand and Trip Experience", "group": "live-trip-and-confidence", "internalModules": [{"title": "ETA Prediction Models", "description": "Predicts pickup and trip arrival timing.", "type": "service"}, {"title": "Pickup and Drop-off Guidance", "description": "Optimizes exact meeting points and constrained-zone handoffs.", "type": "service"}, {"title": "Geofence and Zone Rules", "description": "Maintains airport, venue, and city-specific navigation constraints.", "type": "policy"}], "interfaces": [{"title": "ETA and Routing API", "description": "Returns routes, ETAs, and pickup guidance.", "type": "api"}, {"title": "Live Location Events", "description": "Emits location and route progress events.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Maps and traffic providers", "type": "data", "interface": "Routing APIs", "description": "Provides road network, traffic, and geospatial context."}], "externalSystemsDependingOnThisBrick": [], "icon": "etar.png"}}, {"brickId": "safe", "brickName": "Safety and Trust Operations", "brick": {"id": "safe", "name": "Safety and Trust Operations", "type": "full-stack", "description": "Provides identity assurance, trip safety tooling, trust controls, incident workflows, and abuse or fraud prevention.", "domain": "Platform Foundation", "group": "trust-and-identity", "internalModules": [{"title": "Identity and Verification Controls", "description": "Supports driver identity, PIN verification, and risk controls.", "type": "service"}, {"title": "On-trip Safety Toolkit", "description": "Exposes emergency, tracking, and incident-help features.", "type": "full-stack"}, {"title": "Incident and Trust Workflow Engine", "description": "Routes support, fraud, and safety events into operational case handling.", "type": "operations"}], "interfaces": [{"title": "Safety Toolkit API", "description": "API for rider and driver safety features.", "type": "api"}, {"title": "Trust Operations Workspace", "description": "Operator interface for incident and trust workflows.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Emergency and security partners", "type": "partner", "interface": "Escalation API", "description": "Supports live safety escalation and emergency workflows."}], "externalSystemsDependingOnThisBrick": [], "icon": "safe.png"}}], "dependsOnTeamIds": ["marketplace-dispatch", "trust-ops", "data-platform"], "defaultSupportingTeamIds": ["marketplace-dispatch", "trust-ops"], "staffing": {"suggestedHeadcount": 10, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own rider conversion and repeat-usage outcomes."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery and engineering execution."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build request, account, and receipt services."}, {"role": "Mobile Engineer", "count": 2, "responsibility": "Build rider mobile flows."}, {"role": "Product Designer", "count": 1, "responsibility": "Design rider booking and trip experiences."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own release confidence and regression coverage."}, {"role": "Data Analyst", "count": 1, "responsibility": "Track conversion and trip-quality performance."}]}, "groupId": "rider-growth", "groupName": "Rider Growth and Trip Experience", "groupLeadership": {}, "dependsOnTeams": [{"id": "marketplace-dispatch", "name": "Marketplace Dispatch and Pricing", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}, {"id": "trust-ops", "name": "Safety and Trust Operations", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}, {"id": "data-platform", "name": "Marketplace Intelligence Platform", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}], "defaultSupportingTeams": [{"id": "marketplace-dispatch", "name": "Marketplace Dispatch and Pricing", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}, {"id": "trust-ops", "name": "Safety and Trust Operations", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls"}], "relatedInitiatives": [], "relatedReleases": [], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "reserve-airport", "teamName": "Reserve and Airport Experience", "sharedBrickIds": ["etar"], "sharedBrickNames": ["ETA, Maps and Routing Intelligence"]}, {"teamId": "driver-growth", "teamName": "Driver Growth and Earnings", "sharedBrickIds": ["safe"], "sharedBrickNames": ["Safety and Trust Operations"]}, {"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "sharedBrickIds": ["etar"], "sharedBrickNames": ["ETA, Maps and Routing Intelligence"]}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "sharedBrickIds": ["ridp", "safe"], "sharedBrickNames": ["Rider Identity, Wallet and Payments", "Safety and Trust Operations"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "data-platform", "teamName": "Marketplace Intelligence Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "marketplace-dispatch", "teamName": "Marketplace Dispatch and Pricing", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "trust-ops", "teamName": "Safety and Trust Operations", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

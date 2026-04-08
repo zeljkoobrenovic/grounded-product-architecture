@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "partner-platform-baas-webhook-event-distribution", "name": "Partner Platform & BaaS - Webhook Event Distribution", "teamType": "stream-aligned", "teamFamilyId": "partner-platform-baas", "teamFamilyName": "Partner Platform & BaaS", "orgLayer": "team", "mission": "Own partner onboarding, tenancy, APIs, and embedded-finance integration workflows. This team specifically focuses on webhook event distribution.", "primaryCustomers": [{"customerId": "embedded_finance_director", "customerName": "VP Product for Embedded Finance and BaaS", "relatedKPIs": ["Partner Go-Live Time", "Partner Activation", "Operating Reliability", "Partner Platform ARR"], "icon": "embedded_finance_director.png"}], "ownedProductBricks": [{"brickId": "waed", "brickName": "Webhook and Event Distribution", "brick": {"id": "waed", "name": "Webhook and Event Distribution", "type": "integration", "description": "Allows partners to react to real-time banking events without polling or manual reconciliation.", "domain": "Fintechs, BaaS, and Embedded Finance Providers", "group": "enable-partners-to-launch-financial-products-through-apis", "internalModules": [{"title": "Contract and Mapping Layer", "description": "Maintains schemas, field mappings, and versioned contracts used by Webhook and Event Distribution.", "type": "integration"}, {"title": "Transformation and Routing Engine", "description": "Transforms messages and routes requests or events through Webhook and Event Distribution.", "type": "service"}, {"title": "Access and Observability Controls", "description": "Applies authentication, throttling, retry handling, and monitoring for Webhook and Event Distribution.", "type": "platform"}], "interfaces": [{"title": "Inbound API", "description": "API entry point used to submit requests or payloads into Webhook and Event Distribution.", "type": "api"}, {"title": "Outbound Event Feed", "description": "Event or webhook surface used by Webhook and Event Distribution to publish downstream updates.", "type": "event"}, {"title": "Partner Connector Surface", "description": "Connector interface for external systems exchanging data through Webhook and Event Distribution.", "type": "integration"}], "brickDependencies": [{"targetBrickId": "caam", "type": "identity", "interface": "Authentication API", "description": "Depends on Customer and Account Migration Toolkit to provide identity capabilities required by Webhook and Event Distribution."}, {"targetBrickId": "waac", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Workflow Automation and Case Management to provide operations capabilities required by Webhook and Event Distribution."}, {"targetBrickId": "ooas", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Operational Observability and SLA Monitoring to provide analytics capabilities required by Webhook and Event Distribution."}], "externalSystemsThisBrickDependsOn": [{"system": "Partner Platforms", "type": "external-integration", "interface": "Partner API", "description": "Webhook and Event Distribution exchanges operational data with external partner platforms and adjacent systems."}, {"system": "Event Broker or Messaging Infrastructure", "type": "platform", "interface": "Event / Queue Interface", "description": "Webhook and Event Distribution depends on messaging infrastructure to route and buffer integration traffic."}], "externalSystemsDependingOnThisBrick": [{"system": "Internal Domain Services", "type": "integration-consumer", "interface": "API / Event Gateway", "description": "Internal services depend on Webhook and Event Distribution to connect reliably with partner systems and adjacent platforms."}, {"system": "Partner Operations", "type": "partner-consumer", "interface": "Connector Interface", "description": "Partner-facing workflows depend on Webhook and Event Distribution to exchange data and synchronize state with external parties."}], "icon": "waed.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["risk-finance-platform-reusable-templates"], "defaultSupportingTeamIds": ["risk-finance-platform-reusable-templates"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Each customer-facing team is intentionally kept near 10 FTE so it can own a narrow journey or capability slice with clear accountability and fast decision-making.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own the roadmap, prioritization, and KPI tradeoffs for this team scope."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution, staffing, and engineering health for the team."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction and guard long-term architecture quality across the team scope."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build and evolve backend services, business logic, and integration points."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build user-facing workflows and maintain a high-quality interaction model."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own regression depth, release confidence, and automated quality coverage."}, {"role": "Product Designer", "count": 1, "responsibility": "Shape the end-to-end workflow, information architecture, and UX quality."}]}, "relatedDiscoveries": [], "groupId": "product-lines-partner-platform-baas", "groupName": "Product Lines / Partner Platform & BaaS", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architectural coherence, and craft leadership for the teams in this group.", "leadershipModel": "Directors own the operating cadence and people leadership for the group; principal roles work as group-level individual contributors who coach teams and shape standards.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own the strategy, portfolio tradeoffs, and outcome accountability across the team group.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, system health, and staffing quality across the team group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Principal Engineer", "count": 1, "responsibility": "Provide cross-team architecture leadership and coach senior engineers across the group.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive cross-team UX coherence, workflow quality, and design standards across the group.", "reportsTo": "Product Director"}, {"role": "Principal Data / Domain Architect", "count": 1, "responsibility": "Shape the shared domain model, KPI semantics, and analytical consistency used by the teams in the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "risk-finance-platform-reusable-templates", "name": "Risk, Finance & Expansion Platform - Reusable Templates", "teamType": "platform", "groupId": "shared-platform", "groupName": "Shared Platform"}], "defaultSupportingTeams": [{"id": "risk-finance-platform-reusable-templates", "name": "Risk, Finance & Expansion Platform - Reusable Templates", "teamType": "platform", "groupId": "shared-platform", "groupName": "Shared Platform"}], "relatedInitiatives": [], "relatedReleases": [], "dependencyData": {"sharedProductBricks": [], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

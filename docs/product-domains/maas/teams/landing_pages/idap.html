@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "idap", "name": "Arrive Identity and API Platform", "teamType": "pltg", "teamFamilyId": "pltg", "teamFamilyName": "Platform, Data and Reliability", "orgLayer": "team", "mission": "Own identity, external API governance, and developer-platform capabilities reused across Arrive products.", "ownedProductBricks": [{"brickId": "idam", "brickName": "Identity & Access Management", "brick": {"id": "idam", "name": "Identity & Access Management", "type": "service", "description": "Provides authentication, authorization, tenancy, and role control across operators, partners, businesses, and internal teams.", "domain": "platform_foundation", "group": "shared-platform-services", "internalModules": [{"title": "Identity and Policy Engine", "description": "Authenticates actors, evaluates access policies, and manages trust rules for Identity & Access Management.", "type": "identity"}, {"title": "Entitlements and Lifecycle Management", "description": "Manages roles, permissions, account state, and lifecycle changes within Identity & Access Management.", "type": "service"}, {"title": "Audit and Compliance Controls", "description": "Records security-relevant actions and compliance evidence produced by Identity & Access Management.", "type": "compliance"}], "interfaces": [{"title": "Authentication API", "description": "Programmatic interface for authentication, authorization, or account checks exposed by Identity & Access Management.", "type": "api"}, {"title": "Administration Console", "description": "Operational interface for managing identity settings and access policies in Identity & Access Management.", "type": "ui"}, {"title": "Audit Event Stream", "description": "Event interface that publishes security and compliance signals from Identity & Access Management.", "type": "event"}], "brickDependencies": [{"targetBrickId": "devi", "type": "service-api", "interface": "Service API", "description": "Depends on Device & Validator Management to provide service capabilities required by Identity & Access Management."}, {"targetBrickId": "part", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Partner API, Sandbox & Certification to provide integration capabilities required by Identity & Access Management."}, {"targetBrickId": "opal", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Operator Analytics & Control Tower to provide analytics capabilities required by Identity & Access Management."}], "externalSystemsThisBrickDependsOn": [{"system": "Corporate Identity Provider", "type": "identity", "interface": "OIDC / SAML", "description": "Identity & Access Management integrates with an external identity provider for authentication and federation."}, {"system": "Compliance Screening Services", "type": "compliance", "interface": "Screening API", "description": "Identity & Access Management may call external screening or verification services to enforce trust and compliance checks."}], "externalSystemsDependingOnThisBrick": [{"system": "Customer and Operator Applications", "type": "identity-consumer", "interface": "Authentication / Authorization Interface", "description": "Internal and external applications depend on Identity & Access Management for authentication, authorization, and trusted account state."}, {"system": "Audit and Risk Systems", "type": "control-consumer", "interface": "Audit / Event Interface", "description": "Governance and risk systems depend on Identity & Access Management to emit trust, access, and compliance events."}], "icon": "idam.png"}}, {"brickId": "apix", "brickName": "API Gateway & Developer Experience", "brick": {"id": "apix", "name": "API Gateway & Developer Experience", "type": "integration", "description": "Provides secure external APIs, throttling, keys, lifecycle governance, and developer-facing controls.", "domain": "platform_foundation", "group": "shared-platform-services", "internalModules": [{"title": "Contract and Mapping Layer", "description": "Maintains schemas, field mappings, and versioned contracts used by API Gateway & Developer Experience.", "type": "integration"}, {"title": "Transformation and Routing Engine", "description": "Transforms messages and routes requests or events through API Gateway & Developer Experience.", "type": "service"}, {"title": "Access and Observability Controls", "description": "Applies authentication, throttling, retry handling, and monitoring for API Gateway & Developer Experience.", "type": "platform"}], "interfaces": [{"title": "Inbound API", "description": "API entry point used to submit requests or payloads into API Gateway & Developer Experience.", "type": "api"}, {"title": "Outbound Event Feed", "description": "Event or webhook surface used by API Gateway & Developer Experience to publish downstream updates.", "type": "event"}, {"title": "Partner Connector Surface", "description": "Connector interface for external systems exchanging data through API Gateway & Developer Experience.", "type": "integration"}], "brickDependencies": [{"targetBrickId": "acce", "type": "identity", "interface": "Authentication API", "description": "Depends on Access, Permit & LPR Control to provide identity capabilities required by API Gateway & Developer Experience."}, {"targetBrickId": "resv", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Reservations & Permit Inventory to provide operations capabilities required by API Gateway & Developer Experience."}, {"targetBrickId": "opal", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Operator Analytics & Control Tower to provide analytics capabilities required by API Gateway & Developer Experience."}], "externalSystemsThisBrickDependsOn": [{"system": "Partner Platforms", "type": "external-integration", "interface": "Partner API", "description": "API Gateway & Developer Experience exchanges operational data with external partner platforms and adjacent systems."}, {"system": "Event Broker or Messaging Infrastructure", "type": "platform", "interface": "Event / Queue Interface", "description": "API Gateway & Developer Experience depends on messaging infrastructure to route and buffer integration traffic."}], "externalSystemsDependingOnThisBrick": [{"system": "Internal Domain Services", "type": "integration-consumer", "interface": "API / Event Gateway", "description": "Internal services depend on API Gateway & Developer Experience to connect reliably with partner systems and adjacent platforms."}, {"system": "Partner Operations", "type": "partner-consumer", "interface": "Connector Interface", "description": "Partner-facing workflows depend on API Gateway & Developer Experience to exchange data and synchronize state with external parties."}], "icon": "apix.png"}}], "staffing": {"suggestedHeadcount": 8, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own platform priorities and reuse decisions."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead platform delivery and reliability."}, {"role": "Backend / Platform Engineer", "count": 4, "responsibility": "Build identity, authz, and API management services."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own platform regression and contract testing."}, {"role": "Developer Experience Specialist", "count": 1, "responsibility": "Improve documentation, onboarding, and platform usability."}]}, "groupId": "pltg", "groupName": "Arrive Platform, Data and Reliability", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, platform architecture coherence, and reliability leadership for shared Arrive foundations.", "leadershipModel": "Directors own the platform portfolio and service posture while group-level staff roles align API, data, ledger, workflow, and reliability standards across teams.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own shared-platform priorities, adoption tradeoffs, and service-level expectations across the domain.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, platform resilience, and staffing quality across shared foundations.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Staff Engineer", "count": 1, "responsibility": "Provide cross-team technical direction for APIs, eventing, data, ledger, and workflow platforms.", "reportsTo": "Engineering Director"}, {"role": "Principal Platform Architect", "count": 1, "responsibility": "Shape shared platform contracts, interoperability patterns, and engineering standards used by all teams.", "reportsTo": "Engineering Director"}, {"role": "Principal Reliability / Data Architect", "count": 1, "responsibility": "Drive reliability posture, telemetry semantics, and analytical consistency across the shared platform estate.", "reportsTo": "Engineering Director"}]}, "primaryCustomers": [], "supportingProductBricks": [], "dependsOnTeams": [], "defaultSupportingTeams": [], "relatedInitiatives": [], "relatedReleases": [], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": []}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

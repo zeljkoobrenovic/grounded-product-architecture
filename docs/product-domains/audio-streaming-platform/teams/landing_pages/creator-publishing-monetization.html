@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "creator-publishing-monetization", "name": "Creator Publishing & Monetization", "teamType": "stream-aligned", "teamFamilyId": "creator-growth", "teamFamilyName": "Creator Growth", "orgLayer": "team", "mission": "Own publishing, audience growth, creator interaction, analytics, and monetization for podcasters and video creators.", "primaryCustomers": [{"customerId": "cg3-p1", "customerName": "Podcast / Video Creator", "relatedKPIs": ["Monthly monetizable consumption hours", "Partner Program eligibility rate"], "icon": "creator.png"}], "ownedProductBricks": [{"brickId": "publ", "brickName": "Podcast & Video Publishing", "brick": {"id": "publ", "name": "Podcast & Video Publishing", "type": "full-stack", "description": "Show, episode, and video publishing workflows with episode state, distribution, and quality controls.", "domain": "Creator Growth", "group": "Creator publishing and monetization", "internalModules": [{"title": "Creator publishing pipeline", "description": "Handles ingestion, validation, scheduling, and publish state.", "type": "service"}], "interfaces": [{"title": "Publishing studio UI", "description": "Creator-facing publish and manage experience for audio and video episodes.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "cata", "type": "metadata", "interface": "Content graph write APIs", "description": "Creates and updates canonical show and episode metadata."}, {"targetBrickId": "trst", "type": "policy", "interface": "Policy checks", "description": "Uses trust and policy screening on published content."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "publ.png"}}, {"brickId": "grow", "brickName": "Audience Growth & Fan Interaction", "brick": {"id": "grow", "name": "Audience Growth & Fan Interaction", "type": "full-stack", "description": "Comments, clips, follows, prompts, and recirculation tools that help creators grow their audience inside Spotify.", "domain": "Creator Growth", "group": "Creator publishing and monetization", "internalModules": [{"title": "Creator engagement services", "description": "Supports comments, clips, CTAs, and follow loops.", "type": "full-stack"}], "interfaces": [{"title": "Fan interaction UI", "description": "Creator-side controls and listener-side interaction points.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "sosh", "type": "social", "interface": "Follow and sharing graph", "description": "Uses shared follow and sharing state."}, {"targetBrickId": "crea", "type": "feedback", "interface": "Show analytics", "description": "Uses engagement insight to tune growth actions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "grow.png"}}, {"brickId": "monet", "brickName": "Creator Monetization", "brick": {"id": "monet", "name": "Creator Monetization", "type": "full-stack", "description": "Creator-side monetization across subscriptions, ad participation, Premium video revenue, and payout eligibility.", "domain": "Creator Growth", "group": "Creator publishing and monetization", "internalModules": [{"title": "Creator earnings orchestration", "description": "Calculates monetization eligibility, earnings state, and payout configuration.", "type": "service"}], "interfaces": [{"title": "Monetization manager UI", "description": "Creator-facing monetization setup and earnings views.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "bill", "type": "financial", "interface": "Revenue settlement", "description": "Uses financial ledger and payout workflows."}, {"targetBrickId": "camp", "type": "inventory", "interface": "Ad delivery participation", "description": "Depends on ad demand and monetizable inventory state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "monet.png"}}, {"brickId": "crea", "brickName": "Creator Audience Analytics", "brick": {"id": "crea", "name": "Creator Audience Analytics", "type": "full-stack", "description": "Audience funnel, conversion, plays, and monetization analytics for podcasters, video creators, and publishers.", "domain": "Creator Growth", "group": "Creator publishing and monetization", "internalModules": [{"title": "Creator funnel analytics service", "description": "Aggregates discovery, consumption, and conversion views for creators.", "type": "service"}], "interfaces": [{"title": "Creator analytics UI", "description": "Dashboards for audience growth, retention, and monetization performance.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "intel", "type": "data", "interface": "Shared analytics layer", "description": "Depends on shared event processing and experiment data."}, {"targetBrickId": "play", "type": "events", "interface": "Consumption telemetry", "description": "Uses listen and watch activity streams."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "crea.png"}}], "supportingProductBricks": [{"brickId": "camp", "brickName": "Campaign Booking & Delivery", "brick": {"id": "camp", "name": "Campaign Booking & Delivery", "type": "full-stack", "description": "Campaign trafficking, inventory allocation, pacing, delivery, and creative serving across Spotify ad surfaces.", "domain": "Monetization and Foundations", "group": "Advertising and commerce", "internalModules": [{"title": "Ad delivery engine", "description": "Handles pacing, inventory decisions, and creative serving.", "type": "service"}], "interfaces": [{"title": "Campaign management UI", "description": "Advertiser and operator interface for campaign launch and control.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "adsg", "type": "targeting", "interface": "Audience segments", "description": "Uses audience selection and eligibility outputs."}, {"targetBrickId": "play", "type": "inventory", "interface": "Playable session inventory", "description": "Uses eligible listener sessions and inventory opportunities."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "camp.png"}}, {"brickId": "bill", "brickName": "Billing & Revenue Operations", "brick": {"id": "bill", "name": "Billing & Revenue Operations", "type": "full-stack", "description": "Subscription billing, advertiser invoicing, creator settlements, credits, and core revenue ledger operations.", "domain": "Monetization and Foundations", "group": "Advertising and commerce", "internalModules": [{"title": "Revenue ledger and settlement engine", "description": "Maintains billable events, invoices, settlements, and adjustment state.", "type": "service"}], "interfaces": [{"title": "Billing operations UI", "description": "Internal and customer-facing billing views for subscriptions and campaigns.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "identity", "interface": "Account billing ownership", "description": "Uses account and organization ownership models."}, {"targetBrickId": "righ", "type": "rights", "interface": "Royalty and entitlement rules", "description": "Uses rights and royalty rules for settlements."}], "externalSystemsThisBrickDependsOn": [{"name": "Payment processors", "description": "External payment and settlement providers."}], "externalSystemsDependingOnThisBrick": [], "icon": "bill.png"}}], "dependsOnTeamIds": ["ad-platform", "revenue-systems", "identity-trust-platform"], "defaultSupportingTeamIds": ["ad-platform", "revenue-systems", "identity-trust-platform"], "staffing": {"suggestedHeadcount": 10, "staffingGuidance": "Keep creator publishing, engagement, and monetization close enough that creator economics stay legible.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own creator growth and earnings roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build publishing, monetization, and analytics services."}, {"role": "Frontend Engineer", "count": 2, "responsibility": "Build creator studio surfaces."}, {"role": "Product Designer", "count": 1, "responsibility": "Design creator workflows."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own publishing and revenue-flow reliability."}, {"role": "Data Analyst", "count": 1, "responsibility": "Own creator funnel diagnostics."}]}, "groupId": "creator-growth", "groupName": "Creator Growth", "groupLeadership": [], "dependsOnTeams": [{"id": "ad-platform", "name": "Ad Platform", "teamType": "stream-aligned", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}, {"id": "revenue-systems", "name": "Revenue Systems", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}, {"id": "identity-trust-platform", "name": "Identity & Trust Platform", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}], "defaultSupportingTeams": [{"id": "ad-platform", "name": "Ad Platform", "teamType": "stream-aligned", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}, {"id": "revenue-systems", "name": "Revenue Systems", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}, {"id": "identity-trust-platform", "name": "Identity & Trust Platform", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}], "relatedInitiatives": [{"date": "2026-05-08", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-02-14", "description": "Archived initiative to improve earnings visibility during the initial creator monetization rollout.", "landingPageKey": "5", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-26", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "playback-premium", "teamName": "Playback & Premium", "sharedBrickIds": ["bill"], "sharedBrickNames": ["Billing & Revenue Operations"]}, {"teamId": "ad-platform", "teamName": "Ad Platform", "sharedBrickIds": ["camp"], "sharedBrickNames": ["Campaign Booking & Delivery"]}, {"teamId": "revenue-systems", "teamName": "Revenue Systems", "sharedBrickIds": ["bill"], "sharedBrickNames": ["Billing & Revenue Operations"]}], "sharedInitiatives": [{"teamId": "ad-platform", "teamName": "Ad Platform", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "date": "2026-05-08"}]}, {"teamId": "measurement-and-insights", "teamName": "Measurement & Insights", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "date": "2026-05-08"}]}, {"teamId": "revenue-systems", "teamName": "Revenue Systems", "sharedInitiativeKeys": ["1", "5"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "date": "2026-05-08"}, {"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Archived initiative to improve earnings visibility during the initial creator monetization rollout.", "date": "2026-02-14"}]}], "sharedReleases": [{"teamId": "ad-platform", "teamName": "Ad Platform", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "date": "2026-06-26"}]}, {"teamId": "measurement-and-insights", "teamName": "Measurement & Insights", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "date": "2026-06-26"}]}, {"teamId": "revenue-systems", "teamName": "Revenue Systems", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "date": "2026-06-26"}]}], "explicitRelationships": [{"teamId": "ad-platform", "teamName": "Ad Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "revenue-systems", "teamName": "Revenue Systems", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "identity-trust-platform", "teamName": "Identity & Trust Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "ad-platform", "teamName": "Ad Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "revenue-systems", "teamName": "Revenue Systems", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "identity-trust-platform", "teamName": "Identity & Trust Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

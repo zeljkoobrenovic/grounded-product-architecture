@@ -21,6 +21,8 @@ domains_root = '../../_config/product-domains/'
 domain, _ = load_domain_args()
 imports_root = '../../_templates/_imports/'
 common_style = open(imports_root + 'common/style.html').read()
+tabs_style = open(imports_root + 'tabs/style.html').read()
+tabs_script = open(imports_root + 'tabs/script.html').read()
 breadcrumbs_style = open(imports_root + 'breadcrumbs/style.html').read()
 breadcrumbs_script = open(imports_root + 'breadcrumbs/script.html').read()
 
@@ -261,6 +263,8 @@ def render_list(template_root, template_name, docs_folder, domain, placeholder_n
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         html_file.write(template
+                        .replace('${tabs_style}', tabs_style)
+                        .replace('${tabs_script}', tabs_script)
                         .replace('${breadcrumbs_style}', breadcrumbs_style)
                         .replace('${breadcrumbs_script}', breadcrumbs_script)
                         .replace('${breadcrumbs}', render_breadcrumbs(template_root, breadcrumbs_template_name, {
@@ -293,6 +297,8 @@ def render_landing_pages(template_root, docs_folder, template_placeholder, templ
         with open(landing_page_file, 'w') as html_file:
             html_file.write(template
                             .replace('${common_style}', common_style)
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
                             .replace('${breadcrumbs}', render_breadcrumbs(template_root, 'landing_page_breadcrumbs.json', {

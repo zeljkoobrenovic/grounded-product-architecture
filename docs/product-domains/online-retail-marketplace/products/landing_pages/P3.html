@@ -16,6 +16,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -41,38 +82,6 @@
 
         a {
             text-decoration: none;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .review-image {
@@ -526,40 +535,74 @@
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'InterfacesTab';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('InterfacesTab')" onhashchange="initTab('InterfacesTab')">
+<div id="breadcrumbs" style="margin-left: 20px"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs" style="margin-left: 20px"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 
 <script>
     const config = {"domains": [{"id": "online-retail-marketplace", "name": "Online Retail Marketplace", "description": "The Online Retail Marketplace domain covers the shopper, Prime, seller, fulfillment, retail-media, trust, and shared-commerce workflows required to run a scaled digital retail marketplace across first-party retail, third-party supply, subscriptions, and advertising."}]};
-    const all_products = [{"id": "P1", "name": "Amazon Shopping Experience", "type": "B2C", "primaryCustomers": [{"id": "cg1-p1", "name": "Prime Household Shopper", "icon": "shopper.png"}], "interfaces": [{"type": "web", "name": "Amazon Web Store", "description": "Primary browser experience for search, detail, cart, checkout, order management, and Prime surfaces.", "users": ["Shoppers"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Amazon iOS App", "description": "Native iOS shopping, tracking, and account experience.", "users": ["Shoppers"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Amazon Android App", "description": "Native Android shopping and post-purchase experience.", "users": ["Shoppers"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Resolves shopping intent into a confident shortlist.", "mappingType": "inferred_from_product_definition", "brickId": "sear", "brickName": "Search, Browse & Facets"}, {"whyNeeded": "Supports product decision making through richer product and offer context.", "mappingType": "inferred_from_product_definition", "brickId": "pdet", "brickName": "Product Detail Experience"}, {"whyNeeded": "Handles purchase staging and low-friction conversion.", "mappingType": "inferred_from_product_definition", "brickId": "cart", "brickName": "Cart & Save-for-Later"}, {"whyNeeded": "Completes payment and delivery selection.", "mappingType": "inferred_from_product_definition", "brickId": "chec", "brickName": "Checkout & Payments"}]}, {"id": "P2", "name": "Prime Delivery and Post-Purchase Experience", "type": "B2C", "primaryCustomers": [{"id": "cg1-p1", "name": "Prime Household Shopper", "icon": "shopper.png"}], "interfaces": [{"type": "web", "name": "Orders and Returns Console", "description": "Browser flows for tracking, delivery updates, returns, refunds, and customer care.", "users": ["Shoppers"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Shows order state and exceptions clearly after purchase.", "mappingType": "inferred_from_product_definition", "brickId": "orde", "brickName": "Order Management & Tracking"}, {"whyNeeded": "Controls delivery promise reliability and last-mile outcomes.", "mappingType": "inferred_from_product_definition", "brickId": "deli", "brickName": "Delivery Promise & Last Mile"}, {"whyNeeded": "Handles reverse logistics and issue recovery.", "mappingType": "inferred_from_product_definition", "brickId": "retu", "brickName": "Returns, Refunds & Exchanges"}]}, {"id": "P3", "name": "Seller Central and Catalog Growth", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}], "interfaces": [{"type": "web", "name": "Seller Central", "description": "Browser workspace for seller onboarding, listing, pricing, inventory, reporting, and account health.", "users": ["Sellers", "Brands"], "availabilityHorizon": "live"}, {"type": "web", "name": "Brand Registry", "description": "Brand control, authenticity, and content-protection workflows.", "users": ["Brands"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Sets up merchant identity, compliance, and account state.", "mappingType": "inferred_from_product_definition", "brickId": "sell", "brickName": "Seller Identity & Onboarding"}, {"whyNeeded": "Gets products into a launchable and conversion-ready state.", "mappingType": "inferred_from_product_definition", "brickId": "list", "brickName": "Catalog Authoring & Content"}, {"whyNeeded": "Maintains buyability through price and offer health.", "mappingType": "inferred_from_product_definition", "brickId": "price", "brickName": "Pricing & Offer Health"}, {"whyNeeded": "Shows sales, traffic, and economics clearly enough to guide action.", "mappingType": "inferred_from_product_definition", "brickId": "repr", "brickName": "Retail Analytics & Reporting"}]}, {"id": "P4", "name": "Fulfillment by Amazon and Merchant Operations", "type": "B2B", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}], "interfaces": [{"type": "web", "name": "FBA Workflow Console", "description": "Inbound, inventory, storage, fee, and settlement workflows for seller operations teams.", "users": ["Sellers", "Operations teams"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Manages inbounding and network handoff into Amazon fulfillment.", "mappingType": "inferred_from_product_definition", "brickId": "fbao", "brickName": "FBA Inbound & Operations"}, {"whyNeeded": "Improves stock availability and working-capital decisions.", "mappingType": "inferred_from_product_definition", "brickId": "invn", "brickName": "Inventory Planning & Availability"}, {"whyNeeded": "Explains fees, reserves, and settlement behavior.", "mappingType": "inferred_from_product_definition", "brickId": "payo", "brickName": "Payouts, Fees & Ledgers"}]}, {"id": "P5", "name": "Amazon Ads and Retail Media", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Performance Brand Marketer", "icon": "advertiser.png"}], "interfaces": [{"type": "web", "name": "Amazon Ads Console", "description": "Campaign creation, optimization, and reporting for Sponsored Ads and DSP.", "users": ["Advertisers", "Agencies", "Brand teams"], "availabilityHorizon": "live"}, {"type": "api", "name": "Measurement and Reporting APIs", "description": "Programmatic surfaces for campaign reporting and workflow automation.", "users": ["Agencies", "Enterprise advertisers"], "availabilityHorizon": "emerging"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Captures high-intent demand near purchase.", "mappingType": "inferred_from_product_definition", "brickId": "spon", "brickName": "Sponsored Ads & Retail Media"}, {"whyNeeded": "Supports audience extension and retargeting beyond direct sponsored placement.", "mappingType": "inferred_from_product_definition", "brickId": "dspm", "brickName": "DSP Audiences & Programmatic Media"}, {"whyNeeded": "Links media activity to retail performance and budget allocation.", "mappingType": "inferred_from_product_definition", "brickId": "anal", "brickName": "Commerce Measurement & Experimentation"}]}];
-    const product = {"id": "P3", "name": "Seller Central and Catalog Growth", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}], "interfaces": [{"type": "web", "name": "Seller Central", "description": "Browser workspace for seller onboarding, listing, pricing, inventory, reporting, and account health.", "users": ["Sellers", "Brands"], "availabilityHorizon": "live"}, {"type": "web", "name": "Brand Registry", "description": "Brand control, authenticity, and content-protection workflows.", "users": ["Brands"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Sets up merchant identity, compliance, and account state.", "mappingType": "inferred_from_product_definition", "brickId": "sell", "brickName": "Seller Identity & Onboarding"}, {"whyNeeded": "Gets products into a launchable and conversion-ready state.", "mappingType": "inferred_from_product_definition", "brickId": "list", "brickName": "Catalog Authoring & Content"}, {"whyNeeded": "Maintains buyability through price and offer health.", "mappingType": "inferred_from_product_definition", "brickId": "price", "brickName": "Pricing & Offer Health"}, {"whyNeeded": "Shows sales, traffic, and economics clearly enough to guide action.", "mappingType": "inferred_from_product_definition", "brickId": "repr", "brickName": "Retail Analytics & Reporting"}]};
+    const all_products = [{"id": "p1", "name": "Amazon Shopping Experience", "type": "B2C", "primaryCustomers": [{"id": "cg1-p1", "name": "Prime Household Shopper", "icon": "shopper.png"}], "interfaces": [{"type": "web", "name": "Amazon Web Store", "description": "Primary browser experience for search, detail, cart, checkout, order management, and Prime surfaces.", "users": ["Shoppers"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Amazon iOS App", "description": "Native iOS shopping, tracking, and account experience.", "users": ["Shoppers"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Amazon Android App", "description": "Native Android shopping and post-purchase experience.", "users": ["Shoppers"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Resolves shopping intent into a confident shortlist.", "mappingType": "inferred_from_product_definition", "brickId": "sear", "brickName": "Search, Browse & Facets"}, {"whyNeeded": "Supports product decision making through richer product and offer context.", "mappingType": "inferred_from_product_definition", "brickId": "pdet", "brickName": "Product Detail Experience"}, {"whyNeeded": "Handles purchase staging and low-friction conversion.", "mappingType": "inferred_from_product_definition", "brickId": "cart", "brickName": "Cart & Save-for-Later"}, {"whyNeeded": "Completes payment and delivery selection.", "mappingType": "inferred_from_product_definition", "brickId": "chec", "brickName": "Checkout & Payments"}]}, {"id": "p2", "name": "Prime Delivery and Post-Purchase Experience", "type": "B2C", "primaryCustomers": [{"id": "cg1-p1", "name": "Prime Household Shopper", "icon": "shopper.png"}], "interfaces": [{"type": "web", "name": "Orders and Returns Console", "description": "Browser flows for tracking, delivery updates, returns, refunds, and customer care.", "users": ["Shoppers"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Shows order state and exceptions clearly after purchase.", "mappingType": "inferred_from_product_definition", "brickId": "orde", "brickName": "Order Management & Tracking"}, {"whyNeeded": "Controls delivery promise reliability and last-mile outcomes.", "mappingType": "inferred_from_product_definition", "brickId": "deli", "brickName": "Delivery Promise & Last Mile"}, {"whyNeeded": "Handles reverse logistics and issue recovery.", "mappingType": "inferred_from_product_definition", "brickId": "retu", "brickName": "Returns, Refunds & Exchanges"}]}, {"id": "p3", "name": "Seller Central and Catalog Growth", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}], "interfaces": [{"type": "web", "name": "Seller Central", "description": "Browser workspace for seller onboarding, listing, pricing, inventory, reporting, and account health.", "users": ["Sellers", "Brands"], "availabilityHorizon": "live"}, {"type": "web", "name": "Brand Registry", "description": "Brand control, authenticity, and content-protection workflows.", "users": ["Brands"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Sets up merchant identity, compliance, and account state.", "mappingType": "inferred_from_product_definition", "brickId": "sell", "brickName": "Seller Identity & Onboarding"}, {"whyNeeded": "Gets products into a launchable and conversion-ready state.", "mappingType": "inferred_from_product_definition", "brickId": "list", "brickName": "Catalog Authoring & Content"}, {"whyNeeded": "Maintains buyability through price and offer health.", "mappingType": "inferred_from_product_definition", "brickId": "price", "brickName": "Pricing & Offer Health"}, {"whyNeeded": "Shows sales, traffic, and economics clearly enough to guide action.", "mappingType": "inferred_from_product_definition", "brickId": "repr", "brickName": "Retail Analytics & Reporting"}]}, {"id": "p4", "name": "Fulfillment by Amazon and Merchant Operations", "type": "B2B", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}], "interfaces": [{"type": "web", "name": "FBA Workflow Console", "description": "Inbound, inventory, storage, fee, and settlement workflows for seller operations teams.", "users": ["Sellers", "Operations teams"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Manages inbounding and network handoff into Amazon fulfillment.", "mappingType": "inferred_from_product_definition", "brickId": "fbao", "brickName": "FBA Inbound & Operations"}, {"whyNeeded": "Improves stock availability and working-capital decisions.", "mappingType": "inferred_from_product_definition", "brickId": "invn", "brickName": "Inventory Planning & Availability"}, {"whyNeeded": "Explains fees, reserves, and settlement behavior.", "mappingType": "inferred_from_product_definition", "brickId": "payo", "brickName": "Payouts, Fees & Ledgers"}]}, {"id": "p5", "name": "Amazon Ads and Retail Media", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Performance Brand Marketer", "icon": "advertiser.png"}], "interfaces": [{"type": "web", "name": "Amazon Ads Console", "description": "Campaign creation, optimization, and reporting for Sponsored Ads and DSP.", "users": ["Advertisers", "Agencies", "Brand teams"], "availabilityHorizon": "live"}, {"type": "api", "name": "Measurement and Reporting APIs", "description": "Programmatic surfaces for campaign reporting and workflow automation.", "users": ["Agencies", "Enterprise advertisers"], "availabilityHorizon": "emerging"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Captures high-intent demand near purchase.", "mappingType": "inferred_from_product_definition", "brickId": "spon", "brickName": "Sponsored Ads & Retail Media"}, {"whyNeeded": "Supports audience extension and retargeting beyond direct sponsored placement.", "mappingType": "inferred_from_product_definition", "brickId": "dspm", "brickName": "DSP Audiences & Programmatic Media"}, {"whyNeeded": "Links media activity to retail performance and budget allocation.", "mappingType": "inferred_from_product_definition", "brickId": "anal", "brickName": "Commerce Measurement & Experimentation"}]}];
+    const product = {"id": "p3", "name": "Seller Central and Catalog Growth", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}], "interfaces": [{"type": "web", "name": "Seller Central", "description": "Browser workspace for seller onboarding, listing, pricing, inventory, reporting, and account health.", "users": ["Sellers", "Brands"], "availabilityHorizon": "live"}, {"type": "web", "name": "Brand Registry", "description": "Brand control, authenticity, and content-protection workflows.", "users": ["Brands"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Sets up merchant identity, compliance, and account state.", "mappingType": "inferred_from_product_definition", "brickId": "sell", "brickName": "Seller Identity & Onboarding"}, {"whyNeeded": "Gets products into a launchable and conversion-ready state.", "mappingType": "inferred_from_product_definition", "brickId": "list", "brickName": "Catalog Authoring & Content"}, {"whyNeeded": "Maintains buyability through price and offer health.", "mappingType": "inferred_from_product_definition", "brickId": "price", "brickName": "Pricing & Offer Health"}, {"whyNeeded": "Shows sales, traffic, and economics clearly enough to guide action.", "mappingType": "inferred_from_product_definition", "brickId": "repr", "brickName": "Retail Analytics & Reporting"}]};
 </script>
 <div id="Navigation"></div>
 <div style="margin: 0 20px">
@@ -572,9 +615,9 @@
             <button class="tablinks" id="tab_BricksTab" onclick="openTab('BricksTab')"></button>
         </div>
 
-        <div id="InterfacesTab" class="tabcontent" style="padding: 10px"><div id="Interfaces"></div></div>
-        <div id="ChannelsTab" class="tabcontent" style="padding: 10px"><div id="Channels"></div></div>
-        <div id="BricksTab" class="tabcontent" style="padding: 10px"><div id="Bricks"></div></div>
+        <div id="tab_content_InterfacesTab" class="tabcontent" style="padding: 10px"><div id="Interfaces"></div></div>
+        <div id="tab_content_ChannelsTab" class="tabcontent" style="padding: 10px"><div id="Channels"></div></div>
+        <div id="tab_content_BricksTab" class="tabcontent" style="padding: 10px"><div id="Bricks"></div></div>
     </div>
 </div>
 

@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "seller-growth", "name": "Seller Growth", "teamType": "stream-aligned", "teamFamilyId": "seller-platform", "teamFamilyName": "Seller Platform", "orgLayer": "team", "mission": "Own seller onboarding, listing, brand protection, pricing, and retail reporting.", "primaryCustomers": [{"customerId": "cg2-p1", "customerName": "Marketplace Seller / Brand Operator", "relatedKPIs": ["Profitable shipped sales growth", "New ASIN launch readiness SLA"], "icon": "seller.png"}], "ownedProductBricks": [{"brickId": "sell", "brickName": "Seller Identity & Onboarding", "brick": {"id": "sell", "name": "Seller Identity & Onboarding", "type": "full-stack", "description": "Merchant registration, compliance, tax, verification, and account health setup.", "domain": "Seller Growth", "group": "Commercial control", "internalModules": [{"title": "Merchant onboarding workflow", "description": "Guides merchants through registration and verification.", "type": "service"}], "interfaces": [{"title": "Seller onboarding UI", "description": "Account setup and compliance workflow.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "identity", "interface": "Account platform", "description": "Uses shared account and entitlement primitives."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "sell.png"}}, {"brickId": "list", "brickName": "Catalog Authoring & Content", "brick": {"id": "list", "name": "Catalog Authoring & Content", "type": "full-stack", "description": "Product content creation, variation logic, compliance attributes, and listing publication.", "domain": "Seller Growth", "group": "Commercial control", "internalModules": [{"title": "Catalog authoring pipeline", "description": "Validates, enriches, and publishes listing content.", "type": "service"}], "interfaces": [{"title": "Listing management UI", "description": "Seller listing authoring and maintenance workflows.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "bran", "type": "policy", "interface": "Brand authorization checks", "description": "Uses brand rights and ownership controls."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "list.png"}}, {"brickId": "bran", "brickName": "Brand Protection & Registry", "brick": {"id": "bran", "name": "Brand Protection & Registry", "type": "full-stack", "description": "Brand ownership, counterfeit defense, content control, and enforcement workflows.", "domain": "Seller Growth", "group": "Commercial control", "internalModules": [{"title": "Brand rights and enforcement", "description": "Handles ownership validation and enforcement actions.", "type": "service"}], "interfaces": [{"title": "Brand Registry UI", "description": "Brand ownership and abuse-resolution workflow.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "auth", "type": "composition", "interface": "Authenticity policy services", "description": "Uses authenticity signals and listing trust controls."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "bran.png"}}, {"brickId": "price", "brickName": "Pricing & Offer Health", "brick": {"id": "price", "name": "Pricing & Offer Health", "type": "full-stack", "description": "Price competitiveness, buy box monitoring, offer health, and suppression awareness.", "domain": "Seller Growth", "group": "Commercial control", "internalModules": [{"title": "Offer health monitoring", "description": "Tracks buyability, competitiveness, and suppression issues.", "type": "service"}], "interfaces": [{"title": "Offer health UI", "description": "Seller-facing offer competitiveness and buyability console.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "repr", "type": "feedback", "interface": "Retail performance analytics", "description": "Uses performance feedback for commercial prioritization."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "price.png"}}, {"brickId": "repr", "brickName": "Retail Analytics & Reporting", "brick": {"id": "repr", "name": "Retail Analytics & Reporting", "type": "full-stack", "description": "Operational and commercial reporting across traffic, conversion, sales, inventory, and campaign performance.", "domain": "Seller Growth", "group": "Operations and demand generation", "internalModules": [{"title": "Commerce reporting model", "description": "Builds seller and advertiser-facing performance reporting views.", "type": "service"}], "interfaces": [{"title": "Reporting UI", "description": "Operational and commercial analytics surface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "anal", "type": "platform", "interface": "Measurement warehouse", "description": "Uses shared measurement and experiment data."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "repr.png"}}], "supportingProductBricks": [{"brickId": "risk", "brickName": "Fraud, Abuse & Policy Controls", "brick": {"id": "risk", "name": "Fraud, Abuse & Policy Controls", "type": "full-stack", "description": "Abuse detection, policy enforcement, account-risk controls, and trust interventions across commerce flows.", "domain": "Marketplace Foundations", "group": "Trust and platform control", "internalModules": [{"title": "Risk scoring and enforcement", "description": "Scores and enforces abuse, fraud, and policy risks.", "type": "service"}], "interfaces": [{"title": "Policy decision APIs", "description": "Trust and risk decisions for dependent workflows.", "type": "api"}], "brickDependencies": [{"targetBrickId": "iden", "type": "identity", "interface": "Account graph", "description": "Uses identity state to evaluate risk patterns."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "risk.png"}}], "dependsOnTeamIds": ["trust-and-identity", "commerce-intelligence"], "defaultSupportingTeamIds": ["trust-and-identity", "commerce-intelligence"], "staffing": {"suggestedHeadcount": 10, "staffingGuidance": "Keep seller commercial controls and reporting in one decision loop.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own seller growth roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build seller, catalog, and reporting services."}, {"role": "Frontend Engineer", "count": 2, "responsibility": "Build operational consoles."}, {"role": "Product Designer", "count": 1, "responsibility": "Design seller workflows."}, {"role": "Data Analyst", "count": 1, "responsibility": "Connect reporting changes to seller outcomes."}]}, "groupId": "seller-platform", "groupName": "Seller Platform", "groupLeadership": [], "dependsOnTeams": [{"id": "trust-and-identity", "name": "Trust and Identity", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "commerce-intelligence", "name": "Commerce Intelligence", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "trust-and-identity", "name": "Trust and Identity", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "commerce-intelligence", "name": "Commerce Intelligence", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [{"date": "2026-05-08", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-05-01", "description": "Focused investment to improve seller launch readiness, stock predictability, and fulfillment attach on strategic assortments.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-27", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-06-13", "description": "Release focused on improving launch readiness, inventory alerts, and FBA planning for priority sellers.", "landingPageKey": "1", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "returns-resolution", "teamName": "Returns and Resolution", "sharedBrickIds": ["risk"], "sharedBrickNames": ["Fraud, Abuse & Policy Controls"]}, {"teamId": "ads-performance", "teamName": "Ads Performance", "sharedBrickIds": ["price"], "sharedBrickNames": ["Pricing & Offer Health"]}, {"teamId": "measurement-insights", "teamName": "Measurement and Insights", "sharedBrickIds": ["repr"], "sharedBrickNames": ["Retail Analytics & Reporting"]}, {"teamId": "trust-and-identity", "teamName": "Trust and Identity", "sharedBrickIds": ["bran", "risk"], "sharedBrickNames": ["Brand Protection & Registry", "Fraud, Abuse & Policy Controls"]}], "sharedInitiatives": [{"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve seller launch readiness, stock predictability, and fulfillment attach on strategic assortments.", "date": "2026-05-01"}]}, {"teamId": "ads-performance", "teamName": "Ads Performance", "sharedInitiativeKeys": ["0"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "date": "2026-05-08"}]}, {"teamId": "measurement-insights", "teamName": "Measurement and Insights", "sharedInitiativeKeys": ["0"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "date": "2026-05-08"}]}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "sharedInitiativeKeys": ["0", "1"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Focused investment to improve advertiser outcome confidence through retail-aware campaign controls and clearer measurement workflows.", "date": "2026-05-08"}, {"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve seller launch readiness, stock predictability, and fulfillment attach on strategic assortments.", "date": "2026-05-01"}]}], "sharedReleases": [{"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on improving launch readiness, inventory alerts, and FBA planning for priority sellers.", "date": "2026-06-13"}]}, {"teamId": "ads-performance", "teamName": "Ads Performance", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "date": "2026-06-27"}]}, {"teamId": "measurement-insights", "teamName": "Measurement and Insights", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "date": "2026-06-27"}]}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "sharedReleaseKeys": ["0", "1"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on reducing wasted spend from retail mismatches and improving advertiser measurement clarity.", "date": "2026-06-27"}, {"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on improving launch readiness, inventory alerts, and FBA planning for priority sellers.", "date": "2026-06-13"}]}], "explicitRelationships": [{"teamId": "trust-and-identity", "teamName": "Trust and Identity", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-and-identity", "teamName": "Trust and Identity", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

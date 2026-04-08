@@ -65,6 +65,8 @@ def create_overview_docs(domain, docs_folder, customers, insights):
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()
         html_file.write(template
+                        .replace('${tabs_style}', tabs_style)
+                        .replace('${tabs_script}', tabs_script)
                         .replace('${breadcrumbs_style}', breadcrumbs_style)
                         .replace('${breadcrumbs_script}', breadcrumbs_script)
                         .replace('${breadcrumbs}', render_breadcrumbs('index_breadcrumbs.json', {
@@ -117,6 +119,8 @@ def create_landing_pages(customers, docs_folder, activity_data, insights):
             with open(landing_page_file, 'w') as html_file:
                 html_file.write(template
                                 .replace('${common_style}', common_style)
+                                .replace('${tabs_style}', tabs_style)
+                                .replace('${tabs_script}', tabs_script)
                                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                                 .replace('${breadcrumbs_script}', breadcrumbs_script)
                                 .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {

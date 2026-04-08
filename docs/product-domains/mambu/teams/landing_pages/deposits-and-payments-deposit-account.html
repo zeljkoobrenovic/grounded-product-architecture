@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "deposits-and-payments-deposit-account", "name": "Deposits & Payments - Deposit Account", "teamType": "stream-aligned", "teamFamilyId": "deposits-and-payments", "teamFamilyName": "Deposits & Payments", "orgLayer": "team", "mission": "Own deposit accounts, wallets, and payment capabilities used by banks launching modern retail propositions. This team specifically focuses on deposit account.", "primaryCustomers": [{"customerId": "bank_transform_exec", "customerName": "Chief Digital Banking / Transformation Executive", "relatedKPIs": ["Time to Launch New Banking Products", "Delivery Speed", "Operational Safety", "Annual Platform Value Realized"], "icon": "bank_transform_exec.png"}, {"customerId": "embedded_finance_director", "customerName": "VP Product for Embedded Finance and BaaS", "relatedKPIs": ["Partner Go-Live Time", "Partner Activation", "Operating Reliability", "Partner Platform ARR"], "icon": "embedded_finance_director.png"}], "ownedProductBricks": [{"brickId": "dpaa", "brickName": "Deposit Product and Account Lifecycle Management", "brick": {"id": "dpaa", "name": "Deposit Product and Account Lifecycle Management", "type": "service", "description": "Handles account opening, funding, interest, fees, statements, and lifecycle states for deposit propositions.", "domain": "Banks and Credit Unions", "group": "launch-differentiated-deposit-and-payment-propositions-faster", "internalModules": [{"title": "Identity and Policy Engine", "description": "Authenticates actors, evaluates access policies, and manages trust rules for Deposit Product and Account Lifecycle Management.", "type": "identity"}, {"title": "Entitlements and Lifecycle Management", "description": "Manages roles, permissions, account state, and lifecycle changes within Deposit Product and Account Lifecycle Management.", "type": "service"}, {"title": "Audit and Compliance Controls", "description": "Records security-relevant actions and compliance evidence produced by Deposit Product and Account Lifecycle Management.", "type": "compliance"}], "interfaces": [{"title": "Authentication API", "description": "Programmatic interface for authentication, authorization, or account checks exposed by Deposit Product and Account Lifecycle Management.", "type": "api"}, {"title": "Administration Console", "description": "Operational interface for managing identity settings and access policies in Deposit Product and Account Lifecycle Management.", "type": "ui"}, {"title": "Audit Event Stream", "description": "Event interface that publishes security and compliance signals from Deposit Product and Account Lifecycle Management.", "type": "event"}], "brickDependencies": [{"targetBrickId": "cadm", "type": "service-api", "interface": "Service API", "description": "Depends on Collections and Delinquency Management to provide service capabilities required by Deposit Product and Account Lifecycle Management."}, {"targetBrickId": "agai", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on API Gateway and Integration Layer to provide integration capabilities required by Deposit Product and Account Lifecycle Management."}, {"targetBrickId": "ooas", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Operational Observability and SLA Monitoring to provide analytics capabilities required by Deposit Product and Account Lifecycle Management."}], "externalSystemsThisBrickDependsOn": [{"system": "Corporate Identity Provider", "type": "identity", "interface": "OIDC / SAML", "description": "Deposit Product and Account Lifecycle Management integrates with an external identity provider for authentication and federation."}, {"system": "Compliance Screening Services", "type": "compliance", "interface": "Screening API", "description": "Deposit Product and Account Lifecycle Management may call external screening or verification services to enforce trust and compliance checks."}], "externalSystemsDependingOnThisBrick": [{"system": "Customer and Operator Applications", "type": "identity-consumer", "interface": "Authentication / Authorization Interface", "description": "Internal and external applications depend on Deposit Product and Account Lifecycle Management for authentication, authorization, and trusted account state."}, {"system": "Audit and Risk Systems", "type": "control-consumer", "interface": "Audit / Event Interface", "description": "Governance and risk systems depend on Deposit Product and Account Lifecycle Management to emit trust, access, and compliance events."}], "icon": "dpaa.png"}}], "supportingProductBricks": [{"brickId": "cpdr", "brickName": "Composable Product Domain Reuse", "brick": {"id": "cpdr", "name": "Composable Product Domain Reuse", "type": "development", "description": "Lets the provider assemble new partner propositions from reusable lending, deposits, and payments modules.", "domain": "Fintechs, BaaS, and Embedded Finance Providers", "group": "expand-the-platform-from-one-product-line-to-a-broader-banking-stack", "internalModules": [{"title": "Runtime Foundation", "description": "Provides the shared architectural runtime and core engineering foundations behind Composable Product Domain Reuse.", "type": "platform"}, {"title": "Developer Tooling and Templates", "description": "Accelerates implementation, testing, and service creation through Composable Product Domain Reuse.", "type": "development"}, {"title": "Standards and Release Controls", "description": "Enforces engineering standards, guardrails, and release quality in Composable Product Domain Reuse.", "type": "governance"}], "interfaces": [{"title": "Developer Portal", "description": "Interface where engineers discover standards, templates, and capabilities provided by Composable Product Domain Reuse.", "type": "ui"}, {"title": "Automation API", "description": "API used by pipelines and tooling to interact with the platform services behind Composable Product Domain Reuse.", "type": "api"}, {"title": "Platform Event Feed", "description": "Event interface exposing platform lifecycle and automation signals from Composable Product Domain Reuse.", "type": "event"}], "brickDependencies": [{"targetBrickId": "agai", "type": "integration", "interface": "Inbound API", "description": "Depends on API Gateway and Integration Layer to provide integration capabilities required by Composable Product Domain Reuse."}, {"targetBrickId": "cadm", "type": "operations-control", "interface": "Operations Workspace", "description": "Depends on Collections and Delinquency Management to provide service capabilities required by Composable Product Domain Reuse."}, {"targetBrickId": "ooas", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Operational Observability and SLA Monitoring to provide analytics capabilities required by Composable Product Domain Reuse."}], "externalSystemsThisBrickDependsOn": [{"system": "CI/CD and Source Control Platforms", "type": "engineering-platform", "interface": "Automation API", "description": "Composable Product Domain Reuse integrates with delivery pipelines and source-control systems to enable engineering workflows."}, {"system": "Runtime Infrastructure Platforms", "type": "infrastructure", "interface": "Provisioning API", "description": "Composable Product Domain Reuse depends on runtime infrastructure and platform services to provision and operate software."}], "externalSystemsDependingOnThisBrick": [{"system": "Engineering Teams", "type": "developer-consumer", "interface": "Developer Portal / Automation API", "description": "Engineering teams depend on Composable Product Domain Reuse for reusable platform capabilities, standards, and automation."}, {"system": "Delivery Pipelines", "type": "platform-consumer", "interface": "Platform Event / Provisioning Interface", "description": "Build and deployment pipelines depend on Composable Product Domain Reuse to provision, validate, and operate software foundations."}], "icon": "cpdr.png"}}], "dependsOnTeamIds": ["risk-finance-platform-reusable-templates", "partner-platform-baas-partner-onboarding-tenant"], "defaultSupportingTeamIds": ["risk-finance-platform-reusable-templates", "partner-platform-baas-partner-onboarding-tenant"], "staffing": {"suggestedHeadcount": 10, "staffingGuidance": "Each customer-facing team is intentionally kept near 10 FTE so it can own a narrow journey or capability slice with clear accountability and fast decision-making.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own the roadmap, prioritization, and KPI tradeoffs for this team scope."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution, staffing, and engineering health for the team."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction and guard long-term architecture quality across the team scope."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build and evolve backend services, business logic, and integration points."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build user-facing workflows and maintain a high-quality interaction model."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own regression depth, release confidence, and automated quality coverage."}, {"role": "Product Designer", "count": 1, "responsibility": "Shape the end-to-end workflow, information architecture, and UX quality."}, {"role": "Data / Domain Specialist", "count": 1, "responsibility": "Bridge product decisions with domain semantics, data quality, and operational fit."}]}, "relatedDiscoveries": [], "groupId": "product-lines-deposits-and-payments", "groupName": "Product Lines / Deposits & Payments", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architectural coherence, and craft leadership for the teams in this group.", "leadershipModel": "Directors own the operating cadence and people leadership for the group; principal roles work as group-level individual contributors who coach teams and shape standards.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own the strategy, portfolio tradeoffs, and outcome accountability across the team group.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, system health, and staffing quality across the team group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Principal Engineer", "count": 1, "responsibility": "Provide cross-team architecture leadership and coach senior engineers across the group.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive cross-team UX coherence, workflow quality, and design standards across the group.", "reportsTo": "Product Director"}, {"role": "Principal Data / Domain Architect", "count": 1, "responsibility": "Shape the shared domain model, KPI semantics, and analytical consistency used by the teams in the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "risk-finance-platform-reusable-templates", "name": "Risk, Finance & Expansion Platform - Reusable Templates", "teamType": "platform", "groupId": "shared-platform", "groupName": "Shared Platform"}, {"id": "partner-platform-baas-partner-onboarding-tenant", "name": "Partner Platform & BaaS - Partner Onboarding Tenant", "teamType": "stream-aligned", "groupId": "product-lines-partner-platform-baas", "groupName": "Product Lines / Partner Platform & BaaS"}], "defaultSupportingTeams": [{"id": "risk-finance-platform-reusable-templates", "name": "Risk, Finance & Expansion Platform - Reusable Templates", "teamType": "platform", "groupId": "shared-platform", "groupName": "Shared Platform"}, {"id": "partner-platform-baas-partner-onboarding-tenant", "name": "Partner Platform & BaaS - Partner Onboarding Tenant", "teamType": "stream-aligned", "groupId": "product-lines-partner-platform-baas", "groupName": "Product Lines / Partner Platform & BaaS"}], "relatedInitiatives": [], "relatedReleases": [], "dependencyData": {"sharedProductBricks": [{"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "sharedBrickIds": ["cpdr"], "sharedBrickNames": ["Composable Product Domain Reuse"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "partner-platform-baas-partner-onboarding-tenant", "teamName": "Partner Platform & BaaS - Partner Onboarding Tenant", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "partner-platform-baas-partner-onboarding-tenant", "teamName": "Partner Platform & BaaS - Partner Onboarding Tenant", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "purchase-conversion", "name": "Purchase Conversion", "teamType": "stream-aligned", "teamFamilyId": "shopper-growth", "teamFamilyName": "Shopper Growth", "orgLayer": "team", "mission": "Own detail-page confidence, cart, checkout, and promotion conversion.", "primaryCustomers": [{"customerId": "cg1-p1", "customerName": "Prime Household Shopper", "relatedKPIs": ["Detail-to-order conversion", "Checkout success rate"], "icon": "shopper.png"}], "ownedProductBricks": [{"brickId": "pdet", "brickName": "Product Detail Experience", "brick": {"id": "pdet", "name": "Product Detail Experience", "type": "full-stack", "description": "Product detail pages, offer presentation, compatibility guidance, and structured comparison logic.", "domain": "Shopper Experience", "group": "Discovery and evaluation", "internalModules": [{"title": "Offer and content assembly", "description": "Assembles product content, seller offers, shipping promise, and merchandising context.", "type": "service"}], "interfaces": [{"title": "Detail page UI", "description": "Primary product decision surface for shoppers.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "revi", "type": "composition", "interface": "Review and Q&A feed", "description": "Uses reviews and answer signals in purchase decisions."}, {"targetBrickId": "deli", "type": "context", "interface": "Promise calculation API", "description": "Uses delivery promise state in final decision-making."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pdet.png"}}, {"brickId": "revi", "brickName": "Reviews, Ratings & Q&A", "brick": {"id": "revi", "name": "Reviews, Ratings & Q&A", "type": "full-stack", "description": "Ratings, reviews, question-answer content, and shopper trust feedback loops.", "domain": "Shopper Experience", "group": "Discovery and evaluation", "internalModules": [{"title": "Review moderation and ranking", "description": "Ranks and moderates review content and quality signals.", "type": "service"}], "interfaces": [{"title": "Review surfaces", "description": "Review summaries, filters, and question-answer views.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "risk", "type": "policy", "interface": "Abuse and integrity policy checks", "description": "Uses fraud and abuse controls to defend review integrity."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "revi.png"}}, {"brickId": "cart", "brickName": "Cart & Save-for-Later", "brick": {"id": "cart", "name": "Cart & Save-for-Later", "type": "full-stack", "description": "Cart state, save-for-later, and basket-building utilities prior to checkout.", "domain": "Shopper Experience", "group": "Conversion and service", "internalModules": [{"title": "Cart state orchestration", "description": "Maintains line items, availability, and basket promotions.", "type": "service"}], "interfaces": [{"title": "Cart UI", "description": "Basket review and purchase staging surface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "price", "type": "data", "interface": "Offer and pricing API", "description": "Uses current price and buyability state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "cart.png"}}, {"brickId": "chec", "brickName": "Checkout & Payments", "brick": {"id": "chec", "name": "Checkout & Payments", "type": "full-stack", "description": "Checkout, payment authorization, address selection, and order placement flow.", "domain": "Shopper Experience", "group": "Conversion and service", "internalModules": [{"title": "Payment and order placement", "description": "Handles transaction completion and order creation.", "type": "service"}], "interfaces": [{"title": "Checkout UI", "description": "Purchase completion surface across web and mobile.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "identity", "interface": "Account and entitlement API", "description": "Uses saved addresses, payment methods, and household entitlements."}, {"targetBrickId": "deli", "type": "context", "interface": "Promise API", "description": "Uses final delivery options and promise state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chec.png"}}, {"brickId": "deal", "brickName": "Deals, Promotions & Merchandising", "brick": {"id": "deal", "name": "Deals, Promotions & Merchandising", "type": "full-stack", "description": "Promotional placements, deal eligibility, badges, and merchandising programs that stimulate conversion.", "domain": "Shopper Experience", "group": "Discovery and evaluation", "internalModules": [{"title": "Promotion orchestration", "description": "Schedules, validates, and merchandises promotional offers.", "type": "service"}], "interfaces": [{"title": "Promotion surfaces", "description": "Deal pages, badging, and offer modules.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "price", "type": "context", "interface": "Offer health API", "description": "Uses price and buyability status to ensure offer quality."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "deal.png"}}], "supportingProductBricks": [{"brickId": "auth", "brickName": "Authenticity & Listing Trust", "brick": {"id": "auth", "name": "Authenticity & Listing Trust", "type": "full-stack", "description": "Listing legitimacy, authenticity signals, and trust controls that protect shoppers and brands.", "domain": "Marketplace Foundations", "group": "Trust and platform control", "internalModules": [{"title": "Listing trust engine", "description": "Scores content legitimacy, brand authorization, and authenticity indicators.", "type": "service"}], "interfaces": [{"title": "Trust signal APIs", "description": "Product and offer trust signal interfaces.", "type": "api"}], "brickDependencies": [{"targetBrickId": "bran", "type": "rights", "interface": "Brand ownership graph", "description": "Uses brand-rights and enforcement context."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}], "dependsOnTeamIds": ["trust-and-identity"], "defaultSupportingTeamIds": ["trust-and-identity"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Keep detail and checkout decisions close enough that trust and conversion tradeoffs stay visible.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own detail and checkout roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build product, cart, and checkout services."}, {"role": "Frontend / Mobile Engineer", "count": 2, "responsibility": "Build decision and checkout surfaces."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Protect conversion reliability."}, {"role": "Product Designer", "count": 1, "responsibility": "Design detail and purchase flows."}]}, "groupId": "shopper-growth", "groupName": "Shopper Growth", "groupLeadership": [], "dependsOnTeams": [{"id": "trust-and-identity", "name": "Trust and Identity", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "trust-and-identity", "name": "Trust and Identity", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [{"date": "2026-04-15", "description": "Focused investment to improve broad-intent shopping conversion through search refinement, grounded product comparison, and higher-confidence discovery.", "landingPageKey": "3", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedReleases": [], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "trust-and-identity", "teamName": "Trust and Identity", "sharedBrickIds": ["auth"], "sharedBrickNames": ["Authenticity & Listing Trust"]}], "sharedInitiatives": [{"teamId": "shopping-discovery", "teamName": "Shopping Discovery", "sharedInitiativeKeys": ["3"], "sharedInitiatives": [{"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Focused investment to improve broad-intent shopping conversion through search refinement, grounded product comparison, and higher-confidence discovery.", "date": "2026-04-15"}]}, {"teamId": "commerce-intelligence", "teamName": "Commerce Intelligence", "sharedInitiativeKeys": ["3"], "sharedInitiatives": [{"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Focused investment to improve broad-intent shopping conversion through search refinement, grounded product comparison, and higher-confidence discovery.", "date": "2026-04-15"}]}], "sharedReleases": [], "explicitRelationships": [{"teamId": "trust-and-identity", "teamName": "Trust and Identity", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-and-identity", "teamName": "Trust and Identity", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

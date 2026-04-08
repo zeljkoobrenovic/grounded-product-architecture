@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -238,39 +279,6 @@
             margin-bottom: 8px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
-        }
-
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -424,8 +432,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onhashchange="initTab('HomeTab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 8px">
     <tr>
         <td style="vertical-align: top; padding-top: 0px">
@@ -441,13 +509,13 @@
 
 <div style="margin-left: 12px">
     <div class="tab" id="TabBar"></div>
-    <div id="HomeTab" class="tabcontent"></div>
+    <div id="tab_content_HomeTab" class="tabcontent"></div>
     <div id="KRTabsContainer"></div>
-    <div id="DiscoveriesTab" class="tabcontent"></div>
+    <div id="tab_content_DiscoveriesTab" class="tabcontent"></div>
 </div>
 
 <script>
-    const pageData = {"id": "bike-mobility-2024-q2-knowledge-worker-commuter", "title": "2024-Q2 Remove the biggest rider conversion blockers", "objective": "Make the first rider journey understandable enough that employees who are curious about the benefit actually complete an order.", "okrStyle": "objective-and-key-results", "status": "archived", "period": {"quarter": "2024-Q2", "startDate": "2024-04-01", "endDate": "2024-06-30", "type": "archived"}, "linkedCustomers": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "customerGroup": "Employees and Riders"}], "linkedCustomerKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "CO-RIDER-B1-C1", "kpiName": "Quote-to-order conversion", "description": "Share of riders who convert from configured quote to confirmed order.", "unit": "%", "kind": "customer", "targetDirection": "increase"}, {"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "CO-RIDER-B1-C1-L1", "kpiName": "Time to first confirmed order", "description": "Elapsed time between first visit and completed order.", "unit": "hours", "kind": "customer", "targetDirection": "decrease"}], "linkedBusinessKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "BO-RIDER-TOP", "kpiName": "Active riders", "description": "Count of riders with a live contract and recent activity.", "unit": "count", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Quote-to-order conversion", "kind": "customer", "targetDirection": "increase", "target": "Convert more interested employees into confirmed bike orders", "baseline": "Many riders hesitate when cost and process are not clear", "statement": "Increase quote-to-order conversion by clarifying savings, contract steps, and dealer handover expectations.", "executingTeams": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "role": "executing", "intent": "Lead the work to improve quote-to-order conversion by clarifying savings, contract steps, and dealer handover expectations via Bike Catalog & Recommendation and Order Orchestration & Checkout."}], "supportingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for quote-to-order conversion, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}, {"teamId": "bike-partner-network", "teamName": "Bike Partner Network", "role": "supporting", "intent": "Support the KR by contributing capability for quote-to-order conversion, aligned with its focus on own dealer onboarding, coverage, stock readiness, and handover planning via Dealer & Service Partner Network Management and Stock, Availability & Handover Planning."}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for quote-to-order conversion, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2024-Q3 target", "date": "2024-09-30", "target": "Convert more interested employees into confirmed bike orders", "projectedValue": "Current estimate: Quote-to-order conversion moves far enough to show clear momentum toward convert more interested employees into confirmed bike orders, driven by increase quote-to-order conversion by clarifying savings, contract steps, and dealer handover expectations.", "confidence": "green"}, "target2": {"label": "2024-year-end target", "date": "2024-12-31", "target": "Convert more interested employees into confirmed bike orders", "projectedValue": "Current estimate: Quote-to-order conversion ends the horizon sustainably ahead of today's baseline, with convert more interested employees into confirmed bike orders holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-2", "metric": "Time to first confirmed order", "kind": "customer", "targetDirection": "decrease", "target": "Shorten the path from exploration to commitment", "baseline": "Order completion can stall across approval and partner handoffs", "statement": "Reduce time to first confirmed order by removing unnecessary steps and improving order-status transparency.", "executingTeams": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "role": "executing", "intent": "Lead the work to reduce time to first confirmed order by removing unnecessary steps and improving order-status transparency via Bike Catalog & Recommendation and Order Orchestration & Checkout."}], "supportingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for time to first confirmed order, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}, {"teamId": "bike-partner-network", "teamName": "Bike Partner Network", "role": "supporting", "intent": "Support the KR by contributing capability for time to first confirmed order, aligned with its focus on own dealer onboarding, coverage, stock readiness, and handover planning via Dealer & Service Partner Network Management and Stock, Availability & Handover Planning."}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for time to first confirmed order, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2024-Q3 target", "date": "2024-09-30", "target": "Shorten the path from exploration to commitment", "projectedValue": "Current estimate: Time to first confirmed order moves far enough to show clear momentum toward shorten the path from exploration to commitment, driven by reduce time to first confirmed order by removing unnecessary steps and improving order-status transparency.", "confidence": "green"}, "target2": {"label": "2024-year-end target", "date": "2024-12-31", "target": "Shorten the path from exploration to commitment", "projectedValue": "Current estimate: Time to first confirmed order ends the horizon sustainably lower than today's baseline, with shorten the path from exploration to commitment holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-3", "metric": "Active riders", "kind": "business", "targetDirection": "increase", "target": "Build a meaningful active rider base from the first major launch cohorts", "baseline": "Active-rider count still depends on successful first-order conversion", "statement": "Increase active riders by improving first-order completion and early confidence after delivery.", "executingTeams": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "role": "executing", "intent": "Lead the work to improve active riders by improving first-order completion and early confidence after delivery via Bike Catalog & Recommendation and Order Orchestration & Checkout."}], "supportingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for active riders, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}, {"teamId": "bike-partner-network", "teamName": "Bike Partner Network", "role": "supporting", "intent": "Support the KR by contributing capability for active riders, aligned with its focus on own dealer onboarding, coverage, stock readiness, and handover planning via Dealer & Service Partner Network Management and Stock, Availability & Handover Planning."}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for active riders, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2024-Q3 target", "date": "2024-09-30", "target": "Build a meaningful active rider base from the first major launch cohorts", "projectedValue": "Current estimate: Active riders moves far enough to show clear momentum toward build a meaningful active rider base from the first major launch cohorts, driven by increase active riders by improving first-order completion and early confidence after delivery.", "confidence": "green"}, "target2": {"label": "2024-year-end target", "date": "2024-12-31", "target": "Build a meaningful active rider base from the first major launch cohorts", "projectedValue": "Current estimate: Active riders ends the horizon sustainably ahead of today's baseline, with build a meaningful active rider base from the first major launch cohorts holding across the broader operating model.", "confidence": "green"}}], "linkedInitiatives": [], "linkedReleases": [], "sourceReferences": {"customers": "customers/customers.json", "initiatives": null, "releases": null}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-growth", "obj-leverage"], "inspiredByInsights": [{"insightId": "discovery-bike-mobility-2026-01-27-02-rider-conversion-and-trust", "insightTitle": "Rider conversion and trust: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's growth tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-01-10-01-employer-launch-model", "insightTitle": "Employer launch model: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's growth tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-01-01-partner-service-control-tower", "insightTitle": "Partner Service Control Tower: dealer network economics discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}], "landingPageId": "bike-mobility-2024-q2-knowledge-worker-commuter", "companyObjectiveRefs": [{"id": "obj-growth", "title": "Archive Create stronger customer pull and adoption", "landingPageId": "archived-obj-growth"}, {"id": "obj-leverage", "title": "Archive Turn product progress into economic leverage", "landingPageId": "archived-obj-leverage"}], "enrichedInitiatives": [], "enrichedReleases": []};
+    const pageData = {"id": "bike-mobility-2024-q2-knowledge-worker-commuter", "title": "2024-Q2 Remove the biggest rider conversion blockers", "objective": "Make the first rider journey understandable enough that employees who are curious about the benefit actually complete an order.", "okrStyle": "objective-and-key-results", "status": "archived", "period": {"quarter": "2024-Q2", "startDate": "2024-04-01", "endDate": "2024-06-30", "type": "archived"}, "linkedCustomers": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "customerGroup": "Employees and Riders"}], "linkedCustomerKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "co-rider-b1-c1", "kpiName": "Quote-to-order conversion", "description": "Share of riders who convert from configured quote to confirmed order.", "unit": "%", "kind": "customer", "targetDirection": "increase"}, {"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "co-rider-b1-c1-l1", "kpiName": "Time to first confirmed order", "description": "Elapsed time between first visit and completed order.", "unit": "hours", "kind": "customer", "targetDirection": "decrease"}], "linkedBusinessKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "bo-rider-top", "kpiName": "Active riders", "description": "Count of riders with a live contract and recent activity.", "unit": "count", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Quote-to-order conversion", "kind": "customer", "targetDirection": "increase", "target": "Convert more interested employees into confirmed bike orders", "baseline": "Many riders hesitate when cost and process are not clear", "statement": "Increase quote-to-order conversion by clarifying savings, contract steps, and dealer handover expectations.", "executingTeams": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "role": "executing", "intent": "Lead the work to improve quote-to-order conversion by clarifying savings, contract steps, and dealer handover expectations via Bike Catalog & Recommendation and Order Orchestration & Checkout."}], "supportingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for quote-to-order conversion, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}, {"teamId": "bike-partner-network", "teamName": "Bike Partner Network", "role": "supporting", "intent": "Support the KR by contributing capability for quote-to-order conversion, aligned with its focus on own dealer onboarding, coverage, stock readiness, and handover planning via Dealer & Service Partner Network Management and Stock, Availability & Handover Planning."}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for quote-to-order conversion, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2024-Q3 target", "date": "2024-09-30", "target": "Convert more interested employees into confirmed bike orders", "projectedValue": "Current estimate: Quote-to-order conversion moves far enough to show clear momentum toward convert more interested employees into confirmed bike orders, driven by increase quote-to-order conversion by clarifying savings, contract steps, and dealer handover expectations.", "confidence": "green"}, "target2": {"label": "2024-year-end target", "date": "2024-12-31", "target": "Convert more interested employees into confirmed bike orders", "projectedValue": "Current estimate: Quote-to-order conversion ends the horizon sustainably ahead of today's baseline, with convert more interested employees into confirmed bike orders holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-2", "metric": "Time to first confirmed order", "kind": "customer", "targetDirection": "decrease", "target": "Shorten the path from exploration to commitment", "baseline": "Order completion can stall across approval and partner handoffs", "statement": "Reduce time to first confirmed order by removing unnecessary steps and improving order-status transparency.", "executingTeams": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "role": "executing", "intent": "Lead the work to reduce time to first confirmed order by removing unnecessary steps and improving order-status transparency via Bike Catalog & Recommendation and Order Orchestration & Checkout."}], "supportingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for time to first confirmed order, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}, {"teamId": "bike-partner-network", "teamName": "Bike Partner Network", "role": "supporting", "intent": "Support the KR by contributing capability for time to first confirmed order, aligned with its focus on own dealer onboarding, coverage, stock readiness, and handover planning via Dealer & Service Partner Network Management and Stock, Availability & Handover Planning."}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for time to first confirmed order, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2024-Q3 target", "date": "2024-09-30", "target": "Shorten the path from exploration to commitment", "projectedValue": "Current estimate: Time to first confirmed order moves far enough to show clear momentum toward shorten the path from exploration to commitment, driven by reduce time to first confirmed order by removing unnecessary steps and improving order-status transparency.", "confidence": "green"}, "target2": {"label": "2024-year-end target", "date": "2024-12-31", "target": "Shorten the path from exploration to commitment", "projectedValue": "Current estimate: Time to first confirmed order ends the horizon sustainably lower than today's baseline, with shorten the path from exploration to commitment holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-3", "metric": "Active riders", "kind": "business", "targetDirection": "increase", "target": "Build a meaningful active rider base from the first major launch cohorts", "baseline": "Active-rider count still depends on successful first-order conversion", "statement": "Increase active riders by improving first-order completion and early confidence after delivery.", "executingTeams": [{"teamId": "bike-rider-growth", "teamName": "Bike Rider Growth", "role": "executing", "intent": "Lead the work to improve active riders by improving first-order completion and early confidence after delivery via Bike Catalog & Recommendation and Order Orchestration & Checkout."}], "supportingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for active riders, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}, {"teamId": "bike-partner-network", "teamName": "Bike Partner Network", "role": "supporting", "intent": "Support the KR by contributing capability for active riders, aligned with its focus on own dealer onboarding, coverage, stock readiness, and handover planning via Dealer & Service Partner Network Management and Stock, Availability & Handover Planning."}, {"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for active riders, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2024-Q3 target", "date": "2024-09-30", "target": "Build a meaningful active rider base from the first major launch cohorts", "projectedValue": "Current estimate: Active riders moves far enough to show clear momentum toward build a meaningful active rider base from the first major launch cohorts, driven by increase active riders by improving first-order completion and early confidence after delivery.", "confidence": "green"}, "target2": {"label": "2024-year-end target", "date": "2024-12-31", "target": "Build a meaningful active rider base from the first major launch cohorts", "projectedValue": "Current estimate: Active riders ends the horizon sustainably ahead of today's baseline, with build a meaningful active rider base from the first major launch cohorts holding across the broader operating model.", "confidence": "green"}}], "linkedInitiatives": [], "linkedReleases": [], "sourceReferences": {"customers": "customers/customers.json", "initiatives": null, "releases": null}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-growth", "obj-leverage"], "inspiredByInsights": [{"insightId": "discovery-bike-mobility-2026-01-27-02-rider-conversion-and-trust", "insightTitle": "Rider conversion and trust: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's growth tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-01-10-01-employer-launch-model", "insightTitle": "Employer launch model: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's growth tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-01-01-partner-service-control-tower", "insightTitle": "Partner Service Control Tower: dealer network economics discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}], "landingPageId": "bike-mobility-2024-q2-knowledge-worker-commuter", "companyObjectiveRefs": [{"id": "obj-growth", "title": "Archive Create stronger customer pull and adoption", "landingPageId": "archived-obj-growth"}, {"id": "obj-leverage", "title": "Archive Turn product progress into economic leverage", "landingPageId": "archived-obj-leverage"}], "enrichedInitiatives": [], "enrichedReleases": []};
     const pageKind = 'source-objective';
     const pagePeriod = 'archived';
 
@@ -469,31 +537,6 @@
         if (!pageLogo) return;
         pageLogo.src = '../icons/' + periodIconName(pagePeriod);
         pageLogo.alt = (pagePeriod ? pagePeriod.charAt(0).toUpperCase() + pagePeriod.slice(1) + ' ' : '') + 'Objectives';
-    }
-
-    function initTab() {
-        let tabName = 'HomeTab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
     }
 
     function escapeHtml(value) {
@@ -782,7 +825,7 @@
     if (!isCompany && keyResults.length) {
         let krDivsHtml = '';
         keyResults.forEach((kr, i) => {
-            krDivsHtml += '<div id="KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
+            krDivsHtml += '<div id="tab_content_KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
         });
         document.getElementById('KRTabsContainer').innerHTML = krDivsHtml;
     }
@@ -1024,7 +1067,7 @@
         return html;
     }
 
-    document.getElementById('HomeTab').innerHTML = isCompany
+    document.getElementById('tab_content_HomeTab').innerHTML = isCompany
         ? renderCompanyObjectiveHome(pageData)
         : renderSourceObjectiveHome(pageData);
 
@@ -1032,7 +1075,7 @@
 
     if (!isCompany && keyResults.length) {
         keyResults.forEach((item, i) => {
-            document.getElementById('KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
+            document.getElementById('tab_content_KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
         });
     }
 
@@ -1052,11 +1095,11 @@
             }
             discHtml += '</div>';
         });
-        document.getElementById('DiscoveriesTab').innerHTML = discHtml;
+        document.getElementById('tab_content_DiscoveriesTab').innerHTML = discHtml;
     }
 
     initPageLogo();
-    initTab();
+    initTab('HomeTab');
 
     mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {fontSize: '14px'}});
 </script>

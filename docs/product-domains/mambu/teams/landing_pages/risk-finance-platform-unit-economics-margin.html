@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "risk-finance-platform-unit-economics-margin", "name": "Risk, Finance & Expansion Platform - Unit Economics Margin", "teamType": "platform", "teamFamilyId": "risk-finance-platform", "teamFamilyName": "Risk, Finance & Expansion Platform", "orgLayer": "team", "mission": "Provide regulatory reporting, accounting, tenant governance, and adjacent-product expansion capabilities. This team specifically focuses on unit economics margin.", "primaryCustomers": [{"customerId": "bank_transform_exec", "customerName": "Chief Digital Banking / Transformation Executive", "relatedKPIs": ["Time to Launch New Banking Products", "Delivery Speed", "Operational Safety", "Annual Platform Value Realized"], "icon": "bank_transform_exec.png"}, {"customerId": "lending_gm", "customerName": "General Manager of Digital Lending", "relatedKPIs": ["Lending Product Launch Velocity", "Growth Quality", "Servicing Health", "Portfolio Contribution Margin"], "icon": "lending_gm.png"}, {"customerId": "embedded_finance_director", "customerName": "VP Product for Embedded Finance and BaaS", "relatedKPIs": ["Partner Go-Live Time", "Partner Activation", "Operating Reliability", "Partner Platform ARR"], "icon": "embedded_finance_director.png"}], "ownedProductBricks": [{"brickId": "ueam", "brickName": "Unit Economics and Margin Analytics", "brick": {"id": "ueam", "name": "Unit Economics and Margin Analytics", "type": "service", "description": "Connects lending volumes to margin, servicing cost, and collections effort so expansion decisions stay grounded.", "domain": "Lenders and Consumer Finance Providers", "group": "scale-responsibly-across-new-markets-and-segments", "internalModules": [{"title": "Signal Ingestion and Processing", "description": "Collects operational and business signals that feed Unit Economics and Margin Analytics.", "type": "data"}, {"title": "Metrics and Decision Engine", "description": "Calculates insights, KPIs, forecasts, or scores produced by Unit Economics and Margin Analytics.", "type": "analytics"}, {"title": "Reporting and Operations Workspace", "description": "Presents actionable views, alerts, and drill-down workflows for Unit Economics and Margin Analytics.", "type": "full-stack"}], "interfaces": [{"title": "Dashboard Interface", "description": "Interactive reporting or control surface that presents insights from Unit Economics and Margin Analytics.", "type": "ui"}, {"title": "Metrics and Query API", "description": "API for retrieving metrics, scores, forecasts, or analytical outputs from Unit Economics and Margin Analytics.", "type": "api"}, {"title": "Alert and Signal Feed", "description": "Event or notification interface exposing operational signals generated by Unit Economics and Margin Analytics.", "type": "event"}], "brickDependencies": [{"targetBrickId": "agai", "type": "integration", "interface": "Inbound API", "description": "Depends on API Gateway and Integration Layer to provide integration capabilities required by Unit Economics and Margin Analytics."}, {"targetBrickId": "waac", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Workflow Automation and Case Management to provide operations capabilities required by Unit Economics and Margin Analytics."}, {"targetBrickId": "cadm", "type": "event-subscription", "interface": "Domain Event Feed", "description": "Depends on Collections and Delinquency Management to provide service capabilities required by Unit Economics and Margin Analytics."}], "externalSystemsThisBrickDependsOn": [{"system": "Data Warehouse and BI Platforms", "type": "analytics-platform", "interface": "Query / Export Interface", "description": "Unit Economics and Margin Analytics publishes metrics and operational signals into external analytical environments."}, {"system": "Alerting and Incident Platforms", "type": "operations", "interface": "Webhook / Event Interface", "description": "Unit Economics and Margin Analytics depends on external alerting systems to escalate anomalies and operational issues."}], "externalSystemsDependingOnThisBrick": [{"system": "Operational Teams and Workspaces", "type": "insight-consumer", "interface": "Dashboard / Alert Interface", "description": "Operational teams depend on Unit Economics and Margin Analytics to monitor health, detect issues, and make decisions."}, {"system": "Reporting and Planning Systems", "type": "analytics-consumer", "interface": "Metrics / Export Interface", "description": "Analytical and planning consumers depend on Unit Economics and Margin Analytics for metrics, forecasts, and decision support outputs."}], "icon": "ueam.png"}}, {"brickId": "edav", "brickName": "Ecosystem Demand and Value Intelligence", "brick": {"id": "edav", "name": "Ecosystem Demand and Value Intelligence", "type": "service", "description": "Surfaces which partner needs, propositions, and integrations create the most strategic value.", "domain": "Fintechs, BaaS, and Embedded Finance Providers", "group": "expand-the-platform-from-one-product-line-to-a-broader-banking-stack", "internalModules": [{"title": "Signal Ingestion and Processing", "description": "Collects operational and business signals that feed Ecosystem Demand and Value Intelligence.", "type": "data"}, {"title": "Metrics and Decision Engine", "description": "Calculates insights, KPIs, forecasts, or scores produced by Ecosystem Demand and Value Intelligence.", "type": "analytics"}, {"title": "Reporting and Operations Workspace", "description": "Presents actionable views, alerts, and drill-down workflows for Ecosystem Demand and Value Intelligence.", "type": "full-stack"}], "interfaces": [{"title": "Dashboard Interface", "description": "Interactive reporting or control surface that presents insights from Ecosystem Demand and Value Intelligence.", "type": "ui"}, {"title": "Metrics and Query API", "description": "API for retrieving metrics, scores, forecasts, or analytical outputs from Ecosystem Demand and Value Intelligence.", "type": "api"}, {"title": "Alert and Signal Feed", "description": "Event or notification interface exposing operational signals generated by Ecosystem Demand and Value Intelligence.", "type": "event"}], "brickDependencies": [{"targetBrickId": "agai", "type": "integration", "interface": "Inbound API", "description": "Depends on API Gateway and Integration Layer to provide integration capabilities required by Ecosystem Demand and Value Intelligence."}, {"targetBrickId": "waac", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Workflow Automation and Case Management to provide operations capabilities required by Ecosystem Demand and Value Intelligence."}, {"targetBrickId": "cadm", "type": "event-subscription", "interface": "Domain Event Feed", "description": "Depends on Collections and Delinquency Management to provide service capabilities required by Ecosystem Demand and Value Intelligence."}], "externalSystemsThisBrickDependsOn": [{"system": "Data Warehouse and BI Platforms", "type": "analytics-platform", "interface": "Query / Export Interface", "description": "Ecosystem Demand and Value Intelligence publishes metrics and operational signals into external analytical environments."}, {"system": "Alerting and Incident Platforms", "type": "operations", "interface": "Webhook / Event Interface", "description": "Ecosystem Demand and Value Intelligence depends on external alerting systems to escalate anomalies and operational issues."}], "externalSystemsDependingOnThisBrick": [{"system": "Operational Teams and Workspaces", "type": "insight-consumer", "interface": "Dashboard / Alert Interface", "description": "Operational teams depend on Ecosystem Demand and Value Intelligence to monitor health, detect issues, and make decisions."}, {"system": "Reporting and Planning Systems", "type": "analytics-consumer", "interface": "Metrics / Export Interface", "description": "Analytical and planning consumers depend on Ecosystem Demand and Value Intelligence for metrics, forecasts, and decision support outputs."}], "icon": "edav.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": [], "defaultSupportingTeamIds": [], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Each platform team is intentionally kept near 10 FTE so ownership stays coherent while shared services remain dependable for multiple stream-aligned teams.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own the roadmap, prioritization, and KPI tradeoffs for this team scope."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution, staffing, and engineering health for the team."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction and guard long-term architecture quality across the team scope."}, {"role": "Platform Engineer", "count": 2, "responsibility": "Build reusable platform capabilities, internal tooling, and service foundations."}, {"role": "Site Reliability Engineer", "count": 1, "responsibility": "Own reliability, observability, incident readiness, and operational resilience."}, {"role": "Data Engineer", "count": 1, "responsibility": "Provide durable pipelines, canonical data models, and analytics-ready datasets."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own regression depth, release confidence, and automated quality coverage."}, {"role": "Security / Compliance Engineer", "count": 1, "responsibility": "Embed control design, auditability, and secure-by-default practices."}]}, "relatedDiscoveries": [], "groupId": "shared-platform", "groupName": "Shared Platform", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architectural coherence, and craft leadership for the teams in this group.", "leadershipModel": "Directors own the operating cadence and people leadership for the group; principal roles work as group-level individual contributors who coach teams and shape standards.", "suggestedHeadcount": 3, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own the strategy, portfolio tradeoffs, and outcome accountability across the team group.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, system health, and staffing quality across the team group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Principal Platform Engineer", "count": 1, "responsibility": "Own platform direction, shared technical foundations, and operational consistency across the group.", "reportsTo": "Engineering Director"}]}, "dependsOnTeams": [], "defaultSupportingTeams": [], "relatedInitiatives": [], "relatedReleases": [], "dependencyData": {"sharedProductBricks": [{"teamId": "partner-platform-baas-multi-tenant-runtime", "teamName": "Partner Platform & BaaS - Multi Tenant Runtime", "sharedBrickIds": ["edav"], "sharedBrickNames": ["Ecosystem Demand and Value Intelligence"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": []}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

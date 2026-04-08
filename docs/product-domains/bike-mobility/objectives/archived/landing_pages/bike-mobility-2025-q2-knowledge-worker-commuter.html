@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -238,39 +279,6 @@
             margin-bottom: 8px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
-        }
-
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -424,8 +432,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onhashchange="initTab('HomeTab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 8px">
     <tr>
         <td style="vertical-align: top; padding-top: 0px">
@@ -441,13 +509,13 @@
 
 <div style="margin-left: 12px">
     <div class="tab" id="TabBar"></div>
-    <div id="HomeTab" class="tabcontent"></div>
+    <div id="tab_content_HomeTab" class="tabcontent"></div>
     <div id="KRTabsContainer"></div>
-    <div id="DiscoveriesTab" class="tabcontent"></div>
+    <div id="tab_content_DiscoveriesTab" class="tabcontent"></div>
 </div>
 
 <script>
-    const pageData = {"id": "bike-mobility-2025-q2-knowledge-worker-commuter", "title": "2025-Q2 Improve post-delivery rider confidence", "objective": "Strengthen the rider experience after handover so employees keep commuting, recover faster from issues, and see the program as dependable rather than bureaucratic.", "okrStyle": "objective-and-key-results", "status": "archived", "period": {"quarter": "2025-Q2", "startDate": "2025-04-01", "endDate": "2025-06-30", "type": "archived"}, "linkedCustomers": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "customerGroup": "Employees and Riders"}], "linkedCustomerKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "CO-RIDER-TOP", "kpiName": "Active commuting days per rider", "description": "Average number of days per month a rider uses the bike for commuting or regular utility travel.", "unit": "days/month", "kind": "customer", "targetDirection": "increase"}, {"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "CO-RIDER-B2-C1", "kpiName": "Incident recovery time", "description": "Average time to restore rider mobility after a reported issue.", "unit": "days", "kind": "customer", "targetDirection": "decrease"}], "linkedBusinessKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "BO-RIDER-B1-C1", "kpiName": "Renewal and upgrade rate", "description": "Share of contracts that renew, upgrade, or convert into a next-term bike.", "unit": "%", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Active commuting days per rider", "kind": "customer", "targetDirection": "increase", "target": "Increase steady usage after the first delivery wave", "baseline": "Some riders stop using the bike regularly after early friction", "statement": "Increase active commuting days per rider by making service, support, and everyday ownership simpler after handover.", "executingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "executing", "intent": "Lead the work to improve active commuting days per rider by making service, support, and everyday ownership simpler after handover via Rider Identity, Wallet & App Experience."}], "supportingTeams": [{"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for active commuting days per rider, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}, {"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for active commuting days per rider, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q3 target", "date": "2025-09-30", "target": "Increase steady usage after the first delivery wave", "projectedValue": "Current estimate: Active commuting days per rider moves far enough to show clear momentum toward increase steady usage after the first delivery wave, driven by increase active commuting days per rider by making service, support, and everyday ownership simpler after handover.", "confidence": "green"}, "target2": {"label": "2025-year-end target", "date": "2025-12-31", "target": "Increase steady usage after the first delivery wave", "projectedValue": "Current estimate: Active commuting days per rider ends the horizon sustainably ahead of today's baseline, with increase steady usage after the first delivery wave holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-2", "metric": "Incident recovery time", "kind": "customer", "targetDirection": "decrease", "target": "Reduce rider downtime after service and claims events", "baseline": "Recovery remains slow when partner coordination is unclear", "statement": "Reduce incident recovery time through better case routing, status transparency, and partner turnaround management.", "executingTeams": [{"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "executing", "intent": "Lead the work to reduce incident recovery time through better case routing, status transparency, and partner turnaround management via Communications & Notifications and Contract Lifecycle Management."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for incident recovery time, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for incident recovery time, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q3 target", "date": "2025-09-30", "target": "Reduce rider downtime after service and claims events", "projectedValue": "Current estimate: Incident recovery time moves far enough to show clear momentum toward reduce rider downtime after service and claims events, driven by reduce incident recovery time through better case routing, status transparency, and partner turnaround management.", "confidence": "green"}, "target2": {"label": "2025-year-end target", "date": "2025-12-31", "target": "Reduce rider downtime after service and claims events", "projectedValue": "Current estimate: Incident recovery time ends the horizon sustainably lower than today's baseline, with reduce rider downtime after service and claims events holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-3", "metric": "Renewal and upgrade rate", "kind": "business", "targetDirection": "increase", "target": "Start turning first-contract riders into repeat lifecycle customers", "baseline": "Renewal performance is still limited by weak lifecycle visibility", "statement": "Increase renewal and upgrade rate by making contract, service history, and next-bike options easier to navigate.", "executingTeams": [{"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "executing", "intent": "Lead the work to improve renewal and upgrade rate by making contract, service history, and next-bike options easier to navigate via Communications & Notifications and Contract Lifecycle Management."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for renewal and upgrade rate, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for renewal and upgrade rate, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q3 target", "date": "2025-09-30", "target": "Start turning first-contract riders into repeat lifecycle customers", "projectedValue": "Current estimate: Renewal and upgrade rate moves far enough to show clear momentum toward start turning first-contract riders into repeat lifecycle customers, driven by increase renewal and upgrade rate by making contract, service history, and next-bike options easier to navigate.", "confidence": "green"}, "target2": {"label": "2025-year-end target", "date": "2025-12-31", "target": "Start turning first-contract riders into repeat lifecycle customers", "projectedValue": "Current estimate: Renewal and upgrade rate ends the horizon sustainably ahead of today's baseline, with start turning first-contract riders into repeat lifecycle customers holding across the broader operating model.", "confidence": "green"}}], "linkedInitiatives": [], "linkedReleases": [], "sourceReferences": {"customers": "customers/customers.json", "initiatives": null, "releases": null}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-leverage", "obj-operations"], "inspiredByInsights": [{"insightId": "discovery-bike-mobility-2026-01-27-02-rider-conversion-and-trust", "insightTitle": "Rider conversion and trust: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-08-02-fleet-expansion-model", "insightTitle": "Fleet expansion model: pooled bike operations discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-01-01-partner-service-control-tower", "insightTitle": "Partner Service Control Tower: dealer network economics discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-01-10-01-employer-launch-model", "insightTitle": "Employer launch model: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}], "landingPageId": "bike-mobility-2025-q2-knowledge-worker-commuter", "companyObjectiveRefs": [{"id": "obj-leverage", "title": "Archive Turn product progress into economic leverage", "landingPageId": "archived-obj-leverage"}, {"id": "obj-operations", "title": "Archive Make execution reliably repeatable", "landingPageId": "archived-obj-operations"}], "enrichedInitiatives": [], "enrichedReleases": []};
+    const pageData = {"id": "bike-mobility-2025-q2-knowledge-worker-commuter", "title": "2025-Q2 Improve post-delivery rider confidence", "objective": "Strengthen the rider experience after handover so employees keep commuting, recover faster from issues, and see the program as dependable rather than bureaucratic.", "okrStyle": "objective-and-key-results", "status": "archived", "period": {"quarter": "2025-Q2", "startDate": "2025-04-01", "endDate": "2025-06-30", "type": "archived"}, "linkedCustomers": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "customerGroup": "Employees and Riders"}], "linkedCustomerKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "co-rider-top", "kpiName": "Active commuting days per rider", "description": "Average number of days per month a rider uses the bike for commuting or regular utility travel.", "unit": "days/month", "kind": "customer", "targetDirection": "increase"}, {"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "co-rider-b2-c1", "kpiName": "Incident recovery time", "description": "Average time to restore rider mobility after a reported issue.", "unit": "days", "kind": "customer", "targetDirection": "decrease"}], "linkedBusinessKPIs": [{"customerId": "knowledge_worker_commuter", "customerName": "Urban Knowledge Worker Commuter", "kpiId": "bo-rider-b1-c1", "kpiName": "Renewal and upgrade rate", "description": "Share of contracts that renew, upgrade, or convert into a next-term bike.", "unit": "%", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Active commuting days per rider", "kind": "customer", "targetDirection": "increase", "target": "Increase steady usage after the first delivery wave", "baseline": "Some riders stop using the bike regularly after early friction", "statement": "Increase active commuting days per rider by making service, support, and everyday ownership simpler after handover.", "executingTeams": [{"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "executing", "intent": "Lead the work to improve active commuting days per rider by making service, support, and everyday ownership simpler after handover via Rider Identity, Wallet & App Experience."}], "supportingTeams": [{"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "supporting", "intent": "Support the KR by contributing capability for active commuting days per rider, aligned with its focus on own notifications, lifecycle state visibility, renewal readiness, and contract confidence after the initial order via Communications & Notifications and Contract Lifecycle Management."}, {"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for active commuting days per rider, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q3 target", "date": "2025-09-30", "target": "Increase steady usage after the first delivery wave", "projectedValue": "Current estimate: Active commuting days per rider moves far enough to show clear momentum toward increase steady usage after the first delivery wave, driven by increase active commuting days per rider by making service, support, and everyday ownership simpler after handover.", "confidence": "green"}, "target2": {"label": "2025-year-end target", "date": "2025-12-31", "target": "Increase steady usage after the first delivery wave", "projectedValue": "Current estimate: Active commuting days per rider ends the horizon sustainably ahead of today's baseline, with increase steady usage after the first delivery wave holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-2", "metric": "Incident recovery time", "kind": "customer", "targetDirection": "decrease", "target": "Reduce rider downtime after service and claims events", "baseline": "Recovery remains slow when partner coordination is unclear", "statement": "Reduce incident recovery time through better case routing, status transparency, and partner turnaround management.", "executingTeams": [{"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "executing", "intent": "Lead the work to reduce incident recovery time through better case routing, status transparency, and partner turnaround management via Communications & Notifications and Contract Lifecycle Management."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for incident recovery time, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for incident recovery time, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q3 target", "date": "2025-09-30", "target": "Reduce rider downtime after service and claims events", "projectedValue": "Current estimate: Incident recovery time moves far enough to show clear momentum toward reduce rider downtime after service and claims events, driven by reduce incident recovery time through better case routing, status transparency, and partner turnaround management.", "confidence": "green"}, "target2": {"label": "2025-year-end target", "date": "2025-12-31", "target": "Reduce rider downtime after service and claims events", "projectedValue": "Current estimate: Incident recovery time ends the horizon sustainably lower than today's baseline, with reduce rider downtime after service and claims events holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-3", "metric": "Renewal and upgrade rate", "kind": "business", "targetDirection": "increase", "target": "Start turning first-contract riders into repeat lifecycle customers", "baseline": "Renewal performance is still limited by weak lifecycle visibility", "statement": "Increase renewal and upgrade rate by making contract, service history, and next-bike options easier to navigate.", "executingTeams": [{"teamId": "bike-rider-lifecycle", "teamName": "Bike Rider Lifecycle", "role": "executing", "intent": "Lead the work to improve renewal and upgrade rate by making contract, service history, and next-bike options easier to navigate via Communications & Notifications and Contract Lifecycle Management."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for renewal and upgrade rate, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-rider-mobile", "teamName": "Bike Rider Mobile", "role": "supporting", "intent": "Support the KR by contributing capability for renewal and upgrade rate, aligned with its focus on own native rider mobile experiences and the app surfaces that maintain confidence after checkout via Rider Identity, Wallet & App Experience."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q3 target", "date": "2025-09-30", "target": "Start turning first-contract riders into repeat lifecycle customers", "projectedValue": "Current estimate: Renewal and upgrade rate moves far enough to show clear momentum toward start turning first-contract riders into repeat lifecycle customers, driven by increase renewal and upgrade rate by making contract, service history, and next-bike options easier to navigate.", "confidence": "green"}, "target2": {"label": "2025-year-end target", "date": "2025-12-31", "target": "Start turning first-contract riders into repeat lifecycle customers", "projectedValue": "Current estimate: Renewal and upgrade rate ends the horizon sustainably ahead of today's baseline, with start turning first-contract riders into repeat lifecycle customers holding across the broader operating model.", "confidence": "green"}}], "linkedInitiatives": [], "linkedReleases": [], "sourceReferences": {"customers": "customers/customers.json", "initiatives": null, "releases": null}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-leverage", "obj-operations"], "inspiredByInsights": [{"insightId": "discovery-bike-mobility-2026-01-27-02-rider-conversion-and-trust", "insightTitle": "Rider conversion and trust: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-08-02-fleet-expansion-model", "insightTitle": "Fleet expansion model: pooled bike operations discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-01-01-partner-service-control-tower", "insightTitle": "Partner Service Control Tower: dealer network economics discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-01-10-01-employer-launch-model", "insightTitle": "Employer launch model: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}], "landingPageId": "bike-mobility-2025-q2-knowledge-worker-commuter", "companyObjectiveRefs": [{"id": "obj-leverage", "title": "Archive Turn product progress into economic leverage", "landingPageId": "archived-obj-leverage"}, {"id": "obj-operations", "title": "Archive Make execution reliably repeatable", "landingPageId": "archived-obj-operations"}], "enrichedInitiatives": [], "enrichedReleases": []};
     const pageKind = 'source-objective';
     const pagePeriod = 'archived';
 
@@ -469,31 +537,6 @@
         if (!pageLogo) return;
         pageLogo.src = '../icons/' + periodIconName(pagePeriod);
         pageLogo.alt = (pagePeriod ? pagePeriod.charAt(0).toUpperCase() + pagePeriod.slice(1) + ' ' : '') + 'Objectives';
-    }
-
-    function initTab() {
-        let tabName = 'HomeTab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
     }
 
     function escapeHtml(value) {
@@ -782,7 +825,7 @@
     if (!isCompany && keyResults.length) {
         let krDivsHtml = '';
         keyResults.forEach((kr, i) => {
-            krDivsHtml += '<div id="KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
+            krDivsHtml += '<div id="tab_content_KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
         });
         document.getElementById('KRTabsContainer').innerHTML = krDivsHtml;
     }
@@ -1024,7 +1067,7 @@
         return html;
     }
 
-    document.getElementById('HomeTab').innerHTML = isCompany
+    document.getElementById('tab_content_HomeTab').innerHTML = isCompany
         ? renderCompanyObjectiveHome(pageData)
         : renderSourceObjectiveHome(pageData);
 
@@ -1032,7 +1075,7 @@
 
     if (!isCompany && keyResults.length) {
         keyResults.forEach((item, i) => {
-            document.getElementById('KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
+            document.getElementById('tab_content_KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
         });
     }
 
@@ -1052,11 +1095,11 @@
             }
             discHtml += '</div>';
         });
-        document.getElementById('DiscoveriesTab').innerHTML = discHtml;
+        document.getElementById('tab_content_DiscoveriesTab').innerHTML = discHtml;
     }
 
     initPageLogo();
-    initTab();
+    initTab('HomeTab');
 
     mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {fontSize: '14px'}});
 </script>

@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -238,39 +279,6 @@
             margin-bottom: 8px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
-        }
-
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -424,8 +432,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onhashchange="initTab('HomeTab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 8px">
     <tr>
         <td style="vertical-align: top; padding-top: 0px">
@@ -441,13 +509,13 @@
 
 <div style="margin-left: 12px">
     <div class="tab" id="TabBar"></div>
-    <div id="HomeTab" class="tabcontent"></div>
+    <div id="tab_content_HomeTab" class="tabcontent"></div>
     <div id="KRTabsContainer"></div>
-    <div id="DiscoveriesTab" class="tabcontent"></div>
+    <div id="tab_content_DiscoveriesTab" class="tabcontent"></div>
 </div>
 
 <script>
-    const pageData = {"id": "payments-and-revenue-infrastructure-2026-q2-cg3-p1", "title": "2026-Q2 Platform Payments GM outcome goal", "objective": "Improve platform growth by raising connected-account activation and payout reliability while reducing operator control gaps.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg3-p1", "customerName": "Platform Payments GM", "customerGroup": "Platforms and Marketplaces"}], "linkedCustomerKPIs": [{"customerId": "cg3-p1", "customerName": "Platform Payments GM", "kpiId": "CO-CG3-TOP", "kpiName": "Activated connected account rate", "description": "Qualified connected accounts activated within 14 days.", "unit": "% of qualified connected accounts", "kind": "customer", "targetDirection": "increase"}, {"customerId": "cg3-p1", "customerName": "Platform Payments GM", "kpiId": "CO-CG3-B2-C1", "kpiName": "On-time payout rate", "description": "Scheduled payout cycles completed on time.", "unit": "% of scheduled payout cycles", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg3-p1", "customerName": "Platform Payments GM", "kpiId": "BO-CG3-TOP", "kpiName": "Connect platform GPV growth", "description": "Year-over-year growth of Connect-linked platform payment volume.", "unit": "% YoY GPV growth", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Activated connected account rate", "kind": "customer", "targetDirection": "increase", "target": "Reach 88% within 14 days", "baseline": "Q1 2026 strategic platform baseline", "statement": "Increase platform activation by improving verification completion and remediation clarity.", "executingTeams": [{"teamId": "connected-accounts", "teamName": "Connected Accounts", "role": "executing", "intent": "Improve onboarding and identity-assisted activation flows."}], "supportingTeams": [{"teamId": "trust-ops", "teamName": "Trust Operations", "role": "supporting", "intent": "Reduce unnecessary manual reviews."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}, {"id": "kr-2", "metric": "Connect platform GPV growth", "kind": "business", "targetDirection": "increase", "target": "Reach 30% year-over-year growth", "baseline": "Q1 2026 strategic platform baseline", "statement": "Grow platform payment volume by improving payout quality and funds-flow trust.", "executingTeams": [{"teamId": "funds-movement", "teamName": "Funds Movement", "role": "executing", "intent": "Improve platform settlement and payout quality."}], "supportingTeams": [{"teamId": "finance-ops", "teamName": "Finance Operations", "role": "supporting", "intent": "Improve payout investigation and reconciliation trust."}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "role": "supporting", "intent": "Improve webhook and platform integration reliability."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}], "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "title": "Connect Activation and Payout Reliability Initiative"}], "linkedReleases": [], "landingPageId": "payments-and-revenue-infrastructure-2026-q2-cg3-p1", "inspiredByInsights": [], "companyObjectiveRefs": [], "enrichedInitiatives": [{"title": "Connect Activation and Payout Reliability Initiative", "date": "2026-04-24", "description": "Focused investment to improve connected-account activation, remediation clarity, and payout reliability for platform operators.", "customerImpact": [{"customerId": "cg3-p1", "customer": {"id": "cg3-p1", "name": "Platform Payments GM", "group": "Platforms and Marketplaces", "icon": "platform_gm.png"}, "customerKPIs": [{"kpi": "Activated connected account rate", "expectedImpact": "Increase the share of qualified counterparties that activate successfully.", "description": "Activate 88% of qualified connected accounts within 14 days of onboarding start.", "unit": "% of qualified connected accounts", "currentValue": "48.9", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/co-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "On-time payout rate", "expectedImpact": "Improve platform payout trust.", "description": "Keep on-time payouts above 98.9% on scheduled payout cycles.", "unit": "% of scheduled payout cycles", "currentValue": "62.1", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Connect platform GPV growth", "expectedImpact": "Support volume growth through lower activation and payout friction.", "description": "Grow Connect-linked platform GPV by 30% year over year while protecting operator trust.", "unit": "% YoY GPV growth", "currentValue": "84.7", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/bo-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "acct", "change": "Improve connected-account lifecycle state visibility.", "brick": {"id": "acct", "name": "Connected Account Lifecycle", "type": "full-stack", "description": "Account types, capability state, lifecycle transitions, and platform controls for counterparties.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Account capability orchestration", "description": "Tracks connected-account state, requirements, and activation logic.", "type": "service"}], "interfaces": [{"title": "Connected account UI", "description": "Operator workflows for account lifecycle and status management.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "kycb", "type": "composition", "interface": "Verification requirements service", "description": "Uses verification requirements to decide account status."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "acct.png"}}, {"brickId": "kycb", "change": "Improve verification remediation guidance.", "brick": {"id": "kycb", "name": "KYC and KYB Verification", "type": "full-stack", "description": "Business and individual verification workflows required to activate and maintain accounts.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Verification workflow engine", "description": "Collects and validates required KYC and KYB data.", "type": "service"}], "interfaces": [{"title": "Onboarding verification UI", "description": "Hosted and operator-assisted verification workflows.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "composition", "interface": "Identity verification service", "description": "Uses identity document checks for stronger assurance where needed."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "kycb.png"}}, {"brickId": "pyot", "change": "Improve payout scheduling and failure handling.", "brick": {"id": "pyot", "name": "Global Payouts and Treasury Workflows", "type": "full-stack", "description": "Outbound payouts, scheduling, rails management, and treasury-adjacent money movement workflows.", "domain": "Platform Money Movement", "group": "Platform funds and financial products", "internalModules": [{"title": "Payout execution engine", "description": "Schedules and executes outbound money movement across payout rails.", "type": "service"}], "interfaces": [{"title": "Payout operations UI", "description": "Operator workflow for payout timing, failures, and status.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "split", "type": "composition", "interface": "Funds routing service", "description": "Uses routed balances and settlement outcomes to trigger payouts."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pyot.png"}}], "deliveryChannels": [{"channelId": "dashboard-web", "change": "Release updated Connect operator workflows.", "channel": {"productId": "dashboard", "productName": "", "name": "dashboard-web", "type": "product", "icon": "product.png"}}, {"channelId": "payments-production", "change": "Release updated onboarding and payout services.", "channel": {"productId": "payments", "productName": "", "name": "payments-production", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["connected-accounts", "funds-movement"], "supportingTeamIds": ["trust-ops", "finance-ops"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "discoveryIds": ["discovery-payments-revenue-infrastructure-2026-04-11-03-connect"], "priority": "p1", "keyResultId": "payments-and-revenue-infrastructure-2026-q2-cg3-p1/kr-1", "landingPageIndex": 3}], "enrichedReleases": [{"title": "Connect Activation and Payout Reliability Release", "date": "2026-06-11", "description": "Release focused on faster connected-account activation, clearer onboarding remediation, and stronger payout reliability for platforms.", "customerImpact": [{"customerId": "cg3-p1", "customer": {"id": "cg3-p1", "name": "Platform Payments GM", "group": "Platforms and Marketplaces", "icon": "platform_gm.png"}, "customerKPIs": [{"kpi": "Activated connected account rate", "expectedImpact": "Increase supply activation in qualified onboarding cohorts.", "description": "Activate 88% of qualified connected accounts within 14 days of onboarding start.", "unit": "% of qualified connected accounts", "currentValue": "48.9", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/co-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "On-time payout rate", "expectedImpact": "Improve payout predictability for platform counterparties.", "description": "Keep on-time payouts above 98.9% on scheduled payout cycles.", "unit": "% of scheduled payout cycles", "currentValue": "62.1", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Connect platform GPV growth", "expectedImpact": "Improve platform volume growth through lower activation and payout drag.", "description": "Grow Connect-linked platform GPV by 30% year over year while protecting operator trust.", "unit": "% YoY GPV growth", "currentValue": "84.7", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/bo-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "acct", "change": "Improve connected-account requirement visibility and activation state explanations.", "brick": {"id": "acct", "name": "Connected Account Lifecycle", "type": "full-stack", "description": "Account types, capability state, lifecycle transitions, and platform controls for counterparties.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Account capability orchestration", "description": "Tracks connected-account state, requirements, and activation logic.", "type": "service"}], "interfaces": [{"title": "Connected account UI", "description": "Operator workflows for account lifecycle and status management.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "kycb", "type": "composition", "interface": "Verification requirements service", "description": "Uses verification requirements to decide account status."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "acct.png"}}, {"brickId": "kycb", "change": "Improve remediation guidance on failed or incomplete verification.", "brick": {"id": "kycb", "name": "KYC and KYB Verification", "type": "full-stack", "description": "Business and individual verification workflows required to activate and maintain accounts.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Verification workflow engine", "description": "Collects and validates required KYC and KYB data.", "type": "service"}], "interfaces": [{"title": "Onboarding verification UI", "description": "Hosted and operator-assisted verification workflows.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "composition", "interface": "Identity verification service", "description": "Uses identity document checks for stronger assurance where needed."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "kycb.png"}}, {"brickId": "pyot", "change": "Improve payout scheduling transparency and exception handling.", "brick": {"id": "pyot", "name": "Global Payouts and Treasury Workflows", "type": "full-stack", "description": "Outbound payouts, scheduling, rails management, and treasury-adjacent money movement workflows.", "domain": "Platform Money Movement", "group": "Platform funds and financial products", "internalModules": [{"title": "Payout execution engine", "description": "Schedules and executes outbound money movement across payout rails.", "type": "service"}], "interfaces": [{"title": "Payout operations UI", "description": "Operator workflow for payout timing, failures, and status.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "split", "type": "composition", "interface": "Funds routing service", "description": "Uses routed balances and settlement outcomes to trigger payouts."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pyot.png"}}], "deliveryChannels": [{"channelId": "dashboard-web", "change": "Release updated Connect operator workflows.", "channel": {"productId": "dashboard", "productName": "", "name": "dashboard-web", "type": "product", "icon": "product.png"}}, {"channelId": "payments-production", "change": "Release supporting onboarding and payout services.", "channel": {"productId": "payments", "productName": "", "name": "payments-production", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["connected-accounts", "funds-movement"], "supportingTeamIds": ["trust-ops", "finance-ops"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "landingPageIndex": 1}]};
+    const pageData = {"id": "payments-and-revenue-infrastructure-2026-q2-cg3-p1", "title": "2026-Q2 Platform Payments GM outcome goal", "objective": "Improve platform growth by raising connected-account activation and payout reliability while reducing operator control gaps.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg3-p1", "customerName": "Platform Payments GM", "customerGroup": "Platforms and Marketplaces"}], "linkedCustomerKPIs": [{"customerId": "cg3-p1", "customerName": "Platform Payments GM", "kpiId": "co-cg3-top", "kpiName": "Activated connected account rate", "description": "Qualified connected accounts activated within 14 days.", "unit": "% of qualified connected accounts", "kind": "customer", "targetDirection": "increase"}, {"customerId": "cg3-p1", "customerName": "Platform Payments GM", "kpiId": "co-cg3-b2-c1", "kpiName": "On-time payout rate", "description": "Scheduled payout cycles completed on time.", "unit": "% of scheduled payout cycles", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg3-p1", "customerName": "Platform Payments GM", "kpiId": "bo-cg3-top", "kpiName": "Connect platform GPV growth", "description": "Year-over-year growth of Connect-linked platform payment volume.", "unit": "% YoY GPV growth", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Activated connected account rate", "kind": "customer", "targetDirection": "increase", "target": "Reach 88% within 14 days", "baseline": "Q1 2026 strategic platform baseline", "statement": "Increase platform activation by improving verification completion and remediation clarity.", "executingTeams": [{"teamId": "connected-accounts", "teamName": "Connected Accounts", "role": "executing", "intent": "Improve onboarding and identity-assisted activation flows."}], "supportingTeams": [{"teamId": "trust-ops", "teamName": "Trust Operations", "role": "supporting", "intent": "Reduce unnecessary manual reviews."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}, {"id": "kr-2", "metric": "Connect platform GPV growth", "kind": "business", "targetDirection": "increase", "target": "Reach 30% year-over-year growth", "baseline": "Q1 2026 strategic platform baseline", "statement": "Grow platform payment volume by improving payout quality and funds-flow trust.", "executingTeams": [{"teamId": "funds-movement", "teamName": "Funds Movement", "role": "executing", "intent": "Improve platform settlement and payout quality."}], "supportingTeams": [{"teamId": "finance-ops", "teamName": "Finance Operations", "role": "supporting", "intent": "Improve payout investigation and reconciliation trust."}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "role": "supporting", "intent": "Improve webhook and platform integration reliability."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}], "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "title": "Connect Activation and Payout Reliability Initiative"}], "linkedReleases": [], "landingPageId": "payments-and-revenue-infrastructure-2026-q2-cg3-p1", "inspiredByInsights": [], "companyObjectiveRefs": [], "enrichedInitiatives": [{"title": "Connect Activation and Payout Reliability Initiative", "date": "2026-04-24", "description": "Focused investment to improve connected-account activation, remediation clarity, and payout reliability for platform operators.", "customerImpact": [{"customerId": "cg3-p1", "customer": {"id": "cg3-p1", "name": "Platform Payments GM", "group": "Platforms and Marketplaces", "icon": "platform_gm.png"}, "customerKPIs": [{"kpi": "Activated connected account rate", "expectedImpact": "Increase the share of qualified counterparties that activate successfully.", "description": "Activate 88% of qualified connected accounts within 14 days of onboarding start.", "unit": "% of qualified connected accounts", "currentValue": "48.9", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/co-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "On-time payout rate", "expectedImpact": "Improve platform payout trust.", "description": "Keep on-time payouts above 98.9% on scheduled payout cycles.", "unit": "% of scheduled payout cycles", "currentValue": "62.1", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Connect platform GPV growth", "expectedImpact": "Support volume growth through lower activation and payout friction.", "description": "Grow Connect-linked platform GPV by 30% year over year while protecting operator trust.", "unit": "% YoY GPV growth", "currentValue": "84.7", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/bo-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "acct", "change": "Improve connected-account lifecycle state visibility.", "brick": {"id": "acct", "name": "Connected Account Lifecycle", "type": "full-stack", "description": "Account types, capability state, lifecycle transitions, and platform controls for counterparties.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Account capability orchestration", "description": "Tracks connected-account state, requirements, and activation logic.", "type": "service"}], "interfaces": [{"title": "Connected account UI", "description": "Operator workflows for account lifecycle and status management.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "kycb", "type": "composition", "interface": "Verification requirements service", "description": "Uses verification requirements to decide account status."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "acct.png"}}, {"brickId": "kycb", "change": "Improve verification remediation guidance.", "brick": {"id": "kycb", "name": "KYC and KYB Verification", "type": "full-stack", "description": "Business and individual verification workflows required to activate and maintain accounts.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Verification workflow engine", "description": "Collects and validates required KYC and KYB data.", "type": "service"}], "interfaces": [{"title": "Onboarding verification UI", "description": "Hosted and operator-assisted verification workflows.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "composition", "interface": "Identity verification service", "description": "Uses identity document checks for stronger assurance where needed."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "kycb.png"}}, {"brickId": "pyot", "change": "Improve payout scheduling and failure handling.", "brick": {"id": "pyot", "name": "Global Payouts and Treasury Workflows", "type": "full-stack", "description": "Outbound payouts, scheduling, rails management, and treasury-adjacent money movement workflows.", "domain": "Platform Money Movement", "group": "Platform funds and financial products", "internalModules": [{"title": "Payout execution engine", "description": "Schedules and executes outbound money movement across payout rails.", "type": "service"}], "interfaces": [{"title": "Payout operations UI", "description": "Operator workflow for payout timing, failures, and status.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "split", "type": "composition", "interface": "Funds routing service", "description": "Uses routed balances and settlement outcomes to trigger payouts."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pyot.png"}}], "deliveryChannels": [{"channelId": "dashboard-web", "change": "Release updated Connect operator workflows.", "channel": {"productId": "dashboard", "productName": "", "name": "dashboard-web", "type": "product", "icon": "product.png"}}, {"channelId": "payments-production", "change": "Release updated onboarding and payout services.", "channel": {"productId": "payments", "productName": "", "name": "payments-production", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["connected-accounts", "funds-movement"], "supportingTeamIds": ["trust-ops", "finance-ops"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "discoveryIds": ["discovery-payments-revenue-infrastructure-2026-04-11-03-connect"], "priority": "p1", "keyResultId": "payments-and-revenue-infrastructure-2026-q2-cg3-p1/kr-1", "landingPageIndex": 3}], "enrichedReleases": [{"title": "Connect Activation and Payout Reliability Release", "date": "2026-06-11", "description": "Release focused on faster connected-account activation, clearer onboarding remediation, and stronger payout reliability for platforms.", "customerImpact": [{"customerId": "cg3-p1", "customer": {"id": "cg3-p1", "name": "Platform Payments GM", "group": "Platforms and Marketplaces", "icon": "platform_gm.png"}, "customerKPIs": [{"kpi": "Activated connected account rate", "expectedImpact": "Increase supply activation in qualified onboarding cohorts.", "description": "Activate 88% of qualified connected accounts within 14 days of onboarding start.", "unit": "% of qualified connected accounts", "currentValue": "48.9", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/co-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "On-time payout rate", "expectedImpact": "Improve payout predictability for platform counterparties.", "description": "Keep on-time payouts above 98.9% on scheduled payout cycles.", "unit": "% of scheduled payout cycles", "currentValue": "62.1", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Connect platform GPV growth", "expectedImpact": "Improve platform volume growth through lower activation and payout drag.", "description": "Grow Connect-linked platform GPV by 30% year over year while protecting operator trust.", "unit": "% YoY GPV growth", "currentValue": "84.7", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg3-p1/kpis/bo-cg3-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "acct", "change": "Improve connected-account requirement visibility and activation state explanations.", "brick": {"id": "acct", "name": "Connected Account Lifecycle", "type": "full-stack", "description": "Account types, capability state, lifecycle transitions, and platform controls for counterparties.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Account capability orchestration", "description": "Tracks connected-account state, requirements, and activation logic.", "type": "service"}], "interfaces": [{"title": "Connected account UI", "description": "Operator workflows for account lifecycle and status management.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "kycb", "type": "composition", "interface": "Verification requirements service", "description": "Uses verification requirements to decide account status."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "acct.png"}}, {"brickId": "kycb", "change": "Improve remediation guidance on failed or incomplete verification.", "brick": {"id": "kycb", "name": "KYC and KYB Verification", "type": "full-stack", "description": "Business and individual verification workflows required to activate and maintain accounts.", "domain": "Platform Money Movement", "group": "Platform onboarding", "internalModules": [{"title": "Verification workflow engine", "description": "Collects and validates required KYC and KYB data.", "type": "service"}], "interfaces": [{"title": "Onboarding verification UI", "description": "Hosted and operator-assisted verification workflows.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "composition", "interface": "Identity verification service", "description": "Uses identity document checks for stronger assurance where needed."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "kycb.png"}}, {"brickId": "pyot", "change": "Improve payout scheduling transparency and exception handling.", "brick": {"id": "pyot", "name": "Global Payouts and Treasury Workflows", "type": "full-stack", "description": "Outbound payouts, scheduling, rails management, and treasury-adjacent money movement workflows.", "domain": "Platform Money Movement", "group": "Platform funds and financial products", "internalModules": [{"title": "Payout execution engine", "description": "Schedules and executes outbound money movement across payout rails.", "type": "service"}], "interfaces": [{"title": "Payout operations UI", "description": "Operator workflow for payout timing, failures, and status.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "split", "type": "composition", "interface": "Funds routing service", "description": "Uses routed balances and settlement outcomes to trigger payouts."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pyot.png"}}], "deliveryChannels": [{"channelId": "dashboard-web", "change": "Release updated Connect operator workflows.", "channel": {"productId": "dashboard", "productName": "", "name": "dashboard-web", "type": "product", "icon": "product.png"}}, {"channelId": "payments-production", "change": "Release supporting onboarding and payout services.", "channel": {"productId": "payments", "productName": "", "name": "payments-production", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["connected-accounts", "funds-movement"], "supportingTeamIds": ["trust-ops", "finance-ops"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "landingPageIndex": 1}]};
     const pageKind = 'source-objective';
     const pagePeriod = 'current';
 
@@ -469,31 +537,6 @@
         if (!pageLogo) return;
         pageLogo.src = '../icons/' + periodIconName(pagePeriod);
         pageLogo.alt = (pagePeriod ? pagePeriod.charAt(0).toUpperCase() + pagePeriod.slice(1) + ' ' : '') + 'Objectives';
-    }
-
-    function initTab() {
-        let tabName = 'HomeTab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
     }
 
     function escapeHtml(value) {
@@ -782,7 +825,7 @@
     if (!isCompany && keyResults.length) {
         let krDivsHtml = '';
         keyResults.forEach((kr, i) => {
-            krDivsHtml += '<div id="KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
+            krDivsHtml += '<div id="tab_content_KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
         });
         document.getElementById('KRTabsContainer').innerHTML = krDivsHtml;
     }
@@ -1024,7 +1067,7 @@
         return html;
     }
 
-    document.getElementById('HomeTab').innerHTML = isCompany
+    document.getElementById('tab_content_HomeTab').innerHTML = isCompany
         ? renderCompanyObjectiveHome(pageData)
         : renderSourceObjectiveHome(pageData);
 
@@ -1032,7 +1075,7 @@
 
     if (!isCompany && keyResults.length) {
         keyResults.forEach((item, i) => {
-            document.getElementById('KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
+            document.getElementById('tab_content_KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
         });
     }
 
@@ -1052,11 +1095,11 @@
             }
             discHtml += '</div>';
         });
-        document.getElementById('DiscoveriesTab').innerHTML = discHtml;
+        document.getElementById('tab_content_DiscoveriesTab').innerHTML = discHtml;
     }
 
     initPageLogo();
-    initTab();
+    initTab('HomeTab');
 
     mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {fontSize: '14px'}});
 </script>

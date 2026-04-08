@@ -16,6 +16,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -41,38 +82,6 @@
 
         a {
             text-decoration: none;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .review-image {
@@ -526,40 +535,74 @@
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'InterfacesTab';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('InterfacesTab')" onhashchange="initTab('InterfacesTab')">
+<div id="breadcrumbs" style="margin-left: 20px"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs" style="margin-left: 20px"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 
 <script>
     const config = {"domains": [{"id": "hosted-stays-marketplace", "name": "Hosted Stays Marketplace", "description": "The Hosted Stays Marketplace domain covers the guest, host, co-host, trust, payment, and compliance workflows required to run a global marketplace for homes, rooms, and professionally managed short-term rental stays."}]};
-    const all_products = [{"id": "P1", "name": "Guest Discovery and Booking Experience", "type": "B2C", "primaryCustomers": [{"id": "cg1-p1", "name": "Guest Stay Booker", "icon": "guest.png"}], "interfaces": [{"type": "web", "name": "Guest Web Marketplace", "description": "Browser experience for inspiration, search, listing evaluation, booking, and trip management.", "users": ["Guests"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Guest iOS App", "description": "Native iOS experience for discovery, booking, and trip messaging.", "users": ["Guests"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Guest Android App", "description": "Native Android experience aligned to the guest booking journey.", "users": ["Guests"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Provides guest entry points from broad travel intent into stay discovery.", "mappingType": "inferred_from_product_definition", "brickId": "insp", "brickName": "Inspiration & Category Discovery"}, {"whyNeeded": "Provides the core guest search and shortlist journey.", "mappingType": "inferred_from_product_definition", "brickId": "srch", "brickName": "Search, Ranking & Map Browse"}, {"whyNeeded": "Helps guests judge whether a stay is worth trusting before they book.", "mappingType": "inferred_from_product_definition", "brickId": "list", "brickName": "Listing Detail & Review Trust"}, {"whyNeeded": "Converts guest intent into a confirmed booking.", "mappingType": "inferred_from_product_definition", "brickId": "book", "brickName": "Booking & Checkout"}, {"whyNeeded": "Provides communication and itinerary support before and during the stay.", "mappingType": "inferred_from_product_definition", "brickId": "trip", "brickName": "Trip Messaging & Itinerary"}, {"whyNeeded": "Supports safe booking and issue recovery expectations.", "mappingType": "inferred_from_product_definition", "brickId": "trst", "brickName": "Trust, Safety & AirCover"}]}, {"id": "P2", "name": "Host Setup and Listing Studio", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Everyday Home Host", "icon": "host.png"}], "interfaces": [{"type": "web", "name": "Host Web Console", "description": "Browser experience for listing setup, calendar, pricing, payouts, and performance.", "users": ["Hosts"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Host Mobile App", "description": "Mobile host controls for inbox, calendar, pricing, and earnings visibility.", "users": ["Hosts"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Activates new hosts and validates readiness to go live.", "mappingType": "inferred_from_product_definition", "brickId": "hono", "brickName": "Host Onboarding & Verification"}, {"whyNeeded": "Captures listing content, policies, and photo-rich merchandising.", "mappingType": "inferred_from_product_definition", "brickId": "lista", "brickName": "Listing Authoring & Content"}, {"whyNeeded": "Controls bookable dates, rules, and booking windows.", "mappingType": "inferred_from_product_definition", "brickId": "cala", "brickName": "Calendar & Availability"}, {"whyNeeded": "Supports prices, discounts, and host monetization decisions.", "mappingType": "inferred_from_product_definition", "brickId": "pric", "brickName": "Pricing & Discounts"}, {"whyNeeded": "Makes earnings and listing quality actionable for hosts.", "mappingType": "inferred_from_product_definition", "brickId": "host", "brickName": "Host Performance & Earnings"}, {"whyNeeded": "Supports payouts, taxes, and fee visibility.", "mappingType": "inferred_from_product_definition", "brickId": "paym", "brickName": "Payments, Taxes & Payouts"}]}, {"id": "P3", "name": "Professional Host and Co-host Operations", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Professional Host / Co-host Operator", "icon": "operator.png"}], "interfaces": [{"type": "web", "name": "Portfolio Operations Console", "description": "Browser experience for multi-listing operations, permissions, pricing, and reconciliation.", "users": ["Professional hosts", "Co-host operators"], "availabilityHorizon": "live"}, {"type": "api", "name": "Portfolio Integration APIs", "description": "Portfolio sync and export interfaces for scaled operators.", "users": ["Professional hosts", "Operator systems"], "availabilityHorizon": "emerging"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Supports delegated operations and role-based access.", "mappingType": "inferred_from_product_definition", "brickId": "coho", "brickName": "Co-host Network & Permissions"}, {"whyNeeded": "Supports changeover, readiness, and daily operating workflows.", "mappingType": "inferred_from_product_definition", "brickId": "opco", "brickName": "Turnover & Operations Coordination"}, {"whyNeeded": "Shows portfolio performance and reconciliation at scale.", "mappingType": "inferred_from_product_definition", "brickId": "host", "brickName": "Host Performance & Earnings"}, {"whyNeeded": "Enables professional pricing, calendar, and occupancy control.", "mappingType": "inferred_from_product_definition", "brickId": "pric", "brickName": "Pricing & Discounts"}, {"whyNeeded": "Supports issue management and case resolution across the portfolio.", "mappingType": "inferred_from_product_definition", "brickId": "reso", "brickName": "Resolutions & Support"}, {"whyNeeded": "Supports external sync and export patterns used by professional operators.", "mappingType": "inferred_from_product_definition", "brickId": "apix", "brickName": "Partner APIs & Channel Connectivity"}]}];
-    const product = {"id": "P3", "name": "Professional Host and Co-host Operations", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Professional Host / Co-host Operator", "icon": "operator.png"}], "interfaces": [{"type": "web", "name": "Portfolio Operations Console", "description": "Browser experience for multi-listing operations, permissions, pricing, and reconciliation.", "users": ["Professional hosts", "Co-host operators"], "availabilityHorizon": "live"}, {"type": "api", "name": "Portfolio Integration APIs", "description": "Portfolio sync and export interfaces for scaled operators.", "users": ["Professional hosts", "Operator systems"], "availabilityHorizon": "emerging"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Supports delegated operations and role-based access.", "mappingType": "inferred_from_product_definition", "brickId": "coho", "brickName": "Co-host Network & Permissions"}, {"whyNeeded": "Supports changeover, readiness, and daily operating workflows.", "mappingType": "inferred_from_product_definition", "brickId": "opco", "brickName": "Turnover & Operations Coordination"}, {"whyNeeded": "Shows portfolio performance and reconciliation at scale.", "mappingType": "inferred_from_product_definition", "brickId": "host", "brickName": "Host Performance & Earnings"}, {"whyNeeded": "Enables professional pricing, calendar, and occupancy control.", "mappingType": "inferred_from_product_definition", "brickId": "pric", "brickName": "Pricing & Discounts"}, {"whyNeeded": "Supports issue management and case resolution across the portfolio.", "mappingType": "inferred_from_product_definition", "brickId": "reso", "brickName": "Resolutions & Support"}, {"whyNeeded": "Supports external sync and export patterns used by professional operators.", "mappingType": "inferred_from_product_definition", "brickId": "apix", "brickName": "Partner APIs & Channel Connectivity"}]};
+    const all_products = [{"id": "p1", "name": "Guest Discovery and Booking Experience", "type": "B2C", "primaryCustomers": [{"id": "cg1-p1", "name": "Guest Stay Booker", "icon": "guest.png"}], "interfaces": [{"type": "web", "name": "Guest Web Marketplace", "description": "Browser experience for inspiration, search, listing evaluation, booking, and trip management.", "users": ["Guests"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Guest iOS App", "description": "Native iOS experience for discovery, booking, and trip messaging.", "users": ["Guests"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Guest Android App", "description": "Native Android experience aligned to the guest booking journey.", "users": ["Guests"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Provides guest entry points from broad travel intent into stay discovery.", "mappingType": "inferred_from_product_definition", "brickId": "insp", "brickName": "Inspiration & Category Discovery"}, {"whyNeeded": "Provides the core guest search and shortlist journey.", "mappingType": "inferred_from_product_definition", "brickId": "srch", "brickName": "Search, Ranking & Map Browse"}, {"whyNeeded": "Helps guests judge whether a stay is worth trusting before they book.", "mappingType": "inferred_from_product_definition", "brickId": "list", "brickName": "Listing Detail & Review Trust"}, {"whyNeeded": "Converts guest intent into a confirmed booking.", "mappingType": "inferred_from_product_definition", "brickId": "book", "brickName": "Booking & Checkout"}, {"whyNeeded": "Provides communication and itinerary support before and during the stay.", "mappingType": "inferred_from_product_definition", "brickId": "trip", "brickName": "Trip Messaging & Itinerary"}, {"whyNeeded": "Supports safe booking and issue recovery expectations.", "mappingType": "inferred_from_product_definition", "brickId": "trst", "brickName": "Trust, Safety & AirCover"}]}, {"id": "p2", "name": "Host Setup and Listing Studio", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Everyday Home Host", "icon": "host.png"}], "interfaces": [{"type": "web", "name": "Host Web Console", "description": "Browser experience for listing setup, calendar, pricing, payouts, and performance.", "users": ["Hosts"], "availabilityHorizon": "live"}, {"type": "mobile_app", "name": "Host Mobile App", "description": "Mobile host controls for inbox, calendar, pricing, and earnings visibility.", "users": ["Hosts"], "availabilityHorizon": "live"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Activates new hosts and validates readiness to go live.", "mappingType": "inferred_from_product_definition", "brickId": "hono", "brickName": "Host Onboarding & Verification"}, {"whyNeeded": "Captures listing content, policies, and photo-rich merchandising.", "mappingType": "inferred_from_product_definition", "brickId": "lista", "brickName": "Listing Authoring & Content"}, {"whyNeeded": "Controls bookable dates, rules, and booking windows.", "mappingType": "inferred_from_product_definition", "brickId": "cala", "brickName": "Calendar & Availability"}, {"whyNeeded": "Supports prices, discounts, and host monetization decisions.", "mappingType": "inferred_from_product_definition", "brickId": "pric", "brickName": "Pricing & Discounts"}, {"whyNeeded": "Makes earnings and listing quality actionable for hosts.", "mappingType": "inferred_from_product_definition", "brickId": "host", "brickName": "Host Performance & Earnings"}, {"whyNeeded": "Supports payouts, taxes, and fee visibility.", "mappingType": "inferred_from_product_definition", "brickId": "paym", "brickName": "Payments, Taxes & Payouts"}]}, {"id": "p3", "name": "Professional Host and Co-host Operations", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Professional Host / Co-host Operator", "icon": "operator.png"}], "interfaces": [{"type": "web", "name": "Portfolio Operations Console", "description": "Browser experience for multi-listing operations, permissions, pricing, and reconciliation.", "users": ["Professional hosts", "Co-host operators"], "availabilityHorizon": "live"}, {"type": "api", "name": "Portfolio Integration APIs", "description": "Portfolio sync and export interfaces for scaled operators.", "users": ["Professional hosts", "Operator systems"], "availabilityHorizon": "emerging"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Supports delegated operations and role-based access.", "mappingType": "inferred_from_product_definition", "brickId": "coho", "brickName": "Co-host Network & Permissions"}, {"whyNeeded": "Supports changeover, readiness, and daily operating workflows.", "mappingType": "inferred_from_product_definition", "brickId": "opco", "brickName": "Turnover & Operations Coordination"}, {"whyNeeded": "Shows portfolio performance and reconciliation at scale.", "mappingType": "inferred_from_product_definition", "brickId": "host", "brickName": "Host Performance & Earnings"}, {"whyNeeded": "Enables professional pricing, calendar, and occupancy control.", "mappingType": "inferred_from_product_definition", "brickId": "pric", "brickName": "Pricing & Discounts"}, {"whyNeeded": "Supports issue management and case resolution across the portfolio.", "mappingType": "inferred_from_product_definition", "brickId": "reso", "brickName": "Resolutions & Support"}, {"whyNeeded": "Supports external sync and export patterns used by professional operators.", "mappingType": "inferred_from_product_definition", "brickId": "apix", "brickName": "Partner APIs & Channel Connectivity"}]}];
+    const product = {"id": "p3", "name": "Professional Host and Co-host Operations", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Professional Host / Co-host Operator", "icon": "operator.png"}], "interfaces": [{"type": "web", "name": "Portfolio Operations Console", "description": "Browser experience for multi-listing operations, permissions, pricing, and reconciliation.", "users": ["Professional hosts", "Co-host operators"], "availabilityHorizon": "live"}, {"type": "api", "name": "Portfolio Integration APIs", "description": "Portfolio sync and export interfaces for scaled operators.", "users": ["Professional hosts", "Operator systems"], "availabilityHorizon": "emerging"}], "deploymentModelRef": "deployment.json", "neededBricks": [{"whyNeeded": "Supports delegated operations and role-based access.", "mappingType": "inferred_from_product_definition", "brickId": "coho", "brickName": "Co-host Network & Permissions"}, {"whyNeeded": "Supports changeover, readiness, and daily operating workflows.", "mappingType": "inferred_from_product_definition", "brickId": "opco", "brickName": "Turnover & Operations Coordination"}, {"whyNeeded": "Shows portfolio performance and reconciliation at scale.", "mappingType": "inferred_from_product_definition", "brickId": "host", "brickName": "Host Performance & Earnings"}, {"whyNeeded": "Enables professional pricing, calendar, and occupancy control.", "mappingType": "inferred_from_product_definition", "brickId": "pric", "brickName": "Pricing & Discounts"}, {"whyNeeded": "Supports issue management and case resolution across the portfolio.", "mappingType": "inferred_from_product_definition", "brickId": "reso", "brickName": "Resolutions & Support"}, {"whyNeeded": "Supports external sync and export patterns used by professional operators.", "mappingType": "inferred_from_product_definition", "brickId": "apix", "brickName": "Partner APIs & Channel Connectivity"}]};
 </script>
 <div id="Navigation"></div>
 <div style="margin: 0 20px">
@@ -572,9 +615,9 @@
             <button class="tablinks" id="tab_BricksTab" onclick="openTab('BricksTab')"></button>
         </div>
 
-        <div id="InterfacesTab" class="tabcontent" style="padding: 10px"><div id="Interfaces"></div></div>
-        <div id="ChannelsTab" class="tabcontent" style="padding: 10px"><div id="Channels"></div></div>
-        <div id="BricksTab" class="tabcontent" style="padding: 10px"><div id="Bricks"></div></div>
+        <div id="tab_content_InterfacesTab" class="tabcontent" style="padding: 10px"><div id="Interfaces"></div></div>
+        <div id="tab_content_ChannelsTab" class="tabcontent" style="padding: 10px"><div id="Channels"></div></div>
+        <div id="tab_content_BricksTab" class="tabcontent" style="padding: 10px"><div id="Bricks"></div></div>
     </div>
 </div>
 

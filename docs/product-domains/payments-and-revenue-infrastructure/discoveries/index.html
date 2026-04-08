@@ -5,6 +5,47 @@
     <title>Discoveries (Payments and Revenue Infrastructure)</title>
 
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -101,39 +142,6 @@
             color: #6b7280;
             font-size: 18px;
             margin-bottom: 14px;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -271,35 +279,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Ongoing';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Ongoing')" onhashchange="initTab('Ongoing')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -327,8 +369,8 @@
     <button class="tablinks" id="tab_Archived" onclick="openTab('Archived')">Archived</button>
 </div>
 
-<div id="Ongoing" class="tabcontent"></div>
-<div id="Archived" class="tabcontent"></div>
+<div id="tab_content_Ongoing" class="tabcontent"></div>
+<div id="tab_content_Archived" class="tabcontent"></div>
 
 <script>
     const discoveries = {"ongoing": [{"title": "Checkout conversion discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-05-01-checkout", "name": "Checkout conversion discovery", "status": "ongoing", "lastUpdated": "2026-04-26", "summary": "Discovery work is testing whether payment-method ordering, buyer trust cues, or approval recovery is the largest remaining drag on legitimate payment conversion.", "opportunity": "Clarify where legitimate demand is lost before capture and which checkout improvements move the largest merchant cohorts fastest.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "landingPageIndex": 5, "initiativeDescription": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants."}], "teams": {"leadTeamId": "checkout-conversion", "supportingTeamIds": ["payment-network-performance", "trust-ops"]}, "riskFocus": [{"riskType": "valuable", "question": "Which changes most increase successful payment conversion for legitimate buyers?", "hypothesis": "Better method ordering and lower-friction checkout UX will increase captured volume faster than isolated visual changes.", "methods": ["Funnel analysis", "Cohort analysis", "Checkout usability testing"]}], "plannedActivities": ["Compare abandonment and approval rates by payment method and region.", "Review conversion gaps between hosted and embedded surfaces.", "Test market-specific method ordering treatments."], "decisionToMake": "Decide which checkout and orchestration patterns become the default Q2 rollout for strategic merchants.", "startDate": "2026-04-05", "endDate": "2026-04-26", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-05", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Recurring revenue recovery discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-09-02-billing", "name": "Recurring revenue recovery discovery", "status": "ongoing", "lastUpdated": "2026-04-30", "summary": "Discovery work is testing whether recurring-revenue loss comes more from payment failure, weak dunning, or pricing-model operability constraints.", "opportunity": "Clarify which product changes most improve recovered revenue and reduce monetization change friction for recurring businesses.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-18-02", "description": "Focused investment to improve recurring collections, failed-payment recovery, and pricing-model operability.", "landingPageIndex": 4, "initiativeDescription": "Focused investment to improve recurring collections, failed-payment recovery, and pricing-model operability."}], "teams": {"leadTeamId": "billing-growth", "supportingTeamIds": ["payment-network-performance", "finance-automation"]}, "riskFocus": [{"riskType": "valuable", "question": "Do recurring businesses gain more from better collection recovery or easier pricing control?", "hypothesis": "Improved invoice-state clarity and recovery logic will unlock more short-term revenue than pricing UX improvements alone.", "methods": ["Account cohort analysis", "RevOps interviews", "Workflow review"]}], "plannedActivities": ["Review failed-payment recovery by invoice and subscription cohort.", "Map the slowest recurring pricing change workflows.", "Test revised collections and dunning controls with target accounts."], "decisionToMake": "Decide which billing and recovery workflows become standard for recurring growth accounts in Q2.", "startDate": "2026-04-09", "endDate": "2026-04-30", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-09", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Connect activation discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-11-03-connect", "name": "Connect activation discovery", "status": "ongoing", "lastUpdated": "2026-05-03", "summary": "Discovery work is testing whether activation drag comes more from verification remediation, capability-state confusion, or payout readiness gaps.", "opportunity": "Clarify which onboarding and operator changes most improve platform activation without increasing review burden.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "description": "Focused investment to improve connected-account activation, remediation clarity, and payout reliability for platform operators.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve connected-account activation, remediation clarity, and payout reliability for platform operators."}], "teams": {"leadTeamId": "connected-accounts", "supportingTeamIds": ["funds-movement", "trust-ops"]}, "riskFocus": [{"riskType": "valuable", "question": "Which activation blockers are most responsible for delayed first earnings events?", "hypothesis": "Platforms lose more activation from unclear remediation and capability-state confusion than from raw verification volume alone.", "methods": ["Onboarding funnel review", "Operator interviews", "Platform cohort analysis"]}], "plannedActivities": ["Review remediation drop-off by requirement type.", "Map operator escalation points before first payout.", "Test revised account-state explanations and onboarding guidance."], "decisionToMake": "Decide which activation and remediation patterns become the standard Connect onboarding flow in Q2.", "startDate": "2026-04-11", "endDate": "2026-05-03", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-04-11", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Finance trust discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-15-04-finance-trust", "name": "Finance trust discovery", "status": "ongoing", "lastUpdated": "2026-05-08", "summary": "Discovery work is testing whether finance trust breaks most around tax registration readiness, reporting discrepancies, or reconciliation investigation effort.", "opportunity": "Clarify which changes most improve adoption of Stripe's finance automation products in control-sensitive accounts.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-05-02-04", "description": "Focused investment to improve tax readiness, reporting trust, and reconciliation clarity for recurring and finance-sensitive customers.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to improve tax readiness, reporting trust, and reconciliation clarity for recurring and finance-sensitive customers."}], "teams": {"leadTeamId": "finance-automation", "supportingTeamIds": ["finance-ops", "developer-foundations"]}, "riskFocus": [{"riskType": "usable", "question": "What most improves operator confidence in tax and revenue outputs?", "hypothesis": "Confidence rises fastest when tax, recognition, and reconciliation outcomes can be explained in one operator workflow.", "methods": ["Finance interviews", "Support-ticket review", "Prototype walkthroughs"]}], "plannedActivities": ["Review top month-end support escalations in recurring accounts.", "Map the most common tax registration and reporting breakdowns.", "Test unified investigation flows across tax, revenue, and reconciliation."], "decisionToMake": "Decide which trust-building finance workflows become default for strategic recurring accounts in Q2.", "startDate": "2026-04-15", "endDate": "2026-05-08", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-04-15", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Omnichannel operations discovery", "id": "discovery-payments-revenue-infrastructure-2026-07-02-01-omnichannel", "name": "Omnichannel operations discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to identify which finance and reporting gaps most limit omnichannel product depth.", "decisionToMake": "Decide which omnichannel reporting and settlement workflows deserve Q3 investment.", "startDate": "2026-07-02", "endDate": "2026-07-24", "statusLabel": "Ongoing", "landingPageIndex": 4, "date": "2026-07-02", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}, {"title": "Platform monetization discovery", "id": "discovery-payments-revenue-infrastructure-2026-07-07-02-platform-controls", "name": "Platform monetization discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to identify which funds-flow controls most improve platform monetization depth without increasing operator burden.", "decisionToMake": "Decide which platform monetization controls become product defaults in Q3.", "startDate": "2026-07-07", "endDate": "2026-07-29", "statusLabel": "Ongoing", "landingPageIndex": 5, "date": "2026-07-07", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}], "archived": [{"title": "Domain baseline discovery", "id": "discovery-payments-revenue-infrastructure-2026-01-15-01-baseline", "name": "Domain baseline discovery", "status": "archived", "lastUpdated": "2026-03-20", "summary": "Completed discovery that established the core KPI and workflow baseline for merchant, recurring, and platform segments.", "decisionToMake": "Use the baseline to drive Q2 customer-outcome objectives.", "startDate": "2026-01-15", "endDate": "2026-03-20", "statusLabel": "Archived", "landingPageIndex": 6, "date": "2026-01-15", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}], "items": [{"title": "Checkout conversion discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-05-01-checkout", "name": "Checkout conversion discovery", "status": "ongoing", "lastUpdated": "2026-04-26", "summary": "Discovery work is testing whether payment-method ordering, buyer trust cues, or approval recovery is the largest remaining drag on legitimate payment conversion.", "opportunity": "Clarify where legitimate demand is lost before capture and which checkout improvements move the largest merchant cohorts fastest.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "landingPageIndex": 5, "initiativeDescription": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants."}], "teams": {"leadTeamId": "checkout-conversion", "supportingTeamIds": ["payment-network-performance", "trust-ops"]}, "riskFocus": [{"riskType": "valuable", "question": "Which changes most increase successful payment conversion for legitimate buyers?", "hypothesis": "Better method ordering and lower-friction checkout UX will increase captured volume faster than isolated visual changes.", "methods": ["Funnel analysis", "Cohort analysis", "Checkout usability testing"]}], "plannedActivities": ["Compare abandonment and approval rates by payment method and region.", "Review conversion gaps between hosted and embedded surfaces.", "Test market-specific method ordering treatments."], "decisionToMake": "Decide which checkout and orchestration patterns become the default Q2 rollout for strategic merchants.", "startDate": "2026-04-05", "endDate": "2026-04-26", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-05", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Recurring revenue recovery discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-09-02-billing", "name": "Recurring revenue recovery discovery", "status": "ongoing", "lastUpdated": "2026-04-30", "summary": "Discovery work is testing whether recurring-revenue loss comes more from payment failure, weak dunning, or pricing-model operability constraints.", "opportunity": "Clarify which product changes most improve recovered revenue and reduce monetization change friction for recurring businesses.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-18-02", "description": "Focused investment to improve recurring collections, failed-payment recovery, and pricing-model operability.", "landingPageIndex": 4, "initiativeDescription": "Focused investment to improve recurring collections, failed-payment recovery, and pricing-model operability."}], "teams": {"leadTeamId": "billing-growth", "supportingTeamIds": ["payment-network-performance", "finance-automation"]}, "riskFocus": [{"riskType": "valuable", "question": "Do recurring businesses gain more from better collection recovery or easier pricing control?", "hypothesis": "Improved invoice-state clarity and recovery logic will unlock more short-term revenue than pricing UX improvements alone.", "methods": ["Account cohort analysis", "RevOps interviews", "Workflow review"]}], "plannedActivities": ["Review failed-payment recovery by invoice and subscription cohort.", "Map the slowest recurring pricing change workflows.", "Test revised collections and dunning controls with target accounts."], "decisionToMake": "Decide which billing and recovery workflows become standard for recurring growth accounts in Q2.", "startDate": "2026-04-09", "endDate": "2026-04-30", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-09", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Connect activation discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-11-03-connect", "name": "Connect activation discovery", "status": "ongoing", "lastUpdated": "2026-05-03", "summary": "Discovery work is testing whether activation drag comes more from verification remediation, capability-state confusion, or payout readiness gaps.", "opportunity": "Clarify which onboarding and operator changes most improve platform activation without increasing review burden.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-24-03", "description": "Focused investment to improve connected-account activation, remediation clarity, and payout reliability for platform operators.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve connected-account activation, remediation clarity, and payout reliability for platform operators."}], "teams": {"leadTeamId": "connected-accounts", "supportingTeamIds": ["funds-movement", "trust-ops"]}, "riskFocus": [{"riskType": "valuable", "question": "Which activation blockers are most responsible for delayed first earnings events?", "hypothesis": "Platforms lose more activation from unclear remediation and capability-state confusion than from raw verification volume alone.", "methods": ["Onboarding funnel review", "Operator interviews", "Platform cohort analysis"]}], "plannedActivities": ["Review remediation drop-off by requirement type.", "Map operator escalation points before first payout.", "Test revised account-state explanations and onboarding guidance."], "decisionToMake": "Decide which activation and remediation patterns become the standard Connect onboarding flow in Q2.", "startDate": "2026-04-11", "endDate": "2026-05-03", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-04-11", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Finance trust discovery", "id": "discovery-payments-revenue-infrastructure-2026-04-15-04-finance-trust", "name": "Finance trust discovery", "status": "ongoing", "lastUpdated": "2026-05-08", "summary": "Discovery work is testing whether finance trust breaks most around tax registration readiness, reporting discrepancies, or reconciliation investigation effort.", "opportunity": "Clarify which changes most improve adoption of Stripe's finance automation products in control-sensitive accounts.", "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-05-02-04", "description": "Focused investment to improve tax readiness, reporting trust, and reconciliation clarity for recurring and finance-sensitive customers.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to improve tax readiness, reporting trust, and reconciliation clarity for recurring and finance-sensitive customers."}], "teams": {"leadTeamId": "finance-automation", "supportingTeamIds": ["finance-ops", "developer-foundations"]}, "riskFocus": [{"riskType": "usable", "question": "What most improves operator confidence in tax and revenue outputs?", "hypothesis": "Confidence rises fastest when tax, recognition, and reconciliation outcomes can be explained in one operator workflow.", "methods": ["Finance interviews", "Support-ticket review", "Prototype walkthroughs"]}], "plannedActivities": ["Review top month-end support escalations in recurring accounts.", "Map the most common tax registration and reporting breakdowns.", "Test unified investigation flows across tax, revenue, and reconciliation."], "decisionToMake": "Decide which trust-building finance workflows become default for strategic recurring accounts in Q2.", "startDate": "2026-04-15", "endDate": "2026-05-08", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-04-15", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Omnichannel operations discovery", "id": "discovery-payments-revenue-infrastructure-2026-07-02-01-omnichannel", "name": "Omnichannel operations discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to identify which finance and reporting gaps most limit omnichannel product depth.", "decisionToMake": "Decide which omnichannel reporting and settlement workflows deserve Q3 investment.", "startDate": "2026-07-02", "endDate": "2026-07-24", "statusLabel": "Ongoing", "landingPageIndex": 4, "date": "2026-07-02", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}, {"title": "Platform monetization discovery", "id": "discovery-payments-revenue-infrastructure-2026-07-07-02-platform-controls", "name": "Platform monetization discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Planned discovery to identify which funds-flow controls most improve platform monetization depth without increasing operator burden.", "decisionToMake": "Decide which platform monetization controls become product defaults in Q3.", "startDate": "2026-07-07", "endDate": "2026-07-29", "statusLabel": "Ongoing", "landingPageIndex": 5, "date": "2026-07-07", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}, {"title": "Domain baseline discovery", "id": "discovery-payments-revenue-infrastructure-2026-01-15-01-baseline", "name": "Domain baseline discovery", "status": "archived", "lastUpdated": "2026-03-20", "summary": "Completed discovery that established the core KPI and workflow baseline for merchant, recurring, and platform segments.", "decisionToMake": "Use the baseline to drive Q2 customer-outcome objectives.", "startDate": "2026-01-15", "endDate": "2026-03-20", "statusLabel": "Archived", "landingPageIndex": 6, "date": "2026-01-15", "linkedInitiatives": [], "customerImpact": [], "productBricks": [], "deliveryChannels": [], "riskFocus": [], "plannedActivities": []}]};

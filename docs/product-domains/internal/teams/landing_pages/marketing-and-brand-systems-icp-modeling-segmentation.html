@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "marketing-and-brand-systems-icp-modeling-segmentation", "name": "Marketing & Brand Systems - Icp Modeling Segmentation", "teamType": "stream-aligned", "teamFamilyId": "marketing-and-brand-systems", "teamFamilyName": "Marketing & Brand Systems", "orgLayer": "team", "mission": "Own demand generation, lifecycle, content, and brand systems that drive qualified pipeline. This team specifically focuses on icp modeling segmentation.", "primaryCustomers": [{"customerId": "cmmo", "customerName": "Chief Marketing Officer / VP Marketing", "relatedKPIs": ["Marketing-Sourced Pipeline", "Efficiency", "Conversion", "Annual Platform Value Realized"], "icon": "campaign.png"}, {"customerId": "crov", "customerName": "Chief Revenue Officer / VP Sales", "relatedKPIs": ["Net New Revenue Attainment", "Pipeline Quality", "Conversion Efficiency", "Annual Platform Value Realized"], "icon": "trending_up.png"}], "ownedProductBricks": [{"brickId": "imas", "brickName": "ICP modeling and segmentation", "brick": {"id": "imas", "name": "ICP modeling and segmentation", "type": "full-stack", "description": "Analyzes historical win data and firmographics to define high-conversion segments.", "domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "internalModules": [{"title": "Experience Shell and Navigation", "description": "Provides the primary user flow, navigation, and page composition for ICP modeling and segmentation.", "type": "full-stack"}, {"title": "Session and Personalization State", "description": "Manages user context, preferences, and personalized behavior within ICP modeling and segmentation.", "type": "service"}, {"title": "Content and Interaction Orchestration", "description": "Coordinates the content blocks, tasks, and interaction logic shown by ICP modeling and segmentation.", "type": "content"}], "interfaces": [{"title": "User Experience Interface", "description": "Primary user-facing interface delivered by ICP modeling and segmentation.", "type": "ui"}, {"title": "Experience Backend API", "description": "API surface used to assemble state and content for ICP modeling and segmentation.", "type": "api"}, {"title": "Interaction Event Stream", "description": "Event interface capturing user actions and journey signals from ICP modeling and segmentation.", "type": "event"}], "brickDependencies": [{"targetBrickId": "iaam", "type": "identity", "interface": "Authentication API", "description": "Depends on Identity and account matching to provide identity capabilities required by ICP modeling and segmentation."}, {"targetBrickId": "pren", "type": "event-subscription", "interface": "Catalog Update Feed", "description": "Depends on Playbook recommendation engine to provide discovery capabilities required by ICP modeling and segmentation."}, {"targetBrickId": "sgwo", "type": "operator-control", "interface": "Operator Console", "description": "Depends on Stage-gated workflow orchestration to provide operations capabilities required by ICP modeling and segmentation."}], "externalSystemsThisBrickDependsOn": [{"system": "Web and Mobile Clients", "type": "channel", "interface": "UI", "description": "User-facing clients consume ICP modeling and segmentation through browser or app experiences."}, {"system": "Notification Delivery Platforms", "type": "communication", "interface": "Email / Push APIs", "description": "ICP modeling and segmentation depends on outbound communication systems to notify users and continue journeys."}], "externalSystemsDependingOnThisBrick": [{"system": "Web and Mobile Clients", "type": "channel-consumer", "interface": "UI", "description": "Web and mobile clients rely on ICP modeling and segmentation as the user-facing surface for discovery, interaction, or task completion."}, {"system": "Marketing and Acquisition Platforms", "type": "traffic-source", "interface": "Deep Link / Landing Page Interface", "description": "Acquisition and campaign systems drive traffic into ICP modeling and segmentation to convert or retain users."}], "icon": "imas.png"}}, {"brickId": "mcas", "brickName": "Multi-channel attribution system", "brick": {"id": "mcas", "name": "Multi-channel attribution system", "type": "service", "description": "Tracks touchpoints across channels and ties them to pipeline creation.", "domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "internalModules": [{"title": "Core Domain Engine", "description": "Implements the main business logic and lifecycle handled by Multi-channel attribution system.", "type": "service"}, {"title": "Rules and Administration", "description": "Provides the configuration, rules, and administrative controls required by Multi-channel attribution system.", "type": "operations"}, {"title": "Reporting and Exception Handling", "description": "Supports visibility, diagnostics, and manual handling of exceptions in Multi-channel attribution system.", "type": "analytics"}], "interfaces": [{"title": "Service API", "description": "API surface for interacting with the business capabilities implemented by Multi-channel attribution system.", "type": "api"}, {"title": "Operations Workspace", "description": "User interface for administration and operational control of Multi-channel attribution system.", "type": "ui"}, {"title": "Domain Event Feed", "description": "Event interface that publishes notable business changes from Multi-channel attribution system.", "type": "event"}], "brickDependencies": [{"targetBrickId": "iaam", "type": "identity", "interface": "Authentication API", "description": "Depends on Identity and account matching to provide identity capabilities required by Multi-channel attribution system."}, {"targetBrickId": "otbi", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Order-to-booking integration to provide integration capabilities required by Multi-channel attribution system."}, {"targetBrickId": "fasp", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Forecasting and scenario planning to provide analytics capabilities required by Multi-channel attribution system."}], "externalSystemsThisBrickDependsOn": [{"system": "Back-Office Systems", "type": "back-office", "interface": "Service API", "description": "Multi-channel attribution system exchanges operational state and business records with external back-office systems."}, {"system": "Notification and Communication Platforms", "type": "communication", "interface": "Messaging API", "description": "Multi-channel attribution system uses external communication channels to notify users, operators, or partners."}], "externalSystemsDependingOnThisBrick": [{"system": "Business Workflows", "type": "service-consumer", "interface": "Service API", "description": "Upstream business workflows depend on Multi-channel attribution system for core domain capabilities and state transitions."}, {"system": "Operations and Support Teams", "type": "operations-consumer", "interface": "Operations Workspace / Events", "description": "Operations consumers depend on Multi-channel attribution system for administration, visibility, and exception resolution."}], "icon": "mcas.png"}}, {"brickId": "rlra", "brickName": "Revenue-linked ROI analytics", "brick": {"id": "rlra", "name": "Revenue-linked ROI analytics", "type": "service", "description": "Connects campaign spend to closed-won revenue and payback period.", "domain": "Revenue & Growth Stakeholders", "group": "generate-predictable-qualified-demand", "internalModules": [{"title": "Transaction and Ledger Core", "description": "Records the core financial or commercial transactions handled by Revenue-linked ROI analytics.", "type": "finance"}, {"title": "Settlement and Reconciliation", "description": "Matches external outcomes, balances, and exceptions flowing through Revenue-linked ROI analytics.", "type": "operations"}, {"title": "Billing Rules and Controls", "description": "Applies pricing, billing, tax, or financial control logic inside Revenue-linked ROI analytics.", "type": "policy"}], "interfaces": [{"title": "Transaction API", "description": "API surface for submitting or retrieving financial transactions handled by Revenue-linked ROI analytics.", "type": "api"}, {"title": "Finance Operations Workspace", "description": "User interface for reconciliation, exception handling, and financial oversight in Revenue-linked ROI analytics.", "type": "ui"}, {"title": "Settlement and Ledger Events", "description": "Event stream carrying posting, settlement, and status changes from Revenue-linked ROI analytics.", "type": "event"}], "brickDependencies": [{"targetBrickId": "sgwo", "type": "workflow", "interface": "Workflow API", "description": "Depends on Stage-gated workflow orchestration to provide operations capabilities required by Revenue-linked ROI analytics."}, {"targetBrickId": "iaam", "type": "event-subscription", "interface": "Audit Event Stream", "description": "Depends on Identity and account matching to provide identity capabilities required by Revenue-linked ROI analytics."}, {"targetBrickId": "otbi", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on Order-to-booking integration to provide integration capabilities required by Revenue-linked ROI analytics."}], "externalSystemsThisBrickDependsOn": [{"system": "Payment Schemes and PSPs", "type": "financial-network", "interface": "Payment APIs", "description": "Revenue-linked ROI analytics depends on external payment or banking networks to authorize and settle transactions."}, {"system": "Accounting or ERP Systems", "type": "back-office", "interface": "ERP Interface", "description": "Revenue-linked ROI analytics exchanges postings, reconciliations, or settlement outcomes with finance back-office systems."}], "externalSystemsDependingOnThisBrick": [{"system": "Checkout and Billing Flows", "type": "transaction-consumer", "interface": "Payment / Posting API", "description": "Commercial flows depend on Revenue-linked ROI analytics to authorize, post, reconcile, or settle financial transactions."}, {"system": "Finance and Reporting Systems", "type": "finance-consumer", "interface": "Ledger / Settlement Feed", "description": "Back-office finance consumers depend on Revenue-linked ROI analytics for accounting, settlement, and reconciliation outputs."}], "icon": "rlra.png"}}, {"brickId": "bsan", "brickName": "Brand sentiment analytics", "brick": {"id": "bsan", "name": "Brand sentiment analytics", "type": "service", "description": "Aggregates social, web, and campaign engagement data into brand health indicators.", "domain": "Revenue & Growth Stakeholders", "group": "build-and-sustain-brand-equity", "internalModules": [{"title": "Signal Ingestion and Processing", "description": "Collects operational and business signals that feed Brand sentiment analytics.", "type": "data"}, {"title": "Metrics and Decision Engine", "description": "Calculates insights, KPIs, forecasts, or scores produced by Brand sentiment analytics.", "type": "analytics"}, {"title": "Reporting and Operations Workspace", "description": "Presents actionable views, alerts, and drill-down workflows for Brand sentiment analytics.", "type": "full-stack"}], "interfaces": [{"title": "Dashboard Interface", "description": "Interactive reporting or control surface that presents insights from Brand sentiment analytics.", "type": "ui"}, {"title": "Metrics and Query API", "description": "API for retrieving metrics, scores, forecasts, or analytical outputs from Brand sentiment analytics.", "type": "api"}, {"title": "Alert and Signal Feed", "description": "Event or notification interface exposing operational signals generated by Brand sentiment analytics.", "type": "event"}], "brickDependencies": [{"targetBrickId": "tere", "type": "data-access", "interface": "Data Access API", "description": "Depends on Technical exception registry to provide data capabilities required by Brand sentiment analytics."}, {"targetBrickId": "otbi", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Order-to-booking integration to provide integration capabilities required by Brand sentiment analytics."}, {"targetBrickId": "sgwo", "type": "operator-control", "interface": "Operator Console", "description": "Depends on Stage-gated workflow orchestration to provide operations capabilities required by Brand sentiment analytics."}], "externalSystemsThisBrickDependsOn": [{"system": "Data Warehouse and BI Platforms", "type": "analytics-platform", "interface": "Query / Export Interface", "description": "Brand sentiment analytics publishes metrics and operational signals into external analytical environments."}, {"system": "Alerting and Incident Platforms", "type": "operations", "interface": "Webhook / Event Interface", "description": "Brand sentiment analytics depends on external alerting systems to escalate anomalies and operational issues."}], "externalSystemsDependingOnThisBrick": [{"system": "Operational Teams and Workspaces", "type": "insight-consumer", "interface": "Dashboard / Alert Interface", "description": "Operational teams depend on Brand sentiment analytics to monitor health, detect issues, and make decisions."}, {"system": "Reporting and Planning Systems", "type": "analytics-consumer", "interface": "Metrics / Export Interface", "description": "Analytical and planning consumers depend on Brand sentiment analytics for metrics, forecasts, and decision support outputs."}], "icon": "bsan.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["engineering-product-platform-cell-1", "enterprise-data-office-enterprise-metric-layer"], "defaultSupportingTeamIds": ["enterprise-data-office-enterprise-metric-layer"], "staffing": {"suggestedHeadcount": 12, "staffingGuidance": "Each customer-facing team is intentionally kept near 10 FTE so it can own a narrow journey or capability slice with clear accountability and fast decision-making.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own the roadmap, prioritization, and KPI tradeoffs for this team scope."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution, staffing, and engineering health for the team."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction and guard long-term architecture quality across the team scope."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build and evolve backend services, business logic, and integration points."}, {"role": "Frontend Engineer", "count": 2, "responsibility": "Build user-facing workflows and maintain a high-quality interaction model."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own regression depth, release confidence, and automated quality coverage."}, {"role": "Product Designer", "count": 1, "responsibility": "Shape the end-to-end workflow, information architecture, and UX quality."}, {"role": "Data / Domain Specialist", "count": 1, "responsibility": "Bridge product decisions with domain semantics, data quality, and operational fit."}]}, "relatedDiscoveries": [], "groupId": "business-systems-marketing-and-brand-systems", "groupName": "Business Systems / Marketing & Brand Systems", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architectural coherence, and craft leadership for the teams in this group.", "leadershipModel": "Directors own the operating cadence and people leadership for the group; principal roles work as group-level individual contributors who coach teams and shape standards.", "suggestedHeadcount": 4, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own the strategy, portfolio tradeoffs, and outcome accountability across the team group.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, system health, and staffing quality across the team group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Principal Engineer", "count": 1, "responsibility": "Provide cross-team architecture leadership and coach senior engineers across the group.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive cross-team UX coherence, workflow quality, and design standards across the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "engineering-product-platform-cell-1", "name": "Engineering Product Platform - Cell 1", "teamType": "platform", "groupId": "shared-enablement-engineering-product-platform", "groupName": "Shared Enablement / Engineering Product Platform"}, {"id": "enterprise-data-office-enterprise-metric-layer", "name": "Enterprise Data Office - Enterprise Metric Layer", "teamType": "platform", "groupId": "shared-enablement-enterprise-data-office", "groupName": "Shared Enablement / Enterprise Data Office"}], "defaultSupportingTeams": [{"id": "enterprise-data-office-enterprise-metric-layer", "name": "Enterprise Data Office - Enterprise Metric Layer", "teamType": "platform", "groupId": "shared-enablement-enterprise-data-office", "groupName": "Shared Enablement / Enterprise Data Office"}], "relatedInitiatives": [], "relatedReleases": [], "dependencyData": {"sharedProductBricks": [], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "engineering-product-platform-cell-1", "teamName": "Engineering Product Platform - Cell 1", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "enterprise-data-office-enterprise-metric-layer", "teamName": "Enterprise Data Office - Enterprise Metric Layer", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "enterprise-data-office-enterprise-metric-layer", "teamName": "Enterprise Data Office - Enterprise Metric Layer", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

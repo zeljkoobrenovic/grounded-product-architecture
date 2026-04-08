@@ -16,6 +16,8 @@ domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/objectives/'
 domain, _ = load_domain_args()
 common_style = open(templates_root + '../_imports/common/style.html').read()
+tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
 breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
 
@@ -360,6 +362,8 @@ def create_landing_pages(docs_folder, payload, domain):
         with open(landing_page_file, 'w') as html_file:
             html_file.write(template
                             .replace('${common_style}', common_style)
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
                             .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {
@@ -378,6 +382,8 @@ def create_landing_pages(docs_folder, payload, domain):
         with open(landing_page_file, 'w') as html_file:
             html_file.write(template
                             .replace('${common_style}', common_style)
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
                             .replace('${breadcrumbs}', render_breadcrumbs('landing_page_breadcrumbs.json', {

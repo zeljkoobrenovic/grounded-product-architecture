@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -40,38 +81,6 @@
 
         a {
             text-decoration: none;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .review-image {
@@ -234,18 +243,14 @@
         }
 
         .kpi-title {
-            display: flex;
             align-items: center;
             justify-content: center;
             width: 100%;
         }
 
         .kpi-icon {
-            width: 50px;
             height: 50px;
-            object-fit: contain;
-            padding: 4px;
-            margin-right: 8px;
+            padding: 0;
         }
 
         .triangle {
@@ -387,7 +392,7 @@
         .job-detail-hero {
             width: 300px;
             height: 200px;
-            object-fit: cover;
+            object-fit: contain;
             margin-top: 12px;
             margin-bottom: 12px;
             box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
@@ -468,35 +473,69 @@
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'HomeTab';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('HomeTab')" onhashchange="initTab('HomeTab')">
+<div id="breadcrumbs" style="margin-left: 18px"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs" style="margin-left: 18px"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 
 <script>
     const config = {"domains": [{"id": "maas", "name": "Mobility-as-a-Service (MaaS)", "description": "The products, workflows, and platform capabilities required to run parking, curbside, public transport payments, fleet mobility, city-planning intelligence, and partner ecosystems at global urban-mobility scale."}]};
@@ -521,22 +560,22 @@
             <button class="tablinks" id="tab_InsightsTab" onclick="openTab('InsightsTab')">Insights</button>
         </div>
 
-        <div id="HomeTab" class="tabcontent" style="padding: 10px">
+        <div id="tab_content_HomeTab" class="tabcontent" style="padding: 10px">
             <div id="Home"></div>
         </div>
-        <div id="JobsTab" class="tabcontent" style="padding: 10px;">
+        <div id="tab_content_JobsTab" class="tabcontent" style="padding: 10px;">
             <div id="Jobs"></div>
         </div>
-        <div id="JourneysTab" class="tabcontent" style="padding: 10px;">
+        <div id="tab_content_JourneysTab" class="tabcontent" style="padding: 10px;">
             <div id="Journeys"></div>
         </div>
-        <div id="KPITab" class="tabcontent" style="padding: 10px;">
+        <div id="tab_content_KPITab" class="tabcontent" style="padding: 10px;">
             <div id="KPI"></div>
         </div>
-        <div id="RoadmapTab" class="tabcontent" style="padding: 10px;">
+        <div id="tab_content_RoadmapTab" class="tabcontent" style="padding: 10px;">
             <div id="Roadmap"></div>
         </div>
-        <div id="InsightsTab" class="tabcontent" style="padding: 10px;">
+        <div id="tab_content_InsightsTab" class="tabcontent" style="padding: 10px;">
             <div id="Insights"></div>
         </div>
     </div>
@@ -983,7 +1022,7 @@
     function renderKpiTitle(node) {
         let html = '';
         html += '<div class="kpi-title">';
-        html += '<img class="kpi-icon" src="../icons/' + escapeHtml(kpiIconFile(node)) + '" onerror="this.onerror=null;this.src=\'../icons/kpi.png\'">';
+        html += '<div><img class="kpi-icon" src="../icons/' + escapeHtml(kpiIconFile(node)) + '" onerror="this.onerror=null;this.src=\'../icons/kpi.png\'"></div>';
         html += '<div><div>' + escapeHtml(node.name || '') + '</div>' + renderKpiMeta(node) + '</div>';
         html += '</div>';
         return html;

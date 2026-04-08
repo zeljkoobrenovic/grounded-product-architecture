@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -238,39 +279,6 @@
             margin-bottom: 8px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
-        }
-
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -424,8 +432,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onhashchange="initTab('HomeTab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 8px">
     <tr>
         <td style="vertical-align: top; padding-top: 0px">
@@ -441,13 +509,13 @@
 
 <div style="margin-left: 12px">
     <div class="tab" id="TabBar"></div>
-    <div id="HomeTab" class="tabcontent"></div>
+    <div id="tab_content_HomeTab" class="tabcontent"></div>
     <div id="KRTabsContainer"></div>
-    <div id="DiscoveriesTab" class="tabcontent"></div>
+    <div id="tab_content_DiscoveriesTab" class="tabcontent"></div>
 </div>
 
 <script>
-    const pageData = {"id": "payments-and-revenue-infrastructure-2026-q2-cg1-p1", "title": "2026-Q2 Growth Commerce GM outcome goal", "objective": "Improve payment conversion and omnichannel operability by raising checkout quality, approval performance, and finance clarity.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "customerGroup": "Direct Merchants"}], "linkedCustomerKPIs": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "kpiId": "CO-CG1-TOP", "kpiName": "Successful payment conversion", "description": "Share of legitimate payment attempts that become captured payments.", "unit": "% of legitimate payment attempts", "kind": "customer", "targetDirection": "increase"}, {"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "kpiId": "CO-CG1-B2-C1", "kpiName": "Issuer authorization rate", "description": "Share of legitimate card attempts authorized successfully.", "unit": "% of legitimate card attempts", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "kpiId": "BO-CG1-TOP", "kpiName": "Enterprise merchant GPV retention", "description": "Retained merchant volume growth on enterprise commerce cohorts.", "unit": "% net GPV retention", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Successful payment conversion", "kind": "customer", "targetDirection": "increase", "target": "Reach 97.5% on legitimate payment attempts", "baseline": "Q1 2026 enterprise merchant baseline", "statement": "Increase checkout and payment completion by improving buyer UX and payment-method presentation.", "executingTeams": [{"teamId": "checkout-conversion", "teamName": "Checkout Conversion", "role": "executing", "intent": "Improve hosted and embedded checkout conversion."}], "supportingTeams": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "role": "supporting", "intent": "Improve payment method selection and approval support."}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "role": "supporting", "intent": "Improve integration reliability and event visibility."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}, {"id": "kr-2", "metric": "Enterprise merchant GPV retention", "kind": "business", "targetDirection": "increase", "target": "Keep retention above 118%", "baseline": "Q1 2026 enterprise merchant baseline", "statement": "Increase retained merchant volume by improving approval performance and reducing finance exceptions.", "executingTeams": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "role": "executing", "intent": "Improve approval and omnichannel payment performance."}], "supportingTeams": [{"teamId": "trust-ops", "teamName": "Trust Operations", "role": "supporting", "intent": "Protect approval gains from fraud and dispute loss."}, {"teamId": "finance-ops", "teamName": "Finance Operations", "role": "supporting", "intent": "Reduce reconciliation and payout confusion."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}], "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "title": "Global Checkout Conversion Initiative"}], "linkedReleases": [], "landingPageId": "payments-and-revenue-infrastructure-2026-q2-cg1-p1", "inspiredByInsights": [], "companyObjectiveRefs": [], "enrichedInitiatives": [{"title": "Global Checkout Conversion Initiative", "date": "2026-04-12", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Growth Commerce GM", "group": "Direct Merchants", "icon": "commerce_gm.png"}, "customerKPIs": [{"kpi": "Successful payment conversion", "expectedImpact": "Increase captured payments from existing checkout demand.", "description": "Increase the share of legitimate checkout attempts that become captured payments to 97.5%.", "unit": "% of legitimate payment attempts", "currentValue": "82.1", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Issuer authorization rate", "expectedImpact": "Reduce avoidable legitimate declines.", "description": "Raise issuer authorization success on legitimate card attempts to 91.5%.", "unit": "% of legitimate card attempts", "currentValue": "52.8", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Enterprise merchant GPV retention", "expectedImpact": "Improve retained merchant volume through conversion quality.", "description": "Keep net GPV retention above 118% on scaled commerce cohorts by improving conversion and cross-product depth.", "unit": "% net GPV retention", "currentValue": "81.8", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "chck", "change": "Improve hosted checkout flows by market and device.", "brick": {"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chck.png"}}, {"brickId": "pmtd", "change": "Improve method ordering and country-level relevance.", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}, {"brickId": "auth", "change": "Improve approval recovery on legitimate traffic.", "brick": {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}], "deliveryChannels": [{"channelId": "hosted-checkout", "change": "Roll out updated checkout treatments.", "channel": {"productId": "hosted", "productName": "", "name": "hosted-checkout", "type": "product", "icon": "product.png"}}, {"channelId": "api-gateway", "change": "Expose supporting orchestration and authorization updates.", "channel": {"productId": "api", "productName": "", "name": "api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["checkout-conversion", "payment-network-performance"], "supportingTeamIds": ["trust-ops", "developer-foundations"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "discoveryIds": ["discovery-payments-revenue-infrastructure-2026-04-05-01-checkout"], "priority": "p1", "keyResultId": "payments-and-revenue-infrastructure-2026-q2-cg1-p1/kr-1", "landingPageIndex": 5}], "enrichedReleases": [{"title": "Global Checkout Conversion Release", "date": "2026-05-14", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Growth Commerce GM", "group": "Direct Merchants", "icon": "commerce_gm.png"}, "customerKPIs": [{"kpi": "Successful payment conversion", "expectedImpact": "Increase the share of legitimate payment attempts that become captured payments.", "description": "Increase the share of legitimate checkout attempts that become captured payments to 97.5%.", "unit": "% of legitimate payment attempts", "currentValue": "82.1", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Issuer authorization rate", "expectedImpact": "Improve card and wallet payment success on legitimate demand.", "description": "Raise issuer authorization success on legitimate card attempts to 91.5%.", "unit": "% of legitimate card attempts", "currentValue": "52.8", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Enterprise merchant GPV retention", "expectedImpact": "Improve retained merchant volume through better conversion quality.", "description": "Keep net GPV retention above 118% on scaled commerce cohorts by improving conversion and cross-product depth.", "unit": "% net GPV retention", "currentValue": "81.8", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "chck", "change": "Improve hosted checkout conversion patterns and localization.", "brick": {"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chck.png"}}, {"brickId": "pmtd", "change": "Improve market-aware payment method ordering.", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}, {"brickId": "auth", "change": "Improve recovery and approval optimization on legitimate attempts.", "brick": {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}], "deliveryChannels": [{"channelId": "hosted-checkout", "change": "Release updated hosted checkout experiences.", "channel": {"productId": "hosted", "productName": "", "name": "hosted-checkout", "type": "product", "icon": "product.png"}}, {"channelId": "api-gateway", "change": "Release updated payment method and authorization APIs.", "channel": {"productId": "api", "productName": "", "name": "api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["checkout-conversion", "payment-network-performance"], "supportingTeamIds": ["trust-ops", "developer-foundations"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "landingPageIndex": 3}]};
+    const pageData = {"id": "payments-and-revenue-infrastructure-2026-q2-cg1-p1", "title": "2026-Q2 Growth Commerce GM outcome goal", "objective": "Improve payment conversion and omnichannel operability by raising checkout quality, approval performance, and finance clarity.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "customerGroup": "Direct Merchants"}], "linkedCustomerKPIs": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "kpiId": "co-cg1-top", "kpiName": "Successful payment conversion", "description": "Share of legitimate payment attempts that become captured payments.", "unit": "% of legitimate payment attempts", "kind": "customer", "targetDirection": "increase"}, {"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "kpiId": "co-cg1-b2-c1", "kpiName": "Issuer authorization rate", "description": "Share of legitimate card attempts authorized successfully.", "unit": "% of legitimate card attempts", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "kpiId": "bo-cg1-top", "kpiName": "Enterprise merchant GPV retention", "description": "Retained merchant volume growth on enterprise commerce cohorts.", "unit": "% net GPV retention", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Successful payment conversion", "kind": "customer", "targetDirection": "increase", "target": "Reach 97.5% on legitimate payment attempts", "baseline": "Q1 2026 enterprise merchant baseline", "statement": "Increase checkout and payment completion by improving buyer UX and payment-method presentation.", "executingTeams": [{"teamId": "checkout-conversion", "teamName": "Checkout Conversion", "role": "executing", "intent": "Improve hosted and embedded checkout conversion."}], "supportingTeams": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "role": "supporting", "intent": "Improve payment method selection and approval support."}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "role": "supporting", "intent": "Improve integration reliability and event visibility."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}, {"id": "kr-2", "metric": "Enterprise merchant GPV retention", "kind": "business", "targetDirection": "increase", "target": "Keep retention above 118%", "baseline": "Q1 2026 enterprise merchant baseline", "statement": "Increase retained merchant volume by improving approval performance and reducing finance exceptions.", "executingTeams": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "role": "executing", "intent": "Improve approval and omnichannel payment performance."}], "supportingTeams": [{"teamId": "trust-ops", "teamName": "Trust Operations", "role": "supporting", "intent": "Protect approval gains from fraud and dispute loss."}, {"teamId": "finance-ops", "teamName": "Finance Operations", "role": "supporting", "intent": "Reduce reconciliation and payout confusion."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "status": "on-track"}], "linkedInitiatives": [{"initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "title": "Global Checkout Conversion Initiative"}], "linkedReleases": [], "landingPageId": "payments-and-revenue-infrastructure-2026-q2-cg1-p1", "inspiredByInsights": [], "companyObjectiveRefs": [], "enrichedInitiatives": [{"title": "Global Checkout Conversion Initiative", "date": "2026-04-12", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Growth Commerce GM", "group": "Direct Merchants", "icon": "commerce_gm.png"}, "customerKPIs": [{"kpi": "Successful payment conversion", "expectedImpact": "Increase captured payments from existing checkout demand.", "description": "Increase the share of legitimate checkout attempts that become captured payments to 97.5%.", "unit": "% of legitimate payment attempts", "currentValue": "82.1", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Issuer authorization rate", "expectedImpact": "Reduce avoidable legitimate declines.", "description": "Raise issuer authorization success on legitimate card attempts to 91.5%.", "unit": "% of legitimate card attempts", "currentValue": "52.8", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Enterprise merchant GPV retention", "expectedImpact": "Improve retained merchant volume through conversion quality.", "description": "Keep net GPV retention above 118% on scaled commerce cohorts by improving conversion and cross-product depth.", "unit": "% net GPV retention", "currentValue": "81.8", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "chck", "change": "Improve hosted checkout flows by market and device.", "brick": {"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chck.png"}}, {"brickId": "pmtd", "change": "Improve method ordering and country-level relevance.", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}, {"brickId": "auth", "change": "Improve approval recovery on legitimate traffic.", "brick": {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}], "deliveryChannels": [{"channelId": "hosted-checkout", "change": "Roll out updated checkout treatments.", "channel": {"productId": "hosted", "productName": "", "name": "hosted-checkout", "type": "product", "icon": "product.png"}}, {"channelId": "api-gateway", "change": "Expose supporting orchestration and authorization updates.", "channel": {"productId": "api", "productName": "", "name": "api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["checkout-conversion", "payment-network-performance"], "supportingTeamIds": ["trust-ops", "developer-foundations"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "discoveryIds": ["discovery-payments-revenue-infrastructure-2026-04-05-01-checkout"], "priority": "p1", "keyResultId": "payments-and-revenue-infrastructure-2026-q2-cg1-p1/kr-1", "landingPageIndex": 5}], "enrichedReleases": [{"title": "Global Checkout Conversion Release", "date": "2026-05-14", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "customerImpact": [{"customerId": "cg1-p1", "customer": {"id": "cg1-p1", "name": "Growth Commerce GM", "group": "Direct Merchants", "icon": "commerce_gm.png"}, "customerKPIs": [{"kpi": "Successful payment conversion", "expectedImpact": "Increase the share of legitimate payment attempts that become captured payments.", "description": "Increase the share of legitimate checkout attempts that become captured payments to 97.5%.", "unit": "% of legitimate payment attempts", "currentValue": "82.1", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/co-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "customer"}, {"kpi": "Issuer authorization rate", "expectedImpact": "Improve card and wallet payment success on legitimate demand.", "description": "Raise issuer authorization success on legitimate card attempts to 91.5%.", "unit": "% of legitimate card attempts", "currentValue": "52.8", "link": "", "linkLabel": "", "kind": "customer"}], "businessKPIs": [{"kpi": "Enterprise merchant GPV retention", "expectedImpact": "Improve retained merchant volume through better conversion quality.", "description": "Keep net GPV retention above 118% on scaled commerce cohorts by improving conversion and cross-product depth.", "unit": "% net GPV retention", "currentValue": "81.8", "link": "https://dashboard.example.com/payments-and-revenue-infrastructure/customers/cg1-p1/kpis/bo-cg1-top", "linkLabel": "Open KPI dashboard", "kind": "business"}]}], "productBricks": [{"brickId": "chck", "change": "Improve hosted checkout conversion patterns and localization.", "brick": {"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chck.png"}}, {"brickId": "pmtd", "change": "Improve market-aware payment method ordering.", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}, {"brickId": "auth", "change": "Improve recovery and approval optimization on legitimate attempts.", "brick": {"id": "auth", "name": "Authorization Optimization", "type": "full-stack", "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.", "domain": "Merchant Payments", "group": "Payment performance and omnichannel", "internalModules": [{"title": "Authorization decision optimizer", "description": "Tunes retries, network tokens, and confirmation paths.", "type": "service"}], "interfaces": [{"title": "Authorization analytics UI", "description": "Shows approval, decline, and recovery diagnostics.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "rada", "type": "context", "interface": "Risk scoring inputs", "description": "Uses fraud and risk signals to preserve good approvals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}], "deliveryChannels": [{"channelId": "hosted-checkout", "change": "Release updated hosted checkout experiences.", "channel": {"productId": "hosted", "productName": "", "name": "hosted-checkout", "type": "product", "icon": "product.png"}}, {"channelId": "api-gateway", "change": "Release updated payment method and authorization APIs.", "channel": {"productId": "api", "productName": "", "name": "api-gateway", "type": "product", "icon": "product.png"}}], "teams": {"primaryTeamIds": ["checkout-conversion", "payment-network-performance"], "supportingTeamIds": ["trust-ops", "developer-foundations"]}, "initiativeId": "initiative-payments-revenue-infrastructure-2026-04-12-01", "landingPageIndex": 3}]};
     const pageKind = 'source-objective';
     const pagePeriod = 'current';
 
@@ -469,31 +537,6 @@
         if (!pageLogo) return;
         pageLogo.src = '../icons/' + periodIconName(pagePeriod);
         pageLogo.alt = (pagePeriod ? pagePeriod.charAt(0).toUpperCase() + pagePeriod.slice(1) + ' ' : '') + 'Objectives';
-    }
-
-    function initTab() {
-        let tabName = 'HomeTab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
     }
 
     function escapeHtml(value) {
@@ -782,7 +825,7 @@
     if (!isCompany && keyResults.length) {
         let krDivsHtml = '';
         keyResults.forEach((kr, i) => {
-            krDivsHtml += '<div id="KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
+            krDivsHtml += '<div id="tab_content_KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
         });
         document.getElementById('KRTabsContainer').innerHTML = krDivsHtml;
     }
@@ -1024,7 +1067,7 @@
         return html;
     }
 
-    document.getElementById('HomeTab').innerHTML = isCompany
+    document.getElementById('tab_content_HomeTab').innerHTML = isCompany
         ? renderCompanyObjectiveHome(pageData)
         : renderSourceObjectiveHome(pageData);
 
@@ -1032,7 +1075,7 @@
 
     if (!isCompany && keyResults.length) {
         keyResults.forEach((item, i) => {
-            document.getElementById('KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
+            document.getElementById('tab_content_KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
         });
     }
 
@@ -1052,11 +1095,11 @@
             }
             discHtml += '</div>';
         });
-        document.getElementById('DiscoveriesTab').innerHTML = discHtml;
+        document.getElementById('tab_content_DiscoveriesTab').innerHTML = discHtml;
     }
 
     initPageLogo();
-    initTab();
+    initTab('HomeTab');
 
     mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {fontSize: '14px'}});
 </script>

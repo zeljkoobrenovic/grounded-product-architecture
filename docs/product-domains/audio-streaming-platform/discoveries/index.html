@@ -5,6 +5,47 @@
     <title>Discoveries (Audio Streaming Platform)</title>
 
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -101,39 +142,6 @@
             color: #6b7280;
             font-size: 18px;
             margin-bottom: 14px;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -271,35 +279,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Ongoing';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Ongoing')" onhashchange="initTab('Ongoing')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -327,8 +369,8 @@
     <button class="tablinks" id="tab_Archived" onclick="openTab('Archived')">Archived</button>
 </div>
 
-<div id="Ongoing" class="tabcontent"></div>
-<div id="Archived" class="tabcontent"></div>
+<div id="tab_content_Ongoing" class="tabcontent"></div>
+<div id="tab_content_Archived" class="tabcontent"></div>
 
 <script>
     const discoveries = {"ongoing": [{"title": "Personalized Home Quality discovery", "id": "discovery-audio-streaming-platform-2026-04-08-01-home-quality", "name": "Personalized Home Quality discovery", "status": "ongoing", "lastUpdated": "2026-04-28", "summary": "Discovery work is testing whether clearer multi-format home intent handling increases session starts without hurting satisfaction.", "opportunity": "Clarify whether home underperformance comes more from stale ranking, too much format mixing, or weak recovery of prior listening intent.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-04-17-01", "description": "Focused investment to improve Spotify's first-session impression by tightening home ranking quality, cross-format recirculation, and faster play starts.", "landingPageIndex": 4, "initiativeDescription": "Focused investment to improve Spotify's first-session impression by tightening home ranking quality, cross-format recirculation, and faster play starts."}], "teams": {"leadTeamId": "personalization-discovery", "supportingTeamIds": ["platform-intelligence"]}, "riskFocus": [{"riskType": "valuable", "question": "Will listeners start more sessions if home becomes more context-aware across music, podcasts, and audiobooks?", "hypothesis": "Listeners convert more often when the first screen reflects recent intent rather than generalized personalization alone.", "methods": ["Funnel analysis", "Session replay review", "User interviews"]}], "plannedActivities": ["Compare home-to-play rates across context cohorts.", "Test stronger recent-intent recovery modules.", "Review session abandonment by content type mix."], "decisionToMake": "Decide which home modules should become default for high-intent return sessions in Q2.", "startDate": "2026-04-08", "endDate": "2026-04-28", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Premium Value Clarity discovery", "id": "discovery-audio-streaming-platform-2026-04-10-02-premium-value", "name": "Premium Value Clarity discovery", "status": "ongoing", "lastUpdated": "2026-05-01", "summary": "Discovery work is testing where Spotify loses listeners between Premium interest, purchase, and retained paid usage.", "opportunity": "Clarify whether purchase drop-off is driven more by plan complexity, household confusion, payment failures, or weak value articulation.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-04-24-02", "description": "Focused investment to improve entitlement clarity, plan comparison, and purchase reliability around Spotify Premium plans.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve entitlement clarity, plan comparison, and purchase reliability around Spotify Premium plans."}], "teams": {"leadTeamId": "playback-premium", "supportingTeamIds": ["revenue-systems", "identity-trust-platform"]}, "riskFocus": [{"riskType": "valuable", "question": "Will clearer plan fit and entitlement explanations increase paid conversion and reduce early churn?", "hypothesis": "Listeners are more likely to buy and keep Premium when plan tradeoffs and entitlement behavior are easier to understand.", "methods": ["Purchase-funnel analysis", "Billing-support review", "Plan-selection usability tests"]}], "plannedActivities": ["Map top drop-off points in plan purchase.", "Review household and entitlement support tickets.", "Test revised Premium comparison treatments."], "decisionToMake": "Decide which plan explanations and account-state treatments become the standard Premium upsell pattern in Q2.", "startDate": "2026-04-10", "endDate": "2026-05-01", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-10", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Artist Fan Conversion discovery", "id": "discovery-audio-streaming-platform-2026-04-15-03-artist-fan-conversion", "name": "Artist Fan Conversion discovery", "status": "ongoing", "lastUpdated": "2026-05-06", "summary": "Discovery work is testing where artist teams lose conversion between release planning, campaign setup, and post-launch fan response.", "opportunity": "Clarify whether conversion is constrained more by audience targeting, readiness friction, or weak post-launch feedback loops.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-05-01-03", "description": "Focused investment to improve release readiness, targeting, and fan-conversion feedback for artist and label teams.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to improve release readiness, targeting, and fan-conversion feedback for artist and label teams."}], "teams": {"leadTeamId": "artist-growth-tools", "supportingTeamIds": ["platform-intelligence", "catalog-rights-core"]}, "riskFocus": [{"riskType": "valuable", "question": "Do artist teams get materially better campaign outcomes when targeting and release readiness are made more explicit?", "hypothesis": "Artist teams convert more listeners when launch constraints and eligible fan segments are visible before campaign spend starts.", "methods": ["Campaign cohort analysis", "Artist team interviews", "Workflow prototype testing"]}], "plannedActivities": ["Review readiness failures on planned launches.", "Compare conversion across fan-targeting cohorts.", "Test improved campaign-result explanations."], "decisionToMake": "Decide which campaign prerequisites become mandatory before broader release-tool rollout.", "startDate": "2026-04-15", "endDate": "2026-05-06", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-04-15", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Creator Monetization Confidence discovery", "id": "discovery-audio-streaming-platform-2026-04-18-04-creator-monetization", "name": "Creator Monetization Confidence discovery", "status": "ongoing", "lastUpdated": "2026-05-12", "summary": "Discovery work is testing which product changes most improve creator trust in monetization and advertiser trust in measured outcomes.", "opportunity": "Clarify whether confidence is constrained more by earnings legibility, inventory eligibility, or weak measurement feedback.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-05-08-04", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "landingPageIndex": 1, "initiativeDescription": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting."}], "teams": {"leadTeamId": "creator-publishing-monetization", "supportingTeamIds": ["measurement-and-insights", "revenue-systems"]}, "riskFocus": [{"riskType": "usable", "question": "Can creators and advertisers understand how Spotify turns consumption into earnings and measured outcomes?", "hypothesis": "Confidence increases when earnings and outcome drivers are surfaced through simpler, more causal reporting views.", "methods": ["Creator interviews", "Advertiser reporting walkthroughs", "Reporting prototype testing"]}], "plannedActivities": ["Review creator payout confusion themes.", "Map inventory eligibility and monetization drop-off.", "Test more causal reporting explanations for creators and advertisers."], "decisionToMake": "Decide which monetization and reporting patterns become standard across creators and advertisers this quarter.", "startDate": "2026-04-18", "endDate": "2026-05-12", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-04-18", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Cross-format Discovery discovery", "id": "discovery-audio-streaming-platform-2026-06-18-01-cross-format", "name": "Cross-format Discovery discovery", "status": "ongoing", "lastUpdated": "2026-06-18", "summary": "Planned discovery on how aggressively Spotify should blend music, podcasts, and audiobooks in listener entry surfaces.", "opportunity": "Clarify where cross-format discovery adds value versus where it creates noise.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-07-10-01", "description": "Planned initiative to improve how Spotify introduces listeners to adjacent audio formats without reducing relevance.", "landingPageIndex": 0, "initiativeDescription": "Planned initiative to improve how Spotify introduces listeners to adjacent audio formats without reducing relevance."}], "teams": {"leadTeamId": "personalization-discovery", "supportingTeamIds": ["platform-intelligence"]}, "riskFocus": [{"riskType": "valuable", "question": "How much cross-format blending actually improves listener value?", "hypothesis": "Moderate, context-sensitive cross-format recommendations improve depth more than aggressive mixing.", "methods": ["A/B tests", "Listener interviews"]}], "plannedActivities": ["Test cross-format module frequency.", "Compare engagement by listener habit cohort."], "decisionToMake": "Decide the appropriate level of cross-format blending for Q3.", "startDate": "2026-06-18", "endDate": "2026-07-09", "statusLabel": "Ongoing", "landingPageIndex": 4, "date": "2026-06-18", "customerImpact": [], "productBricks": [], "deliveryChannels": []}], "archived": [], "items": [{"title": "Personalized Home Quality discovery", "id": "discovery-audio-streaming-platform-2026-04-08-01-home-quality", "name": "Personalized Home Quality discovery", "status": "ongoing", "lastUpdated": "2026-04-28", "summary": "Discovery work is testing whether clearer multi-format home intent handling increases session starts without hurting satisfaction.", "opportunity": "Clarify whether home underperformance comes more from stale ranking, too much format mixing, or weak recovery of prior listening intent.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-04-17-01", "description": "Focused investment to improve Spotify's first-session impression by tightening home ranking quality, cross-format recirculation, and faster play starts.", "landingPageIndex": 4, "initiativeDescription": "Focused investment to improve Spotify's first-session impression by tightening home ranking quality, cross-format recirculation, and faster play starts."}], "teams": {"leadTeamId": "personalization-discovery", "supportingTeamIds": ["platform-intelligence"]}, "riskFocus": [{"riskType": "valuable", "question": "Will listeners start more sessions if home becomes more context-aware across music, podcasts, and audiobooks?", "hypothesis": "Listeners convert more often when the first screen reflects recent intent rather than generalized personalization alone.", "methods": ["Funnel analysis", "Session replay review", "User interviews"]}], "plannedActivities": ["Compare home-to-play rates across context cohorts.", "Test stronger recent-intent recovery modules.", "Review session abandonment by content type mix."], "decisionToMake": "Decide which home modules should become default for high-intent return sessions in Q2.", "startDate": "2026-04-08", "endDate": "2026-04-28", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Premium Value Clarity discovery", "id": "discovery-audio-streaming-platform-2026-04-10-02-premium-value", "name": "Premium Value Clarity discovery", "status": "ongoing", "lastUpdated": "2026-05-01", "summary": "Discovery work is testing where Spotify loses listeners between Premium interest, purchase, and retained paid usage.", "opportunity": "Clarify whether purchase drop-off is driven more by plan complexity, household confusion, payment failures, or weak value articulation.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-04-24-02", "description": "Focused investment to improve entitlement clarity, plan comparison, and purchase reliability around Spotify Premium plans.", "landingPageIndex": 3, "initiativeDescription": "Focused investment to improve entitlement clarity, plan comparison, and purchase reliability around Spotify Premium plans."}], "teams": {"leadTeamId": "playback-premium", "supportingTeamIds": ["revenue-systems", "identity-trust-platform"]}, "riskFocus": [{"riskType": "valuable", "question": "Will clearer plan fit and entitlement explanations increase paid conversion and reduce early churn?", "hypothesis": "Listeners are more likely to buy and keep Premium when plan tradeoffs and entitlement behavior are easier to understand.", "methods": ["Purchase-funnel analysis", "Billing-support review", "Plan-selection usability tests"]}], "plannedActivities": ["Map top drop-off points in plan purchase.", "Review household and entitlement support tickets.", "Test revised Premium comparison treatments."], "decisionToMake": "Decide which plan explanations and account-state treatments become the standard Premium upsell pattern in Q2.", "startDate": "2026-04-10", "endDate": "2026-05-01", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-10", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Artist Fan Conversion discovery", "id": "discovery-audio-streaming-platform-2026-04-15-03-artist-fan-conversion", "name": "Artist Fan Conversion discovery", "status": "ongoing", "lastUpdated": "2026-05-06", "summary": "Discovery work is testing where artist teams lose conversion between release planning, campaign setup, and post-launch fan response.", "opportunity": "Clarify whether conversion is constrained more by audience targeting, readiness friction, or weak post-launch feedback loops.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-05-01-03", "description": "Focused investment to improve release readiness, targeting, and fan-conversion feedback for artist and label teams.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to improve release readiness, targeting, and fan-conversion feedback for artist and label teams."}], "teams": {"leadTeamId": "artist-growth-tools", "supportingTeamIds": ["platform-intelligence", "catalog-rights-core"]}, "riskFocus": [{"riskType": "valuable", "question": "Do artist teams get materially better campaign outcomes when targeting and release readiness are made more explicit?", "hypothesis": "Artist teams convert more listeners when launch constraints and eligible fan segments are visible before campaign spend starts.", "methods": ["Campaign cohort analysis", "Artist team interviews", "Workflow prototype testing"]}], "plannedActivities": ["Review readiness failures on planned launches.", "Compare conversion across fan-targeting cohorts.", "Test improved campaign-result explanations."], "decisionToMake": "Decide which campaign prerequisites become mandatory before broader release-tool rollout.", "startDate": "2026-04-15", "endDate": "2026-05-06", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-04-15", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Creator Monetization Confidence discovery", "id": "discovery-audio-streaming-platform-2026-04-18-04-creator-monetization", "name": "Creator Monetization Confidence discovery", "status": "ongoing", "lastUpdated": "2026-05-12", "summary": "Discovery work is testing which product changes most improve creator trust in monetization and advertiser trust in measured outcomes.", "opportunity": "Clarify whether confidence is constrained more by earnings legibility, inventory eligibility, or weak measurement feedback.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-05-08-04", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "landingPageIndex": 1, "initiativeDescription": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting."}], "teams": {"leadTeamId": "creator-publishing-monetization", "supportingTeamIds": ["measurement-and-insights", "revenue-systems"]}, "riskFocus": [{"riskType": "usable", "question": "Can creators and advertisers understand how Spotify turns consumption into earnings and measured outcomes?", "hypothesis": "Confidence increases when earnings and outcome drivers are surfaced through simpler, more causal reporting views.", "methods": ["Creator interviews", "Advertiser reporting walkthroughs", "Reporting prototype testing"]}], "plannedActivities": ["Review creator payout confusion themes.", "Map inventory eligibility and monetization drop-off.", "Test more causal reporting explanations for creators and advertisers."], "decisionToMake": "Decide which monetization and reporting patterns become standard across creators and advertisers this quarter.", "startDate": "2026-04-18", "endDate": "2026-05-12", "statusLabel": "Ongoing", "landingPageIndex": 3, "date": "2026-04-18", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Cross-format Discovery discovery", "id": "discovery-audio-streaming-platform-2026-06-18-01-cross-format", "name": "Cross-format Discovery discovery", "status": "ongoing", "lastUpdated": "2026-06-18", "summary": "Planned discovery on how aggressively Spotify should blend music, podcasts, and audiobooks in listener entry surfaces.", "opportunity": "Clarify where cross-format discovery adds value versus where it creates noise.", "linkedInitiatives": [{"initiativeId": "initiative-audio-streaming-platform-2026-07-10-01", "description": "Planned initiative to improve how Spotify introduces listeners to adjacent audio formats without reducing relevance.", "landingPageIndex": 0, "initiativeDescription": "Planned initiative to improve how Spotify introduces listeners to adjacent audio formats without reducing relevance."}], "teams": {"leadTeamId": "personalization-discovery", "supportingTeamIds": ["platform-intelligence"]}, "riskFocus": [{"riskType": "valuable", "question": "How much cross-format blending actually improves listener value?", "hypothesis": "Moderate, context-sensitive cross-format recommendations improve depth more than aggressive mixing.", "methods": ["A/B tests", "Listener interviews"]}], "plannedActivities": ["Test cross-format module frequency.", "Compare engagement by listener habit cohort."], "decisionToMake": "Decide the appropriate level of cross-format blending for Q3.", "startDate": "2026-06-18", "endDate": "2026-07-09", "statusLabel": "Ongoing", "landingPageIndex": 4, "date": "2026-06-18", "customerImpact": [], "productBricks": [], "deliveryChannels": []}]};

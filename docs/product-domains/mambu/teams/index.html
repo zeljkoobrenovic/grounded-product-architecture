@@ -4,6 +4,47 @@
     <meta charset="UTF-8">
     <title>Teams (Mambu)</title>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -112,40 +153,6 @@
 
         .summary-strip {
             margin: 0 0 18px 0;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-            margin-bottom: 0;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .stat {
@@ -688,15 +695,74 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home')" onhashchange="initTab('home')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="hero">
     <table class="hero-table">
         <tr>
             <td class="hero-logo-cell"><img class="hero-logo" src="icons/logo.png" alt="Teams"></td>
             <td class="hero-copy-cell">
                 <div class="hero-title">Teams</div>
-                <div class="hero-subtitle">Teams translate strategy into delivery through ownership, staffing, coordination, and execution. This page shows an overview of the team topology, role mix, dependencies, and links to the work they support.</div>
                 <div id="HeroNote" class="hero-note"></div>
             </td>
         </tr>
@@ -710,25 +776,25 @@
     <button class="tablinks" id="tab_matrix" onclick="openTab('matrix')">Matrix</button>
 </div>
 
-<div id="home" class="tabcontent">
+<div id="tab_content_home" class="tabcontent">
     <div class="tab-intro">A compact team topology view showing group and team names with one colored circle per staffing role block.</div>
     <div id="OverviewSummary" class="summary-strip"></div>
     <div id="Overview"></div>
 </div>
 
-<div id="cards" class="tabcontent">
+<div id="tab_content_cards" class="tabcontent">
     <div class="tab-intro">Detailed team cards with staffing mix, linked customers, owned bricks, and delivery activity.</div>
     <div id="Summary" class="summary-strip"></div>
     <div id="Groups"></div>
     <div id="Principles" class="principles"></div>
 </div>
 
-<div id="dependencies" class="tabcontent">
+<div id="tab_content_dependencies" class="tabcontent">
     <div class="tab-intro">Cross-team dependency graph with filters for teams and dependency types.</div>
     <div id="DependenciesContent"></div>
 </div>
 
-<div id="matrix" class="tabcontent">
+<div id="tab_content_matrix" class="tabcontent">
     <div class="tab-intro">Dependency matrix across teams, with selectable teams and dependency types.</div>
     <div id="MatrixContent"></div>
 </div>
@@ -767,36 +833,14 @@
         return (roles || []).map(role => escapeHtml(role.role) + ' x' + escapeHtml(String(role.count))).join(', ');
     }
 
-    function initTab() {
-        let tabName = 'home';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies') {
             renderDependenciesView();
         }
         if (tabName === 'matrix') {
             renderMatrixView();
         }
-    }
+    };
 
     function slugifyRole(value) {
         return String(value || '').trim().toLowerCase();

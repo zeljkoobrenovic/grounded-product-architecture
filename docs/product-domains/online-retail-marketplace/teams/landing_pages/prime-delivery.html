@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "prime-delivery", "name": "Prime Delivery", "teamType": "stream-aligned", "teamFamilyId": "prime-operations", "teamFamilyName": "Prime and Post-Purchase", "orgLayer": "team", "mission": "Own Prime membership value, delivery promise quality, and order tracking.", "primaryCustomers": [{"customerId": "cg1-p1", "customerName": "Prime Household Shopper", "relatedKPIs": ["On-time promise adherence", "Prime paid retention"], "icon": "shopper.png"}], "ownedProductBricks": [{"brickId": "prim", "brickName": "Prime Membership & Benefits", "brick": {"id": "prim", "name": "Prime Membership & Benefits", "type": "full-stack", "description": "Prime sign-up, membership state, benefit eligibility, and retention-oriented value communication.", "domain": "Shopper Experience", "group": "Conversion and service", "internalModules": [{"title": "Prime entitlement service", "description": "Maintains membership state and benefit eligibility.", "type": "service"}], "interfaces": [{"title": "Prime UI", "description": "Membership, benefit, and renewal surfaces.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "identity", "interface": "Account and household API", "description": "Uses account and household-state foundations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "prim.png"}}, {"brickId": "orde", "brickName": "Order Management & Tracking", "brick": {"id": "orde", "name": "Order Management & Tracking", "type": "full-stack", "description": "Order history, shipment visibility, exception handling, and delivery event communication.", "domain": "Shopper Experience", "group": "Conversion and service", "internalModules": [{"title": "Order state timeline", "description": "Tracks order progression and exception states after purchase.", "type": "service"}], "interfaces": [{"title": "Orders UI", "description": "Order visibility and tracking surface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "deli", "type": "event", "interface": "Delivery event feed", "description": "Uses network and shipment events to show promise status."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "orde.png"}}, {"brickId": "deli", "brickName": "Delivery Promise & Last Mile", "brick": {"id": "deli", "name": "Delivery Promise & Last Mile", "type": "full-stack", "description": "Promise calculation, carrier routing, last-mile eventing, and shopper-visible delivery commitments.", "domain": "Shopper Experience", "group": "Conversion and service", "internalModules": [{"title": "Promise calculation engine", "description": "Converts network capacity and inventory into shopper-visible promise windows.", "type": "service"}], "interfaces": [{"title": "Promise APIs", "description": "Delivery promise and shipment event interfaces.", "type": "api"}], "brickDependencies": [{"targetBrickId": "invn", "type": "data", "interface": "Inventory availability feed", "description": "Uses current inventory and node allocation state."}, {"targetBrickId": "fbao", "type": "composition", "interface": "Fulfillment network services", "description": "Uses Amazon fulfillment network capabilities."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "deli.png"}}], "supportingProductBricks": [{"brickId": "supp", "brickName": "Seller-Fulfilled Operations", "brick": {"id": "supp", "name": "Seller-Fulfilled Operations", "type": "full-stack", "description": "Merchant-managed order handling, promise management, shipping eventing, and operational service quality.", "domain": "Seller Growth", "group": "Operations and demand generation", "internalModules": [{"title": "Merchant fulfillment workflow", "description": "Coordinates merchant-side shipment handling and status events.", "type": "service"}], "interfaces": [{"title": "Merchant fulfillment UI", "description": "Seller-facing operational workflow for self-fulfilled orders.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "deli", "type": "contract", "interface": "Promise API", "description": "Uses promise requirements and event expectations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "supp.png"}}], "dependsOnTeamIds": ["seller-fulfillment", "trust-and-identity"], "defaultSupportingTeamIds": ["seller-fulfillment", "trust-and-identity"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Keep Prime value and promise reliability tied to real network outcomes.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own Prime and delivery experience roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build order and promise services."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build order visibility surfaces."}, {"role": "Operations Analyst", "count": 1, "responsibility": "Connect service changes to delivery outcomes."}, {"role": "Product Designer", "count": 1, "responsibility": "Design post-purchase flows."}]}, "groupId": "prime-operations", "groupName": "Prime and Post-Purchase", "groupLeadership": [], "dependsOnTeams": [{"id": "seller-fulfillment", "name": "Seller Fulfillment", "teamType": "stream-aligned", "groupId": "seller-platform", "groupName": "Seller Platform"}, {"id": "trust-and-identity", "name": "Trust and Identity", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "seller-fulfillment", "name": "Seller Fulfillment", "teamType": "stream-aligned", "groupId": "seller-platform", "groupName": "Seller Platform"}, {"id": "trust-and-identity", "name": "Trust and Identity", "teamType": "platform-aligned", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [{"date": "2026-04-22", "description": "Focused investment to improve delivery promise precision, order-state clarity, and low-cost issue resolution.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-05-30", "description": "Release focused on improving promise precision, order-tracking clarity, and self-service issue recovery.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "sharedBrickIds": ["deli", "supp"], "sharedBrickNames": ["Delivery Promise & Last Mile", "Seller-Fulfilled Operations"]}], "sharedInitiatives": [{"teamId": "returns-resolution", "teamName": "Returns and Resolution", "sharedInitiativeKeys": ["2"], "sharedInitiatives": [{"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Focused investment to improve delivery promise precision, order-state clarity, and low-cost issue resolution.", "date": "2026-04-22"}]}, {"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "sharedInitiativeKeys": ["2"], "sharedInitiatives": [{"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Focused investment to improve delivery promise precision, order-state clarity, and low-cost issue resolution.", "date": "2026-04-22"}]}, {"teamId": "trust-and-identity", "teamName": "Trust and Identity", "sharedInitiativeKeys": ["2"], "sharedInitiatives": [{"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Focused investment to improve delivery promise precision, order-state clarity, and low-cost issue resolution.", "date": "2026-04-22"}]}], "sharedReleases": [{"teamId": "returns-resolution", "teamName": "Returns and Resolution", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving promise precision, order-tracking clarity, and self-service issue recovery.", "date": "2026-05-30"}]}, {"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving promise precision, order-tracking clarity, and self-service issue recovery.", "date": "2026-05-30"}]}, {"teamId": "trust-and-identity", "teamName": "Trust and Identity", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving promise precision, order-tracking clarity, and self-service issue recovery.", "date": "2026-05-30"}]}], "explicitRelationships": [{"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-and-identity", "teamName": "Trust and Identity", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "seller-fulfillment", "teamName": "Seller Fulfillment", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "trust-and-identity", "teamName": "Trust and Identity", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

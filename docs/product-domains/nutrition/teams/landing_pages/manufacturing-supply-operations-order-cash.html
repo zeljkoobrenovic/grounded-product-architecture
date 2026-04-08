@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "manufacturing-supply-operations-order-cash", "name": "Manufacturing & Supply Operations - Order Cash", "teamType": "stream-aligned", "teamFamilyId": "manufacturing-supply-operations", "teamFamilyName": "Manufacturing & Supply Operations", "orgLayer": "team", "mission": "Run planning, execution, inventory, and sourcing workflows that keep plants and supply chains synchronized. This team specifically focuses on order cash.", "primaryCustomers": [{"customerId": "opmn", "customerName": "Operations / Production Manager", "relatedKPIs": ["Plan adherence (schedule vs actual)", "Materials & capacity readiness", "Execution efficiency", "ARR"], "icon": "production-manager.png"}, {"customerId": "prpu", "customerName": "Procurement / Purchasing", "relatedKPIs": ["Risk-adjusted input cost", "Sourcing effectiveness", "Continuity & contingency", "ARR"], "icon": "procurement.png"}, {"customerId": "exec", "customerName": "Executive / Economic Buyer (CEO, COO, GM)", "relatedKPIs": ["Gross margin stability", "Cost-to-serve visibility", "Speed of mitigation", "ARR"], "icon": "executive.png"}], "ownedProductBricks": [{"brickId": "otca", "brickName": "Order-to-Cash", "brick": {"id": "otca", "name": "Order-to-Cash", "type": "full-stack", "description": "Quotes, sales orders, pricing, allocations, delivery, invoicing and credit workflows.", "domain": "Core Business Applications", "group": "ERP & Commercial Backbone", "internalModules": [{"title": "Workflow and State Engine", "description": "Orchestrates the main lifecycle, state transitions, and task flow handled by Order-to-Cash.", "type": "service"}, {"title": "Capacity and Exception Management", "description": "Manages inventory, reservations, workload, and exception handling inside Order-to-Cash.", "type": "operations"}, {"title": "Operations Console Logic", "description": "Supports operator actions, escalations, and manual interventions required by Order-to-Cash.", "type": "full-stack"}], "interfaces": [{"title": "Workflow API", "description": "API for starting, updating, or querying operational workflows managed by Order-to-Cash.", "type": "api"}, {"title": "Operator Console", "description": "User interface for task handling, interventions, and operational control within Order-to-Cash.", "type": "ui"}, {"title": "Lifecycle Status Events", "description": "Event stream exposing state changes and exceptions produced by Order-to-Cash.", "type": "event"}], "brickDependencies": [{"targetBrickId": "crbl", "type": "decisioning", "interface": "Decision API", "description": "Depends on Constraints, Rules & Business Logic to provide policy capabilities required by Order-to-Cash."}, {"targetBrickId": "cmac", "type": "event-subscription", "interface": "Audit Event Stream", "description": "Depends on Costing & Margin Accounting to provide identity capabilities required by Order-to-Cash."}, {"targetBrickId": "liel", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on Lab Instrument & External Lab Integration to provide integration capabilities required by Order-to-Cash."}], "externalSystemsThisBrickDependsOn": [{"system": "ERP and Operational Systems", "type": "back-office", "interface": "Operational API", "description": "Order-to-Cash coordinates execution with external ERP, servicing, or operations platforms."}, {"system": "CRM and Case Management Tools", "type": "workflow", "interface": "Case Interface", "description": "Order-to-Cash exchanges tasks, statuses, or escalations with customer and operations tooling."}], "externalSystemsDependingOnThisBrick": [{"system": "Operator Workflows", "type": "workflow-consumer", "interface": "Workflow / Status API", "description": "Operational teams and services depend on Order-to-Cash to coordinate task flow, status, and exception handling."}, {"system": "Customer and Partner Touchpoints", "type": "journey-consumer", "interface": "Lifecycle Event Interface", "description": "Customer and partner-facing journeys depend on Order-to-Cash to advance fulfillment, servicing, or case progress."}], "icon": "otca.png"}}, {"brickId": "dpfo", "brickName": "Data Platform Foundations", "brick": {"id": "dpfo", "name": "Data Platform Foundations", "type": "development", "description": "Operational data stores, analytics warehouse/lake hooks, retention and data pipelines.", "domain": "Infrastructure, Trust & Operations", "group": "Deployment, DevOps & Observability", "internalModules": [{"title": "Canonical Data Model", "description": "Defines the core entities, relationships, and schemas managed by Data Platform Foundations.", "type": "data"}, {"title": "Quality and Governance Controls", "description": "Validates, governs, and curates the information maintained by Data Platform Foundations.", "type": "governance"}, {"title": "Distribution and Access Services", "description": "Serves trusted data products and downstream access patterns from Data Platform Foundations.", "type": "service"}], "interfaces": [{"title": "Data Access API", "description": "API for retrieving or maintaining the canonical data exposed by Data Platform Foundations.", "type": "api"}, {"title": "Data Stewardship Console", "description": "User interface for governing, curating, and reviewing information in Data Platform Foundations.", "type": "ui"}, {"title": "Data Distribution Feed", "description": "Event or export interface for distributing changes originating in Data Platform Foundations.", "type": "event"}], "brickDependencies": [{"targetBrickId": "indm", "type": "data-access", "interface": "Data Access API", "description": "Depends on Ingredient & Nutrient Data Model to provide data capabilities required by Demand Planning & Forecasting."}, {"targetBrickId": "liel", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Lab Instrument & External Lab Integration to provide integration capabilities required by Demand Planning & Forecasting."}, {"targetBrickId": "otca", "type": "operator-control", "interface": "Operator Console", "description": "Depends on Order-to-Cash to provide operations capabilities required by Demand Planning & Forecasting."}], "externalSystemsThisBrickDependsOn": [{"system": "Data Warehouse and BI Platforms", "type": "analytics-platform", "interface": "Query / Export Interface", "description": "Demand Planning & Forecasting publishes metrics and operational signals into external analytical environments."}, {"system": "Alerting and Incident Platforms", "type": "operations", "interface": "Webhook / Event Interface", "description": "Demand Planning & Forecasting depends on external alerting systems to escalate anomalies and operational issues."}], "externalSystemsDependingOnThisBrick": [{"system": "Engineering Teams", "type": "developer-consumer", "interface": "Developer Portal / Automation API", "description": "Engineering teams depend on Data Platform Foundations for reusable platform capabilities, standards, and automation."}, {"system": "Delivery Pipelines", "type": "platform-consumer", "interface": "Platform Event / Provisioning Interface", "description": "Build and deployment pipelines depend on Data Platform Foundations to provision, validate, and operate software foundations."}], "icon": "dpfo.png"}}, {"brickId": "srwi", "brickName": "Supply Risk & What-if Scenarios", "brick": {"id": "srwi", "name": "Supply Risk & What-if Scenarios", "type": "full-stack", "description": "Material shortages, substitutions, alternate sourcing, service level impacts.", "domain": "Core Business Applications", "group": "Planning & Supply Chain (MRP/APS)", "internalModules": [{"title": "Constraint and Objective Model", "description": "Represents the optimization constraints, targets, and trade-offs used by Supply Risk & What-if Scenarios.", "type": "policy"}, {"title": "Solver Execution Engine", "description": "Runs optimization or scenario computations performed by Supply Risk & What-if Scenarios.", "type": "service"}, {"title": "Scenario Review Workspace", "description": "Supports comparison, tuning, and review of outcomes generated by Supply Risk & What-if Scenarios.", "type": "full-stack"}], "interfaces": [{"title": "Optimization API", "description": "API for submitting optimization jobs or retrieving scenario results from Supply Risk & What-if Scenarios.", "type": "api"}, {"title": "Planning Workspace", "description": "Interactive interface for configuring and reviewing plans generated by Supply Risk & What-if Scenarios.", "type": "ui"}, {"title": "Scenario Result Events", "description": "Event stream used to publish scenario completion and outcome changes from Supply Risk & What-if Scenarios.", "type": "event"}], "brickDependencies": [{"targetBrickId": "indm", "type": "data-access", "interface": "Data Access API", "description": "Depends on Ingredient & Nutrient Data Model to provide data capabilities required by Supply Risk & What-if Scenarios."}, {"targetBrickId": "crbl", "type": "config-sync", "interface": "Configuration Workspace", "description": "Depends on Constraints, Rules & Business Logic to provide policy capabilities required by Supply Risk & What-if Scenarios."}, {"targetBrickId": "dpfo", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Demand Planning & Forecasting to provide analytics capabilities required by Supply Risk & What-if Scenarios."}], "externalSystemsThisBrickDependsOn": [{"system": "Planning Input Systems", "type": "planning", "interface": "Planning Data Interface", "description": "Supply Risk & What-if Scenarios consumes upstream demand, capacity, or constraint inputs from planning systems."}, {"system": "Execution Systems", "type": "workflow", "interface": "Execution API", "description": "Supply Risk & What-if Scenarios sends optimized outcomes into execution systems where plans are operationalized."}], "externalSystemsDependingOnThisBrick": [{"system": "Planning and Operations Teams", "type": "optimization-consumer", "interface": "Planning Workspace / API", "description": "Planning and operations consumers depend on Supply Risk & What-if Scenarios for optimized scenarios, recommendations, and execution-ready plans."}, {"system": "Execution Systems", "type": "execution-consumer", "interface": "Scenario Result Interface", "description": "Execution systems depend on Supply Risk & What-if Scenarios to receive optimized outcomes and decisions."}], "icon": "srwi.png"}}, {"brickId": "dema", "brickName": "Deviations & Exceptions Management", "brick": {"id": "dema", "name": "Deviations & Exceptions Management", "type": "service", "description": "Detect and record deviations from target recipe/plan; route to quality and approvals.", "domain": "Core Business Applications", "group": "Manufacturing Execution (MES-lite / Production Execution)", "internalModules": [{"title": "Core Domain Engine", "description": "Implements the main business logic and lifecycle handled by Deviations & Exceptions Management.", "type": "service"}, {"title": "Rules and Administration", "description": "Provides the configuration, rules, and administrative controls required by Deviations & Exceptions Management.", "type": "operations"}, {"title": "Reporting and Exception Handling", "description": "Supports visibility, diagnostics, and manual handling of exceptions in Deviations & Exceptions Management.", "type": "analytics"}], "interfaces": [{"title": "Service API", "description": "API surface for interacting with the business capabilities implemented by Deviations & Exceptions Management.", "type": "api"}, {"title": "Operations Workspace", "description": "User interface for administration and operational control of Deviations & Exceptions Management.", "type": "ui"}, {"title": "Domain Event Feed", "description": "Event interface that publishes notable business changes from Deviations & Exceptions Management.", "type": "event"}], "brickDependencies": [{"targetBrickId": "cmac", "type": "identity", "interface": "Authentication API", "description": "Depends on Costing & Margin Accounting to provide identity capabilities required by Deviations & Exceptions Management."}, {"targetBrickId": "liel", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Lab Instrument & External Lab Integration to provide integration capabilities required by Deviations & Exceptions Management."}, {"targetBrickId": "dpfo", "type": "operator-insight", "interface": "Dashboard Interface", "description": "Depends on Demand Planning & Forecasting to provide analytics capabilities required by Deviations & Exceptions Management."}], "externalSystemsThisBrickDependsOn": [{"system": "Back-Office Systems", "type": "back-office", "interface": "Service API", "description": "Deviations & Exceptions Management exchanges operational state and business records with external back-office systems."}, {"system": "Notification and Communication Platforms", "type": "communication", "interface": "Messaging API", "description": "Deviations & Exceptions Management uses external communication channels to notify users, operators, or partners."}], "externalSystemsDependingOnThisBrick": [{"system": "Business Workflows", "type": "service-consumer", "interface": "Service API", "description": "Upstream business workflows depend on Deviations & Exceptions Management for core domain capabilities and state transitions."}, {"system": "Operations and Support Teams", "type": "operations-consumer", "interface": "Operations Workspace / Events", "description": "Operations consumers depend on Deviations & Exceptions Management for administration, visibility, and exception resolution."}], "icon": "dema.png"}}], "supportingProductBricks": [{"brickId": "cmda", "brickName": "Cost & Margin Drivers Analytics", "brick": {"id": "cmda", "name": "Cost & Margin Drivers Analytics", "type": "service", "description": "Material cost impact, formulation cost deltas, yield variances, customer profitability.", "domain": "Intelligence & Optimization", "group": "Analytics, BI & AI Insights Layer", "internalModules": [{"title": "Signal Ingestion and Processing", "description": "Collects operational and business signals that feed Cost & Margin Drivers Analytics.", "type": "data"}, {"title": "Metrics and Decision Engine", "description": "Calculates insights, KPIs, forecasts, or scores produced by Cost & Margin Drivers Analytics.", "type": "analytics"}, {"title": "Reporting and Operations Workspace", "description": "Presents actionable views, alerts, and drill-down workflows for Cost & Margin Drivers Analytics.", "type": "full-stack"}], "interfaces": [{"title": "Dashboard Interface", "description": "Interactive reporting or control surface that presents insights from Cost & Margin Drivers Analytics.", "type": "ui"}, {"title": "Metrics and Query API", "description": "API for retrieving metrics, scores, forecasts, or analytical outputs from Cost & Margin Drivers Analytics.", "type": "api"}, {"title": "Alert and Signal Feed", "description": "Event or notification interface exposing operational signals generated by Cost & Margin Drivers Analytics.", "type": "event"}], "brickDependencies": [{"targetBrickId": "indm", "type": "data-access", "interface": "Data Access API", "description": "Depends on Ingredient & Nutrient Data Model to provide data capabilities required by Cost & Margin Drivers Analytics."}, {"targetBrickId": "liel", "type": "event-routing", "interface": "Outbound Event Feed", "description": "Depends on Lab Instrument & External Lab Integration to provide integration capabilities required by Cost & Margin Drivers Analytics."}, {"targetBrickId": "otca", "type": "operator-control", "interface": "Operator Console", "description": "Depends on Order-to-Cash to provide operations capabilities required by Cost & Margin Drivers Analytics."}], "externalSystemsThisBrickDependsOn": [{"system": "Data Warehouse and BI Platforms", "type": "analytics-platform", "interface": "Query / Export Interface", "description": "Cost & Margin Drivers Analytics publishes metrics and operational signals into external analytical environments."}, {"system": "Alerting and Incident Platforms", "type": "operations", "interface": "Webhook / Event Interface", "description": "Cost & Margin Drivers Analytics depends on external alerting systems to escalate anomalies and operational issues."}], "externalSystemsDependingOnThisBrick": [{"system": "Operational Teams and Workspaces", "type": "insight-consumer", "interface": "Dashboard / Alert Interface", "description": "Operational teams depend on Cost & Margin Drivers Analytics to monitor health, detect issues, and make decisions."}, {"system": "Reporting and Planning Systems", "type": "analytics-consumer", "interface": "Metrics / Export Interface", "description": "Analytical and planning consumers depend on Cost & Margin Drivers Analytics for metrics, forecasts, and decision support outputs."}], "icon": "cmda.png"}}], "dependsOnTeamIds": ["data-integration-platform-kpi-dashboards", "trust-governance-platform-identity-sso-mfa"], "defaultSupportingTeamIds": ["data-integration-platform-kpi-dashboards"], "staffing": {"suggestedHeadcount": 10, "staffingGuidance": "Each customer-facing team is intentionally kept near 10 FTE so it can own a narrow journey or capability slice with clear accountability and fast decision-making.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own the roadmap, prioritization, and KPI tradeoffs for this team scope."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution, staffing, and engineering health for the team."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction and guard long-term architecture quality across the team scope."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build and evolve backend services, business logic, and integration points."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build user-facing workflows and maintain a high-quality interaction model."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own regression depth, release confidence, and automated quality coverage."}, {"role": "Product Designer", "count": 1, "responsibility": "Shape the end-to-end workflow, information architecture, and UX quality."}, {"role": "Data / Domain Specialist", "count": 1, "responsibility": "Bridge product decisions with domain semantics, data quality, and operational fit."}]}, "relatedDiscoveries": [], "groupId": "value-streams-manufacturing-supply-operations", "groupName": "Value Streams / Manufacturing & Supply Operations", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architectural coherence, and craft leadership for the teams in this group.", "leadershipModel": "Directors own the operating cadence and people leadership for the group; principal roles work as group-level individual contributors who coach teams and shape standards.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own the strategy, portfolio tradeoffs, and outcome accountability across the team group.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, system health, and staffing quality across the team group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Principal Engineer", "count": 1, "responsibility": "Provide cross-team architecture leadership and coach senior engineers across the group.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive cross-team UX coherence, workflow quality, and design standards across the group.", "reportsTo": "Product Director"}, {"role": "Principal Data / Domain Architect", "count": 1, "responsibility": "Shape the shared domain model, KPI semantics, and analytical consistency used by the teams in the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "data-integration-platform-kpi-dashboards", "name": "Data & Integration Platform - Kpi Dashboards", "teamType": "platform", "groupId": "platform-enablement-data-integration-platform", "groupName": "Platform Enablement / Data & Integration Platform"}, {"id": "trust-governance-platform-identity-sso-mfa", "name": "Trust & Governance Platform - Identity Sso Mfa", "teamType": "platform", "groupId": "platform-enablement-trust-governance-platform", "groupName": "Platform Enablement / Trust & Governance Platform"}], "defaultSupportingTeams": [{"id": "data-integration-platform-kpi-dashboards", "name": "Data & Integration Platform - Kpi Dashboards", "teamType": "platform", "groupId": "platform-enablement-data-integration-platform", "groupName": "Platform Enablement / Data & Integration Platform"}], "relatedInitiatives": [], "relatedReleases": [], "dependencyData": {"sharedProductBricks": [{"teamId": "formulation-intelligence-constraints", "teamName": "Formulation Intelligence - Constraints", "sharedBrickIds": ["cmda"], "sharedBrickNames": ["Cost & Margin Drivers Analytics"]}, {"teamId": "commercial-collaboration-order-self", "teamName": "Commercial Collaboration - Order Self", "sharedBrickIds": ["otca"], "sharedBrickNames": ["Order-to-Cash"]}, {"teamId": "data-integration-platform-cost-margin-drivers", "teamName": "Data & Integration Platform - Cost Margin Drivers", "sharedBrickIds": ["cmda"], "sharedBrickNames": ["Cost & Margin Drivers Analytics"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "data-integration-platform-kpi-dashboards", "teamName": "Data & Integration Platform - Kpi Dashboards", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-governance-platform-identity-sso-mfa", "teamName": "Trust & Governance Platform - Identity Sso Mfa", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "data-integration-platform-kpi-dashboards", "teamName": "Data & Integration Platform - Kpi Dashboards", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

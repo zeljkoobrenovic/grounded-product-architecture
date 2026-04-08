@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "air-ops-control", "name": "Air Operations Control", "teamType": "stream-aligned", "teamFamilyId": "operations-recovery", "teamFamilyName": "Operations and Recovery", "orgLayer": "team", "mission": "Own control-tower tooling, operational prioritization, and recovery-decision support.", "primaryCustomers": [{"customerId": "nocc", "customerName": "Network Operations Control Director", "relatedKPIs": ["Completion factor", "Recovery decision cycle time", "Irregular operations cost per disrupted flight"], "icon": "nocc.png"}], "ownedProductBricks": [{"brickId": "opct", "brickName": "Operational Control Tower", "brick": {"id": "opct", "name": "Operational Control Tower", "type": "full-stack", "description": "Creates the integrated operating view of network health, disruption risk, and intervention priorities.", "domain": "ops-and-cargo", "group": "control-and-cargo", "internalModules": [{"title": "Network risk monitor", "description": "Tracks flight, station, and connection risk in real time.", "type": "service"}, {"title": "Intervention workflow board", "description": "Helps control teams assign and track recovery actions.", "type": "operations"}], "interfaces": [{"title": "Operations control workspace", "description": "Real-time workspace for IOC and station control teams.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "odal", "type": "analytics", "interface": "Impact models", "description": "Uses data models to prioritize risk by guest and revenue impact."}, {"targetBrickId": "intg", "type": "event-subscription", "interface": "Operational event backbone", "description": "Consumes real-time operational changes through the event backbone."}], "externalSystemsThisBrickDependsOn": [{"system": "Operations control, airport, and schedule systems", "type": "operational-system", "interface": "Operational status feeds", "description": "Reads real-time operational state from core airline systems."}], "externalSystemsDependingOnThisBrick": [{"system": "Recovery, airport, and care workflows", "type": "operations-consumer", "interface": "Operations control workspace and event feeds", "description": "Use this brick to understand current network priorities."}], "icon": "opct.png"}}, {"brickId": "crac", "brickName": "Crew & Aircraft Recovery Optimization", "brick": {"id": "crac", "name": "Crew & Aircraft Recovery Optimization", "type": "service", "description": "Supports aircraft and crew recovery decisions that protect the schedule and minimize guest impact.", "domain": "ops-and-cargo", "group": "control-and-cargo", "internalModules": [{"title": "Recovery simulation engine", "description": "Evaluates feasible aircraft and crew recovery scenarios.", "type": "service"}, {"title": "Legality and rotation rule layer", "description": "Applies crew legality and operational constraints to recovery choices.", "type": "policy"}], "interfaces": [{"title": "Recovery decision API", "description": "Provides ranked recovery options to operations teams.", "type": "api"}], "brickDependencies": [{"targetBrickId": "opct", "type": "operational", "interface": "Operations priority feed", "description": "Uses network-risk context to focus recovery efforts."}], "externalSystemsThisBrickDependsOn": [{"system": "Crew management and fleet operations systems", "type": "operational-system", "interface": "Crew and aircraft state interfaces", "description": "Consumes crew and aircraft state required for recovery calculations."}], "externalSystemsDependingOnThisBrick": [{"system": "Operations control and disruption recovery workflows", "type": "decision-consumer", "interface": "Recovery decision API", "description": "Use this brick to select recovery paths under disruption."}], "icon": "crac.png"}}], "supportingProductBricks": [{"brickId": "diss", "brickName": "Disruption Recovery & Self-Service Reaccommodation", "brick": {"id": "diss", "name": "Disruption Recovery & Self-Service Reaccommodation", "type": "full-stack", "description": "Coordinates digital and assisted recovery when flights are delayed, cancelled, or broken by missed connections.", "domain": "journey-service", "group": "companion-and-recovery", "internalModules": [{"title": "Recovery eligibility engine", "description": "Determines which options can be offered to which guests under operational and policy constraints.", "type": "policy"}, {"title": "Reaccommodation workflow manager", "description": "Coordinates self-service and agent-assisted reaccommodation paths.", "type": "operations"}], "interfaces": [{"title": "Recovery Options API", "description": "Returns guest-specific disruption recovery choices and next actions.", "type": "api"}], "brickDependencies": [{"targetBrickId": "opct", "type": "operational", "interface": "Disruption priority feed", "description": "Uses network-disruption context to prioritize recovery paths."}, {"targetBrickId": "ords", "type": "service", "interface": "Order Service API", "description": "Needs order servicing to complete rebooking and exchange actions."}], "externalSystemsThisBrickDependsOn": [{"system": "Reservation, schedule-change, and airport servicing systems", "type": "core-airline-system", "interface": "Servicing and disruption interfaces", "description": "Coordinates recovery options with airline servicing and airport constraints."}], "externalSystemsDependingOnThisBrick": [{"system": "Guest channels and agent workspaces", "type": "recovery-consumer", "interface": "Recovery Options API", "description": "Use this brick to resolve passenger disruption quickly."}], "icon": "diss.png"}}], "dependsOnTeamIds": ["air-data-personalisation", "air-integration-platform", "air-airport-recovery"], "defaultSupportingTeamIds": ["air-data-personalisation", "air-airport-recovery"], "staffing": {"suggestedHeadcount": 9, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own control-tower and recovery-decision outcomes."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead operations-platform engineering."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build real-time control and recovery services."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build operations workspace experiences."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own scenario and reliability testing."}, {"role": "Operations Domain Specialist", "count": 1, "responsibility": "Bridge product changes with real airline-control workflows."}]}, "groupId": "air-operations-recovery", "groupName": "Air Operations and Recovery", "groupLeadership": {}, "dependsOnTeams": [{"id": "air-data-personalisation", "name": "Air Data and Personalisation Platform", "teamType": "platform-enabling", "groupId": "air-platform-group", "groupName": "Air Platform Foundations"}, {"id": "air-integration-platform", "name": "Air Integration Platform", "teamType": "platform-enabling", "groupId": "air-platform-group", "groupName": "Air Platform Foundations"}, {"id": "air-airport-recovery", "name": "Air Airport and Recovery Services", "teamType": "stream-aligned", "groupId": "air-operations-recovery", "groupName": "Air Operations and Recovery"}], "defaultSupportingTeams": [{"id": "air-data-personalisation", "name": "Air Data and Personalisation Platform", "teamType": "platform-enabling", "groupId": "air-platform-group", "groupName": "Air Platform Foundations"}, {"id": "air-airport-recovery", "name": "Air Airport and Recovery Services", "teamType": "stream-aligned", "groupId": "air-operations-recovery", "groupName": "Air Operations and Recovery"}], "relatedInitiatives": [{"date": "2026-04-16", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-01-15", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "3", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-11-12", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "4", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-05-14", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "1", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-02-07", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "3", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-12-06", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "4", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [{"date": "2026-01-03 -> 2026-02-07", "description": "Premium disruption recovery: operating discovery", "landingPageKey": "0", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2026-03-29 -> 2026-04-18", "description": "Premium disruption recovery: operating discovery", "landingPageKey": "2", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2025-10-27 -> 2025-11-24", "description": "Premium disruption recovery: operating discovery", "landingPageKey": "4", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}], "dependencyData": {"sharedProductBricks": [{"teamId": "air-loyalty-trip", "teamName": "Air Loyalty and Trip Companion", "sharedBrickIds": ["diss"], "sharedBrickNames": ["Disruption Recovery & Self-Service Reaccommodation"]}, {"teamId": "air-airport-recovery", "teamName": "Air Airport and Recovery Services", "sharedBrickIds": ["diss"], "sharedBrickNames": ["Disruption Recovery & Self-Service Reaccommodation"]}], "sharedInitiatives": [{"teamId": "air-loyalty-trip", "teamName": "Air Loyalty and Trip Companion", "sharedInitiativeKeys": ["1", "3", "4"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-04-16"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "air-airport-recovery", "teamName": "Air Airport and Recovery Services", "sharedInitiativeKeys": ["1", "3", "4"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-04-16"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "sharedInitiativeKeys": ["1", "3", "4"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-04-16"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "sharedInitiativeKeys": ["1", "3", "4"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-04-16"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-01-15"}, {"landingPageKey": "4", "sectionFolder": "initiatives", "description": "Premium disruption recovery initiative Initiative is the quarter's focused investment to move Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-12"}]}], "sharedReleases": [{"teamId": "air-loyalty-trip", "teamName": "Air Loyalty and Trip Companion", "sharedReleaseKeys": ["1", "3", "4"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "air-airport-recovery", "teamName": "Air Airport and Recovery Services", "sharedReleaseKeys": ["1", "3", "4"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "sharedReleaseKeys": ["1", "3", "4"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "sharedReleaseKeys": ["1", "3", "4"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "3", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Trip confidence index and Premium guest lifetime value, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-07"}, {"landingPageKey": "4", "sectionFolder": "releases", "description": "Release of Premium disruption recovery initiative improvements aimed at moving Self-service disruption recovery rate and Repeat guest rate, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Disruption Recovery & Self-Service Reaccommodation with richer choice sets and policy-aware self-service recovery. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-12-06"}]}], "explicitRelationships": [{"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "air-airport-recovery", "teamName": "Air Airport and Recovery Services", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "air-airport-recovery", "teamName": "Air Airport and Recovery Services", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

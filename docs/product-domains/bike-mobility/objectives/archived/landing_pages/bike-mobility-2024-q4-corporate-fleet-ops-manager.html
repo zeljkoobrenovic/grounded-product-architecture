@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -238,39 +279,6 @@
             margin-bottom: 8px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
-        }
-
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -424,8 +432,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onhashchange="initTab('HomeTab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 8px">
     <tr>
         <td style="vertical-align: top; padding-top: 0px">
@@ -441,13 +509,13 @@
 
 <div style="margin-left: 12px">
     <div class="tab" id="TabBar"></div>
-    <div id="HomeTab" class="tabcontent"></div>
+    <div id="tab_content_HomeTab" class="tabcontent"></div>
     <div id="KRTabsContainer"></div>
-    <div id="DiscoveriesTab" class="tabcontent"></div>
+    <div id="tab_content_DiscoveriesTab" class="tabcontent"></div>
 </div>
 
 <script>
-    const pageData = {"id": "bike-mobility-2024-q4-corporate-fleet-ops-manager", "title": "2024-Q4 Prove pooled bikes can work as an operational fleet", "objective": "Show that shared bike fleets can be kept available, used regularly, and managed with enough operational discipline to justify expansion into fleet-style use cases.", "okrStyle": "objective-and-key-results", "status": "archived", "period": {"quarter": "2024-Q4", "startDate": "2024-10-01", "endDate": "2024-12-31", "type": "archived"}, "linkedCustomers": [{"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "customerGroup": "Corporate Fleet and Operations Managers"}], "linkedCustomerKPIs": [{"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "kpiId": "CO-FLEET-B1-C1", "kpiName": "Asset availability", "description": "Share of fleet assets ready for operational use.", "unit": "%", "kind": "customer", "targetDirection": "increase"}, {"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "kpiId": "CO-FLEET-B2-C1", "kpiName": "Rides per asset per week", "description": "Average weekly activity per pooled or assigned bike asset.", "unit": "rides/week", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "kpiId": "BO-FLEET-TOP", "kpiName": "Recurring revenue from fleet programs", "description": "Revenue from pooled bikes, assigned fleet contracts, and associated services.", "unit": "EUR", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Asset availability", "kind": "customer", "targetDirection": "increase", "target": "Keep pilot fleet assets ready for daily operational work", "baseline": "Pilot readiness is vulnerable to maintenance gaps and unclear ownership", "statement": "Increase asset availability by putting maintenance planning and asset-state controls into the pooled fleet workflow.", "executingTeams": [{"teamId": "bike-fleet-operations", "teamName": "Bike Fleet Operations", "role": "executing", "intent": "Lead the work to improve asset availability by putting maintenance planning and asset-state controls into the pooled fleet workflow via Pool Bike & Fleet Management and Trip, Telematics & Asset Monitoring."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for asset availability, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "role": "supporting", "intent": "Support the KR by contributing capability for asset availability, aligned with its focus on own the data foundation for KPI reporting, unit economics, and operational decision-making via Operational Data, KPI & Analytics Platform."}, {"teamId": "bike-claims-operations", "teamName": "Bike Claims Operations", "role": "supporting", "intent": "Support the KR by contributing capability for asset availability, aligned with its focus on own insurance and claims workflows so riders, dealers, and finance teams can resolve incidents with less friction via Insurance & Claims Administration."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q1 target", "date": "2025-03-31", "target": "Keep pilot fleet assets ready for daily operational work", "projectedValue": "Current estimate: Asset availability moves far enough to show clear momentum toward keep pilot fleet assets ready for daily operational work, driven by increase asset availability by putting maintenance planning and asset-state controls into the pooled fleet workflow.", "confidence": "green"}, "target2": {"label": "2025-Q2 target", "date": "2025-06-30", "target": "Keep pilot fleet assets ready for daily operational work", "projectedValue": "Current estimate: Asset availability ends the horizon sustainably ahead of today's baseline, with keep pilot fleet assets ready for daily operational work holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-2", "metric": "Rides per asset per week", "kind": "customer", "targetDirection": "increase", "target": "Demonstrate that bikes are actually being used for real operational trips", "baseline": "Utilization is still proving out in early pilots", "statement": "Increase rides per asset per week by making booking, assignment, and issue reporting simple for operational users.", "executingTeams": [{"teamId": "bike-fleet-operations", "teamName": "Bike Fleet Operations", "role": "executing", "intent": "Lead the work to improve rides per asset per week by making booking, assignment, and issue reporting simple for operational users via Pool Bike & Fleet Management and Trip, Telematics & Asset Monitoring."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for rides per asset per week, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "role": "supporting", "intent": "Support the KR by contributing capability for rides per asset per week, aligned with its focus on own the data foundation for KPI reporting, unit economics, and operational decision-making via Operational Data, KPI & Analytics Platform."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q1 target", "date": "2025-03-31", "target": "Demonstrate that bikes are actually being used for real operational trips", "projectedValue": "Current estimate: Rides per asset per week moves far enough to show clear momentum toward demonstrate that bikes are actually being used for real operational trips, driven by increase rides per asset per week by making booking, assignment, and issue reporting simple for operational users.", "confidence": "green"}, "target2": {"label": "2025-Q2 target", "date": "2025-06-30", "target": "Demonstrate that bikes are actually being used for real operational trips", "projectedValue": "Current estimate: Rides per asset per week ends the horizon sustainably ahead of today's baseline, with demonstrate that bikes are actually being used for real operational trips holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-3", "metric": "Recurring revenue from fleet programs", "kind": "business", "targetDirection": "increase", "target": "Create evidence that fleet mobility can become a second product line", "baseline": "Fleet revenue is emerging from early pilots rather than scaled contracts", "statement": "Increase recurring revenue from fleet programs by converting initial pilots into multi-site subscriptions.", "executingTeams": [{"teamId": "bike-fleet-operations", "teamName": "Bike Fleet Operations", "role": "executing", "intent": "Lead the work to improve recurring revenue from fleet programs by converting initial pilots into multi-site subscriptions via Pool Bike & Fleet Management and Trip, Telematics & Asset Monitoring."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for recurring revenue from fleet programs, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "role": "supporting", "intent": "Support the KR by contributing capability for recurring revenue from fleet programs, aligned with its focus on own the data foundation for KPI reporting, unit economics, and operational decision-making via Operational Data, KPI & Analytics Platform."}, {"teamId": "bike-employer-platform", "teamName": "Bike Employer Platform", "role": "supporting", "intent": "Support the KR by contributing capability for recurring revenue from fleet programs, aligned with its focus on own employer-facing launch, policy, and KPI workflows that make bike programs easier to configure and expand via Employer Policy & Program Management and Quote, Subsidy & Savings Configurator."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q1 target", "date": "2025-03-31", "target": "Create evidence that fleet mobility can become a second product line", "projectedValue": "Current estimate: Recurring revenue from fleet programs moves far enough to show clear momentum toward create evidence that fleet mobility can become a second product line, driven by increase recurring revenue from fleet programs by converting initial pilots into multi-site subscriptions.", "confidence": "green"}, "target2": {"label": "2025-Q2 target", "date": "2025-06-30", "target": "Create evidence that fleet mobility can become a second product line", "projectedValue": "Current estimate: Recurring revenue from fleet programs ends the horizon sustainably ahead of today's baseline, with create evidence that fleet mobility can become a second product line holding across the broader operating model.", "confidence": "green"}}], "linkedInitiatives": [], "linkedReleases": [], "sourceReferences": {"customers": "customers/customers.json", "initiatives": null, "releases": null}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-leverage", "obj-operations"], "inspiredByInsights": [{"insightId": "discovery-bike-mobility-2026-03-08-02-fleet-expansion-model", "insightTitle": "Fleet expansion model: pooled bike operations discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-01-01-partner-service-control-tower", "insightTitle": "Partner Service Control Tower: dealer network economics discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-01-10-01-employer-launch-model", "insightTitle": "Employer launch model: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}], "landingPageId": "bike-mobility-2024-q4-corporate-fleet-ops-manager", "companyObjectiveRefs": [{"id": "obj-leverage", "title": "Archive Turn product progress into economic leverage", "landingPageId": "archived-obj-leverage"}, {"id": "obj-operations", "title": "Archive Make execution reliably repeatable", "landingPageId": "archived-obj-operations"}], "enrichedInitiatives": [], "enrichedReleases": []};
+    const pageData = {"id": "bike-mobility-2024-q4-corporate-fleet-ops-manager", "title": "2024-Q4 Prove pooled bikes can work as an operational fleet", "objective": "Show that shared bike fleets can be kept available, used regularly, and managed with enough operational discipline to justify expansion into fleet-style use cases.", "okrStyle": "objective-and-key-results", "status": "archived", "period": {"quarter": "2024-Q4", "startDate": "2024-10-01", "endDate": "2024-12-31", "type": "archived"}, "linkedCustomers": [{"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "customerGroup": "Corporate Fleet and Operations Managers"}], "linkedCustomerKPIs": [{"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "kpiId": "co-fleet-b1-c1", "kpiName": "Asset availability", "description": "Share of fleet assets ready for operational use.", "unit": "%", "kind": "customer", "targetDirection": "increase"}, {"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "kpiId": "co-fleet-b2-c1", "kpiName": "Rides per asset per week", "description": "Average weekly activity per pooled or assigned bike asset.", "unit": "rides/week", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "corporate_fleet_ops_manager", "customerName": "Corporate Fleet and Field Operations Manager", "kpiId": "bo-fleet-top", "kpiName": "Recurring revenue from fleet programs", "description": "Revenue from pooled bikes, assigned fleet contracts, and associated services.", "unit": "EUR", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-1", "metric": "Asset availability", "kind": "customer", "targetDirection": "increase", "target": "Keep pilot fleet assets ready for daily operational work", "baseline": "Pilot readiness is vulnerable to maintenance gaps and unclear ownership", "statement": "Increase asset availability by putting maintenance planning and asset-state controls into the pooled fleet workflow.", "executingTeams": [{"teamId": "bike-fleet-operations", "teamName": "Bike Fleet Operations", "role": "executing", "intent": "Lead the work to improve asset availability by putting maintenance planning and asset-state controls into the pooled fleet workflow via Pool Bike & Fleet Management and Trip, Telematics & Asset Monitoring."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for asset availability, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "role": "supporting", "intent": "Support the KR by contributing capability for asset availability, aligned with its focus on own the data foundation for KPI reporting, unit economics, and operational decision-making via Operational Data, KPI & Analytics Platform."}, {"teamId": "bike-claims-operations", "teamName": "Bike Claims Operations", "role": "supporting", "intent": "Support the KR by contributing capability for asset availability, aligned with its focus on own insurance and claims workflows so riders, dealers, and finance teams can resolve incidents with less friction via Insurance & Claims Administration."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q1 target", "date": "2025-03-31", "target": "Keep pilot fleet assets ready for daily operational work", "projectedValue": "Current estimate: Asset availability moves far enough to show clear momentum toward keep pilot fleet assets ready for daily operational work, driven by increase asset availability by putting maintenance planning and asset-state controls into the pooled fleet workflow.", "confidence": "green"}, "target2": {"label": "2025-Q2 target", "date": "2025-06-30", "target": "Keep pilot fleet assets ready for daily operational work", "projectedValue": "Current estimate: Asset availability ends the horizon sustainably ahead of today's baseline, with keep pilot fleet assets ready for daily operational work holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-2", "metric": "Rides per asset per week", "kind": "customer", "targetDirection": "increase", "target": "Demonstrate that bikes are actually being used for real operational trips", "baseline": "Utilization is still proving out in early pilots", "statement": "Increase rides per asset per week by making booking, assignment, and issue reporting simple for operational users.", "executingTeams": [{"teamId": "bike-fleet-operations", "teamName": "Bike Fleet Operations", "role": "executing", "intent": "Lead the work to improve rides per asset per week by making booking, assignment, and issue reporting simple for operational users via Pool Bike & Fleet Management and Trip, Telematics & Asset Monitoring."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for rides per asset per week, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "role": "supporting", "intent": "Support the KR by contributing capability for rides per asset per week, aligned with its focus on own the data foundation for KPI reporting, unit economics, and operational decision-making via Operational Data, KPI & Analytics Platform."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q1 target", "date": "2025-03-31", "target": "Demonstrate that bikes are actually being used for real operational trips", "projectedValue": "Current estimate: Rides per asset per week moves far enough to show clear momentum toward demonstrate that bikes are actually being used for real operational trips, driven by increase rides per asset per week by making booking, assignment, and issue reporting simple for operational users.", "confidence": "green"}, "target2": {"label": "2025-Q2 target", "date": "2025-06-30", "target": "Demonstrate that bikes are actually being used for real operational trips", "projectedValue": "Current estimate: Rides per asset per week ends the horizon sustainably ahead of today's baseline, with demonstrate that bikes are actually being used for real operational trips holding across the broader operating model.", "confidence": "green"}}, {"id": "kr-3", "metric": "Recurring revenue from fleet programs", "kind": "business", "targetDirection": "increase", "target": "Create evidence that fleet mobility can become a second product line", "baseline": "Fleet revenue is emerging from early pilots rather than scaled contracts", "statement": "Increase recurring revenue from fleet programs by converting initial pilots into multi-site subscriptions.", "executingTeams": [{"teamId": "bike-fleet-operations", "teamName": "Bike Fleet Operations", "role": "executing", "intent": "Lead the work to improve recurring revenue from fleet programs by converting initial pilots into multi-site subscriptions via Pool Bike & Fleet Management and Trip, Telematics & Asset Monitoring."}], "supportingTeams": [{"teamId": "bike-service-orchestration", "teamName": "Bike Service Orchestration", "role": "supporting", "intent": "Support the KR by contributing capability for recurring revenue from fleet programs, aligned with its focus on own maintenance, repair, and service workflows that determine rider uptime and partner throughput via Service Case & Maintenance Orchestration."}, {"teamId": "bike-data-platform", "teamName": "Bike Data Platform", "role": "supporting", "intent": "Support the KR by contributing capability for recurring revenue from fleet programs, aligned with its focus on own the data foundation for KPI reporting, unit economics, and operational decision-making via Operational Data, KPI & Analytics Platform."}, {"teamId": "bike-employer-platform", "teamName": "Bike Employer Platform", "role": "supporting", "intent": "Support the KR by contributing capability for recurring revenue from fleet programs, aligned with its focus on own employer-facing launch, policy, and KPI workflows that make bike programs easier to configure and expand via Employer Policy & Program Management and Quote, Subsidy & Savings Configurator."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "This KR should be pursued as an outcome target with room for discovery, iteration, and tradeoff.", "status": "achieved", "target1": {"label": "2025-Q1 target", "date": "2025-03-31", "target": "Create evidence that fleet mobility can become a second product line", "projectedValue": "Current estimate: Recurring revenue from fleet programs moves far enough to show clear momentum toward create evidence that fleet mobility can become a second product line, driven by increase recurring revenue from fleet programs by converting initial pilots into multi-site subscriptions.", "confidence": "green"}, "target2": {"label": "2025-Q2 target", "date": "2025-06-30", "target": "Create evidence that fleet mobility can become a second product line", "projectedValue": "Current estimate: Recurring revenue from fleet programs ends the horizon sustainably ahead of today's baseline, with create evidence that fleet mobility can become a second product line holding across the broader operating model.", "confidence": "green"}}], "linkedInitiatives": [], "linkedReleases": [], "sourceReferences": {"customers": "customers/customers.json", "initiatives": null, "releases": null}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-leverage", "obj-operations"], "inspiredByInsights": [{"insightId": "discovery-bike-mobility-2026-03-08-02-fleet-expansion-model", "insightTitle": "Fleet expansion model: pooled bike operations discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-03-01-01-partner-service-control-tower", "insightTitle": "Partner Service Control Tower: dealer network economics discovery", "status": "ongoing", "howItInspiresObjective": "Provides evidence and product context for the objective's operations tradeoffs."}, {"insightId": "discovery-bike-mobility-2026-01-10-01-employer-launch-model", "insightTitle": "Employer launch model: validated discovery", "status": "archived", "howItInspiresObjective": "Provides evidence and product context for the objective's leverage tradeoffs."}], "landingPageId": "bike-mobility-2024-q4-corporate-fleet-ops-manager", "companyObjectiveRefs": [{"id": "obj-leverage", "title": "Archive Turn product progress into economic leverage", "landingPageId": "archived-obj-leverage"}, {"id": "obj-operations", "title": "Archive Make execution reliably repeatable", "landingPageId": "archived-obj-operations"}], "enrichedInitiatives": [], "enrichedReleases": []};
     const pageKind = 'source-objective';
     const pagePeriod = 'archived';
 
@@ -469,31 +537,6 @@
         if (!pageLogo) return;
         pageLogo.src = '../icons/' + periodIconName(pagePeriod);
         pageLogo.alt = (pagePeriod ? pagePeriod.charAt(0).toUpperCase() + pagePeriod.slice(1) + ' ' : '') + 'Objectives';
-    }
-
-    function initTab() {
-        let tabName = 'HomeTab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
     }
 
     function escapeHtml(value) {
@@ -782,7 +825,7 @@
     if (!isCompany && keyResults.length) {
         let krDivsHtml = '';
         keyResults.forEach((kr, i) => {
-            krDivsHtml += '<div id="KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
+            krDivsHtml += '<div id="tab_content_KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
         });
         document.getElementById('KRTabsContainer').innerHTML = krDivsHtml;
     }
@@ -1024,7 +1067,7 @@
         return html;
     }
 
-    document.getElementById('HomeTab').innerHTML = isCompany
+    document.getElementById('tab_content_HomeTab').innerHTML = isCompany
         ? renderCompanyObjectiveHome(pageData)
         : renderSourceObjectiveHome(pageData);
 
@@ -1032,7 +1075,7 @@
 
     if (!isCompany && keyResults.length) {
         keyResults.forEach((item, i) => {
-            document.getElementById('KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
+            document.getElementById('tab_content_KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
         });
     }
 
@@ -1052,11 +1095,11 @@
             }
             discHtml += '</div>';
         });
-        document.getElementById('DiscoveriesTab').innerHTML = discHtml;
+        document.getElementById('tab_content_DiscoveriesTab').innerHTML = discHtml;
     }
 
     initPageLogo();
-    initTab();
+    initTab('HomeTab');
 
     mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {fontSize: '14px'}});
 </script>

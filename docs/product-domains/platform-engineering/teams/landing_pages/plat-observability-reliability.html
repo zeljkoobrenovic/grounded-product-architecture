@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "plat-observability-reliability", "name": "Platform Observability and Reliability", "teamType": "platform", "teamFamilyId": "controls", "teamFamilyName": "Platform Security and Reliability", "orgLayer": "team", "mission": "Own platform telemetry, service-health models, incident automation, and recovery workflows across the shared estate.", "primaryCustomers": [{"customerId": "swen", "customerName": "Software Engineer", "relatedKPIs": ["Developer satisfaction with platform experience", "Incident MTTR for common platform failure classes"], "icon": "code.png"}, {"customerId": "srel", "customerName": "Site Reliability and Security Lead", "relatedKPIs": ["Incident MTTR for common platform failure classes", "Production services with standard telemetry"], "icon": "shield.png"}, {"customerId": "penm", "customerName": "Product Engineering Manager", "relatedKPIs": ["Lead time for change", "Change failure rate"], "icon": "engineering.png"}], "ownedProductBricks": [{"brickId": "obsv", "brickName": "Observability and Telemetry Foundation", "brick": {"id": "obsv", "name": "Observability and Telemetry Foundation", "type": "full-stack", "description": "Shared logging, metrics, tracing, alerting, and dashboarding foundation used across services and platform workflows.", "domain": "platform_controls", "group": "observability-reliability-and-economics", "internalModules": [{"title": "Telemetry Collection Layer", "description": "Collects and routes logs, metrics, and traces from services and platform systems.", "type": "service"}, {"title": "Dashboard and Alert Model", "description": "Defines standard dashboards, alerts, and service-health views.", "type": "analytics"}], "interfaces": [{"title": "Telemetry APIs", "description": "Ingestion and query interfaces for observability data.", "type": "api"}, {"title": "Operations Dashboards", "description": "Operational visibility into service and platform health.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "obsv.png"}}, {"brickId": "reli", "brickName": "Reliability Workflows and Incident Automation", "brick": {"id": "reli", "name": "Reliability Workflows and Incident Automation", "type": "service", "description": "Coordinates incidents, runbooks, rollback patterns, ownership, and follow-up automation across the platform estate.", "domain": "platform_controls", "group": "observability-reliability-and-economics", "internalModules": [{"title": "Incident Router", "description": "Routes alerts and incidents using service ownership and severity policies.", "type": "service"}, {"title": "Automation and Runbook Engine", "description": "Runs supported remediation, rollback, and notification actions.", "type": "automation"}], "interfaces": [{"title": "Incident Event Stream", "description": "Events for alerts, incidents, and response lifecycle changes.", "type": "event"}, {"title": "Runbook Workflow API", "description": "Automation entry points for response and remediation actions.", "type": "api"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "reli.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["plat-portal-catalog", "plat-insights-finops"], "defaultSupportingTeamIds": ["plat-delivery-automation"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Needs enough operational depth to keep telemetry and response systems trustworthy during incidents.", "roles": [{"role": "Platform Product Manager", "count": 1, "responsibility": "Own telemetry and incident product priorities with strong customer focus."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery and operational health."}, {"role": "Staff Reliability Engineer", "count": 1, "responsibility": "Set technical direction for telemetry, alerting, and automation architecture."}, {"role": "Site Reliability Engineer", "count": 3, "responsibility": "Build and operate observability, alerting, and incident systems."}, {"role": "Platform Engineer", "count": 1, "responsibility": "Integrate telemetry and incident workflows across platform products."}, {"role": "Data Analyst", "count": 1, "responsibility": "Model incident, alert-quality, and reliability outcome metrics."}]}, "groupId": "plat-controls", "groupName": "Platform Security and Reliability", "groupLeadership": {}, "dependsOnTeams": [{"id": "plat-portal-catalog", "name": "Platform Portal and Catalog", "teamType": "platform", "groupId": "plat-devex", "groupName": "Developer Experience Platform"}, {"id": "plat-insights-finops", "name": "Platform Insights and FinOps", "teamType": "complicated-subsystem", "groupId": "plat-enable", "groupName": "Platform Insights and Enablement"}], "defaultSupportingTeams": [{"id": "plat-delivery-automation", "name": "Platform Delivery Automation", "teamType": "platform", "groupId": "plat-runtime", "groupName": "Runtime and Delivery Foundation"}], "relatedInitiatives": [], "relatedReleases": [], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "plat-portal-catalog", "teamName": "Platform Portal and Catalog", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "plat-insights-finops", "teamName": "Platform Insights and FinOps", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "plat-delivery-automation", "teamName": "Platform Delivery Automation", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

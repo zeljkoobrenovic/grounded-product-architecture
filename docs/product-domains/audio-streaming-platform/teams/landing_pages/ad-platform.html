@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "ad-platform", "name": "Ad Platform", "teamType": "stream-aligned", "teamFamilyId": "advertising", "teamFamilyName": "Advertising", "orgLayer": "team", "mission": "Own audience targeting, campaign delivery, and advertiser workflow quality.", "primaryCustomers": [{"customerId": "cg4-p1", "customerName": "Brand Media Buyer", "relatedKPIs": ["Qualified completion rate", "Campaign launch cycle time"], "icon": "advertiser.png"}], "ownedProductBricks": [{"brickId": "adsg", "brickName": "Ad Audience Segmentation", "brick": {"id": "adsg", "name": "Ad Audience Segmentation", "type": "full-stack", "description": "Audience and context segmentation for advertisers and creator campaign use cases.", "domain": "Monetization and Foundations", "group": "Advertising and commerce", "internalModules": [{"title": "Audience segment builder", "description": "Builds listener and contextual segments from logged-in behavior and metadata.", "type": "service"}], "interfaces": [{"title": "Audience planner UI", "description": "Audience definition surfaces inside Ads Manager and campaign tools.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "intel", "type": "data", "interface": "Audience features", "description": "Uses shared data products and feature stores."}, {"targetBrickId": "trst", "type": "policy", "interface": "Privacy and policy guardrails", "description": "Applies consent and policy controls to targeting."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "adsg.png"}}, {"brickId": "camp", "brickName": "Campaign Booking & Delivery", "brick": {"id": "camp", "name": "Campaign Booking & Delivery", "type": "full-stack", "description": "Campaign trafficking, inventory allocation, pacing, delivery, and creative serving across Spotify ad surfaces.", "domain": "Monetization and Foundations", "group": "Advertising and commerce", "internalModules": [{"title": "Ad delivery engine", "description": "Handles pacing, inventory decisions, and creative serving.", "type": "service"}], "interfaces": [{"title": "Campaign management UI", "description": "Advertiser and operator interface for campaign launch and control.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "adsg", "type": "targeting", "interface": "Audience segments", "description": "Uses audience selection and eligibility outputs."}, {"targetBrickId": "play", "type": "inventory", "interface": "Playable session inventory", "description": "Uses eligible listener sessions and inventory opportunities."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "camp.png"}}], "supportingProductBricks": [{"brickId": "meas", "brickName": "Measurement & Attribution", "brick": {"id": "meas", "name": "Measurement & Attribution", "type": "full-stack", "description": "Reach, frequency, lift, conversion, and partner measurement for advertiser outcomes.", "domain": "Monetization and Foundations", "group": "Advertising and commerce", "internalModules": [{"title": "Campaign measurement pipeline", "description": "Computes delivery, attention, and business outcome views.", "type": "service"}], "interfaces": [{"title": "Measurement reporting UI", "description": "Advertiser and agency reporting, exports, and partner connections.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "camp", "type": "events", "interface": "Campaign delivery events", "description": "Uses delivery and impression telemetry."}, {"targetBrickId": "intel", "type": "analytics", "interface": "Analytics models", "description": "Uses shared analytics infrastructure and lift methods."}], "externalSystemsThisBrickDependsOn": [{"name": "Third-party measurement partners", "description": "External attribution and brand-lift partners."}], "externalSystemsDependingOnThisBrick": [], "icon": "meas.png"}}, {"brickId": "trst", "brickName": "Trust, Safety & Policy", "brick": {"id": "trst", "name": "Trust, Safety & Policy", "type": "full-stack", "description": "Content policy enforcement, account safety, advertiser brand safety, and creator moderation controls.", "domain": "Monetization and Foundations", "group": "Platform core", "internalModules": [{"title": "Policy and moderation controls", "description": "Applies trust, abuse, privacy, and policy decisions across user and creator surfaces.", "type": "service"}], "interfaces": [{"title": "Policy operations UI", "description": "Internal trust, moderation, and policy-control surfaces.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "iden", "type": "identity", "interface": "Account risk signals", "description": "Uses account identity and abuse signals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "trst.png"}}], "dependsOnTeamIds": ["measurement-and-insights", "identity-trust-platform"], "defaultSupportingTeamIds": ["measurement-and-insights", "identity-trust-platform"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Keep targeting and delivery together because campaign quality depends on both audience fit and pacing.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own advertiser delivery roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build targeting, inventory, and delivery systems."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build Ads Manager workflows."}, {"role": "Product Designer", "count": 1, "responsibility": "Design advertiser workflows."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own campaign-system reliability."}]}, "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations", "groupLeadership": [], "dependsOnTeams": [{"id": "measurement-and-insights", "name": "Measurement & Insights", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}, {"id": "identity-trust-platform", "name": "Identity & Trust Platform", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}], "defaultSupportingTeams": [{"id": "measurement-and-insights", "name": "Measurement & Insights", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}, {"id": "identity-trust-platform", "name": "Identity & Trust Platform", "teamType": "platform", "groupId": "advertising-and-foundations", "groupName": "Advertising and Foundations"}], "relatedInitiatives": [{"date": "2026-05-08", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedReleases": [{"date": "2026-06-26", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "creator-publishing-monetization", "teamName": "Creator Publishing & Monetization", "sharedBrickIds": ["camp"], "sharedBrickNames": ["Campaign Booking & Delivery"]}, {"teamId": "measurement-and-insights", "teamName": "Measurement & Insights", "sharedBrickIds": ["meas"], "sharedBrickNames": ["Measurement & Attribution"]}, {"teamId": "identity-trust-platform", "teamName": "Identity & Trust Platform", "sharedBrickIds": ["trst"], "sharedBrickNames": ["Trust, Safety & Policy"]}], "sharedInitiatives": [{"teamId": "creator-publishing-monetization", "teamName": "Creator Publishing & Monetization", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "date": "2026-05-08"}]}, {"teamId": "measurement-and-insights", "teamName": "Measurement & Insights", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "date": "2026-05-08"}]}, {"teamId": "revenue-systems", "teamName": "Revenue Systems", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to improve creator earnings transparency, monetizable inventory growth, and advertiser outcome reporting.", "date": "2026-05-08"}]}], "sharedReleases": [{"teamId": "creator-publishing-monetization", "teamName": "Creator Publishing & Monetization", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "date": "2026-06-26"}]}, {"teamId": "measurement-and-insights", "teamName": "Measurement & Insights", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "date": "2026-06-26"}]}, {"teamId": "revenue-systems", "teamName": "Revenue Systems", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on creator monetization transparency, audience funnel visibility, and stronger advertiser outcome reporting.", "date": "2026-06-26"}]}], "explicitRelationships": [{"teamId": "measurement-and-insights", "teamName": "Measurement & Insights", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "identity-trust-platform", "teamName": "Identity & Trust Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "measurement-and-insights", "teamName": "Measurement & Insights", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "identity-trust-platform", "teamName": "Identity & Trust Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

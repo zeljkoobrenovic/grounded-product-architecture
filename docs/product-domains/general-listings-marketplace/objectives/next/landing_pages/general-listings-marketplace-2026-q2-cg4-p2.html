@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -238,39 +279,6 @@
             margin-bottom: 8px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
-        }
-
         .card {
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -424,8 +432,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body onhashchange="initTab('HomeTab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 8px">
     <tr>
         <td style="vertical-align: top; padding-top: 0px">
@@ -441,13 +509,13 @@
 
 <div style="margin-left: 12px">
     <div class="tab" id="TabBar"></div>
-    <div id="HomeTab" class="tabcontent"></div>
+    <div id="tab_content_HomeTab" class="tabcontent"></div>
     <div id="KRTabsContainer"></div>
-    <div id="DiscoveriesTab" class="tabcontent"></div>
+    <div id="tab_content_DiscoveriesTab" class="tabcontent"></div>
 </div>
 
 <script>
-    const pageData = {"id": "general-listings-marketplace-2026-q2-cg4-p2", "title": "2026-Q2 Merchant SaaS / Feed Integration Partner outcome goal", "objective": "Improve partner integration reliability by reducing validation ambiguity and operational failure modes.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg4-p2", "customerName": "Merchant SaaS / Feed Integration Partner", "customerGroup": "Ecosystem Partners"}], "linkedCustomerKPIs": [{"customerId": "cg4-p2", "customerName": "Merchant SaaS / Feed Integration Partner", "kpiId": "CO-CG4-TOP", "kpiName": "Partner integration reliability", "description": "Operational reliability of partner-managed inventory and update flows.", "unit": "% successful partner updates", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg4-p2", "customerName": "Merchant SaaS / Feed Integration Partner", "kpiId": "BO-CG4-TOP", "kpiName": "Partner-enabled supply scale", "description": "Professional supply volume and revenue supported through partner integrations.", "unit": "index", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-3", "metric": "Partner integration reliability", "kind": "customer", "targetDirection": "increase", "target": "Improve quarter over quarter", "baseline": "Baseline from partner operations reporting", "statement": "Increase partner integration reliability during the quarter.", "executingTeams": [{"teamId": "merchant-platform-operations", "teamName": "Merchant Platform - Operations", "role": "executing", "intent": "Lead partner integration and operational quality improvements."}], "supportingTeams": [{"teamId": "platform-core-services", "teamName": "Platform Core Services", "role": "supporting", "intent": "Support API, auth, and platform reliability."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "Outcome target tied to operational quality and supply continuity.", "status": "planned", "target1": {"label": "2026-Q3 target", "date": "2026-09-30", "target": "Improve quarter over quarter", "projectedValue": "Current estimate: Partner integration reliability moves far enough to show clear momentum toward improve quarter over quarter, driven by increase partner integration reliability during the quarter.", "confidence": "undefined"}, "target2": {"label": "2026-year-end target", "date": "2026-12-31", "target": "Improve quarter over quarter", "projectedValue": "Current estimate: Partner integration reliability ends the horizon sustainably ahead of today's baseline, with improve quarter over quarter holding across the broader operating model.", "confidence": "undefined"}}], "linkedInitiatives": [{"id": "initiative-general-listings-marketplace-2026-03-14-03", "date": "2026-03-14", "description": "Improve merchant retention by strengthening feed reliability, lead workflow visibility, and paid exposure reporting in the merchant workspace.", "customerIds": ["cg3-p1", "cg4-p2"], "deliveryChannels": ["P3-merchant-portal", "P3-inventory-feed-api"], "productBricks": ["clim", "svih", "iess"]}], "linkedReleases": [{"id": "release-general-listings-marketplace-2026-03-27-04", "date": "2026-03-27", "description": "Release of merchant workspace improvements covering feed diagnostics, lead workflows, and paid visibility reporting.", "customerIds": ["cg3-p1", "cg4-p2"], "deliveryChannels": ["P3-merchant-portal", "P3-inventory-feed-api"], "productBricks": ["clim", "svih", "iess"]}], "sourceReferences": {"customers": "customers/customers.json", "initiatives": "delivery/initiatives.json", "releases": "delivery/releases.json"}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-trust"], "inspiredByInsights": [{"insightId": "discovery-general-listings-marketplace-2026-02-18-03-merchant-roi", "insightTitle": "Merchant ROI and feed reliability discovery", "status": "archived", "howItInspiresObjective": "Links partner reliability to merchant supply health."}], "landingPageId": "general-listings-marketplace-2026-q2-cg4-p2", "companyObjectiveRefs": [{"id": "obj-trust", "title": "2026-Q2 Make local transactions safer and more repeatable", "landingPageId": "2026-q3-obj-trust"}], "enrichedInitiatives": [], "enrichedReleases": []};
+    const pageData = {"id": "general-listings-marketplace-2026-q2-cg4-p2", "title": "2026-Q2 Merchant SaaS / Feed Integration Partner outcome goal", "objective": "Improve partner integration reliability by reducing validation ambiguity and operational failure modes.", "okrStyle": "objective-and-key-results", "status": "active", "period": {"quarter": "2026-Q2", "startDate": "2026-04-01", "endDate": "2026-06-30", "type": "current"}, "linkedCustomers": [{"customerId": "cg4-p2", "customerName": "Merchant SaaS / Feed Integration Partner", "customerGroup": "Ecosystem Partners"}], "linkedCustomerKPIs": [{"customerId": "cg4-p2", "customerName": "Merchant SaaS / Feed Integration Partner", "kpiId": "co-cg4-top", "kpiName": "Partner integration reliability", "description": "Operational reliability of partner-managed inventory and update flows.", "unit": "% successful partner updates", "kind": "customer", "targetDirection": "increase"}], "linkedBusinessKPIs": [{"customerId": "cg4-p2", "customerName": "Merchant SaaS / Feed Integration Partner", "kpiId": "bo-cg4-top", "kpiName": "Partner-enabled supply scale", "description": "Professional supply volume and revenue supported through partner integrations.", "unit": "index", "kind": "business", "targetDirection": "increase"}], "keyResults": [{"id": "kr-3", "metric": "Partner integration reliability", "kind": "customer", "targetDirection": "increase", "target": "Improve quarter over quarter", "baseline": "Baseline from partner operations reporting", "statement": "Increase partner integration reliability during the quarter.", "executingTeams": [{"teamId": "merchant-platform-operations", "teamName": "Merchant Platform - Operations", "role": "executing", "intent": "Lead partner integration and operational quality improvements."}], "supportingTeams": [{"teamId": "platform-core-services", "teamName": "Platform Core Services", "role": "supporting", "intent": "Support API, auth, and platform reliability."}], "commitmentType": "standard", "commitmentLabel": "Standard KR", "commitmentRationale": "Outcome target tied to operational quality and supply continuity.", "status": "planned", "target1": {"label": "2026-Q3 target", "date": "2026-09-30", "target": "Improve quarter over quarter", "projectedValue": "Current estimate: Partner integration reliability moves far enough to show clear momentum toward improve quarter over quarter, driven by increase partner integration reliability during the quarter.", "confidence": "undefined"}, "target2": {"label": "2026-year-end target", "date": "2026-12-31", "target": "Improve quarter over quarter", "projectedValue": "Current estimate: Partner integration reliability ends the horizon sustainably ahead of today's baseline, with improve quarter over quarter holding across the broader operating model.", "confidence": "undefined"}}], "linkedInitiatives": [{"id": "initiative-general-listings-marketplace-2026-03-14-03", "date": "2026-03-14", "description": "Improve merchant retention by strengthening feed reliability, lead workflow visibility, and paid exposure reporting in the merchant workspace.", "customerIds": ["cg3-p1", "cg4-p2"], "deliveryChannels": ["P3-merchant-portal", "P3-inventory-feed-api"], "productBricks": ["clim", "svih", "iess"]}], "linkedReleases": [{"id": "release-general-listings-marketplace-2026-03-27-04", "date": "2026-03-27", "description": "Release of merchant workspace improvements covering feed diagnostics, lead workflows, and paid visibility reporting.", "customerIds": ["cg3-p1", "cg4-p2"], "deliveryChannels": ["P3-merchant-portal", "P3-inventory-feed-api"], "productBricks": ["clim", "svih", "iess"]}], "sourceReferences": {"customers": "customers/customers.json", "initiatives": "delivery/initiatives.json", "releases": "delivery/releases.json"}, "objectiveRole": "source_objective_for_company_okrs", "companyObjectiveIds": ["obj-trust"], "inspiredByInsights": [{"insightId": "discovery-general-listings-marketplace-2026-02-18-03-merchant-roi", "insightTitle": "Merchant ROI and feed reliability discovery", "status": "archived", "howItInspiresObjective": "Links partner reliability to merchant supply health."}], "landingPageId": "general-listings-marketplace-2026-q2-cg4-p2", "companyObjectiveRefs": [{"id": "obj-trust", "title": "2026-Q2 Make local transactions safer and more repeatable", "landingPageId": "2026-q3-obj-trust"}], "enrichedInitiatives": [], "enrichedReleases": []};
     const pageKind = 'source-objective';
     const pagePeriod = 'current';
 
@@ -469,31 +537,6 @@
         if (!pageLogo) return;
         pageLogo.src = '../icons/' + periodIconName(pagePeriod);
         pageLogo.alt = (pagePeriod ? pagePeriod.charAt(0).toUpperCase() + pagePeriod.slice(1) + ' ' : '') + 'Objectives';
-    }
-
-    function initTab() {
-        let tabName = 'HomeTab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
     }
 
     function escapeHtml(value) {
@@ -782,7 +825,7 @@
     if (!isCompany && keyResults.length) {
         let krDivsHtml = '';
         keyResults.forEach((kr, i) => {
-            krDivsHtml += '<div id="KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
+            krDivsHtml += '<div id="tab_content_KR' + (i + 1) + 'Tab" class="tabcontent"></div>';
         });
         document.getElementById('KRTabsContainer').innerHTML = krDivsHtml;
     }
@@ -1024,7 +1067,7 @@
         return html;
     }
 
-    document.getElementById('HomeTab').innerHTML = isCompany
+    document.getElementById('tab_content_HomeTab').innerHTML = isCompany
         ? renderCompanyObjectiveHome(pageData)
         : renderSourceObjectiveHome(pageData);
 
@@ -1032,7 +1075,7 @@
 
     if (!isCompany && keyResults.length) {
         keyResults.forEach((item, i) => {
-            document.getElementById('KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
+            document.getElementById('tab_content_KR' + (i + 1) + 'Tab').innerHTML = renderKeyResult(item);
         });
     }
 
@@ -1052,11 +1095,11 @@
             }
             discHtml += '</div>';
         });
-        document.getElementById('DiscoveriesTab').innerHTML = discHtml;
+        document.getElementById('tab_content_DiscoveriesTab').innerHTML = discHtml;
     }
 
     initPageLogo();
-    initTab();
+    initTab('HomeTab');
 
     mermaid.initialize({startOnLoad: true, theme: 'base', themeVariables: {fontSize: '14px'}});
 </script>

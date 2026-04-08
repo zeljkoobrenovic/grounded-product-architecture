@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "connectivity-ecosystem", "name": "Connectivity Ecosystem", "teamType": "platform", "teamFamilyId": "partner-growth", "teamFamilyName": "Partner Growth", "orgLayer": "team", "mission": "Own partner APIs, reservation sync quality, and connectivity-provider experience.", "primaryCustomers": [{"customerId": "cg3-p1", "customerName": "Hotel Revenue & Operations Manager", "relatedKPIs": ["Availability accuracy", "Overbooking incident rate"], "icon": "hotel.png"}], "ownedProductBricks": [{"brickId": "conn", "brickName": "Connectivity & Partner APIs", "brick": {"id": "conn", "name": "Connectivity & Partner APIs", "type": "integration", "description": "Partner connectivity, reservation sync, inventory APIs, and ecosystem integration surfaces for PMS, channel managers, and other partners.", "domain": "Marketplace Foundations", "group": "Trust, connectivity, and intelligence", "internalModules": [{"title": "Partner Contract and Validation Layer", "description": "Validates payloads, partner credentials, and supply quality rules.", "type": "integration"}, {"title": "Reservation and Inventory Sync", "description": "Moves inventory and reservation changes across systems.", "type": "integration"}, {"title": "Partner Reliability Controls", "description": "Tracks partner integration health, retries, and contract-quality issues.", "type": "service"}], "interfaces": [{"title": "Partner Connectivity API", "description": "API surface for property systems and ecosystem partners.", "type": "api"}, {"title": "Partner Integration Event Feed", "description": "Event stream for partner sync, errors, and validation outcomes.", "type": "event"}], "brickDependencies": [{"targetBrickId": "invt", "type": "data", "interface": "Supply state API", "description": "Uses supply-core data to power external sync."}, {"targetBrickId": "trst", "type": "partner-risk", "interface": "Risk and verification API", "description": "Uses trust and verification controls for partner certification and anomaly handling."}], "externalSystemsThisBrickDependsOn": [{"system": "Channel Managers and PMS Platforms", "type": "partner-system", "interface": "XML/JSON APIs", "description": "External systems integrate for inventory and reservation operations."}], "externalSystemsDependingOnThisBrick": [], "icon": "conn.png"}}, {"brickId": "invt", "brickName": "Inventory, Rates & Reservations", "brick": {"id": "invt", "name": "Inventory, Rates & Reservations", "type": "service", "description": "Rate, availability, room, reservation, and booking-state backbone for accommodation supply.", "domain": "Partner Operations", "group": "Inventory and commercial performance", "internalModules": [{"title": "Rate and Availability Core", "description": "Stores and resolves rate and availability conditions.", "type": "service"}, {"title": "Reservation State Machine", "description": "Tracks reservation status and operational transitions.", "type": "service"}, {"title": "Supply Integrity Controls", "description": "Applies validation and conflict rules to prevent inconsistent bookable inventory.", "type": "service"}], "interfaces": [{"title": "Supply Core API", "description": "API for rates, availability, and reservations.", "type": "api"}, {"title": "Reservation Event Feed", "description": "Event stream for reservation and availability changes across systems.", "type": "event"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Property Management Systems", "type": "partner-system", "interface": "Availability and reservation sync", "description": "Consumes and emits reservation state to PMS and channel manager systems."}], "externalSystemsDependingOnThisBrick": [], "icon": "invt.png"}}, {"brickId": "rsrv", "brickName": "Reservation Inbox & Operations", "brick": {"id": "rsrv", "name": "Reservation Inbox & Operations", "type": "full-stack", "description": "Partner-facing reservation management, no-show handling, check-in state, special requests, and exception operations around incoming bookings.", "domain": "Partner Operations", "group": "Inventory and commercial performance", "internalModules": [{"title": "Reservation Work Queue", "description": "Organizes reservation actions, alerts, and follow-up tasks for partner operators.", "type": "full-stack"}, {"title": "Reservation Exception Controls", "description": "Handles overbooking, no-show, and special-case operational states.", "type": "service"}], "interfaces": [{"title": "Reservation Operations UI", "description": "Partner-facing interface for reservation actions and issue handling.", "type": "ui"}, {"title": "Reservation Operations API", "description": "API for reservation-action workflows and operational state updates.", "type": "api"}], "brickDependencies": [{"targetBrickId": "invt", "type": "reservation-state", "interface": "Reservation API", "description": "Uses core reservation state to power partner reservation workflows."}, {"targetBrickId": "msgc", "type": "communication", "interface": "Messaging API", "description": "Uses messaging capabilities for guest communication from reservation operations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "rsrv.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["platform-core-services", "trust-and-marketplace-integrity"], "defaultSupportingTeamIds": ["platform-core-services", "trust-and-marketplace-integrity"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Keep API reliability, contract quality, and reservation accuracy in the same team.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own partner API roadmap and ecosystem priorities."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead team execution."}, {"role": "Backend / Integration Engineer", "count": 4, "responsibility": "Build contracts, sync services, and partner validation."}, {"role": "Developer Experience Engineer", "count": 1, "responsibility": "Improve integration ergonomics and partner onboarding."}, {"role": "QA / Reliability Engineer", "count": 1, "responsibility": "Own contract and sync reliability."}]}, "groupId": "partner-growth", "groupName": "Partner Growth", "groupLeadership": [], "dependsOnTeams": [{"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "platform-core-services", "name": "Platform Core Services", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "trust-and-marketplace-integrity", "name": "Trust & Marketplace Integrity", "teamType": "enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [], "relatedReleases": [], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "homes-host-platform", "teamName": "Homes Host Platform", "sharedBrickIds": ["invt"], "sharedBrickNames": ["Inventory, Rates & Reservations"]}], "sharedInitiatives": [], "sharedReleases": [], "explicitRelationships": [{"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "platform-core-services", "teamName": "Platform Core Services", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "trust-and-marketplace-integrity", "teamName": "Trust & Marketplace Integrity", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

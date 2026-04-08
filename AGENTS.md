@@ -94,6 +94,7 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 - Preserve the repository's no-framework approach. Do not introduce React, build tooling, npm dependencies, or external JS libraries unless explicitly requested.
 - Keep generated pages self-contained. Avoid solutions that depend on shared runtime infrastructure or client-side package bundling.
 - Prefer extending the existing JSON schemas and HTML template patterns instead of inventing a parallel model.
+- Keep all ID values in `_config/**` lowercase, including `id`, `*Id`, and `*Ids` fields.
 - Keep naming aligned with the domain language already used in the repository: customers, product strategy, delivery, product bricks, targets, roadmap, evidence, documents.
 
 ## Editing Guidance

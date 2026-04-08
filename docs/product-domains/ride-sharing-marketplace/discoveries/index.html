@@ -5,6 +5,47 @@
     <title>Discoveries (Ride Sharing Marketplace)</title>
 
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -101,39 +142,6 @@
             color: #6b7280;
             font-size: 18px;
             margin-bottom: 14px;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 18px;
-            border: 1px solid #ccc;
-            border-top: none;
-            background-color: white;
         }
 
         .grid {
@@ -271,35 +279,69 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <script>
-        function initTab() {
-            let tabName = 'Ongoing';
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + hash)) {
-                    tabName = hash;
-                }
+</head>
+<body onload="initTab('Ongoing')" onhashchange="initTab('Ongoing')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
             }
-            openTab(tabName);
         }
 
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            history.pushState({}, '', '#' + tabName);
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </script>
-</head>
-<body onload="initTab()" onhashchange="initTab()">
-<div id="breadcrumbs"></div>
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <div class="section-nav">
     <a class="section-link" href="../start/index.html">Home</a>
     <a class="section-link" href="../customers/index.html">Customers</a>
@@ -327,8 +369,8 @@
     <button class="tablinks" id="tab_Archived" onclick="openTab('Archived')">Archived</button>
 </div>
 
-<div id="Ongoing" class="tabcontent"></div>
-<div id="Archived" class="tabcontent"></div>
+<div id="tab_content_Ongoing" class="tabcontent"></div>
+<div id="tab_content_Archived" class="tabcontent"></div>
 
 <script>
     const discoveries = {"ongoing": [{"title": "Airport and reserve reliability discovery", "id": "discovery-ride-sharing-marketplace-2026-04-03-00-airport-reserve-reliability", "name": "Airport and reserve reliability discovery", "status": "ongoing", "lastUpdated": "2026-04-03", "summary": "Discovery work is testing which airport and reserve failure modes most materially hurt rider trust and premium trip conversion.", "opportunity": "Decide whether the next scale move should emphasize constrained-zone execution, supply reservation quality, or rider communication clarity first.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2026-04-10-00", "description": "Focused investment to improve airport and reserve trip predictability.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to improve airport and reserve trip predictability by strengthening constrained-zone dispatch, pickup guidance, and scheduled-trip orchestration."}], "teams": {"leadTeamId": "reserve-airport", "supportingTeamIds": ["marketplace-dispatch", "fleet-programs"], "assignments": [{"teamId": "reserve-airport", "teamName": "Reserve and Airport Experience", "role": "lead", "roleLabel": "Lead discovery team", "how": "Leads problem framing and evidence synthesis."}]}, "riskFocus": [{"riskType": "valuable", "question": "Will improved airport and reserve predictability change rider behavior meaningfully?", "hypothesis": "Riders will choose these products more often when they believe timing risk is lower."}, {"riskType": "feasible", "question": "Can constrained pickup improvements be delivered consistently across different airports and venues?", "hypothesis": "A reusable orchestration layer can absorb most city and airport variation."}], "plannedActivities": ["Review high-friction airport pickup journeys", "Map reserve fulfillment failures by market", "Test clearer rider-facing trip-state communication"], "decisionToMake": "Choose the smallest set of airport and reserve improvements that materially shifts confidence and completion.", "startDate": "2026-04-03", "endDate": "2026-05-02", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-03", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Driver trust and earnings discovery", "id": "discovery-ride-sharing-marketplace-2026-04-08-01-driver-trust-and-earnings", "name": "Driver trust and earnings discovery", "status": "ongoing", "lastUpdated": "2026-04-08", "summary": "Discovery work is testing which earnings and compliance frictions most strongly damage short-horizon driver retention.", "opportunity": "Clarify whether the next best investment is payout explanation, dispatch quality, or support-response speed.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2026-04-24-01", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to trust.", "landingPageIndex": 1, "initiativeDescription": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust."}], "teams": {"leadTeamId": "driver-growth", "supportingTeamIds": ["trust-ops", "marketplace-dispatch"], "assignments": [{"teamId": "driver-growth", "teamName": "Driver Growth and Earnings", "role": "lead", "roleLabel": "Lead discovery team", "how": "Leads driver problem framing and prioritization."}]}, "riskFocus": [{"riskType": "valuable", "question": "Which trust friction matters most to active drivers?", "hypothesis": "Drivers react more strongly to opaque losses and status changes than to isolated UI inconvenience."}, {"riskType": "usable", "question": "Can drivers understand new earnings explanations quickly enough to change behavior?", "hypothesis": "Simpler earnings and compliance states reduce support demand and improve trust."}], "plannedActivities": ["Review payout-related support tickets", "Analyze churn around compliance pauses", "Test alternative earnings explanation concepts"], "decisionToMake": "Choose the highest-leverage trust fix for supply retention in focus markets.", "startDate": "2026-04-08", "endDate": "2026-05-09", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Mixed trip-type choice discovery", "id": "discovery-ride-sharing-marketplace-2026-06-20-00-mixed-choice", "name": "Mixed trip-type choice discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Discovery will test how riders interpret price, wait, and certainty tradeoffs across standard, shared, and scheduled rides.", "opportunity": "Clarify whether clearer packaging can improve conversion without weakening trust in pricing.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2026-07-10-00", "description": "Planned investment to make tradeoffs across trip products more legible.", "landingPageIndex": 0, "initiativeDescription": "Planned investment to make tradeoffs across standard, shared, reserve, and airport products more legible to riders."}], "teams": {"leadTeamId": "rider-core", "supportingTeamIds": ["reserve-airport", "marketplace-dispatch"], "assignments": []}, "riskFocus": [], "plannedActivities": ["Review rider confusion in mixed product-choice markets", "Prototype alternative pricing and certainty explanations"], "decisionToMake": "Choose the clearest trip-type packaging model for Q3.", "startDate": "2026-06-20", "endDate": "2026-07-09", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-06-20", "customerImpact": [], "productBricks": [], "deliveryChannels": []}], "archived": [{"title": "Teen and family ride trust discovery", "id": "discovery-ride-sharing-marketplace-2025-09-22-00-teen-family-trust", "name": "Teen and family ride trust discovery", "status": "archived", "lastUpdated": "2025-12-15", "summary": "Archived discovery on which trust cues matter most for supervised teen and family travel.", "opportunity": "Use supervised travel signals to strengthen trust in broader rider safety journeys.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2025-10-10-00", "description": "Archived investment focused on clearer safety and supervised-travel signaling.", "landingPageIndex": 3, "initiativeDescription": "Archived investment focused on clearer safety and supervised-travel signaling in the rider experience."}], "teams": {"leadTeamId": "trust-ops", "supportingTeamIds": [], "assignments": []}, "riskFocus": [], "plannedActivities": [], "decisionToMake": "Archived.", "startDate": "2025-09-22", "endDate": "2025-10-09", "statusLabel": "Archived", "landingPageIndex": 3, "date": "2025-09-22", "customerImpact": [], "productBricks": [], "deliveryChannels": []}], "items": [{"title": "Airport and reserve reliability discovery", "id": "discovery-ride-sharing-marketplace-2026-04-03-00-airport-reserve-reliability", "name": "Airport and reserve reliability discovery", "status": "ongoing", "lastUpdated": "2026-04-03", "summary": "Discovery work is testing which airport and reserve failure modes most materially hurt rider trust and premium trip conversion.", "opportunity": "Decide whether the next scale move should emphasize constrained-zone execution, supply reservation quality, or rider communication clarity first.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2026-04-10-00", "description": "Focused investment to improve airport and reserve trip predictability.", "landingPageIndex": 2, "initiativeDescription": "Focused investment to improve airport and reserve trip predictability by strengthening constrained-zone dispatch, pickup guidance, and scheduled-trip orchestration."}], "teams": {"leadTeamId": "reserve-airport", "supportingTeamIds": ["marketplace-dispatch", "fleet-programs"], "assignments": [{"teamId": "reserve-airport", "teamName": "Reserve and Airport Experience", "role": "lead", "roleLabel": "Lead discovery team", "how": "Leads problem framing and evidence synthesis."}]}, "riskFocus": [{"riskType": "valuable", "question": "Will improved airport and reserve predictability change rider behavior meaningfully?", "hypothesis": "Riders will choose these products more often when they believe timing risk is lower."}, {"riskType": "feasible", "question": "Can constrained pickup improvements be delivered consistently across different airports and venues?", "hypothesis": "A reusable orchestration layer can absorb most city and airport variation."}], "plannedActivities": ["Review high-friction airport pickup journeys", "Map reserve fulfillment failures by market", "Test clearer rider-facing trip-state communication"], "decisionToMake": "Choose the smallest set of airport and reserve improvements that materially shifts confidence and completion.", "startDate": "2026-04-03", "endDate": "2026-05-02", "statusLabel": "Ongoing", "landingPageIndex": 0, "date": "2026-04-03", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Driver trust and earnings discovery", "id": "discovery-ride-sharing-marketplace-2026-04-08-01-driver-trust-and-earnings", "name": "Driver trust and earnings discovery", "status": "ongoing", "lastUpdated": "2026-04-08", "summary": "Discovery work is testing which earnings and compliance frictions most strongly damage short-horizon driver retention.", "opportunity": "Clarify whether the next best investment is payout explanation, dispatch quality, or support-response speed.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2026-04-24-01", "description": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to trust.", "landingPageIndex": 1, "initiativeDescription": "Focused investment to improve driver productivity and retention by making payouts, compliance, and support outcomes easier to understand and trust."}], "teams": {"leadTeamId": "driver-growth", "supportingTeamIds": ["trust-ops", "marketplace-dispatch"], "assignments": [{"teamId": "driver-growth", "teamName": "Driver Growth and Earnings", "role": "lead", "roleLabel": "Lead discovery team", "how": "Leads driver problem framing and prioritization."}]}, "riskFocus": [{"riskType": "valuable", "question": "Which trust friction matters most to active drivers?", "hypothesis": "Drivers react more strongly to opaque losses and status changes than to isolated UI inconvenience."}, {"riskType": "usable", "question": "Can drivers understand new earnings explanations quickly enough to change behavior?", "hypothesis": "Simpler earnings and compliance states reduce support demand and improve trust."}], "plannedActivities": ["Review payout-related support tickets", "Analyze churn around compliance pauses", "Test alternative earnings explanation concepts"], "decisionToMake": "Choose the highest-leverage trust fix for supply retention in focus markets.", "startDate": "2026-04-08", "endDate": "2026-05-09", "statusLabel": "Ongoing", "landingPageIndex": 1, "date": "2026-04-08", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Mixed trip-type choice discovery", "id": "discovery-ride-sharing-marketplace-2026-06-20-00-mixed-choice", "name": "Mixed trip-type choice discovery", "status": "ongoing", "lastUpdated": "2026-03-31", "summary": "Discovery will test how riders interpret price, wait, and certainty tradeoffs across standard, shared, and scheduled rides.", "opportunity": "Clarify whether clearer packaging can improve conversion without weakening trust in pricing.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2026-07-10-00", "description": "Planned investment to make tradeoffs across trip products more legible.", "landingPageIndex": 0, "initiativeDescription": "Planned investment to make tradeoffs across standard, shared, reserve, and airport products more legible to riders."}], "teams": {"leadTeamId": "rider-core", "supportingTeamIds": ["reserve-airport", "marketplace-dispatch"], "assignments": []}, "riskFocus": [], "plannedActivities": ["Review rider confusion in mixed product-choice markets", "Prototype alternative pricing and certainty explanations"], "decisionToMake": "Choose the clearest trip-type packaging model for Q3.", "startDate": "2026-06-20", "endDate": "2026-07-09", "statusLabel": "Ongoing", "landingPageIndex": 2, "date": "2026-06-20", "customerImpact": [], "productBricks": [], "deliveryChannels": []}, {"title": "Teen and family ride trust discovery", "id": "discovery-ride-sharing-marketplace-2025-09-22-00-teen-family-trust", "name": "Teen and family ride trust discovery", "status": "archived", "lastUpdated": "2025-12-15", "summary": "Archived discovery on which trust cues matter most for supervised teen and family travel.", "opportunity": "Use supervised travel signals to strengthen trust in broader rider safety journeys.", "linkedInitiatives": [{"initiativeId": "initiative-ride-sharing-marketplace-2025-10-10-00", "description": "Archived investment focused on clearer safety and supervised-travel signaling.", "landingPageIndex": 3, "initiativeDescription": "Archived investment focused on clearer safety and supervised-travel signaling in the rider experience."}], "teams": {"leadTeamId": "trust-ops", "supportingTeamIds": [], "assignments": []}, "riskFocus": [], "plannedActivities": [], "decisionToMake": "Archived.", "startDate": "2025-09-22", "endDate": "2025-10-09", "statusLabel": "Archived", "landingPageIndex": 3, "date": "2025-09-22", "customerImpact": [], "productBricks": [], "deliveryChannels": []}]};

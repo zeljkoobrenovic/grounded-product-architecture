@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "checkout-conversion", "name": "Checkout Conversion", "teamType": "stream-aligned", "teamFamilyId": "payments-experience", "teamFamilyName": "Payments Experience", "orgLayer": "team", "mission": "Own Hosted Checkout, Payment Elements, and Payment Links.", "primaryCustomers": [{"customerId": "cg1-p1", "customerName": "Growth Commerce GM", "relatedKPIs": ["Successful payment conversion", "Checkout completion rate"], "icon": "commerce_gm.png"}], "ownedProductBricks": [{"brickId": "chck", "brickName": "Hosted Checkout", "brick": {"id": "chck", "name": "Hosted Checkout", "type": "full-stack", "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Session orchestration", "description": "Creates and manages buyer-facing hosted payment sessions.", "type": "service"}], "interfaces": [{"title": "Hosted buyer payment UI", "description": "Stripe-hosted checkout interface.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Payment method availability service", "description": "Uses market-aware payment method selection."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "chck.png"}}, {"brickId": "elem", "brickName": "Payment Elements", "brick": {"id": "elem", "name": "Payment Elements", "type": "full-stack", "description": "Embeddable payment form components with centralized method logic and wallet support.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Payment form rendering", "description": "Delivers embeddable payment components across buyer surfaces.", "type": "service"}], "interfaces": [{"title": "Embedded payment UI", "description": "Customizable payment element rendered in merchant surfaces.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "pmtd", "type": "composition", "interface": "Method orchestration API", "description": "Uses payment method ranking and eligibility logic."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "elem.png"}}, {"brickId": "pmlk", "brickName": "Payment Links", "brick": {"id": "pmlk", "name": "Payment Links", "type": "full-stack", "description": "Low-code payment collection surfaces for one-off and lightweight commerce flows.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Hosted link generation", "description": "Creates hosted payment and collection links for operators.", "type": "service"}], "interfaces": [{"title": "Payment link management UI", "description": "Dashboard workflow for link creation and monitoring.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "chck", "type": "composition", "interface": "Hosted session components", "description": "Reuses hosted payment session capabilities."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmlk.png"}}], "supportingProductBricks": [{"brickId": "pmtd", "brickName": "Payment Method Orchestration", "brick": {"id": "pmtd", "name": "Payment Method Orchestration", "type": "full-stack", "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.", "domain": "Merchant Payments", "group": "Checkout and conversion", "internalModules": [{"title": "Method eligibility engine", "description": "Determines available methods by geography, device, and merchant configuration.", "type": "service"}], "interfaces": [{"title": "Method configuration UI", "description": "Operator controls for payment method availability and preferences.", "type": "ui"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "pmtd.png"}}], "dependsOnTeamIds": ["payment-network-performance", "developer-foundations"], "defaultSupportingTeamIds": ["payment-network-performance", "developer-foundations"], "staffing": {"suggestedHeadcount": 9, "staffingGuidance": "Keep buyer UX and merchant integration concerns close enough that checkout optimization remains measurable.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own checkout conversion roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery."}, {"role": "Backend Engineer", "count": 2, "responsibility": "Build session and orchestration services."}, {"role": "Frontend Engineer", "count": 2, "responsibility": "Build hosted and embeddable payment UX."}, {"role": "Product Designer", "count": 1, "responsibility": "Design buyer and operator payment flows."}, {"role": "Data Analyst", "count": 2, "responsibility": "Own conversion diagnostics and experiments."}]}, "groupId": "payments-experience", "groupName": "Payments Experience", "groupLeadership": [], "dependsOnTeams": [{"id": "payment-network-performance", "name": "Payment Network Performance", "teamType": "stream-aligned", "groupId": "payments-experience", "groupName": "Payments Experience"}, {"id": "developer-foundations", "name": "Developer Foundations", "teamType": "platform", "groupId": "developer-platform", "groupName": "Developer Platform and Data"}], "defaultSupportingTeams": [{"id": "payment-network-performance", "name": "Payment Network Performance", "teamType": "stream-aligned", "groupId": "payments-experience", "groupName": "Payments Experience"}, {"id": "developer-foundations", "name": "Developer Foundations", "teamType": "platform", "groupId": "developer-platform", "groupName": "Developer Platform and Data"}], "relatedInitiatives": [{"date": "2026-04-12", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "landingPageKey": "5", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-05-14", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "landingPageKey": "3", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "sharedBrickIds": ["pmtd"], "sharedBrickNames": ["Payment Method Orchestration"]}], "sharedInitiatives": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "sharedInitiativeKeys": ["5"], "sharedInitiatives": [{"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "date": "2026-04-12"}]}, {"teamId": "trust-ops", "teamName": "Trust Operations", "sharedInitiativeKeys": ["5"], "sharedInitiatives": [{"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "date": "2026-04-12"}]}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "sharedInitiativeKeys": ["5"], "sharedInitiatives": [{"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Focused investment to improve checkout completion, local method relevance, and payment approval performance for scaled merchants.", "date": "2026-04-12"}]}], "sharedReleases": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "sharedReleaseKeys": ["3"], "sharedReleases": [{"landingPageKey": "3", "sectionFolder": "releases", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "date": "2026-05-14"}]}, {"teamId": "trust-ops", "teamName": "Trust Operations", "sharedReleaseKeys": ["3"], "sharedReleases": [{"landingPageKey": "3", "sectionFolder": "releases", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "date": "2026-05-14"}]}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "sharedReleaseKeys": ["3"], "sharedReleases": [{"landingPageKey": "3", "sectionFolder": "releases", "description": "Release focused on better checkout completion and authorization success through payment-method ordering, buyer UX refinement, and approval optimization.", "date": "2026-05-14"}]}], "explicitRelationships": [{"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "payment-network-performance", "teamName": "Payment Network Performance", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "developer-foundations", "teamName": "Developer Foundations", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

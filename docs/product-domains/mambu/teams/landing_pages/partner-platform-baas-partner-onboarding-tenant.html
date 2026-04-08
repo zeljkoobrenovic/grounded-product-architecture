@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "partner-platform-baas-partner-onboarding-tenant", "name": "Partner Platform & BaaS - Partner Onboarding Tenant", "teamType": "stream-aligned", "teamFamilyId": "partner-platform-baas", "teamFamilyName": "Partner Platform & BaaS", "orgLayer": "team", "mission": "Own partner onboarding, tenancy, APIs, and embedded-finance integration workflows. This team specifically focuses on partner onboarding tenant.", "primaryCustomers": [{"customerId": "embedded_finance_director", "customerName": "VP Product for Embedded Finance and BaaS", "relatedKPIs": ["Partner Go-Live Time", "Partner Activation", "Operating Reliability", "Partner Platform ARR"], "icon": "embedded_finance_director.png"}], "ownedProductBricks": [{"brickId": "poat", "brickName": "Partner Onboarding and Tenant Setup", "brick": {"id": "poat", "name": "Partner Onboarding and Tenant Setup", "type": "integration", "description": "Standardizes how new partners are provisioned, configured, and governed so scale does not require custom operational playbooks.", "domain": "Fintechs, BaaS, and Embedded Finance Providers", "group": "enable-partners-to-launch-financial-products-through-apis", "internalModules": [{"title": "Partner and Network Registry", "description": "Maintains partner profiles, capabilities, and relationship data used by Partner Onboarding and Tenant Setup.", "type": "data"}, {"title": "Onboarding and Performance Workflows", "description": "Handles partner onboarding, qualification, and ongoing operating workflows in Partner Onboarding and Tenant Setup.", "type": "operations"}, {"title": "Commercial and Compliance Controls", "description": "Applies network policies, SLAs, and compliance checks managed by Partner Onboarding and Tenant Setup.", "type": "policy"}], "interfaces": [{"title": "Partner API", "description": "API used by partners or internal systems to exchange operational data with Partner Onboarding and Tenant Setup.", "type": "api"}, {"title": "Partner Portal", "description": "User interface for onboarding, servicing, and monitoring partner activity in Partner Onboarding and Tenant Setup.", "type": "ui"}, {"title": "Partner Lifecycle Events", "description": "Event stream carrying onboarding, status, and performance changes from Partner Onboarding and Tenant Setup.", "type": "event"}], "brickDependencies": [{"targetBrickId": "caam", "type": "identity", "interface": "Authentication API", "description": "Depends on Customer and Account Migration Toolkit to provide identity capabilities required by Partner Onboarding and Tenant Setup."}, {"targetBrickId": "waac", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Workflow Automation and Case Management to provide operations capabilities required by Partner Onboarding and Tenant Setup."}, {"targetBrickId": "agai", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on API Gateway and Integration Layer to provide integration capabilities required by Partner Onboarding and Tenant Setup."}], "externalSystemsThisBrickDependsOn": [{"system": "Partner and Dealer Systems", "type": "partner-network", "interface": "Partner API", "description": "Partner Onboarding and Tenant Setup depends on external partner systems for onboarding, operations, and performance exchange."}, {"system": "Contract and SLA Management Tools", "type": "governance", "interface": "Document / Status Interface", "description": "Partner Onboarding and Tenant Setup exchanges network obligations and status signals with external governance tooling."}], "externalSystemsDependingOnThisBrick": [{"system": "Internal Partner Operations Teams", "type": "partner-consumer", "interface": "Partner Portal / API", "description": "Internal teams depend on Partner Onboarding and Tenant Setup to onboard, manage, and monitor partner relationships."}, {"system": "External Partner Ecosystem", "type": "ecosystem-consumer", "interface": "Partner Data Interface", "description": "External partners depend on Partner Onboarding and Tenant Setup to exchange operational status, onboarding data, and performance signals."}], "icon": "poat.png"}}, {"brickId": "pohb", "brickName": "Partner Operations Hub", "brick": {"id": "pohb", "name": "Partner Operations Hub", "type": "full-stack", "description": "Centralizes operational servicing, case handling, and exception management across partner programs.", "domain": "Fintechs, BaaS, and Embedded Finance Providers", "group": "enable-partners-to-launch-financial-products-through-apis", "internalModules": [{"title": "Partner and Network Registry", "description": "Maintains partner profiles, capabilities, and relationship data used by Partner Operations Hub.", "type": "data"}, {"title": "Onboarding and Performance Workflows", "description": "Handles partner onboarding, qualification, and ongoing operating workflows in Partner Operations Hub.", "type": "operations"}, {"title": "Commercial and Compliance Controls", "description": "Applies network policies, SLAs, and compliance checks managed by Partner Operations Hub.", "type": "policy"}], "interfaces": [{"title": "Partner API", "description": "API used by partners or internal systems to exchange operational data with Partner Operations Hub.", "type": "api"}, {"title": "Partner Portal", "description": "User interface for onboarding, servicing, and monitoring partner activity in Partner Operations Hub.", "type": "ui"}, {"title": "Partner Lifecycle Events", "description": "Event stream carrying onboarding, status, and performance changes from Partner Operations Hub.", "type": "event"}], "brickDependencies": [{"targetBrickId": "caam", "type": "identity", "interface": "Authentication API", "description": "Depends on Customer and Account Migration Toolkit to provide identity capabilities required by Partner Operations Hub."}, {"targetBrickId": "waac", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Workflow Automation and Case Management to provide operations capabilities required by Partner Operations Hub."}, {"targetBrickId": "agai", "type": "partner-connectivity", "interface": "Partner Connector Surface", "description": "Depends on API Gateway and Integration Layer to provide integration capabilities required by Partner Operations Hub."}], "externalSystemsThisBrickDependsOn": [{"system": "Partner and Dealer Systems", "type": "partner-network", "interface": "Partner API", "description": "Partner Operations Hub depends on external partner systems for onboarding, operations, and performance exchange."}, {"system": "Contract and SLA Management Tools", "type": "governance", "interface": "Document / Status Interface", "description": "Partner Operations Hub exchanges network obligations and status signals with external governance tooling."}], "externalSystemsDependingOnThisBrick": [{"system": "Internal Partner Operations Teams", "type": "partner-consumer", "interface": "Partner Portal / API", "description": "Internal teams depend on Partner Operations Hub to onboard, manage, and monitor partner relationships."}, {"system": "External Partner Ecosystem", "type": "ecosystem-consumer", "interface": "Partner Data Interface", "description": "External partners depend on Partner Operations Hub to exchange operational status, onboarding data, and performance signals."}], "icon": "pohb.png"}}], "supportingProductBricks": [{"brickId": "aapi", "brickName": "Analytics and Portfolio Insights", "brick": {"id": "aapi", "name": "Analytics and Portfolio Insights", "type": "service", "description": "Provides cohort, product, and performance analytics so the bank can iterate based on actual customer and business outcomes.", "domain": "Banks and Credit Unions", "group": "launch-differentiated-deposit-and-payment-propositions-faster", "internalModules": [{"title": "Signal Ingestion and Processing", "description": "Collects operational and business signals that feed Analytics and Portfolio Insights.", "type": "data"}, {"title": "Metrics and Decision Engine", "description": "Calculates insights, KPIs, forecasts, or scores produced by Analytics and Portfolio Insights.", "type": "analytics"}, {"title": "Reporting and Operations Workspace", "description": "Presents actionable views, alerts, and drill-down workflows for Analytics and Portfolio Insights.", "type": "full-stack"}], "interfaces": [{"title": "Dashboard Interface", "description": "Interactive reporting or control surface that presents insights from Analytics and Portfolio Insights.", "type": "ui"}, {"title": "Metrics and Query API", "description": "API for retrieving metrics, scores, forecasts, or analytical outputs from Analytics and Portfolio Insights.", "type": "api"}, {"title": "Alert and Signal Feed", "description": "Event or notification interface exposing operational signals generated by Analytics and Portfolio Insights.", "type": "event"}], "brickDependencies": [{"targetBrickId": "agai", "type": "integration", "interface": "Inbound API", "description": "Depends on API Gateway and Integration Layer to provide integration capabilities required by Analytics and Portfolio Insights."}, {"targetBrickId": "waac", "type": "event-subscription", "interface": "Lifecycle Status Events", "description": "Depends on Workflow Automation and Case Management to provide operations capabilities required by Analytics and Portfolio Insights."}, {"targetBrickId": "cadm", "type": "event-subscription", "interface": "Domain Event Feed", "description": "Depends on Collections and Delinquency Management to provide service capabilities required by Analytics and Portfolio Insights."}], "externalSystemsThisBrickDependsOn": [{"system": "Data Warehouse and BI Platforms", "type": "analytics-platform", "interface": "Query / Export Interface", "description": "Analytics and Portfolio Insights publishes metrics and operational signals into external analytical environments."}, {"system": "Alerting and Incident Platforms", "type": "operations", "interface": "Webhook / Event Interface", "description": "Analytics and Portfolio Insights depends on external alerting systems to escalate anomalies and operational issues."}], "externalSystemsDependingOnThisBrick": [{"system": "Operational Teams and Workspaces", "type": "insight-consumer", "interface": "Dashboard / Alert Interface", "description": "Operational teams depend on Analytics and Portfolio Insights to monitor health, detect issues, and make decisions."}, {"system": "Reporting and Planning Systems", "type": "analytics-consumer", "interface": "Metrics / Export Interface", "description": "Analytical and planning consumers depend on Analytics and Portfolio Insights for metrics, forecasts, and decision support outputs."}], "icon": "aapi.png"}}], "dependsOnTeamIds": ["risk-finance-platform-reusable-templates"], "defaultSupportingTeamIds": ["risk-finance-platform-reusable-templates"], "staffing": {"suggestedHeadcount": 10, "staffingGuidance": "Each customer-facing team is intentionally kept near 10 FTE so it can own a narrow journey or capability slice with clear accountability and fast decision-making.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own the roadmap, prioritization, and KPI tradeoffs for this team scope."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery execution, staffing, and engineering health for the team."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction and guard long-term architecture quality across the team scope."}, {"role": "Backend Engineer", "count": 3, "responsibility": "Build and evolve backend services, business logic, and integration points."}, {"role": "Frontend Engineer", "count": 1, "responsibility": "Build user-facing workflows and maintain a high-quality interaction model."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own regression depth, release confidence, and automated quality coverage."}, {"role": "Product Designer", "count": 1, "responsibility": "Shape the end-to-end workflow, information architecture, and UX quality."}, {"role": "Data / Domain Specialist", "count": 1, "responsibility": "Bridge product decisions with domain semantics, data quality, and operational fit."}]}, "relatedDiscoveries": [{"date": "2026-01-31 -> 2026-03-14", "description": "Embedded Finance Partner Platform: operating discovery", "landingPageKey": "1", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}, {"date": "2026-04-21 -> 2026-05-23", "description": "Embedded Finance Partner Platform: operating discovery", "landingPageKey": "3", "sectionFolder": "discoveries", "teamRole": "support", "teamRoleLabel": "Supporting discovery team", "how": "Adds workflow, commercial, and implementation evidence needed to close the main delivery risks."}], "groupId": "product-lines-partner-platform-baas", "groupName": "Product Lines / Partner Platform & BaaS", "groupLeadership": {"orgLayer": "group", "includedInDomainHeadcountEstimate": false, "purpose": "Provide cross-team direction, architectural coherence, and craft leadership for the teams in this group.", "leadershipModel": "Directors own the operating cadence and people leadership for the group; principal roles work as group-level individual contributors who coach teams and shape standards.", "suggestedHeadcount": 5, "roles": [{"role": "Product Director", "count": 1, "responsibility": "Own the strategy, portfolio tradeoffs, and outcome accountability across the team group.", "reportsTo": "Domain Head of Product / CPO"}, {"role": "Engineering Director", "count": 1, "responsibility": "Own engineering execution, system health, and staffing quality across the team group.", "reportsTo": "Domain Head of Engineering / CTO"}, {"role": "Principal Engineer", "count": 1, "responsibility": "Provide cross-team architecture leadership and coach senior engineers across the group.", "reportsTo": "Engineering Director"}, {"role": "Principal Product Designer", "count": 1, "responsibility": "Drive cross-team UX coherence, workflow quality, and design standards across the group.", "reportsTo": "Product Director"}, {"role": "Principal Data / Domain Architect", "count": 1, "responsibility": "Shape the shared domain model, KPI semantics, and analytical consistency used by the teams in the group.", "reportsTo": "Product Director"}]}, "dependsOnTeams": [{"id": "risk-finance-platform-reusable-templates", "name": "Risk, Finance & Expansion Platform - Reusable Templates", "teamType": "platform", "groupId": "shared-platform", "groupName": "Shared Platform"}], "defaultSupportingTeams": [{"id": "risk-finance-platform-reusable-templates", "name": "Risk, Finance & Expansion Platform - Reusable Templates", "teamType": "platform", "groupId": "shared-platform", "groupName": "Shared Platform"}], "relatedInitiatives": [{"date": "2026-05-14", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-02-12", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-11", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-03-08", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "dependencyData": {"sharedProductBricks": [{"teamId": "deposits-and-payments-portfolio-insights", "teamName": "Deposits & Payments - Portfolio Insights", "sharedBrickIds": ["aapi"], "sharedBrickNames": ["Analytics and Portfolio Insights"]}], "sharedInitiatives": [{"teamId": "partner-platform-baas-multi-tenant-runtime", "teamName": "Partner Platform & BaaS - Multi Tenant Runtime", "sharedInitiativeKeys": ["0", "2"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}]}, {"teamId": "partner-platform-baas-developer-public", "teamName": "Partner Platform & BaaS - Developer Public", "sharedInitiativeKeys": ["0", "2"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}]}, {"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "sharedInitiativeKeys": ["0", "2"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Embedded Finance Partner Platform Initiative is the quarter's focused investment to move Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}]}], "sharedReleases": [{"teamId": "partner-platform-baas-multi-tenant-runtime", "teamName": "Partner Platform & BaaS - Multi Tenant Runtime", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}]}, {"teamId": "partner-platform-baas-developer-public", "teamName": "Partner Platform & BaaS - Developer Public", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}]}, {"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Embedded Finance Partner Platform improvements aimed at moving Partner Go-Live Time and Partner Platform ARR, anchored in scaling banking workflows through cleaner data, lower servicing effort, and stronger partner readiness and led through Partner Onboarding and Tenant Setup. The quarter concentrates on data-driven banking operations, embedded-finance readiness, and lower servicing complexity so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}]}], "explicitRelationships": [{"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "risk-finance-platform-reusable-templates", "teamName": "Risk, Finance & Expansion Platform - Reusable Templates", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

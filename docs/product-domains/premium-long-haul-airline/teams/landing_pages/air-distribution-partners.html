@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "air-distribution-partners", "name": "Air Distribution and Partners", "teamType": "stream-aligned", "teamFamilyId": "commercial-platforms", "teamFamilyName": "Commercial Platforms", "orgLayer": "team", "mission": "Own corporate, agency, NDC, alliance, and partner continuity workflows.", "primaryCustomers": [{"customerId": "ctpm", "customerName": "Corporate Travel Program Manager", "relatedKPIs": ["In-policy booking rate", "Corporate revenue share of wallet", "Traveller disruption resolution time"], "icon": "ctpm.png"}], "ownedProductBricks": [{"brickId": "dist", "brickName": "Corporate, Agency & NDC Distribution", "brick": {"id": "dist", "name": "Corporate, Agency & NDC Distribution", "type": "integration", "description": "Controls commercial content, contract logic, and servicing pathways across indirect and managed-travel channels.", "domain": "holiday-and-distribution", "group": "commercial-growth", "internalModules": [{"title": "Distribution policy layer", "description": "Applies account, channel, and contract rules to distributed content.", "type": "policy"}, {"title": "NDC and agency gateway", "description": "Publishes content and servicing functions through commercial APIs.", "type": "integration"}], "interfaces": [{"title": "Distribution API", "description": "Exposes controlled offer and servicing capabilities to approved commercial partners.", "type": "api"}], "brickDependencies": [{"targetBrickId": "ofav", "type": "commercial", "interface": "Offer API", "description": "Uses governed retail offers as the source of distributed content."}, {"targetBrickId": "part", "type": "partner", "interface": "Partner continuity service", "description": "Needs partner itinerary context for mixed-carrier distribution and servicing."}], "externalSystemsThisBrickDependsOn": [{"system": "Travel management companies and agency systems", "type": "distribution-partner", "interface": "NDC and agency connections", "description": "Connects to agency and managed-travel channels."}], "externalSystemsDependingOnThisBrick": [{"system": "Sales, account management, and partner channels", "type": "commercial-consumer", "interface": "Distribution API", "description": "Use this brick to distribute and monitor managed-travel content."}], "icon": "dist.png"}}, {"brickId": "part", "brickName": "Partner & Alliance Journey Orchestration", "brick": {"id": "part", "name": "Partner & Alliance Journey Orchestration", "type": "integration", "description": "Coordinates itinerary continuity, servicing context, and commercial logic across alliance, JV, codeshare, and selected cargo partners.", "domain": "holiday-and-distribution", "group": "commercial-growth", "internalModules": [{"title": "Partner rules engine", "description": "Stores partner-specific logic for continuity, servicing, and handoffs.", "type": "policy"}, {"title": "Partner event and message broker", "description": "Manages partner-facing itinerary and recovery messaging.", "type": "integration"}], "interfaces": [{"title": "Partner continuity service", "description": "Exposes partner-aware itinerary and servicing context to internal products.", "type": "api"}], "brickDependencies": [{"targetBrickId": "intg", "type": "integration", "interface": "Partner event backbone", "description": "Uses the shared integration layer for partner eventing."}], "externalSystemsThisBrickDependsOn": [{"system": "Alliance, JV, codeshare, and cargo partner systems", "type": "partner-system", "interface": "Partner messaging and servicing APIs", "description": "Relies on partner systems for joint itinerary and continuity data."}], "externalSystemsDependingOnThisBrick": [{"system": "Retail, servicing, distribution, and cargo products", "type": "internal-consumer", "interface": "Partner continuity service", "description": "Use this brick whenever journeys or shipments extend beyond own-metal operations."}], "icon": "part.png"}}], "supportingProductBricks": [{"brickId": "odal", "brickName": "Operational Data, Revenue & Personalisation Platform", "brick": {"id": "odal", "name": "Operational Data, Revenue & Personalisation Platform", "type": "service", "description": "Creates the shared data, KPI, and decision-support layer for commercial, operational, and guest experiences.", "domain": "platform-foundation", "group": "shared-foundations", "internalModules": [{"title": "Unified airline data model", "description": "Standardizes guest, booking, operational, and revenue entities for analytics and decisioning.", "type": "service"}, {"title": "Insight and personalisation models", "description": "Supports KPI reporting, prioritization, and personalised next-best actions.", "type": "analytics"}], "interfaces": [{"title": "Data products and KPI workspace", "description": "Provides curated datasets and dashboards to teams across the airline.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "intg", "type": "data-ingestion", "interface": "Event and batch feeds", "description": "Relies on shared ingestion and eventing to populate the platform."}], "externalSystemsThisBrickDependsOn": [{"system": "Enterprise data warehouse and ML tooling", "type": "data-platform", "interface": "Data storage and model-serving interfaces", "description": "Uses the organization's shared data and modeling stack."}], "externalSystemsDependingOnThisBrick": [{"system": "Commercial, operations, loyalty, and care teams", "type": "analytics-consumer", "interface": "Data products and KPI workspace", "description": "Use this brick to monitor performance and inform decisions."}], "icon": "odal.png"}}], "dependsOnTeamIds": ["air-guest-commerce", "air-integration-platform", "air-data-personalisation"], "defaultSupportingTeamIds": ["air-integration-platform", "air-data-personalisation"], "staffing": {"suggestedHeadcount": 8, "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own distribution control and partner-continuity priorities."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead channel and partner-platform execution."}, {"role": "Backend / Integration Engineer", "count": 4, "responsibility": "Build NDC, partner, and continuity services."}, {"role": "QA / Test Automation Engineer", "count": 1, "responsibility": "Own contract and integration quality."}, {"role": "Commercial Systems Specialist", "count": 1, "responsibility": "Bridge product logic with managed-travel and partner workflows."}]}, "groupId": "air-commercial-platforms", "groupName": "Air Commercial Platforms", "groupLeadership": {}, "dependsOnTeams": [{"id": "air-guest-commerce", "name": "Air Guest Commerce", "teamType": "stream-aligned", "groupId": "air-guest-loyalty", "groupName": "Air Guest and Loyalty"}, {"id": "air-integration-platform", "name": "Air Integration Platform", "teamType": "platform-enabling", "groupId": "air-platform-group", "groupName": "Air Platform Foundations"}, {"id": "air-data-personalisation", "name": "Air Data and Personalisation Platform", "teamType": "platform-enabling", "groupId": "air-platform-group", "groupName": "Air Platform Foundations"}], "defaultSupportingTeams": [{"id": "air-integration-platform", "name": "Air Integration Platform", "teamType": "platform-enabling", "groupId": "air-platform-group", "groupName": "Air Platform Foundations"}, {"id": "air-data-personalisation", "name": "Air Data and Personalisation Platform", "teamType": "platform-enabling", "groupId": "air-platform-group", "groupName": "Air Platform Foundations"}], "relatedInitiatives": [{"date": "2026-05-14", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-02-12", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-10-15", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "5", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-06-11", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-03-08", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2025-11-05", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "landingPageKey": "5", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [{"date": "2026-01-31 -> 2026-03-14", "description": "Corporate content control and partner continuity: operating discovery", "landingPageKey": "1", "sectionFolder": "discoveries", "teamRole": "lead", "teamRoleLabel": "Lead discovery team", "how": "Leads the discovery framing, evidence synthesis, and recommendation on how far this initiative should scale."}, {"date": "2026-04-21 -> 2026-05-23", "description": "Corporate content control and partner continuity: operating discovery", "landingPageKey": "3", "sectionFolder": "discoveries", "teamRole": "lead", "teamRoleLabel": "Lead discovery team", "how": "Leads the discovery framing, evidence synthesis, and recommendation on how far this initiative should scale."}, {"date": "2025-09-29 -> 2025-10-20", "description": "Corporate content control and partner continuity: operating discovery", "landingPageKey": "5", "sectionFolder": "discoveries", "teamRole": "lead", "teamRoleLabel": "Lead discovery team", "how": "Leads the discovery framing, evidence synthesis, and recommendation on how far this initiative should scale."}], "dependencyData": {"sharedProductBricks": [{"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "sharedBrickIds": ["part"], "sharedBrickNames": ["Partner & Alliance Journey Orchestration"]}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "sharedBrickIds": ["odal"], "sharedBrickNames": ["Operational Data, Revenue & Personalisation Platform"]}], "sharedInitiatives": [{"teamId": "air-guest-commerce", "teamName": "Air Guest Commerce", "sharedInitiativeKeys": ["0", "2", "5"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}, {"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-10-15"}]}, {"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "sharedInitiativeKeys": ["0", "2", "5"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}, {"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-10-15"}]}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "sharedInitiativeKeys": ["0", "2", "5"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-05-14"}, {"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-02-12"}, {"landingPageKey": "5", "sectionFolder": "initiatives", "description": "Corporate content control and partner continuity initiative Initiative is the quarter's focused investment to move Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths.. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-10-15"}]}], "sharedReleases": [{"teamId": "air-guest-commerce", "teamName": "Air Guest Commerce", "sharedReleaseKeys": ["0", "2", "5"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}, {"landingPageKey": "5", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-05"}]}, {"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "sharedReleaseKeys": ["0", "2", "5"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}, {"landingPageKey": "5", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-05"}]}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "sharedReleaseKeys": ["0", "2", "5"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-06-11"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Completion factor and Irregular operations cost per disrupted flight, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2026-03-08"}, {"landingPageKey": "5", "sectionFolder": "releases", "description": "Release of Corporate content control and partner continuity initiative improvements aimed at moving Corporate account satisfaction and Corporate revenue share of wallet, anchored in premium revenue quality and operational resilience under disruption and partner complexity and led through Corporate, Agency & NDC Distribution with account-aware content controls and cleaner servicing paths. The quarter concentrates on digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience so the work reads like a realistic OKR-driven investment set for a company with roughly 250 product and technology people.", "date": "2025-11-05"}]}], "explicitRelationships": [{"teamId": "air-guest-commerce", "teamName": "Air Guest Commerce", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "air-integration-platform", "teamName": "Air Integration Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "air-data-personalisation", "teamName": "Air Data and Personalisation Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {

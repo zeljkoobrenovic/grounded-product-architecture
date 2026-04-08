@@ -15,6 +15,47 @@
     }
 </style>
     <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
     .breadcrumbs-container {
         display: flex;
         flex-wrap: wrap;
@@ -72,8 +113,7 @@
 
         .section {
             border-top: 1px solid #e5e7eb;
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
         }
 
         .section-title {
@@ -203,38 +243,6 @@
             font-size: 12px;
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
-
         .empty-state {
             color: #6b7280;
             font-style: italic;
@@ -243,8 +251,68 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
-<body onload="initTab()" onhashchange="initTab()">
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 <table style="margin-top: 10px">
     <tr>
         <td style="vertical-align: top; padding-top: 0">
@@ -263,8 +331,8 @@
     <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Home</button>
     <button class="tablinks" id="tab_dependencies-tab" onclick="openTab('dependencies-tab')">Dependencies</button>
 </div>
-<div id="home-tab" class="tabcontent"></div>
-<div id="dependencies-tab" class="tabcontent"></div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+<div id="tab_content_dependencies-tab" class="tabcontent"></div>
 
 <script>
     const team = {"id": "trust-aircover-support", "name": "Trust, AirCover & Support", "teamType": "platform-enabling", "teamFamilyId": "marketplace-control", "teamFamilyName": "Marketplace Control", "orgLayer": "team", "mission": "Own identity-linked trust, issue recovery, AirCover, and support case handling.", "primaryCustomers": [{"customerId": "cg2-p1", "customerName": "Everyday Home Host", "relatedKPIs": ["Host protection confidence", "Payout predictability"], "icon": "host.png"}, {"customerId": "cg3-p1", "customerName": "Professional Host / Co-host Operator", "relatedKPIs": ["Resolution cycle time", "Damage-case recovery time"], "icon": "operator.png"}], "ownedProductBricks": [{"brickId": "idvr", "brickName": "Identity & Verification", "brick": {"id": "idvr", "name": "Identity & Verification", "type": "service", "description": "Guest and host identity verification, document checks, and core screening signals.", "domain": "Marketplace Foundations", "group": "Trust, payments, and policy", "internalModules": [{"title": "Identity verification workflow", "description": "Collects and validates identity information for guests and hosts.", "type": "service"}], "interfaces": [{"title": "Verification API", "description": "Shared verification and status API.", "type": "api"}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"system": "Identity verification providers", "type": "vendor", "interface": "Verification APIs", "description": "Used for document, watchlist, and identity checks."}], "externalSystemsDependingOnThisBrick": [], "icon": "idvr.png"}}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "brick": {"id": "trst", "name": "Trust, Safety & AirCover", "type": "service", "description": "Reservation screening, trust enforcement, host protection, guest safety, and AirCover-related controls.", "domain": "Marketplace Foundations", "group": "Trust, payments, and policy", "internalModules": [{"title": "Risk scoring and screening", "description": "Evaluates reservation risk and policy-sensitive demand.", "type": "service"}, {"title": "Protection and incident workflow", "description": "Supports AirCover, damage, and safety intervention paths.", "type": "service"}], "interfaces": [{"title": "Trust decision API", "description": "Shared API for risk and trust decisions.", "type": "api"}, {"title": "Incident operations UI", "description": "Internal trust and incident handling workflow.", "type": "ui"}], "brickDependencies": [{"targetBrickId": "idvr", "type": "identity", "interface": "Verification API", "description": "Uses identity state as input to risk decisions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "trst.png"}}, {"brickId": "reso", "brickName": "Resolutions & Support", "brick": {"id": "reso", "name": "Resolutions & Support", "type": "full-stack", "description": "Structured support, claims, refund, dispute, and service-recovery workflows.", "domain": "Marketplace Foundations", "group": "Trust, payments, and policy", "internalModules": [{"title": "Case orchestration", "description": "Coordinates cases across guests, hosts, trust teams, and payouts.", "type": "service"}, {"title": "Resolution center", "description": "Guest- and host-facing issue and claim management surfaces.", "type": "full-stack"}], "interfaces": [{"title": "Resolution UI", "description": "User-facing and internal support workflows.", "type": "ui"}, {"title": "Support case API", "description": "API for claims, disputes, and issue-case state.", "type": "api"}], "brickDependencies": [{"targetBrickId": "paym", "type": "financial", "interface": "Payments API", "description": "Uses refund and payout state during case handling."}, {"targetBrickId": "trst", "type": "incident", "interface": "Trust decision API", "description": "Uses trust signals for incident-aware case handling."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "reso.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["payments-and-ledger", "policy-compliance-controls"], "defaultSupportingTeamIds": ["payments-and-ledger", "policy-compliance-controls"], "staffing": {"suggestedHeadcount": 10, "staffingGuidance": "Keep trust decisioning and resolution quality close to reduce handoff cost in incidents.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own trust and support roadmap."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution."}, {"role": "Backend Engineer", "count": 4, "responsibility": "Build trust, claims, and case-management services."}, {"role": "Frontend Engineer", "count": 2, "responsibility": "Build user-facing and internal support workflows."}, {"role": "Analyst / Ops Scientist", "count": 1, "responsibility": "Analyze issue and trust outcomes."}, {"role": "Product Designer", "count": 1, "responsibility": "Design sensitive issue and trust workflows."}]}, "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations", "groupLeadership": [], "dependsOnTeams": [{"id": "payments-and-ledger", "name": "Payments & Ledger", "teamType": "platform-enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "policy-compliance-controls", "name": "Policy & Compliance Controls", "teamType": "platform-enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "defaultSupportingTeams": [{"id": "payments-and-ledger", "name": "Payments & Ledger", "teamType": "platform-enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}, {"id": "policy-compliance-controls", "name": "Policy & Compliance Controls", "teamType": "platform-enabling", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations"}], "relatedInitiatives": [{"date": "2026-05-01", "description": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-04-18", "description": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation at the moment of decision.", "landingPageKey": "3", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedReleases": [{"date": "2026-06-20", "description": "Release focused on multi-listing operators by improving co-host permissions, turnover coordination, and case visibility for reservation exceptions and payouts.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-05-16", "description": "Release focused on improving guest booking confidence through clearer total price explanation, review trust presentation, and cancellation guidance on listing and checkout surfaces.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "guest-booking-trip", "teamName": "Guest Booking & Trip", "sharedBrickIds": ["reso"], "sharedBrickNames": ["Resolutions & Support"]}], "sharedInitiatives": [{"teamId": "guest-discovery-ranking", "teamName": "Guest Discovery & Ranking", "sharedInitiativeKeys": ["3"], "sharedInitiatives": [{"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation at the moment of decision.", "date": "2026-04-18"}]}, {"teamId": "guest-booking-trip", "teamName": "Guest Booking & Trip", "sharedInitiativeKeys": ["3"], "sharedInitiatives": [{"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation at the moment of decision.", "date": "2026-04-18"}]}, {"teamId": "portfolio-operations", "teamName": "Portfolio Operations", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows.", "date": "2026-05-01"}]}, {"teamId": "payments-and-ledger", "teamName": "Payments & Ledger", "sharedInitiativeKeys": ["1", "3"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Focused investment to give professional operators stronger delegated control, better portfolio issue visibility, and faster resolution workflows.", "date": "2026-05-01"}, {"landingPageKey": "3", "sectionFolder": "initiatives", "description": "Focused investment to improve guest booking confidence by clarifying total price, listing trust, host reputation, and cancellation explanation at the moment of decision.", "date": "2026-04-18"}]}], "sharedReleases": [{"teamId": "guest-discovery-ranking", "teamName": "Guest Discovery & Ranking", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving guest booking confidence through clearer total price explanation, review trust presentation, and cancellation guidance on listing and checkout surfaces.", "date": "2026-05-16"}]}, {"teamId": "guest-booking-trip", "teamName": "Guest Booking & Trip", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving guest booking confidence through clearer total price explanation, review trust presentation, and cancellation guidance on listing and checkout surfaces.", "date": "2026-05-16"}]}, {"teamId": "portfolio-operations", "teamName": "Portfolio Operations", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on multi-listing operators by improving co-host permissions, turnover coordination, and case visibility for reservation exceptions and payouts.", "date": "2026-06-20"}]}, {"teamId": "payments-and-ledger", "teamName": "Payments & Ledger", "sharedReleaseKeys": ["0", "2"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on multi-listing operators by improving co-host permissions, turnover coordination, and case visibility for reservation exceptions and payouts.", "date": "2026-06-20"}, {"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on improving guest booking confidence through clearer total price explanation, review trust presentation, and cancellation guidance on listing and checkout surfaces.", "date": "2026-05-16"}]}], "explicitRelationships": [{"teamId": "payments-and-ledger", "teamName": "Payments & Ledger", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "policy-compliance-controls", "teamName": "Policy & Compliance Controls", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "payments-and-ledger", "teamName": "Payments & Ledger", "relationshipType": "supported_by", "relationshipLabel": "supported by"}, {"teamId": "policy-compliance-controls", "teamName": "Policy & Compliance Controls", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}};
@@ -303,33 +371,11 @@
         return html;
     }
 
-    function initTab() {
-        let tabName = 'home-tab';
-        if (window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            if (document.getElementById('tab_' + hash)) {
-                tabName = hash;
-            }
-        }
-        openTab(tabName);
-    }
-
-    function openTab(tabName) {
-        const tabcontent = document.getElementsByClassName('tabcontent');
-        for (let i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = 'none';
-        }
-        const tablinks = document.getElementsByClassName('tablinks');
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(' active', '');
-        }
-        history.pushState({}, '', '#' + tabName);
-        document.getElementById(tabName).style.display = 'block';
-        document.getElementById('tab_' + tabName).className += ' active';
+    window.afterOpenTab = function(tabName) {
         if (tabName === 'dependencies-tab') {
             renderMermaidDiagrams();
         }
-    }
+    };
 
     function sanitizeMermaidId(value) {
         return String(value || '')
@@ -412,7 +458,7 @@
     }
 
     function renderMermaidDiagrams() {
-        const container = document.getElementById('dependencies-tab');
+        const container = document.getElementById('tab_content_dependencies-tab');
         if (!container || container.getAttribute('data-rendered') === 'true') {
             return;
         }
@@ -545,8 +591,8 @@
         }
         homeHtml += '</div>';
     }
-    document.getElementById('home-tab').innerHTML = homeHtml;
-    document.getElementById('dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
+    document.getElementById('tab_content_home-tab').innerHTML = homeHtml;
+    document.getElementById('tab_content_dependencies-tab').innerHTML = '<div class="section"><div class="section-title">Dependency Views</div><div class="empty-state">Open this tab to render Mermaid dependency diagrams.</div></div>';
 </script>
 <script>
     const breadcrumbs_context = {
