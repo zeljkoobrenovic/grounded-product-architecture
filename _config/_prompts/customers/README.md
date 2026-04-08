@@ -1,4 +1,4 @@
-<DOMAIN-LINK> is https://www.rydoo.com/ 
+<DOMAIN-LINK> is https://www.vizzia.com/en 
 
 Create a new product domain under `_config/product-domains/` for a business domain in which <DOMAIN-LINK> operates.
 
@@ -24,7 +24,6 @@ Requirements:
 - Treat `_config/**` as the source of truth. Only create or modify files there unless generation is explicitly required.
 - If different domains use slightly different structures, identify the most current and internally consistent pattern before creating the new one.
 - Ensure all JSON is valid and consistent with surrounding examples.
-- All IDs should be unique, lowercase, and short but not random.
 
 Expected output:
 
