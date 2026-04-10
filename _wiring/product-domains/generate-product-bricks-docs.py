@@ -23,6 +23,13 @@ def load_json_if_exists(path, default_value):
     return default_value
 
 
+def load_json_from_paths(paths, default_value):
+    for path in paths:
+        if os.path.exists(path):
+            return json.load(open(path))
+    return default_value
+
+
 def copy_icons(icons_path, docs_folder):
     if os.path.exists(icons_path):
         for filename in os.listdir(icons_path):
@@ -461,8 +468,14 @@ activity_data = load_domain_activity(domains_root, domain_id)
 products = load_json_if_exists(domains_root + domain_id + '/products/products.json', {'portfolio': {'products': []}})
 customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
 teams_payload = load_json_if_exists(domains_root + domain_id + '/teams/teams.json', {'groups': []})
-bricks_evidence_items = load_json_if_exists(root_domain + 'bricks-evidence.json', [])
-capabilities_evidence_items = load_json_if_exists(root_domain + 'capabilities-evidence.json', [])
+bricks_evidence_items = load_json_from_paths([
+    root_domain + 'brick-evidence.json',
+    root_domain + 'bricks-evidence.json',
+], [])
+capabilities_evidence_items = load_json_from_paths([
+    root_domain + 'capability-evidence.json',
+    root_domain + 'capabilities-evidence.json',
+], [])
 
 copy_icons(root_templates + 'icons', docs_folder)
 copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)

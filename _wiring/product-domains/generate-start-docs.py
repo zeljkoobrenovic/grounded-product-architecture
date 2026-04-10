@@ -23,8 +23,6 @@ def copy_icons(icons_path, docs_folder):
             dst = os.path.join(docs_folder, 'icons', filename)
             if os.path.isfile(src):
                 shutil.copy2(src, dst)
-
-
 def create_docs(domain, docs_folder):
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)

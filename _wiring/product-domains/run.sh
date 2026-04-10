@@ -12,6 +12,7 @@ scripts=(
   "generate-delivery-docs.py"
   "generate-objectives-docs.py"
   "generate-teams-docs.py"
+  "generate-scorecard-docs.py"
 )
 
 domains=(
