@@ -314,7 +314,7 @@ def render_landing_pages(template_root, docs_folder, template_placeholder, templ
 domain_id = domain['id']
 base_path = domains_root + domain_id + '/delivery/'
 customers_path = domains_root + domain_id + '/customers/customers.json'
-products_path = domains_root + domain_id + '/products/products.json'
+products_path = domains_root + domain_id + '/product-deployments/products.json'
 if not os.path.exists(customers_path):
     customers_path = domains_root + domain_id + '/product/customers.json'
 if not os.path.exists(products_path):

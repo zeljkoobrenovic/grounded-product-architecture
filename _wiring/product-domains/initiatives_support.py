@@ -247,7 +247,7 @@ def load_domain_activity(domains_root, domain_id):
         domain_root + '/product/customers.json'
     ], [])
     products = load_first_existing([
-        domain_root + '/products/products.json',
+        domain_root + '/product-deployments/products.json',
         domain_root + '/product/products.json'
     ], {'portfolio': {'products': []}})
     product_bricks = load_product_bricks_payload(domain_root + '/product-bricks/product-bricks.json')

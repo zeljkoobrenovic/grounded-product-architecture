@@ -416,7 +416,7 @@ And the generated docs exist under:
 
 - `docs/product-domains/<domain-id>/start/`
 - `docs/product-domains/<domain-id>/customers/`
-- `docs/product-domains/<domain-id>/products/`
+- `docs/product-domains/<domain-id>/product-deployments/`
 - `docs/product-domains/<domain-id>/product-bricks/`
 - `docs/product-domains/<domain-id>/objectives/`
 - `docs/product-domains/<domain-id>/initiatives/`

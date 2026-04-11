@@ -93,11 +93,11 @@ def create_overview_docs(domain, docs_folder):
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 
     copy_icons(templates_root + 'icons', docs_folder)
-    copy_icons(domains_root + domain['id'] + '/products/icons', docs_folder)
+    copy_icons(domains_root + domain['id'] + '/product-deployments/icons', docs_folder)
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()
-        deployment_path = domains_root + domain['id'] + '/products/deployment.json'
+        deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
         deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
         html_file.write(template
                         .replace('${tabs_style}', tabs_style)
@@ -144,7 +144,7 @@ def create_landing_pages(products, docs_folder, activity_data):
 
 
 def create_deployment_landing_pages(domain, products, docs_folder):
-    deployment_path = domains_root + domain['id'] + '/products/deployment.json'
+    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
     deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
 
     target_folder = os.path.join(docs_folder, 'deployment')
@@ -179,7 +179,7 @@ def create_deployment_landing_pages(domain, products, docs_folder):
                                 .replace('${channel_ref}', json.dumps(channel_ref)))
 
 domain_id = domain['id']
-products_file_path = domains_root + domain_id + '/products/products.json'
+products_file_path = domains_root + domain_id + '/product-deployments/products.json'
 print(products_file_path)
 if not os.path.exists(products_file_path):
     raise SystemExit(f"Missing products config for domain '{domain_id}'")
