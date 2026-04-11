@@ -11,7 +11,7 @@ os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
 date_string = datetime.date.today().strftime('%Y-%m-%d')
 
 domains_root = '../../_config/product-domains/'
-templates_root = '../../_templates/products/'
+templates_root = '../../_templates/product-deployments/'
 domain, site_config = load_domain_args()
 common_style = open(templates_root + '../_imports/common/style.html').read()
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
@@ -194,7 +194,7 @@ customers_lookup = build_customers_lookup(customers)
 products = enrich_products_with_customers(json.load(open(products_file_path)), customers_lookup)
 activity_data = load_domain_activity(domains_root, domain_id)
 
-docs_folder = domain_id + '/products/'
+docs_folder = domain_id + '/product-deployments/'
 create_overview_docs(domain, docs_folder)
 create_landing_pages(products, docs_folder, activity_data)
 create_deployment_landing_pages(domain, products, docs_folder)
