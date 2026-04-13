@@ -790,6 +790,12 @@ ${tabs_script}
         }
 
         let html = '';
+        html += '<div class="jobs-view-toggle">';
+        html += '<button id="journeys-view-default" class="jobs-view-button jobs-view-button-active" onclick="setJourneysView(\'default\')">Default View</button>';
+        html += '<button id="journeys-view-comic" class="jobs-view-button" onclick="setJourneysView(\'comic\')">Comics View</button>';
+        html += '</div>';
+
+        html += '<div id="journeys-default-view">';
         html += '<div style="height: 50px"></div>';
 
         journeys.forEach(journey => {
@@ -849,7 +855,56 @@ ${tabs_script}
             html += '</div>';
         });
 
+        html += '</div>';
+
+        html += '<div id="journeys-comic-view" style="display: none">';
+        journeys.forEach(journey => {
+            const stages = journey.stages || [];
+            html += '<div class="comic-job">';
+            html += '<div class="comic-job-title">' + escapeHtml(journey.name || '') + '</div>';
+            if (journey.summary) {
+                html += '<div style="text-align: center; margin-bottom: 16px">' + escapeHtml(journey.summary) + '</div>';
+            }
+            if (journey.media && journey.media.length) {
+                html += '<div class="comic-job-media">';
+                journey.media.forEach(item => {
+                    if (!item || !item.src) {
+                        return;
+                    }
+                    const src = '../' + item.src;
+                    html += '<a target="_blank" href="' + src + '">';
+                    html += '<img src="' + src + '">';
+                    html += '</a>';
+                });
+                html += '</div>';
+            }
+            html += '<div class="comic-steps">';
+            stages.forEach((stage, index) => {
+                html += '<div class="comic-step">';
+                html += '<div style="font-size: 75%; color: grey; margin-bottom: 8px; text-align: center">Stage ' + (index + 1) + '</div>';
+                html += '<div class="comic-step-title">' + escapeHtml(stage.stage || '') + '</div>';
+                if (stage.media && stage.media.length) {
+                    html += '<div class="comic-step-media">';
+                    stage.media.forEach(item => {
+                        if (!item || !item.src) {
+                            return;
+                        }
+                        const src = '../' + item.src;
+                        html += '<a target="_blank" href="' + src + '">';
+                        html += '<img src="' + src + '">';
+                        html += '</a>';
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+
         document.getElementById('Journeys').innerHTML = html;
+        setJourneysView('default');
     }
 
     function setJobsView(view) {
@@ -857,6 +912,24 @@ ${tabs_script}
         const comicView = document.getElementById('jobs-comic-view');
         const defaultButton = document.getElementById('jobs-view-default');
         const comicButton = document.getElementById('jobs-view-comic');
+
+        if (!defaultView || !comicView || !defaultButton || !comicButton) {
+            return;
+        }
+
+        const showComic = view === 'comic';
+        defaultView.style.display = showComic ? 'none' : 'block';
+        comicView.style.display = showComic ? 'block' : 'none';
+
+        defaultButton.className = 'jobs-view-button' + (showComic ? '' : ' jobs-view-button-active');
+        comicButton.className = 'jobs-view-button' + (showComic ? ' jobs-view-button-active' : '');
+    }
+
+    function setJourneysView(view) {
+        const defaultView = document.getElementById('journeys-default-view');
+        const comicView = document.getElementById('journeys-comic-view');
+        const defaultButton = document.getElementById('journeys-view-default');
+        const comicButton = document.getElementById('journeys-view-comic');
 
         if (!defaultView || !comicView || !defaultButton || !comicButton) {
             return;
