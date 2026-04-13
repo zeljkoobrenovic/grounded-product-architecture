@@ -16,6 +16,55 @@ def slugify(text):
     return ''.join(chars).strip('-')
 
 
+def normalize_product_brick_rendering(metadata, root_groups, path=''):
+    normalized_metadata = dict(metadata or {})
+    rendering = dict(
+        normalized_metadata.get('rendering')
+        or normalized_metadata.get('render')
+        or normalized_metadata.get('renderding')
+        or {}
+    )
+
+    root_group_names = [group.get('name', '') for group in root_groups or [] if group.get('name')]
+    root_group_name_lookup = {name: name for name in root_group_names}
+    root_group_slug_lookup = {slugify(name): name for name in root_group_names}
+
+    normalized_rows = []
+    for row_info in rendering.get('rows', []) or []:
+        normalized_row = dict(row_info)
+        configured_names = (
+            row_info.get('rootGroupNames')
+            or row_info.get('groupNames')
+            or row_info.get('brickIds')
+            or []
+        )
+        resolved_names = []
+        for configured_name in configured_names:
+            resolved_name = root_group_name_lookup.get(configured_name)
+            if not resolved_name:
+                resolved_name = root_group_slug_lookup.get(slugify(configured_name))
+            if not resolved_name:
+                details = f" in {path}" if path else ''
+                raise ValueError(
+                    f"Unknown root group '{configured_name}' referenced by metadata.rendering.rows{details}. "
+                    f"Expected one of: {', '.join(root_group_names)}"
+                )
+            resolved_names.append(resolved_name)
+
+        normalized_row.pop('brickIds', None)
+        normalized_row.pop('groupNames', None)
+        normalized_row['rootGroupNames'] = resolved_names
+        normalized_rows.append(normalized_row)
+
+    if rendering or 'rendering' in normalized_metadata or 'render' in normalized_metadata or 'renderding' in normalized_metadata:
+        rendering['rows'] = normalized_rows
+        normalized_metadata['rendering'] = rendering
+
+    normalized_metadata.pop('render', None)
+    normalized_metadata.pop('renderding', None)
+    return normalized_metadata
+
+
 def load_product_bricks_payload(path, default_title='Product Bricks', default_description=''):
     if not os.path.exists(path):
         return {'metadata': {'title': default_title, 'description': default_description}, 'rootGroups': []}
@@ -31,7 +80,8 @@ def load_product_bricks_payload(path, default_title='Product Bricks', default_de
             'rootGroups': payload
         }
 
-    metadata = dict(payload.get('metadata', {}))
+    root_groups = payload.get('rootGroups', payload.get('bricks', []))
+    metadata = normalize_product_brick_rendering(dict(payload.get('metadata', {})), root_groups, path)
     if 'title' not in metadata:
         metadata['title'] = default_title
     if 'description' not in metadata:
@@ -39,7 +89,7 @@ def load_product_bricks_payload(path, default_title='Product Bricks', default_de
 
     return {
         'metadata': metadata,
-        'rootGroups': payload.get('rootGroups', payload.get('bricks', []))
+        'rootGroups': root_groups
     }
 
 
@@ -77,6 +127,28 @@ def load_product_capabilities_payload(path, default_title='Product Experiences',
             'rootGroups',
             legacy_capabilities_to_root_groups(payload.get('experiences', payload.get('capabilities', [])))
         )
+    }
+
+
+def load_data_assets_payload(path, default_title='Data Assets', default_description=''):
+    if not os.path.exists(path):
+        return {
+            'metadata': {'title': default_title, 'description': default_description},
+            'assets': [],
+            'stores': []
+        }
+
+    payload = json.load(open(path))
+    metadata = dict(payload.get('metadata', {}))
+    if 'title' not in metadata:
+        metadata['title'] = default_title
+    if 'description' not in metadata:
+        metadata['description'] = default_description
+
+    return {
+        'metadata': metadata,
+        'assets': payload.get('assets', []),
+        'stores': payload.get('stores', [])
     }
 
 
@@ -120,6 +192,7 @@ def flatten_product_bricks(payload):
                 'description': node.get('description', ''),
                 'internalModules': node.get('internalModules', []),
                 'interfaces': node.get('interfaces', []),
+                'dataDependencies': node.get('dataDependencies', []),
                 'brickDependencies': node.get('brickDependencies', []),
                 'externalSystemsThisBrickDependsOn': node.get('externalSystemsThisBrickDependsOn', node.get('externalSystemDependencies', [])),
                 'externalSystemsDependingOnThisBrick': node.get('externalSystemsDependingOnThisBrick', []),
@@ -232,6 +305,7 @@ def build_bricks_lookup(product_bricks_payload):
             'group': item.get('group', ''),
             'internalModules': item.get('internalModules', []),
             'interfaces': item.get('interfaces', []),
+            'dataDependencies': item.get('dataDependencies', []),
             'brickDependencies': item.get('brickDependencies', []),
             'externalSystemsThisBrickDependsOn': item.get('externalSystemsThisBrickDependsOn', item.get('externalSystemDependencies', [])),
             'externalSystemsDependingOnThisBrick': item.get('externalSystemsDependingOnThisBrick', []),
@@ -282,6 +356,7 @@ def legacy_bricks_to_payload(items, title='Product Bricks', description=''):
             'description': item.get('description', ''),
             'internalModules': item.get('internalModules', []),
             'interfaces': item.get('interfaces', []),
+            'dataDependencies': item.get('dataDependencies', []),
             'brickDependencies': item.get('brickDependencies', []),
             'externalSystemsThisBrickDependsOn': item.get('externalSystemsThisBrickDependsOn', item.get('externalSystemDependencies', [])),
             'externalSystemsDependingOnThisBrick': item.get('externalSystemsDependingOnThisBrick', []),
@@ -310,6 +385,7 @@ def legacy_bricks_to_payload(items, title='Product Bricks', description=''):
                                 'description': child.get('description', ''),
                                 'internalModules': child.get('internalModules', []),
                                 'interfaces': child.get('interfaces', []),
+                                'dataDependencies': child.get('dataDependencies', []),
                                 'brickDependencies': child.get('brickDependencies', []),
                                 'externalSystemsThisBrickDependsOn': child.get('externalSystemsThisBrickDependsOn', child.get('externalSystemDependencies', [])),
                                 'externalSystemsDependingOnThisBrick': child.get('externalSystemsDependingOnThisBrick', [])

@@ -317,6 +317,16 @@
             background-color: white;
         }
 
+        .structure-card.structure-interface {
+            background: rgba(219, 234, 254, 0.9);
+            border-color: rgba(30, 64, 175, 0.28);
+        }
+
+        .structure-card.structure-module {
+            background: rgba(220, 252, 231, 0.9);
+            border-color: rgba(22, 101, 52, 0.24);
+        }
+
         .structure-card-title {
             font-size: 16px;
             font-weight: bold;
@@ -410,6 +420,101 @@
             background-color: white;
             padding: 2px;
         }
+
+        .data-diagram-layout {
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+            margin-top: 12px;
+        }
+
+        .data-diagram-controls {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            padding: 14px;
+        }
+
+        .dependency-control-group {
+            margin-bottom: 18px;
+        }
+
+        .dependency-control-title {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .dependency-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .dependency-action {
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background-color: white;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .dependency-checklist {
+            max-height: 260px;
+            overflow: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: white;
+            padding: 8px;
+        }
+
+        .dependency-check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 4px;
+            font-size: 13px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .dependency-check-item:last-child {
+            border-bottom: none;
+        }
+
+        .dependency-check-item input {
+            margin: 0;
+        }
+
+        .data-diagram-shell {
+            min-width: 0;
+        }
+
+        .data-diagram-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .data-diagram-graph {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 14px;
+            overflow: auto;
+            min-height: 320px;
+        }
+
+        @media (max-width: 980px) {
+            .data-diagram-layout {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
@@ -418,7 +523,7 @@
     ${tabs_script}
 
 </head>
-<body onload="initBrickTab('overview')" onhashchange="initBrickTab()">
+<body onload="updateBrickTabLabels(); initBrickTab('overview')" onhashchange="initBrickTab()">
 
 <div id="breadcrumbs" style="margin-left: 24px;"></div>
 
@@ -426,6 +531,7 @@
     const config = ${config};
     const all_bricks = ${all_bricks};
     const allCapabilities = ${all_capabilities};
+    const dataAssetsPayload = ${data_assets};
     const brick = ${brick_data};
     const relatedTeams = ${related_teams};
     const linkedProducts = ${linked_products};
@@ -450,10 +556,21 @@
         });
     }
 
+    function renderDataDiagramIfNeeded() {
+        const container = document.getElementById('Data');
+        if (!container) {
+            return;
+        }
+        renderDataDiagram();
+    }
+
     function initBrickTab(tabName) {
         const resolvedTabName = openTab(tabName, { updateHistory: false });
         if (resolvedTabName === 'dependencies') {
             renderDependenciesDiagramIfNeeded();
+        }
+        if (resolvedTabName === 'data') {
+            renderDataDiagramIfNeeded();
         }
     }
 
@@ -461,6 +578,17 @@
         openTab(tabName);
         if (tabName === 'dependencies') {
             renderDependenciesDiagramIfNeeded();
+        }
+        if (tabName === 'data') {
+            renderDataDiagramIfNeeded();
+        }
+    }
+
+    function updateBrickTabLabels() {
+        const dataCount = (brick.dataDependencies || []).length;
+        const dataTab = document.getElementById('tab_data');
+        if (dataTab) {
+            dataTab.textContent = 'Data (' + dataCount + ')';
         }
     }
 </script>
@@ -470,6 +598,7 @@
     <div class="tab" id="primary_tabs">
         <button class="tablinks active" id="tab_overview" onclick="openBrickTab('overview')">Overview</button>
         <button class="tablinks" id="tab_modules" onclick="openBrickTab('modules')">Modules</button>
+        <button class="tablinks" id="tab_data" onclick="openBrickTab('data')">Data</button>
         <button class="tablinks" id="tab_dependencies" onclick="openBrickTab('dependencies')">Dependencies</button>
     </div>
 
@@ -478,6 +607,9 @@
     </div>
     <div id="tab_content_modules" class="tabcontent" style="padding: 10px">
         <div id="Modules"></div>
+    </div>
+    <div id="tab_content_data" class="tabcontent" style="padding: 10px">
+        <div id="Data"></div>
     </div>
     <div id="tab_content_dependencies" class="tabcontent" style="padding: 10px">
         <div id="Dependencies"></div>
@@ -795,6 +927,10 @@
             return sectionHtml;
         }
 
+        const kindClass = title === 'Interfaces'
+            ? ' structure-interface'
+            : (title === 'Internal Modules' ? ' structure-module' : '');
+
         sectionHtml += '<div class="structure-grid">';
         items.forEach(item => {
             const isObject = item && typeof item === 'object' && !Array.isArray(item);
@@ -803,7 +939,7 @@
             const type = isObject ? (item.type || '') : '';
             const meta = isObject ? [item.id, item.protocol, item.direction].filter(Boolean).join(' | ') : '';
 
-            sectionHtml += '<div class="structure-card">';
+            sectionHtml += '<div class="structure-card' + kindClass + '">';
             if (type) {
                 sectionHtml += '<div class="structure-card-type">' + escapeHomeHtml(type) + '</div>';
             }
@@ -816,6 +952,374 @@
             }
             sectionHtml += '</div>';
         });
+        sectionHtml += '</div>';
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function buildDataAssetLookup() {
+        const lookup = {};
+        (dataAssetsPayload.assets || []).forEach(asset => {
+            lookup[asset.id] = asset;
+        });
+        return lookup;
+    }
+
+    function findIncomingDataDependencies() {
+        const incomingDependencies = [];
+        all_bricks.forEach(candidate => {
+            if (candidate.id === brick.id) {
+                return;
+            }
+            (candidate.dataDependencies || []).forEach(item => {
+                if (!item.assetId) {
+                    return;
+                }
+                if ((brick.dataDependencies || []).some(dep => dep.assetId === item.assetId)) {
+                    incomingDependencies.push({
+                        assetId: item.assetId,
+                        sourceBrickId: candidate.id,
+                        sourceBrickName: candidate.name,
+                        role: item.role || '',
+                        description: item.description || ''
+                    });
+                }
+            });
+        });
+        return incomingDependencies;
+    }
+
+    function renderDataDependencyTable(items) {
+        const assetLookup = buildDataAssetLookup();
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>Data Asset</th><th>Role</th><th>Stores</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            const asset = assetLookup[item.assetId] || {};
+            const stores = (asset.stores || []).map(store => store.storeId).join(', ');
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/data.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<div><strong>' + escapeHomeHtml(asset.name || item.assetId || '') + '</strong>';
+            if (asset.kind) {
+                tableHtml += '<div class="activity-muted">' + escapeHomeHtml(asset.kind) + '</div>';
+            }
+            tableHtml += '</div></div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.role || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(stores || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || asset.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function renderRelatedDataBrickTable(items) {
+        let tableHtml = '<table class="activity-table">';
+        tableHtml += '<thead><tr><th>Related Brick</th><th>Shared Asset</th><th>Role</th><th>Description</th></tr></thead><tbody>';
+        items.forEach(item => {
+            tableHtml += '<tr>';
+            tableHtml += '<td><div class="dependency-entity">';
+            tableHtml += '<img class="dependency-entity-icon" src="../icons/' + escapeHomeHtml(item.sourceBrickId || '') + '.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            tableHtml += '<a target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(item.sourceBrickId || '') + '.html" class="activity-link">' + escapeHomeHtml(item.sourceBrickName || item.sourceBrickId || '') + '</a>';
+            tableHtml += '</div></td>';
+            tableHtml += '<td><div class="dependency-entity"><img class="dependency-entity-icon" src="../icons/data.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'"><span>' + escapeHomeHtml(item.assetId || '') + '</span></div></td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.role || '') + '</td>';
+            tableHtml += '<td>' + escapeHomeHtml(item.description || '') + '</td>';
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+
+    function renderDataDependencySection() {
+        const dataDependencies = brick.dataDependencies || [];
+        const incomingDataDependencies = findIncomingDataDependencies();
+        let sectionHtml = '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Data Dependencies</div>';
+
+        if (!dataDependencies.length && !incomingDataDependencies.length) {
+            sectionHtml += '<div class="activity-muted">No data dependencies are listed for this product brick.</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">This Brick Uses Or Owns</div>';
+        if (dataDependencies.length) {
+            sectionHtml += renderDataDependencyTable(dataDependencies);
+        } else {
+            sectionHtml += '<div class="activity-muted">No direct data asset links are listed for this brick.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '<div class="dependency-subsection">';
+        sectionHtml += '<div class="dependency-subsection-title">Other Bricks Sharing These Assets</div>';
+        if (incomingDataDependencies.length) {
+            sectionHtml += renderRelatedDataBrickTable(incomingDataDependencies);
+        } else {
+            sectionHtml += '<div class="activity-muted">No other product bricks currently share the listed data assets.</div>';
+        }
+        sectionHtml += '</div>';
+
+        sectionHtml += '</div>';
+        return sectionHtml;
+    }
+
+    function getDataDiagramCatalog() {
+        const assetLookup = buildDataAssetLookup();
+        const roles = new Set();
+        const sharedBricks = {};
+
+        (brick.dataDependencies || []).forEach(dep => {
+            roles.add(dep.role || 'unspecified');
+            sharedBricks[brick.id] = {
+                id: brick.id,
+                name: brick.name,
+                role: 'current'
+            };
+        });
+
+        findIncomingDataDependencies().forEach(item => {
+            roles.add(item.role || 'unspecified');
+            sharedBricks[item.sourceBrickId] = {
+                id: item.sourceBrickId,
+                name: item.sourceBrickName || item.sourceBrickId,
+                role: 'related'
+            };
+        });
+
+        return {
+            assets: (brick.dataDependencies || []).map(dep => ({
+                id: dep.assetId,
+                name: (assetLookup[dep.assetId] || {}).name || dep.assetId,
+                role: dep.role || 'unspecified'
+            })),
+            roles: Array.from(roles).sort((left, right) => left.localeCompare(right)),
+            bricks: Object.values(sharedBricks)
+        };
+    }
+
+    function renderDataDiagramControls(catalog) {
+        return `
+            <div class="data-diagram-controls">
+                <div class="dependency-control-group">
+                    <div class="dependency-control-title">Data Assets</div>
+                    <div class="dependency-actions">
+                        <button class="dependency-action" type="button" onclick="setAllDataDiagramCheckboxes('.data-asset-checkbox', true)">Show all</button>
+                        <button class="dependency-action" type="button" onclick="setAllDataDiagramCheckboxes('.data-asset-checkbox', false)">Hide all</button>
+                    </div>
+                    <div class="dependency-checklist">
+                        ${catalog.assets.map(item => `
+                            <label class="dependency-check-item">
+                                <input type="checkbox" class="data-asset-checkbox" value="${item.id}" checked onchange="renderDataDiagram()">
+                                <span>${escapeHomeHtml(item.name)}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="dependency-control-group">
+                    <div class="dependency-control-title">Roles</div>
+                    <div class="dependency-actions">
+                        <button class="dependency-action" type="button" onclick="setAllDataDiagramCheckboxes('.data-role-checkbox', true)">Show all</button>
+                        <button class="dependency-action" type="button" onclick="setAllDataDiagramCheckboxes('.data-role-checkbox', false)">Hide all</button>
+                    </div>
+                    <div class="dependency-checklist">
+                        ${catalog.roles.map(item => `
+                            <label class="dependency-check-item">
+                                <input type="checkbox" class="data-role-checkbox" value="${item}" checked onchange="renderDataDiagram()">
+                                <span>${escapeHomeHtml(item)}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function setAllDataDiagramCheckboxes(selector, checked) {
+        document.querySelectorAll(selector).forEach(input => {
+            input.checked = checked;
+        });
+        renderDataDiagram();
+    }
+
+    function selectedDataDiagramValues(selector) {
+        return new Set(Array.from(document.querySelectorAll(selector))
+            .filter(input => input.checked)
+            .map(input => input.value));
+    }
+
+    function buildDataDiagramGraph(selectedAssetIds, selectedRoles) {
+        const assetLookup = buildDataAssetLookup();
+        const nodes = [{
+            id: 'current_brick',
+            label: brick.name || brick.id,
+            nodeClass: 'currentBrick'
+        }];
+        const edges = [];
+        const nodeIds = {'current_brick': true};
+        const ownershipGroups = {
+            current_brick: {
+                id: 'current_brick',
+                label: brick.name || brick.id,
+                nodeClass: 'currentBrick',
+                assetNodeIds: []
+            }
+        };
+
+        function ensureNode(id, label, nodeClass) {
+            if (nodeIds[id]) {
+                return;
+            }
+            nodeIds[id] = true;
+            nodes.push({id, label, nodeClass});
+        }
+
+        (brick.dataDependencies || []).forEach(dep => {
+            const role = dep.role || 'unspecified';
+            if (!selectedAssetIds.has(dep.assetId) || !selectedRoles.has(role)) {
+                return;
+            }
+            const asset = assetLookup[dep.assetId] || {};
+            const assetNodeId = 'asset_' + dep.assetId.replaceAll('-', '_');
+            ensureNode(assetNodeId, asset.name || dep.assetId, 'dataAsset');
+            if (role === 'own') {
+                ownershipGroups.current_brick.assetNodeIds.push(assetNodeId);
+            } else {
+                edges.push({
+                    source: 'current_brick',
+                    target: assetNodeId,
+                    label: role
+                });
+            }
+
+            findIncomingDataDependencies().forEach(item => {
+                if (item.assetId !== dep.assetId) {
+                    return;
+                }
+                const incomingRole = item.role || 'unspecified';
+                if (!selectedRoles.has(incomingRole)) {
+                    return;
+                }
+                const brickNodeId = 'brick_' + item.sourceBrickId.replaceAll('-', '_');
+                ensureNode(brickNodeId, item.sourceBrickName || item.sourceBrickId, 'relatedBrick');
+                if (!ownershipGroups[brickNodeId]) {
+                    ownershipGroups[brickNodeId] = {
+                        id: brickNodeId,
+                        label: item.sourceBrickName || item.sourceBrickId,
+                        nodeClass: 'relatedBrick',
+                        assetNodeIds: []
+                    };
+                }
+                if (incomingRole === 'own') {
+                    ownershipGroups[brickNodeId].assetNodeIds.push(assetNodeId);
+                } else {
+                    edges.push({
+                        source: brickNodeId,
+                        target: assetNodeId,
+                        label: incomingRole
+                    });
+                }
+            });
+        });
+
+        return {nodes, edges, ownershipGroups: Object.values(ownershipGroups)};
+    }
+
+    function renderDataDiagram() {
+        const graphShell = document.getElementById('DataDiagramGraph');
+        const summaryShell = document.getElementById('DataDiagramSummary');
+        if (!graphShell || !summaryShell) {
+            return;
+        }
+
+        const selectedAssetIds = selectedDataDiagramValues('.data-asset-checkbox');
+        const selectedRoles = selectedDataDiagramValues('.data-role-checkbox');
+        const graph = buildDataDiagramGraph(selectedAssetIds, selectedRoles);
+
+        summaryShell.innerHTML = `
+            <div class="dependency-graph-stat">
+                <div class="dependency-graph-stat-value">${selectedAssetIds.size}</div>
+                <div class="dependency-graph-stat-label">Assets Shown</div>
+            </div>
+            <div class="dependency-graph-stat">
+                <div class="dependency-graph-stat-value">${graph.nodes.length}</div>
+                <div class="dependency-graph-stat-label">Nodes</div>
+            </div>
+            <div class="dependency-graph-stat">
+                <div class="dependency-graph-stat-value">${graph.edges.length}</div>
+                <div class="dependency-graph-stat-label">Links</div>
+            </div>
+        `;
+
+        if (!graph.edges.length) {
+            graphShell.innerHTML = '<div class="activity-muted">Select data assets and roles to render the data dependency diagram.</div>';
+            return;
+        }
+
+        let chart = 'flowchart LR\n\n';
+        const groupedNodeIds = new Set();
+        (graph.ownershipGroups || []).forEach(group => {
+            if (!group.assetNodeIds.length) {
+                return;
+            }
+            chart += 'subgraph ' + group.id + '_group["' + escapeMermaidLabel(group.label) + '"]\n';
+            chart += group.id + '["' + escapeMermaidLabel(group.label) + '"]\n';
+            groupedNodeIds.add(group.id);
+            group.assetNodeIds.forEach(assetNodeId => {
+                const assetNode = graph.nodes.find(node => node.id === assetNodeId);
+                if (!assetNode) {
+                    return;
+                }
+                chart += assetNode.id + '["' + escapeMermaidLabel(assetNode.label) + '"]\n';
+                groupedNodeIds.add(assetNode.id);
+            });
+            chart += 'end\n';
+        });
+        graph.nodes.forEach(node => {
+            if (groupedNodeIds.has(node.id)) {
+                return;
+            }
+            chart += node.id + '["' + escapeMermaidLabel(node.label) + '"]\n';
+        });
+        graph.edges.forEach(edge => {
+            chart += edge.source + ' -->|' + escapeMermaidLabel(edge.label) + '| ' + edge.target + '\n';
+        });
+        chart += '\nclassDef currentBrick fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;\n';
+        chart += 'classDef relatedBrick fill:#ecfccb,stroke:#6b7280,color:#111827;\n';
+        chart += 'classDef dataAsset fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;\n';
+        const currentIds = graph.nodes.filter(node => node.nodeClass === 'currentBrick').map(node => node.id);
+        const relatedIds = graph.nodes.filter(node => node.nodeClass === 'relatedBrick').map(node => node.id);
+        const assetIds = graph.nodes.filter(node => node.nodeClass === 'dataAsset').map(node => node.id);
+        if (currentIds.length) {
+            chart += 'class ' + currentIds.join(',') + ' currentBrick;\n';
+        }
+        if (relatedIds.length) {
+            chart += 'class ' + relatedIds.join(',') + ' relatedBrick;\n';
+        }
+        if (assetIds.length) {
+            chart += 'class ' + assetIds.join(',') + ' dataAsset;\n';
+        }
+
+        graphShell.innerHTML = '<div class="mermaid">' + chart + '</div>';
+        mermaid.run({querySelector: '#DataDiagramGraph .mermaid'}).catch(error => {
+            console.error('Failed to render data dependency diagram', error);
+        });
+    }
+
+    function renderDataTab() {
+        const catalog = getDataDiagramCatalog();
+        let sectionHtml = renderDataDependencySection();
+        sectionHtml += '<div class="home-section">';
+        sectionHtml += '<div class="home-section-title">Data Dependency Diagram</div>';
+        if (!catalog.assets.length) {
+            sectionHtml += '<div class="activity-muted">No direct data asset links are available to render a diagram.</div>';
+            sectionHtml += '</div>';
+            return sectionHtml;
+        }
+        sectionHtml += '<div class="data-diagram-layout">';
+        sectionHtml += renderDataDiagramControls(catalog);
+        sectionHtml += '<div class="data-diagram-shell"><div class="data-diagram-summary" id="DataDiagramSummary"></div><div class="data-diagram-graph" id="DataDiagramGraph"></div></div>';
         sectionHtml += '</div>';
         sectionHtml += '</div>';
         return sectionHtml;
@@ -1010,6 +1514,10 @@
     html += renderBrickStructureSection('Interfaces', brick.interfaces || [], 'No interfaces listed for this product brick.');
     html += renderBrickStructureSection('Internal Modules', brick.internalModules || [], 'No internal modules listed for this product brick.');
     document.getElementById('Modules').innerHTML = html;
+    html = '';
+
+    html += renderDataTab();
+    document.getElementById('Data').innerHTML = html;
     html = '';
 
     html += renderDependencySection();

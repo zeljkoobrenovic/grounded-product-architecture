@@ -16,6 +16,7 @@ scripts=(
 )
 
 domains=(
+  "enterprise-crm-and-revenue-operations|Enterprise CRM and Revenue Operations|The Enterprise CRM and Revenue Operations domain covers lead-to-cash execution, customer service operations, customer data unification, workflow automation, and platform governance for large B2B and B2C organizations."
   "ignore_iwt|ImmoWelt|The ImmoWelt domain covers the customer journeys, commercial workflows, and platform capabilities required to connect property seekers, owners, intermediaries, and partners."
   "emobility|eMobility|The eMobility domain covers the platforms, operations, and customer journeys required to run charging networks, roaming services, driver experiences, and fleet electrification at scale."
   "nutrition|Nutrition|The Nutrition domain covers the products, capabilities, and stakeholders needed to design, produce, govern, and improve nutrition solutions with strong compliance, quality, and sustainability outcomes."

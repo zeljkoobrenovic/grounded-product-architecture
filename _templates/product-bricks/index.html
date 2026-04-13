@@ -133,6 +133,22 @@
             background-color: white;
         }
 
+        .bricks-toolbar {
+            margin-bottom: 18px;
+        }
+
+        .bricks-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .bricks-toggle input {
+            margin: 0;
+        }
+
         .map {
             display: flex;
             flex-direction: column;
@@ -182,7 +198,7 @@
 
         .brick-card {
             margin: 4px;
-            padding: 3px;
+            padding: 4px;
             font-size: 12px;
             width: 140px;
             max-width: 144px;
@@ -190,11 +206,18 @@
             background-color: var(--surface-fallback);
             box-shadow: var(--card-shadow);
             text-align: left;
-            min-height: 52px;
+            min-height: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px;
+            border: 1px solid black;
+        }
+
+        .brick-card-main {
             display: flex;
             align-items: flex-start;
             gap: 4px;
-            border: 1px solid black;
         }
 
         .brick-card.highlighted {
@@ -208,6 +231,59 @@
         .brick-name {
             overflow: hidden;
             width: calc(100% - 40px);
+        }
+
+        .brick-name-title {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .brick-structure-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .brick-structure-card {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            min-width: 24px;
+            padding: 2px 3px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.55);
+            font-size: 9px;
+            line-height: 1.05;
+        }
+
+        .brick-structure-card.structure-interface {
+            background: rgba(219, 234, 254, 0.9);
+            border-color: rgba(30, 64, 175, 0.28);
+        }
+
+        .brick-structure-card.structure-module {
+            background: rgba(220, 252, 231, 0.9);
+            border-color: rgba(22, 101, 52, 0.24);
+        }
+
+        .brick-structure-card .structure-card-type {
+            font-size: 8px;
+            text-transform: uppercase;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+
+        .brick-structure-card .structure-card-name {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #111827;
         }
 
         .legend {
@@ -235,6 +311,82 @@
         .capabilities-panel {
             padding: 18px;
             background-color: white;
+        }
+
+        .data-panel {
+            padding: 18px;
+            background-color: white;
+        }
+
+        .data-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .data-card {
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background-color: #f8fafc;
+            padding: 14px;
+        }
+
+        .data-card-title {
+            font-size: 20px;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        .data-card-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .data-card-icon {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            background-color: white;
+            padding: 4px;
+            flex: 0 0 auto;
+        }
+
+        .data-card-copy {
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .data-card-subtitle {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 12px;
+            margin-bottom: 8px;
+        }
+
+        .data-store-list,
+        .data-meta-list {
+            margin: 0;
+            padding-left: 18px;
+            color: #374151;
+        }
+
+        .data-store-list li,
+        .data-meta-list li {
+            margin-bottom: 6px;
         }
 
         .capabilities-toolbar {
@@ -705,8 +857,10 @@
         function updateTabLabels() {
             const brickCount = getBrickCatalog().length;
             const capabilityCount = getCapabilityCatalogItems().length;
+            const dataAssetCount = (dataAssetsPayload.assets || []).length;
             document.getElementById('tab_BigPicture').textContent = 'Bricks (' + brickCount + ')';
             document.getElementById('tab_Capabilities').textContent = 'Capabilities (' + capabilityCount + ')';
+            document.getElementById('tab_Data').textContent = 'Data (' + dataAssetCount + ')';
         }
 
         function openTab(tabName) {
@@ -727,10 +881,14 @@
             if (tabName === 'Capabilities') {
                 renderCapabilitiesView();
             }
+            if (tabName === 'Data') {
+                renderDataView();
+            }
         }
 
         const bricksPayload = ${bricks};
         const capabilitiesPayload = ${product_capabilities};
+        const dataAssetsPayload = ${data_assets};
         const bricksMetadata = bricksPayload.metadata || {};
         const capabilitiesMetadata = capabilitiesPayload.metadata || {};
         const rootGroups = bricksPayload.rootGroups || bricksPayload.bricks || [];
@@ -778,6 +936,15 @@
             return output.replace(/^-+|-+$/g, '');
         }
 
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function normalizeBrick(item) {
             return {
                 ...item,
@@ -794,11 +961,40 @@
             };
         }
 
+        function shouldShowBrickStructure() {
+            const toggle = document.getElementById('brickStructureToggle');
+            return !toggle || toggle.checked;
+        }
+
         function renderBrick(item) {
+            const structureCards = [
+                ...((item.interfaces || []).map(intf => ({
+                    kind: 'interface',
+                    type: intf.type || 'interface',
+                    name: intf.title || intf.name || 'interface'
+                }))),
+                ...((item.internalModules || []).map(module => ({
+                    kind: 'module',
+                    type: module.type || 'module',
+                    name: module.title || module.name || 'module'
+                })))
+            ];
+            const structureMarkup = shouldShowBrickStructure() && structureCards.length
+                ? `<div class="brick-structure-list">${structureCards.map(structure => `
+                    <div class="brick-structure-card structure-${escapeHtml(structure.kind)}" title="${escapeHtml(structure.name)}">
+                        <div class="structure-card-type">${escapeHtml(structure.type)}</div>
+                    </div>
+                `).join('')}</div>`
+                : '';
             const brickCard = `
                 <div class="brick-card${item.isHighlighted ? ' highlighted' : ''}" style="background-color: ${item.color}">
-                    <img class="brick-icon" src="icons/${item.id}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
-                    <div class="brick-name">${item.name || ''}</div>
+                    <div class="brick-card-main">
+                        <img class="brick-icon" src="icons/${item.id}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
+                        <div class="brick-name">
+                            <div class="brick-name-title">${item.name || ''}</div>
+                        </div>
+                    </div>
+                    ${structureMarkup}
                 </div>
             `;
 
@@ -833,7 +1029,7 @@
             const lookup = {};
             ((brickRendering.rows) || []).forEach(rowInfo => {
                 const row = Number(rowInfo.row) || 1;
-                (rowInfo.groupNames || rowInfo.brickIds || []).forEach(groupName => {
+                (rowInfo.rootGroupNames || rowInfo.groupNames || rowInfo.brickIds || []).forEach(groupName => {
                     lookup[slugify(groupName)] = row;
                 });
             });
@@ -1100,6 +1296,147 @@
                     <div class="capability-area-title">Bricks In Two Or More Capabilities</div>
                     ${showDescriptions ? '<div class="capability-group-copy">Implementation bricks reused across multiple capabilities.</div>' : ''}
                     <div class="capability-pills">${reusedBricks.length ? reusedBricks.map(brick => renderBrickAuditItem(brick, brickUsage[brick.id] || [])).join('') : '<span class="activity-muted">No bricks are shared across two or more capabilities.</span>'}</div>
+                </div>
+            `;
+        }
+
+        function buildDataAssetUsage(assetId) {
+            const producingBricks = [];
+            const consumingBricks = [];
+
+            getBrickCatalog().forEach(brick => {
+                (brick.dataDependencies || []).forEach(dep => {
+                    if (dep.assetId !== assetId) {
+                        return;
+                    }
+                    const role = String(dep.role || '').toLowerCase();
+                    if (['own', 'write', 'publish', 'replicate', 'delete'].includes(role)) {
+                        producingBricks.push({
+                            id: brick.id,
+                            name: brick.name,
+                            role: dep.role || '',
+                            description: dep.description || ''
+                        });
+                    } else {
+                        consumingBricks.push({
+                            id: brick.id,
+                            name: brick.name,
+                            role: dep.role || '',
+                            description: dep.description || ''
+                        });
+                    }
+                });
+            });
+
+            return {producingBricks, consumingBricks};
+        }
+
+        function renderDataBrickPills(items) {
+            if (!items.length) {
+                return '<span class="activity-muted">None linked.</span>';
+            }
+
+            return `
+                <div class="capability-pills">
+                    ${items.map(item => {
+                        const linkedBrick = getBrickCatalog().find(candidate => candidate.id === item.id) || {};
+                        const pillColor = colorOf(linkedBrick.type);
+                        return `
+                        <a class="capability-pill" style="background-color: ${pillColor}; border-color: rgba(17,17,17,0.12);" target="_blank" href="landing_pages/${item.id}.html" title="${escapeHtml(item.description || item.role || '')}">
+                            <img src="icons/${item.id}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
+                            <span>${item.name}</span>
+                            ${item.role ? `<span class="activity-muted">${escapeHtml(item.role)}</span>` : ''}
+                        </a>
+                    `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function renderDataView() {
+            const container = document.getElementById('DataContent');
+            if (!container) {
+                return;
+            }
+
+            const assets = dataAssetsPayload.assets || [];
+            const stores = dataAssetsPayload.stores || [];
+            const totalStoreRefs = assets.reduce((sum, asset) => sum + ((asset.stores || []).length), 0);
+            const governedAssets = assets.filter(asset => String(asset.personalDataLevel || 'none').toLowerCase() !== 'none' || String(asset.classification || '').toLowerCase() === 'restricted').length;
+
+            function storeById(storeId) {
+                return stores.find(item => item.id === storeId) || {};
+            }
+
+            function renderStoreList(asset) {
+                if (!(asset.stores || []).length) {
+                    return '<div class="activity-muted">No stores linked.</div>';
+                }
+                return `
+                    <ul class="data-store-list">
+                        ${(asset.stores || []).map(link => {
+                            const store = storeById(link.storeId);
+                            const parts = [store.name || link.storeId, link.role].filter(Boolean);
+                            return `<li>${escapeHtml(parts.join(' | '))}</li>`;
+                        }).join('')}
+                    </ul>
+                `;
+            }
+
+            function renderMetaList(asset) {
+                const items = [
+                    asset.kind ? 'Kind: ' + asset.kind : '',
+                    asset.classification ? 'Classification: ' + asset.classification : '',
+                    asset.personalDataLevel ? 'Personal data: ' + asset.personalDataLevel : '',
+                    asset.ownerTeamId ? 'Owner team: ' + asset.ownerTeamId : '',
+                    asset.systemOfRecordBrickId ? 'System of record: ' + asset.systemOfRecordBrickId : ''
+                ].filter(Boolean);
+                if (!items.length) {
+                    return '<div class="activity-muted">No governance metadata listed.</div>';
+                }
+                return `<ul class="data-meta-list">${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+            }
+
+            container.innerHTML = `
+                <div class="data-summary">
+                    <div class="dependency-graph-stat">
+                        <div class="dependency-graph-stat-value">${assets.length}</div>
+                        <div class="dependency-graph-stat-label">Assets</div>
+                    </div>
+                    <div class="dependency-graph-stat">
+                        <div class="dependency-graph-stat-value">${stores.length}</div>
+                        <div class="dependency-graph-stat-label">Stores</div>
+                    </div>
+                    <div class="dependency-graph-stat">
+                        <div class="dependency-graph-stat-value">${totalStoreRefs}</div>
+                        <div class="dependency-graph-stat-label">Store Links</div>
+                    </div>
+                    <div class="dependency-graph-stat">
+                        <div class="dependency-graph-stat-value">${governedAssets}</div>
+                        <div class="dependency-graph-stat-label">Governed Assets</div>
+                    </div>
+                </div>
+                <div class="data-grid">
+                    ${assets.length ? assets.map(asset => {
+                        const usage = buildDataAssetUsage(asset.id);
+                        return `
+                            <div class="data-card">
+                                <div class="data-card-head">
+                                    <img class="data-card-icon" src="icons/data.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
+                                    <div class="data-card-title">${escapeHtml(asset.name || asset.id)}</div>
+                                </div>
+                                ${asset.description ? `<div class="data-card-copy">${escapeHtml(asset.description)}</div>` : ''}
+                                <div class="data-card-subtitle">Metadata</div>
+                                ${renderMetaList(asset)}
+                                <div class="data-card-subtitle">Stores</div>
+                                ${renderStoreList(asset)}
+                                <div class="data-card-subtitle">Producing Bricks</div>
+                                ${renderDataBrickPills(usage.producingBricks)}
+                                <div class="data-card-subtitle">Consuming Bricks</div>
+                                ${renderDataBrickPills(usage.consumingBricks)}
+                            </div>
+                        `;
+                    }).join('') : '<div class="activity-muted">No data assets are defined for this domain yet.</div>'}
                 </div>
             `;
         }
@@ -1605,10 +1942,17 @@
     <div class="tab">
         <button class="tablinks active" id="tab_BigPicture" onclick="openTab('BigPicture')">Bricks</button>
         <button class="tablinks" id="tab_Capabilities" onclick="openTab('Capabilities')">Capabilities</button>
+        <button class="tablinks" id="tab_Data" onclick="openTab('Data')">Data</button>
         <button class="tablinks" id="tab_Dependencies" onclick="openTab('Dependencies')">Dependencies</button>
     </div>
     <div id="BigPicture" class="tabcontent" style="display: block">
         <div class="bricks-panel">
+            <div class="bricks-toolbar">
+                <label class="bricks-toggle" for="brickStructureToggle">
+                    <input type="checkbox" id="brickStructureToggle" checked onchange="updateBricksView()">
+                    <span>Show internal modules</span>
+                </label>
+            </div>
             <div id="Current"></div>
             <div class="legend" id="Legend"></div>
         </div>
@@ -1622,6 +1966,11 @@
                 </label>
             </div>
             <div id="CapabilitiesContent"></div>
+        </div>
+    </div>
+    <div id="Data" class="tabcontent">
+        <div class="data-panel">
+            <div id="DataContent"></div>
         </div>
     </div>
     <div id="Dependencies" class="tabcontent">

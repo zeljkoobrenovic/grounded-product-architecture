@@ -8,6 +8,7 @@ from initiatives_support import load_domain_activity, filter_for_brick
 from product_bricks_support import (
     flatten_product_bricks,
     flatten_product_capabilities,
+    load_data_assets_payload,
     load_product_bricks_payload,
     load_product_capabilities_payload,
     sanitize_product_capability_root_groups,
@@ -364,6 +365,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${all_bricks}', json.dumps(bricks))
                             .replace('${all_capabilities}', json.dumps(flat_capabilities))
                             .replace('${brick_data}', json.dumps(brick))
+                            .replace('${data_assets}', json.dumps(data_assets_payload))
                             .replace('${tabs_style}', tabs_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${common_style}', common_style)
@@ -449,6 +451,7 @@ docs_folder = domain_id + '/product-bricks/'
 root_domain = domains_root + docs_folder
 product_bricks_config_path = root_domain + 'product-bricks.json'
 product_capabilities_config_path = root_domain + 'product-capability.json'
+data_assets_config_path = domains_root + domain_id + '/data/data-assets.json'
 
 if not os.path.exists(product_bricks_config_path):
     raise SystemExit(f"Missing product bricks config for domain '{domain_id}'")
@@ -464,6 +467,7 @@ data = load_product_bricks_payload(product_bricks_config_path)
 flat_bricks = flatten_product_bricks(data)
 capabilities_payload = load_product_capabilities_payload(product_capabilities_config_path)
 flat_capabilities = flatten_product_capabilities(capabilities_payload)
+data_assets_payload = load_data_assets_payload(data_assets_config_path)
 activity_data = load_domain_activity(domains_root, domain_id)
 products = load_json_if_exists(domains_root + domain_id + '/product-deployments/products.json', {'portfolio': {'products': []}})
 customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
@@ -488,6 +492,7 @@ with open(docs_folder + 'index.html', 'w') as html_file:
 
     content = template.replace('${domain_description}', domain['description'])
     content = content.replace('${bricks}', json.dumps(data)) \
+        .replace('${data_assets}', json.dumps(data_assets_payload)) \
         .replace('${breadcrumbs_style}', breadcrumbs_style) \
         .replace('${breadcrumbs_script}', breadcrumbs_script) \
         .replace('${breadcrumbs}', breadcrumbs) \
