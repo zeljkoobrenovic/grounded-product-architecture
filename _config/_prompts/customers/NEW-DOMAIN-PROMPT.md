@@ -1,4 +1,4 @@
-<DOMAIN-LINK> is <webbsite-link>
+<DOMAIN-LINK> is 
 
 Before starting, review [skills.md](./skills.md) for the capability set required to define a new product domain well. It captures the organizational design, architecture, product strategy, market research, goal setting, planning, and modeling skills this task depends on.
 
