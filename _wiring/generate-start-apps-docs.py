@@ -36,6 +36,6 @@ with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
     html_file.write(template
                     .replace('${date}', date_string)
                     .replace('${apps}', json.dumps(apps))
-                    .replace('${domain_name}', 'Grounded Product Architecture')
-                    .replace('${domain_description}', ''))
+                    .replace('${domain_name}', 'AI-Driven Product Architectures')
+                    .replace('${domain_description}', 'Defining customer-centric product architecture grounded in reality,<br> connecting the power of GenAI with practical, grounded architecture principles'))
 
