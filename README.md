@@ -63,6 +63,67 @@ Each domain typically contains:
 - `product-bricks/roadmap/roadmap.json`
   Roadmap timing and effort data.
 
+## Creating A New Product Domain
+
+The simplest way to create a new domain is to start from the prompt template at `_config/_prompts/customers/NEW-DOMAIN-PROMPT.md` and refine it with real source links plus references to existing domains in this repository.
+
+Recommended flow:
+
+1. Choose a clear domain and a lowercase slug such as `travel-accommodations-marketplace`.
+2. Open `_config/_prompts/customers/NEW-DOMAIN-PROMPT.md`.
+3. Replace the placeholders such as `<DOMAIN-LINK>` and `<webbsite-link>` with the company, product, or business area you want to model.
+4. Add source links that give the model enough grounding to produce realistic content. Good inputs usually include:
+   - official product and marketing pages
+   - help center or support documentation
+   - API or developer documentation
+   - investor or annual-report pages
+   - architecture, engineering, or trust-and-safety writeups
+   - app store pages or onboarding flows
+5. Ask the model to create a new folder under `_config/product-domains/<new-domain>/` by following the same structure and naming patterns used by current domains such as:
+   - `_config/product-domains/ride-sharing-marketplace/`
+   - `_config/product-domains/online-retail-marketplace/`
+   - `_config/product-domains/premium-long-haul-airline/`
+6. Refine the generated content until it matches the repository conventions:
+   - IDs stay lowercase
+   - terminology stays aligned with customers, objectives, delivery, teams, product bricks, and evidence
+   - JSON structure follows existing domains instead of inventing a new schema
+7. Make sure the new domain contains the expected source files, typically:
+   - `_domain/DOMAIN.md`
+   - `customers/customers.json`
+   - `customers/insights.json`
+   - `product-deployments/products.json`
+   - `product-deployments/deployment.json`
+   - `delivery/releases.json`
+   - `product-bricks/product-bricks.json`
+   - `product-bricks/product-capability.json`
+   - `product-bricks/bricks-evidence.json`
+   - `product-bricks/capabilities-evidence.json`
+   - `objectives/current|next|ktlo|archived/{objectives,initiatives,discoveries}.json`
+   - `teams/teams.json`
+   - `start/config.json`
+   - `data/data-assets.json`
+   - `business/scorecard.json`
+8. Register the new domain in `_wiring/product-domains/run.sh` by adding a new `domain_id|Domain Name|Domain description` entry to the `domains=(...)` list.
+9. Regenerate the documentation from `_wiring/product-domains/`.
+
+Example prompt setup:
+
+```text
+Use _config/_prompts/customers/NEW-DOMAIN-PROMPT.md as the base.
+Model the domain for https://example.com/.
+Use these grounding links:
+- https://example.com/
+- https://help.example.com/
+- https://developer.example.com/
+- https://investors.example.com/
+
+Create the new domain under _config/product-domains/example-domain/.
+Use ride-sharing-marketplace and online-retail-marketplace as structural references.
+Keep all ids lowercase and reuse the repository's existing JSON schemas and naming patterns.
+```
+
+After the new domain exists in `_config/product-domains/<new-domain>/`, generate the site pages by adding it to `_wiring/product-domains/run.sh` and running the generators.
+
 ### Data And Evidence
 
 - `_data/data/`
