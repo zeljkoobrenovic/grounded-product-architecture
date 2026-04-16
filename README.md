@@ -65,6 +65,8 @@ Each domain typically contains:
 
 ## Creating A New Product Domain
 
+The workflow described below was written from using Codex as the CLI assistant, because that is the tool used in this repository so far. The same prompt-driven approach should also work with other capable CLI tools, such as Claude, as long as they can inspect the repository, create files under `_config/product-domains/`, and follow the existing JSON and folder conventions.
+
 The simplest way to create a new domain is to start from the prompt template at `_config/_prompts/customers/NEW-DOMAIN-PROMPT.md` and refine it with real source links plus references to existing domains in this repository.
 
 Recommended flow:
