@@ -1,4 +1,4 @@
-# Skills For Defining A New Product Domain
+    # Skills For Defining A New Product Domain
 
 This document defines the core skills needed to execute the workflow described in [README.md](./README.md) for creating a new product domain under `_config/product-domains/`.
 
