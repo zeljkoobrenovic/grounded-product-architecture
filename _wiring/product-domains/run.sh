@@ -16,6 +16,8 @@ scripts=(
 )
 
 domains=(
+  "technical-design-collaboration-platform|Technical Design Collaboration Platform|Product-led B2B SaaS company serving engineering organizations with AI-assisted technical design and collaboration workflows."
+  "mental-wellbeing-community-platform|Mental Wellbeing Community Platform|Covers the member, employer, contributor, and trust workflows required to operate a digital mental wellbeing platform built around community support, live programming, on-demand content, and employer-sponsored access."
   "industrial-water-intelligence|Industrial Water Intelligence|The Industrial Water Intelligence domain covers connected water treatment, plant-system monitoring, enterprise water analytics, wastewater compliance, and reuse workflows used by water-intensive industrial operators to improve uptime, conserve water, reduce energy and chemistry waste, and prove financial impact."
   "big-enterprise|Big Enterprise|The Big Enterprise domain covers the tools, workflows, and enabling capabilities used by internal teams and enterprise employees across revenue and growth, service, operations, finance, control, workplace, and internal productivity."
   "ignore_iwt|ImmoWelt|The ImmoWelt domain covers the customer journeys, commercial workflows, and platform capabilities required to connect property seekers, owners, intermediaries, and partners."

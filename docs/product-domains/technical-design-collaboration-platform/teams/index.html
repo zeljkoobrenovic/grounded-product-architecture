@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teams (Technical Design Collaboration Platform)</title>
+    <style>
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    @media (max-width: 720px) {
+        .tab button {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+</style>
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #a0a0a0;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;;
+    }
+</style>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 8px 28px 28px;
+            color: #202124;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .section-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .section-link {
+            display: inline-block;
+            padding: 8px 14px;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background-color: #f8fafc;
+            transition: 0.3s;
+        }
+
+        .section-link:hover {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .section-link.active {
+            background-color: #202124;
+            border-color: #202124;
+            color: white;
+        }
+
+        .hero {
+            margin-bottom: 20px;
+        }
+
+        .hero-table {
+            border-collapse: collapse;
+            width: auto;
+        }
+
+        .hero-logo {
+            width: 108px;
+            height: 108px;
+            margin-right: 12px;
+        }
+
+        .hero-logo-cell {
+            border: none;
+            vertical-align: top;
+            padding-top: 12px;
+            padding-right: 12px;
+        }
+
+        .hero-copy-cell {
+            vertical-align: top;
+            border: none;
+        }
+
+        .hero-title {
+            font-size: 64px;
+            margin-bottom: 4px;
+        }
+
+        .hero-subtitle {
+            color: #6b7280;
+            font-size: 18px;
+            margin-bottom: 14px;
+            max-width: 960px;
+            line-height: 1.4;
+        }
+
+        .hero-note {
+            max-width: 960px;
+            line-height: 1.5;
+            color: #4b5563;
+        }
+
+        .summary-strip {
+            margin: 0 0 18px 0;
+        }
+
+        .stat {
+            display: inline-block;
+            min-width: 150px;
+            margin: 0 10px 10px 0;
+            padding: 12px 14px;
+            border: 1px solid lightgrey;
+            border-radius: 6px;
+            background-color: #f8f8f8;
+            vertical-align: top;
+        }
+
+        .stat-value {
+            font-size: 30px;
+            color: #315b7c;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .group {
+            margin: 18px 0 22px 0;
+            padding: 18px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background-color: #fbfbfc;
+        }
+
+        .group-name {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .group-mission {
+            color: #6b7280;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .team-card {
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 16px;
+            background-color: white;
+            box-shadow: rgba(0, 0, 0, 0.06) 0 1px 3px;
+        }
+
+        .team-type {
+            display: inline-block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-radius: 999px;
+            padding: 4px 8px;
+            margin-bottom: 10px;
+            background-color: #ecfdf5;
+            color: #047857;
+        }
+
+        .team-name {
+            font-size: 26px;
+            color: #1d4ed8;
+            margin-bottom: 8px;
+        }
+
+        .team-mission {
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 12px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .customer-pill,
+        .brick-pill,
+        .team-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            font-size: 12px;
+        }
+
+        .linked-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .brick-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #d7dce1;
+            background-color: white;
+        }
+
+        .role-summary {
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .activity-row {
+            margin-top: 10px;
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .principles {
+            margin-top: 18px;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background-color: #f8fafc;
+        }
+
+        .principles ul {
+            margin: 8px 0 0 20px;
+        }
+
+        .tab-intro {
+            margin-bottom: 18px;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .overview-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .overview-group {
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background-color: #fbfbfc;
+            padding: 16px;
+            display: inline-block;
+        }
+
+        .overview-group-name {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .overview-team {
+            display: inline-block;
+            align-items: center;
+            padding: 10px;
+            margin: 4px;
+            border: 2px solid #eceff3;
+            background-color: white;
+            max-width: 250px;
+            vertical-align: top;
+            overflow: hidden;
+        }
+
+        .overview-team-group-level {
+            display: block;
+            align-items: center;
+            padding: 10px;
+            margin: 4px;
+            border: 2px solid #eceff3;
+            background-color: white;
+            vertical-align: top;
+            overflow: hidden;
+        }
+
+        .overview-team:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .overview-team-name {
+            font-size: 16px;
+            color: #1f2937;
+        }
+
+        .overview-team-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .overview-team-link:hover .overview-team-name {
+            text-decoration: underline;
+        }
+
+        .overview-team-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .overview-role-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .role-dot-group {
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background-color: #f8fafc;
+        }
+
+        .role-dots {
+            align-items: center;
+        }
+
+        .role-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 20px;
+            display: inline-block;
+            border: 1px solid rgba(17, 24, 39, 0.12);
+        }
+
+        .role-label {
+            font-size: 12px;
+            color: #4b5563;
+            white-space: nowrap;
+            display: block;
+        }
+
+        .legend-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .legend-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background-color: #f8fafc;
+            font-size: 12px;
+        }
+
+        .legend-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 20px;
+            display: inline-block;
+            border: 1px solid rgba(17, 24, 39, 0.12);
+        }
+
+        .group-leadership-card {
+            margin-bottom: 16px;
+            padding: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background-color: #f8fafc;
+        }
+
+        .dependencies-layout,
+        .matrix-layout {
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .dependency-controls,
+        .matrix-controls {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            padding: 14px;
+        }
+
+        .dependency-control-group,
+        .matrix-control-group {
+            margin-bottom: 16px;
+        }
+
+        .dependency-control-title,
+        .matrix-control-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .dependency-actions,
+        .matrix-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .dependency-action,
+        .matrix-action {
+            border: 1px solid #d1d5db;
+            background-color: white;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .dependency-checklist,
+        .matrix-checklist {
+            max-height: 320px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dependency-check-item,
+        .matrix-check-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .dependency-check-meta,
+        .matrix-check-meta {
+            display: block;
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .dependency-summary,
+        .matrix-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .dependency-stat,
+        .matrix-stat {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            padding: 10px 12px;
+            min-width: 120px;
+        }
+
+        .dependency-stat-value,
+        .matrix-stat-value {
+            font-size: 24px;
+            color: #1d4ed8;
+        }
+
+        .dependency-stat-label,
+        .matrix-stat-label {
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .dependency-graph {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 14px;
+            overflow: auto;
+            min-height: 420px;
+        }
+
+        .dependency-empty,
+        .matrix-empty {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .dependency-legend {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 12px;
+        }
+
+        .dependency-legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .dependency-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #374151;
+        }
+
+        .dependency-legend-swatch {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(17, 24, 39, 0.12);
+        }
+
+        .matrix-table-wrap {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            overflow: auto;
+            max-height: 75vh;
+        }
+
+        .matrix-table {
+            border-collapse: collapse;
+            width: max-content;
+            min-width: 100%;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #f3f4f6;
+            padding: 6px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .matrix-table th {
+            position: sticky;
+            top: 0;
+            background-color: #f8fafc;
+            z-index: 1;
+        }
+
+        .matrix-corner {
+            position: sticky;
+            left: 0;
+            top: 0;
+            z-index: 2;
+            background-color: #f8fafc;
+            min-width: 240px;
+            text-align: left;
+        }
+
+        .matrix-row-head {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            background-color: white;
+            min-width: 240px;
+            text-align: left;
+        }
+
+        .matrix-row-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .matrix-col-label {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 11px;
+            white-space: nowrap;
+            padding: 4px 0;
+            min-width: 22px;
+        }
+
+        .matrix-count {
+            font-size: 11px;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+
+        .matrix-hit {
+            background-color: #dbeafe;
+            color: #1e3a8a;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1080px) {
+            .dependencies-layout,
+            .matrix-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body onload="initTab('home')" onhashchange="initTab('home')">
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+<div class="hero">
+    <table class="hero-table">
+        <tr>
+            <td class="hero-logo-cell"><img class="hero-logo" src="icons/logo.png" alt="Teams"></td>
+            <td class="hero-copy-cell">
+                <div class="hero-title">Teams</div>
+                <div id="HeroNote" class="hero-note"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="tab">
+    <button class="tablinks" id="tab_home" onclick="openTab('home')">Overview</button>
+    <button class="tablinks" id="tab_cards" onclick="openTab('cards')">Team Cards</button>
+    <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
+    <button class="tablinks" id="tab_matrix" onclick="openTab('matrix')">Matrix</button>
+</div>
+
+<div id="tab_content_home" class="tabcontent">
+    <div class="tab-intro">A compact team topology view showing group and team names with one colored circle per staffing role block.</div>
+    <div id="OverviewSummary" class="summary-strip"></div>
+    <div id="Overview"></div>
+</div>
+
+<div id="tab_content_cards" class="tabcontent">
+    <div class="tab-intro">Detailed team cards with staffing mix, linked customers, owned bricks, and delivery activity.</div>
+    <div id="Summary" class="summary-strip"></div>
+    <div id="Groups"></div>
+    <div id="Principles" class="principles"></div>
+</div>
+
+<div id="tab_content_dependencies" class="tabcontent">
+    <div class="tab-intro">Cross-team dependency graph with filters for teams and dependency types.</div>
+    <div id="DependenciesContent"></div>
+</div>
+
+<div id="tab_content_matrix" class="tabcontent">
+    <div class="tab-intro">Dependency matrix across teams, with selectable teams and dependency types.</div>
+    <div id="MatrixContent"></div>
+</div>
+
+<script>
+    const teamsData = {"orgDesign": {"domainId": "technical-design-collaboration-platform", "domainName": "Technical Design Collaboration Platform", "companyProfile": "Product-led B2B SaaS company serving engineering organizations with AI-assisted technical design and collaboration workflows.", "operatingModel": "Cross-functional product teams own distinct workflow areas while a small platform layer supports enterprise governance, integrations, and metering.", "designPrinciples": ["Treat technical design work as a recurring product workflow, not a one-off authoring event.", "Keep enterprise trust features strong enough for procurement without turning daily collaboration into admin work.", "Use code-connected automation to reduce documentation drift rather than creating more manual process."], "staffingPrinciple": "Prefer compact teams of roughly 6-9 FTE that can own a coherent workflow end to end.", "groupingPrinciple": "Group teams by recurring customer workflow and shared product surface.", "groupLeadershipPrinciple": "Use product-led groups with strong staff-plus engineering on integration and trust-heavy surfaces."}, "groups": [{"id": "tdcp-author", "name": "Authoring and Knowledge Experience", "mission": "Own the core authoring surfaces that turn ideas into reusable technical artifacts.", "parentGroupId": "", "parentGroupName": "", "groupLeadership": {}, "teams": [{"id": "tdcp-diagram-ai", "name": "Diagram AI and Authoring", "teamType": "product", "teamFamilyId": "authoring", "teamFamilyName": "Authoring and Knowledge Experience", "orgLayer": "team", "mission": "Own AI drafting, structured diagram authoring, layout quality, and technical shape systems.", "primaryCustomers": [{"customerId": "star", "customerName": "Staff Engineer / Solution Architect", "relatedKPIs": ["Median time to first shareable diagram", "AI-assisted draft acceptance rate"], "icon": "architecture.png"}], "ownedProductBricks": [{"brickId": "aidi", "brickName": "AI Diagram Generation", "brick": {"id": "aidi", "name": "AI Diagram Generation", "type": "development", "description": "AI-assisted drafting, editing, and transformation workflows for technical diagrams and architecture sketches.", "domain": "authoring_experience", "group": "diagram_authoring", "internalModules": [{"title": "AI Diagram Generation Core", "description": "Core logic for ai diagram generation.", "type": "service"}, {"title": "AI Diagram Generation Control Layer", "description": "Workflow and control layer for ai diagram generation.", "type": "automation"}], "interfaces": [{"title": "AI Diagram Generation UI", "description": "User-facing surface for ai diagram generation.", "type": "ui"}, {"title": "AI Diagram Generation API", "description": "Programmatic surface for ai diagram generation.", "type": "api"}], "dataDependencies": [{"assetId": "diagram-source", "role": "read", "description": "Uses diagram source in the ai diagram generation workflow.", "storeIds": ["diagram-source-db"]}, {"assetId": "usage-meter", "role": "publish", "description": "Uses usage meter in the ai diagram generation workflow.", "storeIds": ["usage-meter-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "aidi.png"}}, {"brickId": "daco", "brickName": "Diagram as Code Engine", "brick": {"id": "daco", "name": "Diagram as Code Engine", "type": "development", "description": "Structured diagram source engine for text-based and model-based technical diagram authoring.", "domain": "authoring_experience", "group": "diagram_authoring", "internalModules": [{"title": "Diagram as Code Engine Core", "description": "Core logic for diagram as code engine.", "type": "service"}, {"title": "Diagram as Code Engine Control Layer", "description": "Workflow and control layer for diagram as code engine.", "type": "automation"}], "interfaces": [{"title": "Diagram as Code Engine UI", "description": "User-facing surface for diagram as code engine.", "type": "ui"}, {"title": "Diagram as Code Engine API", "description": "Programmatic surface for diagram as code engine.", "type": "api"}], "dataDependencies": [{"assetId": "diagram-source", "role": "read", "description": "Uses diagram source in the diagram as code engine workflow.", "storeIds": ["diagram-source-db"]}, {"assetId": "diagram-artifact", "role": "publish", "description": "Uses diagram artifact in the diagram as code engine workflow.", "storeIds": ["diagram-artifact-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "daco.png"}}, {"brickId": "cavs", "brickName": "Canvas Editing and Figure Layout", "brick": {"id": "cavs", "name": "Canvas Editing and Figure Layout", "type": "full-stack", "description": "Interactive canvas, selection, grouping, layout, and editing controls for technical figures.", "domain": "authoring_experience", "group": "diagram_authoring", "internalModules": [{"title": "Canvas Editing and Figure Layout Core", "description": "Core logic for canvas editing and figure layout.", "type": "service"}, {"title": "Canvas Editing and Figure Layout Control Layer", "description": "Workflow and control layer for canvas editing and figure layout.", "type": "automation"}], "interfaces": [{"title": "Canvas Editing and Figure Layout UI", "description": "User-facing surface for canvas editing and figure layout.", "type": "ui"}, {"title": "Canvas Editing and Figure Layout API", "description": "Programmatic surface for canvas editing and figure layout.", "type": "api"}], "dataDependencies": [{"assetId": "diagram-artifact", "role": "read", "description": "Uses diagram artifact in the canvas editing and figure layout workflow.", "storeIds": ["diagram-artifact-db"]}, {"assetId": "technical-document", "role": "publish", "description": "Uses technical document in the canvas editing and figure layout workflow.", "storeIds": ["technical-document-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "cavs.png"}}, {"brickId": "icns", "brickName": "Technical Icon and Shape Library", "brick": {"id": "icns", "name": "Technical Icon and Shape Library", "type": "development", "description": "Curated infrastructure, architecture, and reference shape libraries used in technical diagrams.", "domain": "authoring_experience", "group": "diagram_authoring", "internalModules": [{"title": "Technical Icon and Shape Library Core", "description": "Core logic for technical icon and shape library.", "type": "service"}, {"title": "Technical Icon and Shape Library Control Layer", "description": "Workflow and control layer for technical icon and shape library.", "type": "automation"}], "interfaces": [{"title": "Technical Icon and Shape Library UI", "description": "User-facing surface for technical icon and shape library.", "type": "ui"}, {"title": "Technical Icon and Shape Library API", "description": "Programmatic surface for technical icon and shape library.", "type": "api"}], "dataDependencies": [{"assetId": "reference-library", "role": "read", "description": "Uses reference library in the technical icon and shape library workflow.", "storeIds": ["reference-library-db"]}, {"assetId": "diagram-artifact", "role": "publish", "description": "Uses diagram artifact in the technical icon and shape library workflow.", "storeIds": ["diagram-artifact-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "icns.png"}}], "supportingProductBricks": [{"brickId": "aimt", "brickName": "AI Credit Metering and Prompt Orchestration", "brick": {"id": "aimt", "name": "AI Credit Metering and Prompt Orchestration", "type": "service", "description": "Usage controls, prompt routing, model policy, and cost metering for AI-assisted workflows.", "domain": "platform_and_monetization", "group": "ai_operations_and_api", "internalModules": [{"title": "AI Credit Metering and Prompt Orchestration Core", "description": "Core logic for ai credit metering and prompt orchestration.", "type": "service"}, {"title": "AI Credit Metering and Prompt Orchestration Control Layer", "description": "Workflow and control layer for ai credit metering and prompt orchestration.", "type": "automation"}], "interfaces": [{"title": "AI Credit Metering and Prompt Orchestration UI", "description": "User-facing surface for ai credit metering and prompt orchestration.", "type": "ui"}, {"title": "AI Credit Metering and Prompt Orchestration API", "description": "Programmatic surface for ai credit metering and prompt orchestration.", "type": "api"}], "dataDependencies": [{"assetId": "usage-meter", "role": "read", "description": "Uses usage meter in the ai credit metering and prompt orchestration workflow.", "storeIds": ["usage-meter-db"]}, {"assetId": "billing-subscription", "role": "publish", "description": "Uses billing subscription in the ai credit metering and prompt orchestration workflow.", "storeIds": ["billing-subscription-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "aimt.png"}}], "dependsOnTeamIds": ["tdcp-enterprise-platform"], "defaultSupportingTeamIds": ["tdcp-docs-knowledge"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Needs strong frontend, applied AI, and technical design-product craft.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own first-draft speed and authoring adoption."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery and quality."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set technical direction across AI, source model, and canvas architecture."}]}, "groupId": "tdcp-author", "groupName": "Authoring and Knowledge Experience", "groupLeadership": {}, "dependsOnTeams": [{"id": "tdcp-enterprise-platform", "name": "Enterprise Admin and Security Platform", "teamType": "platform", "groupId": "tdcp-platform", "groupName": "Enterprise Platform and Revenue Infrastructure"}], "defaultSupportingTeams": [{"id": "tdcp-docs-knowledge", "name": "Docs and Knowledge Workflows", "teamType": "product", "groupId": "tdcp-author", "groupName": "Authoring and Knowledge Experience"}], "relatedInitiatives": [{"date": "2026-04-15", "description": "Make a credible technical diagram appear quickly enough that more engineers begin design work inside the product.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-05-14", "description": "Release focused on lowering blank-page cost for technical diagramming.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [{"date": "2026-04-05 -> 2026-05-09", "description": "First Draft Fast: operating discovery", "landingPageKey": "0", "sectionFolder": "discoveries", "teamRole": "lead", "teamRoleLabel": "Lead discovery team", "how": "Leads drafting-quality and workflow-friction discovery."}], "dependencyData": {"sharedProductBricks": [{"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "sharedBrickIds": ["aimt"], "sharedBrickNames": ["AI Credit Metering and Prompt Orchestration"]}], "sharedInitiatives": [{"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Make a credible technical diagram appear quickly enough that more engineers begin design work inside the product.", "date": "2026-04-15"}]}], "sharedReleases": [{"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on lowering blank-page cost for technical diagramming.", "date": "2026-05-14"}]}], "explicitRelationships": [{"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}}, {"id": "tdcp-docs-knowledge", "name": "Docs and Knowledge Workflows", "teamType": "product", "teamFamilyId": "authoring", "teamFamilyName": "Authoring and Knowledge Experience", "orgLayer": "team", "mission": "Own markdown docs, embeds, links, and reusable reference workflows for technical knowledge.", "primaryCustomers": [{"customerId": "enma", "customerName": "Engineering Manager", "relatedKPIs": ["Median design review cycle time", "Documents with embedded diagrams in active teams"], "icon": "engineering.png"}], "ownedProductBricks": [{"brickId": "mdoc", "brickName": "Markdown Document Editor", "brick": {"id": "mdoc", "name": "Markdown Document Editor", "type": "full-stack", "description": "Markdown-native editor for technical documents, design proposals, and architecture notes.", "domain": "authoring_experience", "group": "doc_authoring_and_knowledge", "internalModules": [{"title": "Markdown Document Editor Core", "description": "Core logic for markdown document editor.", "type": "service"}, {"title": "Markdown Document Editor Control Layer", "description": "Workflow and control layer for markdown document editor.", "type": "automation"}], "interfaces": [{"title": "Markdown Document Editor UI", "description": "User-facing surface for markdown document editor.", "type": "ui"}, {"title": "Markdown Document Editor API", "description": "Programmatic surface for markdown document editor.", "type": "api"}], "dataDependencies": [{"assetId": "technical-document", "role": "read", "description": "Uses technical document in the markdown document editor workflow.", "storeIds": ["technical-document-db"]}, {"assetId": "workspace", "role": "publish", "description": "Uses workspace in the markdown document editor workflow.", "storeIds": ["workspace-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "mdoc.png"}}, {"brickId": "embe", "brickName": "Figure Embeds and Live References", "brick": {"id": "embe", "name": "Figure Embeds and Live References", "type": "full-stack", "description": "Embedding layer for diagrams, snippets, linked references, and live content inside docs and external tools.", "domain": "authoring_experience", "group": "doc_authoring_and_knowledge", "internalModules": [{"title": "Figure Embeds and Live References Core", "description": "Core logic for figure embeds and live references.", "type": "service"}, {"title": "Figure Embeds and Live References Control Layer", "description": "Workflow and control layer for figure embeds and live references.", "type": "automation"}], "interfaces": [{"title": "Figure Embeds and Live References UI", "description": "User-facing surface for figure embeds and live references.", "type": "ui"}, {"title": "Figure Embeds and Live References API", "description": "Programmatic surface for figure embeds and live references.", "type": "api"}], "dataDependencies": [{"assetId": "technical-document", "role": "read", "description": "Uses technical document in the figure embeds and live references workflow.", "storeIds": ["technical-document-db"]}, {"assetId": "diagram-artifact", "role": "publish", "description": "Uses diagram artifact in the figure embeds and live references workflow.", "storeIds": ["diagram-artifact-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "embe.png"}}, {"brickId": "wiki", "brickName": "Wikilinks and Knowledge Graph Search", "brick": {"id": "wiki", "name": "Wikilinks and Knowledge Graph Search", "type": "service", "description": "Cross-document linking, search, and related-artifact discovery for technical knowledge.", "domain": "authoring_experience", "group": "doc_authoring_and_knowledge", "internalModules": [{"title": "Wikilinks and Knowledge Graph Search Core", "description": "Core logic for wikilinks and knowledge graph search.", "type": "service"}, {"title": "Wikilinks and Knowledge Graph Search Control Layer", "description": "Workflow and control layer for wikilinks and knowledge graph search.", "type": "automation"}], "interfaces": [{"title": "Wikilinks and Knowledge Graph Search UI", "description": "User-facing surface for wikilinks and knowledge graph search.", "type": "ui"}, {"title": "Wikilinks and Knowledge Graph Search API", "description": "Programmatic surface for wikilinks and knowledge graph search.", "type": "api"}], "dataDependencies": [{"assetId": "technical-document", "role": "read", "description": "Uses technical document in the wikilinks and knowledge graph search workflow.", "storeIds": ["technical-document-db"]}, {"assetId": "workspace", "role": "publish", "description": "Uses workspace in the wikilinks and knowledge graph search workflow.", "storeIds": ["workspace-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "wiki.png"}}, {"brickId": "refl", "brickName": "Reference Libraries and Templates", "brick": {"id": "refl", "name": "Reference Libraries and Templates", "type": "service", "description": "Managed template sets, starter docs, and architecture references for repeatable technical design work.", "domain": "authoring_experience", "group": "doc_authoring_and_knowledge", "internalModules": [{"title": "Reference Libraries and Templates Core", "description": "Core logic for reference libraries and templates.", "type": "service"}, {"title": "Reference Libraries and Templates Control Layer", "description": "Workflow and control layer for reference libraries and templates.", "type": "automation"}], "interfaces": [{"title": "Reference Libraries and Templates UI", "description": "User-facing surface for reference libraries and templates.", "type": "ui"}, {"title": "Reference Libraries and Templates API", "description": "Programmatic surface for reference libraries and templates.", "type": "api"}], "dataDependencies": [{"assetId": "reference-library", "role": "read", "description": "Uses reference library in the reference libraries and templates workflow.", "storeIds": ["reference-library-db"]}, {"assetId": "workspace", "role": "publish", "description": "Uses workspace in the reference libraries and templates workflow.", "storeIds": ["workspace-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "refl.png"}}], "supportingProductBricks": [{"brickId": "expo", "brickName": "Export and Publishing Pipeline", "brick": {"id": "expo", "name": "Export and Publishing Pipeline", "type": "service", "description": "Rendering, export, and controlled publishing pipeline for docs, diagrams, embeds, and shared views.", "domain": "platform_and_monetization", "group": "ai_operations_and_api", "internalModules": [{"title": "Export and Publishing Pipeline Core", "description": "Core logic for export and publishing pipeline.", "type": "service"}, {"title": "Export and Publishing Pipeline Control Layer", "description": "Workflow and control layer for export and publishing pipeline.", "type": "automation"}], "interfaces": [{"title": "Export and Publishing Pipeline UI", "description": "User-facing surface for export and publishing pipeline.", "type": "ui"}, {"title": "Export and Publishing Pipeline API", "description": "Programmatic surface for export and publishing pipeline.", "type": "api"}], "dataDependencies": [{"assetId": "diagram-artifact", "role": "read", "description": "Uses diagram artifact in the export and publishing pipeline workflow.", "storeIds": ["diagram-artifact-db"]}, {"assetId": "technical-document", "role": "publish", "description": "Uses technical document in the export and publishing pipeline workflow.", "storeIds": ["technical-document-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "expo.png"}}], "dependsOnTeamIds": ["tdcp-collaboration-review"], "defaultSupportingTeamIds": ["tdcp-diagram-ai"], "staffing": {"suggestedHeadcount": 7, "staffingGuidance": "Needs a blend of writing-surface craft, knowledge-graph thinking, and workflow product management.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own docs workflow adoption and reuse."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution and reliability."}, {"role": "Staff Engineer", "count": 1, "responsibility": "Set architecture for documents, embeds, and knowledge graph services."}]}, "groupId": "tdcp-author", "groupName": "Authoring and Knowledge Experience", "groupLeadership": {}, "dependsOnTeams": [{"id": "tdcp-collaboration-review", "name": "Collaboration and Review", "teamType": "product", "groupId": "tdcp-flow", "groupName": "Collaboration and Connected Workflow"}], "defaultSupportingTeams": [{"id": "tdcp-diagram-ai", "name": "Diagram AI and Authoring", "teamType": "product", "groupId": "tdcp-author", "groupName": "Authoring and Knowledge Experience"}], "relatedInitiatives": [{"date": "2026-02-05", "description": "Delivered the first cohesive combined docs-and-diagrams workflow baseline.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedReleases": [{"date": "2026-08-12", "description": "Release focused on repository-connected documentation and codebase views.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}, {"date": "2026-06-09", "description": "Release focused on docs-plus-diagrams review throughput.", "landingPageKey": "1", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "sharedBrickIds": ["expo"], "sharedBrickNames": ["Export and Publishing Pipeline"]}, {"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "sharedBrickIds": ["expo"], "sharedBrickNames": ["Export and Publishing Pipeline"]}], "sharedInitiatives": [{"teamId": "tdcp-collaboration-review", "teamName": "Collaboration and Review", "sharedInitiativeKeys": ["2"], "sharedInitiatives": [{"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Delivered the first cohesive combined docs-and-diagrams workflow baseline.", "date": "2026-02-05"}]}], "sharedReleases": [{"teamId": "tdcp-collaboration-review", "teamName": "Collaboration and Review", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on docs-plus-diagrams review throughput.", "date": "2026-06-09"}]}, {"teamId": "tdcp-repo-automation", "teamName": "Repo Automation and Code Views", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on repository-connected documentation and codebase views.", "date": "2026-08-12"}]}, {"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on docs-plus-diagrams review throughput.", "date": "2026-06-09"}]}], "explicitRelationships": [{"teamId": "tdcp-collaboration-review", "teamName": "Collaboration and Review", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "tdcp-diagram-ai", "teamName": "Diagram AI and Authoring", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}}]}, {"id": "tdcp-flow", "name": "Collaboration and Connected Workflow", "mission": "Own the review, repository, and change-aware workflows that keep technical artifacts collaborative and current.", "parentGroupId": "", "parentGroupName": "", "groupLeadership": {}, "teams": [{"id": "tdcp-collaboration-review", "name": "Collaboration and Review", "teamType": "product", "teamFamilyId": "workflow", "teamFamilyName": "Collaboration and Connected Workflow", "orgLayer": "team", "mission": "Own shared workspaces, live collaboration, comments, and version history.", "primaryCustomers": [{"customerId": "enma", "customerName": "Engineering Manager", "relatedKPIs": ["Reviews completed asynchronously", "Median design review cycle time"], "icon": "engineering.png"}], "ownedProductBricks": [{"brickId": "work", "brickName": "Workspace and Folder Management", "brick": {"id": "work", "name": "Workspace and Folder Management", "type": "full-stack", "description": "Workspace hierarchy, organization boundaries, foldering, and artifact organization for teams.", "domain": "collaboration_and_workflow", "group": "shared_workspaces_and_review", "internalModules": [{"title": "Workspace and Folder Management Core", "description": "Core logic for workspace and folder management.", "type": "service"}, {"title": "Workspace and Folder Management Control Layer", "description": "Workflow and control layer for workspace and folder management.", "type": "automation"}], "interfaces": [{"title": "Workspace and Folder Management UI", "description": "User-facing surface for workspace and folder management.", "type": "ui"}, {"title": "Workspace and Folder Management API", "description": "Programmatic surface for workspace and folder management.", "type": "api"}], "dataDependencies": [{"assetId": "workspace", "role": "read", "description": "Uses workspace in the workspace and folder management workflow.", "storeIds": ["workspace-db"]}, {"assetId": "identity-membership", "role": "publish", "description": "Uses identity membership in the workspace and folder management workflow.", "storeIds": ["identity-membership-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "work.png"}}, {"brickId": "rtco", "brickName": "Realtime Collaboration", "brick": {"id": "rtco", "name": "Realtime Collaboration", "type": "full-stack", "description": "Presence, live edits, cursor sharing, and collaborative artifact sessions for teams.", "domain": "collaboration_and_workflow", "group": "shared_workspaces_and_review", "internalModules": [{"title": "Realtime Collaboration Core", "description": "Core logic for realtime collaboration.", "type": "service"}, {"title": "Realtime Collaboration Control Layer", "description": "Workflow and control layer for realtime collaboration.", "type": "automation"}], "interfaces": [{"title": "Realtime Collaboration UI", "description": "User-facing surface for realtime collaboration.", "type": "ui"}, {"title": "Realtime Collaboration API", "description": "Programmatic surface for realtime collaboration.", "type": "api"}], "dataDependencies": [{"assetId": "workspace", "role": "read", "description": "Uses workspace in the realtime collaboration workflow.", "storeIds": ["workspace-db"]}, {"assetId": "technical-document", "role": "publish", "description": "Uses technical document in the realtime collaboration workflow.", "storeIds": ["technical-document-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "rtco.png"}}, {"brickId": "comm", "brickName": "Comments and Review Threads", "brick": {"id": "comm", "name": "Comments and Review Threads", "type": "full-stack", "description": "Contextual review comments, decisions, mentions, and resolution workflows linked to docs and diagrams.", "domain": "collaboration_and_workflow", "group": "shared_workspaces_and_review", "internalModules": [{"title": "Comments and Review Threads Core", "description": "Core logic for comments and review threads.", "type": "service"}, {"title": "Comments and Review Threads Control Layer", "description": "Workflow and control layer for comments and review threads.", "type": "automation"}], "interfaces": [{"title": "Comments and Review Threads UI", "description": "User-facing surface for comments and review threads.", "type": "ui"}, {"title": "Comments and Review Threads API", "description": "Programmatic surface for comments and review threads.", "type": "api"}], "dataDependencies": [{"assetId": "review-thread", "role": "read", "description": "Uses review thread in the comments and review threads workflow.", "storeIds": ["review-thread-db"]}, {"assetId": "technical-document", "role": "publish", "description": "Uses technical document in the comments and review threads workflow.", "storeIds": ["technical-document-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "comm.png"}}, {"brickId": "vers", "brickName": "Version History and Snapshots", "brick": {"id": "vers", "name": "Version History and Snapshots", "type": "service", "description": "Artifact history, comparisons, snapshots, and rollback points for technical docs and diagrams.", "domain": "collaboration_and_workflow", "group": "shared_workspaces_and_review", "internalModules": [{"title": "Version History and Snapshots Core", "description": "Core logic for version history and snapshots.", "type": "service"}, {"title": "Version History and Snapshots Control Layer", "description": "Workflow and control layer for version history and snapshots.", "type": "automation"}], "interfaces": [{"title": "Version History and Snapshots UI", "description": "User-facing surface for version history and snapshots.", "type": "ui"}, {"title": "Version History and Snapshots API", "description": "Programmatic surface for version history and snapshots.", "type": "api"}], "dataDependencies": [{"assetId": "technical-document", "role": "read", "description": "Uses technical document in the version history and snapshots workflow.", "storeIds": ["technical-document-db"]}, {"assetId": "diagram-artifact", "role": "publish", "description": "Uses diagram artifact in the version history and snapshots workflow.", "storeIds": ["diagram-artifact-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "vers.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["tdcp-docs-knowledge", "tdcp-enterprise-platform"], "defaultSupportingTeamIds": ["tdcp-repo-automation"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Needs collaborative systems depth and strong judgment around workflow simplicity.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own review throughput and collaboration quality."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead delivery and operational quality."}]}, "groupId": "tdcp-flow", "groupName": "Collaboration and Connected Workflow", "groupLeadership": {}, "dependsOnTeams": [{"id": "tdcp-docs-knowledge", "name": "Docs and Knowledge Workflows", "teamType": "product", "groupId": "tdcp-author", "groupName": "Authoring and Knowledge Experience"}, {"id": "tdcp-enterprise-platform", "name": "Enterprise Admin and Security Platform", "teamType": "platform", "groupId": "tdcp-platform", "groupName": "Enterprise Platform and Revenue Infrastructure"}], "defaultSupportingTeams": [{"id": "tdcp-repo-automation", "name": "Repo Automation and Code Views", "teamType": "product", "groupId": "tdcp-flow", "groupName": "Collaboration and Connected Workflow"}], "relatedInitiatives": [{"date": "2026-02-05", "description": "Delivered the first cohesive combined docs-and-diagrams workflow baseline.", "landingPageKey": "2", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedReleases": [{"date": "2026-06-09", "description": "Release focused on docs-plus-diagrams review throughput.", "landingPageKey": "1", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [], "sharedInitiatives": [{"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "sharedInitiativeKeys": ["2"], "sharedInitiatives": [{"landingPageKey": "2", "sectionFolder": "initiatives", "description": "Delivered the first cohesive combined docs-and-diagrams workflow baseline.", "date": "2026-02-05"}]}], "sharedReleases": [{"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on docs-plus-diagrams review throughput.", "date": "2026-06-09"}]}, {"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on docs-plus-diagrams review throughput.", "date": "2026-06-09"}]}], "explicitRelationships": [{"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "tdcp-repo-automation", "teamName": "Repo Automation and Code Views", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}}, {"id": "tdcp-repo-automation", "name": "Repo Automation and Code Views", "teamType": "product", "teamFamilyId": "workflow", "teamFamilyName": "Collaboration and Connected Workflow", "orgLayer": "team", "mission": "Own repository connections, sync automation, codebase diagrams, and change detection.", "primaryCustomers": [{"customerId": "star", "customerName": "Staff Engineer / Solution Architect", "relatedKPIs": ["Architecture docs updated within 7 days of major change", "Repo sync job success rate"], "icon": "architecture.png"}], "ownedProductBricks": [{"brickId": "gcon", "brickName": "Git Repository Connection", "brick": {"id": "gcon", "name": "Git Repository Connection", "type": "integration", "description": "Connects repositories, branches, and auth state into technical design workflows.", "domain": "collaboration_and_workflow", "group": "integrations_and_sync", "internalModules": [{"title": "Git Repository Connection Core", "description": "Core logic for git repository connection.", "type": "service"}, {"title": "Git Repository Connection Control Layer", "description": "Workflow and control layer for git repository connection.", "type": "automation"}], "interfaces": [{"title": "Git Repository Connection UI", "description": "User-facing surface for git repository connection.", "type": "ui"}, {"title": "Git Repository Connection API", "description": "Programmatic surface for git repository connection.", "type": "api"}], "dataDependencies": [{"assetId": "repo-connection", "role": "read", "description": "Uses repo connection in the git repository connection workflow.", "storeIds": ["repo-connection-db"]}, {"assetId": "identity-membership", "role": "publish", "description": "Uses identity membership in the git repository connection workflow.", "storeIds": ["identity-membership-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "gcon.png"}}, {"brickId": "sync", "brickName": "Git Sync and Pull Request Automation", "brick": {"id": "sync", "name": "Git Sync and Pull Request Automation", "type": "integration", "description": "Syncs docs and diagrams with repos and supports pull-request-centric workflows.", "domain": "collaboration_and_workflow", "group": "integrations_and_sync", "internalModules": [{"title": "Git Sync and Pull Request Automation Core", "description": "Core logic for git sync and pull request automation.", "type": "service"}, {"title": "Git Sync and Pull Request Automation Control Layer", "description": "Workflow and control layer for git sync and pull request automation.", "type": "automation"}], "interfaces": [{"title": "Git Sync and Pull Request Automation UI", "description": "User-facing surface for git sync and pull request automation.", "type": "ui"}, {"title": "Git Sync and Pull Request Automation API", "description": "Programmatic surface for git sync and pull request automation.", "type": "api"}], "dataDependencies": [{"assetId": "repo-connection", "role": "read", "description": "Uses repo connection in the git sync and pull request automation workflow.", "storeIds": ["repo-connection-db"]}, {"assetId": "technical-document", "role": "publish", "description": "Uses technical document in the git sync and pull request automation workflow.", "storeIds": ["technical-document-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "sync.png"}}, {"brickId": "code", "brickName": "Codebase Diagram Extraction", "brick": {"id": "code", "name": "Codebase Diagram Extraction", "type": "integration", "description": "Parses repository structure and code relationships into draft technical diagrams and views.", "domain": "collaboration_and_workflow", "group": "integrations_and_sync", "internalModules": [{"title": "Codebase Diagram Extraction Core", "description": "Core logic for codebase diagram extraction.", "type": "service"}, {"title": "Codebase Diagram Extraction Control Layer", "description": "Workflow and control layer for codebase diagram extraction.", "type": "automation"}], "interfaces": [{"title": "Codebase Diagram Extraction UI", "description": "User-facing surface for codebase diagram extraction.", "type": "ui"}, {"title": "Codebase Diagram Extraction API", "description": "Programmatic surface for codebase diagram extraction.", "type": "api"}], "dataDependencies": [{"assetId": "repo-connection", "role": "read", "description": "Uses repo connection in the codebase diagram extraction workflow.", "storeIds": ["repo-connection-db"]}, {"assetId": "diagram-artifact", "role": "publish", "description": "Uses diagram artifact in the codebase diagram extraction workflow.", "storeIds": ["diagram-artifact-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "code.png"}}, {"brickId": "moni", "brickName": "Eraserbot Monitors and Change Detection", "brick": {"id": "moni", "name": "Eraserbot Monitors and Change Detection", "type": "service", "description": "Automated monitoring of connected technical artifacts and repos to highlight drift, changes, and stale design knowledge.", "domain": "platform_and_monetization", "group": "ai_operations_and_api", "internalModules": [{"title": "Eraserbot Monitors and Change Detection Core", "description": "Core logic for eraserbot monitors and change detection.", "type": "service"}, {"title": "Eraserbot Monitors and Change Detection Control Layer", "description": "Workflow and control layer for eraserbot monitors and change detection.", "type": "automation"}], "interfaces": [{"title": "Eraserbot Monitors and Change Detection UI", "description": "User-facing surface for eraserbot monitors and change detection.", "type": "ui"}, {"title": "Eraserbot Monitors and Change Detection API", "description": "Programmatic surface for eraserbot monitors and change detection.", "type": "api"}], "dataDependencies": [{"assetId": "repo-connection", "role": "read", "description": "Uses repo connection in the eraserbot monitors and change detection workflow.", "storeIds": ["repo-connection-db"]}, {"assetId": "audit-log", "role": "publish", "description": "Uses audit log in the eraserbot monitors and change detection workflow.", "storeIds": ["audit-log-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "moni.png"}}], "supportingProductBricks": [{"brickId": "inte", "brickName": "Confluence Notion and IDE Integrations", "brick": {"id": "inte", "name": "Confluence Notion and IDE Integrations", "type": "integration", "description": "Distribution and authoring integrations for adjacent documentation, wiki, and development tools.", "domain": "collaboration_and_workflow", "group": "integrations_and_sync", "internalModules": [{"title": "Confluence Notion and IDE Integrations Core", "description": "Core logic for confluence notion and ide integrations.", "type": "service"}, {"title": "Confluence Notion and IDE Integrations Control Layer", "description": "Workflow and control layer for confluence notion and ide integrations.", "type": "automation"}], "interfaces": [{"title": "Confluence Notion and IDE Integrations UI", "description": "User-facing surface for confluence notion and ide integrations.", "type": "ui"}, {"title": "Confluence Notion and IDE Integrations API", "description": "Programmatic surface for confluence notion and ide integrations.", "type": "api"}], "dataDependencies": [{"assetId": "workspace", "role": "read", "description": "Uses workspace in the confluence notion and ide integrations workflow.", "storeIds": ["workspace-db"]}, {"assetId": "api-credential", "role": "publish", "description": "Uses api credential in the confluence notion and ide integrations workflow.", "storeIds": ["api-credential-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "inte.png"}}], "dependsOnTeamIds": ["tdcp-enterprise-platform"], "defaultSupportingTeamIds": ["tdcp-diagram-ai"], "staffing": {"suggestedHeadcount": 8, "staffingGuidance": "Needs strong integration engineering, SCM experience, and workflow-product discipline.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own code-connected workflow adoption and reliability."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution and integration quality."}]}, "groupId": "tdcp-flow", "groupName": "Collaboration and Connected Workflow", "groupLeadership": {}, "dependsOnTeams": [{"id": "tdcp-enterprise-platform", "name": "Enterprise Admin and Security Platform", "teamType": "platform", "groupId": "tdcp-platform", "groupName": "Enterprise Platform and Revenue Infrastructure"}], "defaultSupportingTeams": [{"id": "tdcp-diagram-ai", "name": "Diagram AI and Authoring", "teamType": "product", "groupId": "tdcp-author", "groupName": "Authoring and Knowledge Experience"}], "relatedInitiatives": [], "relatedReleases": [{"date": "2026-08-12", "description": "Release focused on repository-connected documentation and codebase views.", "landingPageKey": "0", "sectionFolder": "releases", "teamRole": "primary", "teamRoleLabel": "Primary team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "sharedBrickIds": ["inte"], "sharedBrickNames": ["Confluence Notion and IDE Integrations"]}], "sharedInitiatives": [], "sharedReleases": [{"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "sharedReleaseKeys": ["0"], "sharedReleases": [{"landingPageKey": "0", "sectionFolder": "releases", "description": "Release focused on repository-connected documentation and codebase views.", "date": "2026-08-12"}]}], "explicitRelationships": [{"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "tdcp-diagram-ai", "teamName": "Diagram AI and Authoring", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}}]}, {"id": "tdcp-platform", "name": "Enterprise Platform and Revenue Infrastructure", "mission": "Own the trust, admin, API, and metering surfaces that make the portfolio enterprise-safe and commercially scalable.", "parentGroupId": "", "parentGroupName": "", "groupLeadership": {}, "teams": [{"id": "tdcp-enterprise-platform", "name": "Enterprise Admin and Security Platform", "teamType": "platform", "teamFamilyId": "platform", "teamFamilyName": "Enterprise Platform and Revenue Infrastructure", "orgLayer": "team", "mission": "Own identity, permissions, admin reporting, and security/compliance controls.", "primaryCustomers": [{"customerId": "seco", "customerName": "Security and Compliance Lead", "relatedKPIs": ["Enterprise workspaces on SSO and lifecycle management", "Audit requests fulfilled without manual artifact reconstruction"], "icon": "security.png"}], "ownedProductBricks": [{"brickId": "auth", "brickName": "Identity SSO and Provisioning", "brick": {"id": "auth", "name": "Identity SSO and Provisioning", "type": "service", "description": "Enterprise identity, SSO, lifecycle provisioning, and role assignment for organizations.", "domain": "platform_and_monetization", "group": "enterprise_governance_and_security", "internalModules": [{"title": "Identity SSO and Provisioning Core", "description": "Core logic for identity sso and provisioning.", "type": "service"}, {"title": "Identity SSO and Provisioning Control Layer", "description": "Workflow and control layer for identity sso and provisioning.", "type": "automation"}], "interfaces": [{"title": "Identity SSO and Provisioning UI", "description": "User-facing surface for identity sso and provisioning.", "type": "ui"}, {"title": "Identity SSO and Provisioning API", "description": "Programmatic surface for identity sso and provisioning.", "type": "api"}], "dataDependencies": [{"assetId": "identity-membership", "role": "read", "description": "Uses identity membership in the identity sso and provisioning workflow.", "storeIds": ["identity-membership-db"]}, {"assetId": "audit-log", "role": "publish", "description": "Uses audit log in the identity sso and provisioning workflow.", "storeIds": ["audit-log-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "auth.png"}}, {"brickId": "perm", "brickName": "Sharing Permissions and Link Access", "brick": {"id": "perm", "name": "Sharing Permissions and Link Access", "type": "service", "description": "Artifact-level sharing, permissioning, link policy, and external access controls.", "domain": "platform_and_monetization", "group": "enterprise_governance_and_security", "internalModules": [{"title": "Sharing Permissions and Link Access Core", "description": "Core logic for sharing permissions and link access.", "type": "service"}, {"title": "Sharing Permissions and Link Access Control Layer", "description": "Workflow and control layer for sharing permissions and link access.", "type": "automation"}], "interfaces": [{"title": "Sharing Permissions and Link Access UI", "description": "User-facing surface for sharing permissions and link access.", "type": "ui"}, {"title": "Sharing Permissions and Link Access API", "description": "Programmatic surface for sharing permissions and link access.", "type": "api"}], "dataDependencies": [{"assetId": "identity-membership", "role": "read", "description": "Uses identity membership in the sharing permissions and link access workflow.", "storeIds": ["identity-membership-db"]}, {"assetId": "audit-log", "role": "publish", "description": "Uses audit log in the sharing permissions and link access workflow.", "storeIds": ["audit-log-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "perm.png"}}, {"brickId": "admi", "brickName": "Admin Controls and Usage Reporting", "brick": {"id": "admi", "name": "Admin Controls and Usage Reporting", "type": "full-stack", "description": "Admin console, workspace governance, activity views, and adoption reporting for organization owners.", "domain": "platform_and_monetization", "group": "enterprise_governance_and_security", "internalModules": [{"title": "Admin Controls and Usage Reporting Core", "description": "Core logic for admin controls and usage reporting.", "type": "service"}, {"title": "Admin Controls and Usage Reporting Control Layer", "description": "Workflow and control layer for admin controls and usage reporting.", "type": "automation"}], "interfaces": [{"title": "Admin Controls and Usage Reporting UI", "description": "User-facing surface for admin controls and usage reporting.", "type": "ui"}, {"title": "Admin Controls and Usage Reporting API", "description": "Programmatic surface for admin controls and usage reporting.", "type": "api"}], "dataDependencies": [{"assetId": "usage-meter", "role": "read", "description": "Uses usage meter in the admin controls and usage reporting workflow.", "storeIds": ["usage-meter-db"]}, {"assetId": "workspace", "role": "publish", "description": "Uses workspace in the admin controls and usage reporting workflow.", "storeIds": ["workspace-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "admi.png"}}, {"brickId": "secu", "brickName": "Security Compliance and Deployment Options", "brick": {"id": "secu", "name": "Security Compliance and Deployment Options", "type": "service", "description": "Security controls, data handling posture, deployment options, and compliance-support features.", "domain": "platform_and_monetization", "group": "enterprise_governance_and_security", "internalModules": [{"title": "Security Compliance and Deployment Options Core", "description": "Core logic for security compliance and deployment options.", "type": "service"}, {"title": "Security Compliance and Deployment Options Control Layer", "description": "Workflow and control layer for security compliance and deployment options.", "type": "automation"}], "interfaces": [{"title": "Security Compliance and Deployment Options UI", "description": "User-facing surface for security compliance and deployment options.", "type": "ui"}, {"title": "Security Compliance and Deployment Options API", "description": "Programmatic surface for security compliance and deployment options.", "type": "api"}], "dataDependencies": [{"assetId": "audit-log", "role": "read", "description": "Uses audit log in the security compliance and deployment options workflow.", "storeIds": ["audit-log-db"]}, {"assetId": "workspace", "role": "publish", "description": "Uses workspace in the security compliance and deployment options workflow.", "storeIds": ["workspace-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "secu.png"}}], "supportingProductBricks": [{"brickId": "expo", "brickName": "Export and Publishing Pipeline", "brick": {"id": "expo", "name": "Export and Publishing Pipeline", "type": "service", "description": "Rendering, export, and controlled publishing pipeline for docs, diagrams, embeds, and shared views.", "domain": "platform_and_monetization", "group": "ai_operations_and_api", "internalModules": [{"title": "Export and Publishing Pipeline Core", "description": "Core logic for export and publishing pipeline.", "type": "service"}, {"title": "Export and Publishing Pipeline Control Layer", "description": "Workflow and control layer for export and publishing pipeline.", "type": "automation"}], "interfaces": [{"title": "Export and Publishing Pipeline UI", "description": "User-facing surface for export and publishing pipeline.", "type": "ui"}, {"title": "Export and Publishing Pipeline API", "description": "Programmatic surface for export and publishing pipeline.", "type": "api"}], "dataDependencies": [{"assetId": "diagram-artifact", "role": "read", "description": "Uses diagram artifact in the export and publishing pipeline workflow.", "storeIds": ["diagram-artifact-db"]}, {"assetId": "technical-document", "role": "publish", "description": "Uses technical document in the export and publishing pipeline workflow.", "storeIds": ["technical-document-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "expo.png"}}], "dependsOnTeamIds": [], "defaultSupportingTeamIds": ["tdcp-api-platform"], "staffing": {"suggestedHeadcount": 7, "staffingGuidance": "Needs identity, enterprise admin, and security engineering depth.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own enterprise trust and admin workflow priorities."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead execution and security quality."}]}, "groupId": "tdcp-platform", "groupName": "Enterprise Platform and Revenue Infrastructure", "groupLeadership": {}, "dependsOnTeams": [], "defaultSupportingTeams": [{"id": "tdcp-api-platform", "name": "API and Metering Platform", "teamType": "platform", "groupId": "tdcp-platform", "groupName": "Enterprise Platform and Revenue Infrastructure"}], "relatedInitiatives": [{"date": "2026-07-08", "description": "Investment set for developer console quality, API setup clarity, and governed embed patterns.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedReleases": [{"date": "2026-06-09", "description": "Release focused on docs-plus-diagrams review throughput.", "landingPageKey": "1", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "sharedBrickIds": ["expo"], "sharedBrickNames": ["Export and Publishing Pipeline"]}, {"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "sharedBrickIds": ["expo"], "sharedBrickNames": ["Export and Publishing Pipeline"]}], "sharedInitiatives": [{"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "sharedInitiativeKeys": ["0"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Investment set for developer console quality, API setup clarity, and governed embed patterns.", "date": "2026-07-08"}]}], "sharedReleases": [{"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on docs-plus-diagrams review throughput.", "date": "2026-06-09"}]}, {"teamId": "tdcp-collaboration-review", "teamName": "Collaboration and Review", "sharedReleaseKeys": ["1"], "sharedReleases": [{"landingPageKey": "1", "sectionFolder": "releases", "description": "Release focused on docs-plus-diagrams review throughput.", "date": "2026-06-09"}]}], "explicitRelationships": [{"teamId": "tdcp-api-platform", "teamName": "API and Metering Platform", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}}, {"id": "tdcp-api-platform", "name": "API and Metering Platform", "teamType": "platform", "teamFamilyId": "platform", "teamFamilyName": "Enterprise Platform and Revenue Infrastructure", "orgLayer": "team", "mission": "Own the public API, embedded runtime, metering, and export pipeline that extend the product beyond the core app.", "primaryCustomers": [{"customerId": "plat", "customerName": "Platform Architect", "relatedKPIs": ["Accounts with shared reference libraries attached", "Expansion from accounts with active standards programs"], "icon": "platform.png"}], "ownedProductBricks": [{"brickId": "aimt", "brickName": "AI Credit Metering and Prompt Orchestration", "brick": {"id": "aimt", "name": "AI Credit Metering and Prompt Orchestration", "type": "service", "description": "Usage controls, prompt routing, model policy, and cost metering for AI-assisted workflows.", "domain": "platform_and_monetization", "group": "ai_operations_and_api", "internalModules": [{"title": "AI Credit Metering and Prompt Orchestration Core", "description": "Core logic for ai credit metering and prompt orchestration.", "type": "service"}, {"title": "AI Credit Metering and Prompt Orchestration Control Layer", "description": "Workflow and control layer for ai credit metering and prompt orchestration.", "type": "automation"}], "interfaces": [{"title": "AI Credit Metering and Prompt Orchestration UI", "description": "User-facing surface for ai credit metering and prompt orchestration.", "type": "ui"}, {"title": "AI Credit Metering and Prompt Orchestration API", "description": "Programmatic surface for ai credit metering and prompt orchestration.", "type": "api"}], "dataDependencies": [{"assetId": "usage-meter", "role": "read", "description": "Uses usage meter in the ai credit metering and prompt orchestration workflow.", "storeIds": ["usage-meter-db"]}, {"assetId": "billing-subscription", "role": "publish", "description": "Uses billing subscription in the ai credit metering and prompt orchestration workflow.", "storeIds": ["billing-subscription-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "aimt.png"}}, {"brickId": "apii", "brickName": "Diagramming API and Embedded Workspaces", "brick": {"id": "apii", "name": "Diagramming API and Embedded Workspaces", "type": "full-stack", "description": "Programmable diagram rendering, editing, and workspace embedding for customers and partners.", "domain": "platform_and_monetization", "group": "ai_operations_and_api", "internalModules": [{"title": "Diagramming API and Embedded Workspaces Core", "description": "Core logic for diagramming api and embedded workspaces.", "type": "service"}, {"title": "Diagramming API and Embedded Workspaces Control Layer", "description": "Workflow and control layer for diagramming api and embedded workspaces.", "type": "automation"}], "interfaces": [{"title": "Diagramming API and Embedded Workspaces UI", "description": "User-facing surface for diagramming api and embedded workspaces.", "type": "ui"}, {"title": "Diagramming API and Embedded Workspaces API", "description": "Programmatic surface for diagramming api and embedded workspaces.", "type": "api"}], "dataDependencies": [{"assetId": "api-credential", "role": "read", "description": "Uses api credential in the diagramming api and embedded workspaces workflow.", "storeIds": ["api-credential-db"]}, {"assetId": "usage-meter", "role": "publish", "description": "Uses usage meter in the diagramming api and embedded workspaces workflow.", "storeIds": ["usage-meter-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "apii.png"}}, {"brickId": "expo", "brickName": "Export and Publishing Pipeline", "brick": {"id": "expo", "name": "Export and Publishing Pipeline", "type": "service", "description": "Rendering, export, and controlled publishing pipeline for docs, diagrams, embeds, and shared views.", "domain": "platform_and_monetization", "group": "ai_operations_and_api", "internalModules": [{"title": "Export and Publishing Pipeline Core", "description": "Core logic for export and publishing pipeline.", "type": "service"}, {"title": "Export and Publishing Pipeline Control Layer", "description": "Workflow and control layer for export and publishing pipeline.", "type": "automation"}], "interfaces": [{"title": "Export and Publishing Pipeline UI", "description": "User-facing surface for export and publishing pipeline.", "type": "ui"}, {"title": "Export and Publishing Pipeline API", "description": "Programmatic surface for export and publishing pipeline.", "type": "api"}], "dataDependencies": [{"assetId": "diagram-artifact", "role": "read", "description": "Uses diagram artifact in the export and publishing pipeline workflow.", "storeIds": ["diagram-artifact-db"]}, {"assetId": "technical-document", "role": "publish", "description": "Uses technical document in the export and publishing pipeline workflow.", "storeIds": ["technical-document-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "expo.png"}}, {"brickId": "inte", "brickName": "Confluence Notion and IDE Integrations", "brick": {"id": "inte", "name": "Confluence Notion and IDE Integrations", "type": "integration", "description": "Distribution and authoring integrations for adjacent documentation, wiki, and development tools.", "domain": "collaboration_and_workflow", "group": "integrations_and_sync", "internalModules": [{"title": "Confluence Notion and IDE Integrations Core", "description": "Core logic for confluence notion and ide integrations.", "type": "service"}, {"title": "Confluence Notion and IDE Integrations Control Layer", "description": "Workflow and control layer for confluence notion and ide integrations.", "type": "automation"}], "interfaces": [{"title": "Confluence Notion and IDE Integrations UI", "description": "User-facing surface for confluence notion and ide integrations.", "type": "ui"}, {"title": "Confluence Notion and IDE Integrations API", "description": "Programmatic surface for confluence notion and ide integrations.", "type": "api"}], "dataDependencies": [{"assetId": "workspace", "role": "read", "description": "Uses workspace in the confluence notion and ide integrations workflow.", "storeIds": ["workspace-db"]}, {"assetId": "api-credential", "role": "publish", "description": "Uses api credential in the confluence notion and ide integrations workflow.", "storeIds": ["api-credential-stream"]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "icon": "inte.png"}}], "supportingProductBricks": [], "dependsOnTeamIds": ["tdcp-enterprise-platform"], "defaultSupportingTeamIds": ["tdcp-repo-automation"], "staffing": {"suggestedHeadcount": 7, "staffingGuidance": "Needs API platform engineering and developer product judgment.", "roles": [{"role": "Product Manager", "count": 1, "responsibility": "Own programmable workflow adoption and packaging."}, {"role": "Engineering Manager", "count": 1, "responsibility": "Lead platform execution and reliability."}]}, "groupId": "tdcp-platform", "groupName": "Enterprise Platform and Revenue Infrastructure", "groupLeadership": {}, "dependsOnTeams": [{"id": "tdcp-enterprise-platform", "name": "Enterprise Admin and Security Platform", "teamType": "platform", "groupId": "tdcp-platform", "groupName": "Enterprise Platform and Revenue Infrastructure"}], "defaultSupportingTeams": [{"id": "tdcp-repo-automation", "name": "Repo Automation and Code Views", "teamType": "product", "groupId": "tdcp-flow", "groupName": "Collaboration and Connected Workflow"}], "relatedInitiatives": [{"date": "2026-07-08", "description": "Investment set for developer console quality, API setup clarity, and governed embed patterns.", "landingPageKey": "0", "sectionFolder": "initiatives", "teamRole": "primary", "teamRoleLabel": "Primary team"}, {"date": "2026-04-15", "description": "Make a credible technical diagram appear quickly enough that more engineers begin design work inside the product.", "landingPageKey": "1", "sectionFolder": "initiatives", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedReleases": [{"date": "2026-05-14", "description": "Release focused on lowering blank-page cost for technical diagramming.", "landingPageKey": "2", "sectionFolder": "releases", "teamRole": "supporting", "teamRoleLabel": "Supporting team"}], "relatedDiscoveries": [], "dependencyData": {"sharedProductBricks": [{"teamId": "tdcp-diagram-ai", "teamName": "Diagram AI and Authoring", "sharedBrickIds": ["aimt"], "sharedBrickNames": ["AI Credit Metering and Prompt Orchestration"]}, {"teamId": "tdcp-docs-knowledge", "teamName": "Docs and Knowledge Workflows", "sharedBrickIds": ["expo"], "sharedBrickNames": ["Export and Publishing Pipeline"]}, {"teamId": "tdcp-repo-automation", "teamName": "Repo Automation and Code Views", "sharedBrickIds": ["inte"], "sharedBrickNames": ["Confluence Notion and IDE Integrations"]}, {"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "sharedBrickIds": ["expo"], "sharedBrickNames": ["Export and Publishing Pipeline"]}], "sharedInitiatives": [{"teamId": "tdcp-diagram-ai", "teamName": "Diagram AI and Authoring", "sharedInitiativeKeys": ["1"], "sharedInitiatives": [{"landingPageKey": "1", "sectionFolder": "initiatives", "description": "Make a credible technical diagram appear quickly enough that more engineers begin design work inside the product.", "date": "2026-04-15"}]}, {"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "sharedInitiativeKeys": ["0"], "sharedInitiatives": [{"landingPageKey": "0", "sectionFolder": "initiatives", "description": "Investment set for developer console quality, API setup clarity, and governed embed patterns.", "date": "2026-07-08"}]}], "sharedReleases": [{"teamId": "tdcp-diagram-ai", "teamName": "Diagram AI and Authoring", "sharedReleaseKeys": ["2"], "sharedReleases": [{"landingPageKey": "2", "sectionFolder": "releases", "description": "Release focused on lowering blank-page cost for technical diagramming.", "date": "2026-05-14"}]}], "explicitRelationships": [{"teamId": "tdcp-enterprise-platform", "teamName": "Enterprise Admin and Security Platform", "relationshipType": "depends_on", "relationshipLabel": "depends on"}, {"teamId": "tdcp-repo-automation", "teamName": "Repo Automation and Code Views", "relationshipType": "supported_by", "relationshipLabel": "supported by"}]}}]}]};
+    const rolePalette = [
+        '#1d4ed8',
+        '#047857',
+        '#b45309',
+        '#9333ea',
+        '#dc2626',
+        '#0891b2',
+        '#4f46e5',
+        '#65a30d',
+        '#c2410c',
+        '#be185d',
+        '#0f766e',
+        '#7c3aed'
+    ];
+
+    function escapeHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function formatNumber(value) {
+        return new Intl.NumberFormat('en-US').format(value || 0);
+    }
+
+    function summarizeRoles(roles) {
+        return (roles || []).map(role => escapeHtml(role.role) + ' x' + escapeHtml(String(role.count))).join(', ');
+    }
+
+    window.afterOpenTab = function (tabName) {
+        if (tabName === 'dependencies') {
+            renderDependenciesView();
+        }
+        if (tabName === 'matrix') {
+            renderMatrixView();
+        }
+    };
+
+    function slugifyRole(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function escapeMermaidLabel(value) {
+        return String(value || '')
+            .replaceAll('&', 'and')
+            .replaceAll('"', '')
+            .replaceAll("'", '')
+            .replaceAll('<', '')
+            .replaceAll('>', '')
+            .replaceAll('[', '(')
+            .replaceAll(']', ')')
+            .replaceAll('{', '(')
+            .replaceAll('}', ')')
+            .replaceAll('|', '/');
+    }
+
+    function sanitizeMermaidId(value) {
+        return String(value || 'team')
+            .replace(/[^a-zA-Z0-9_]/g, '_')
+            .replace(/_+/g, '_');
+    }
+
+    const flatTeams = [];
+    (teamsData.groups || []).forEach(group => {
+        (group.teams || []).forEach(team => flatTeams.push(team));
+    });
+    let dependenciesInitialized = false;
+    let matrixInitialized = false;
+
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        flowchart: {
+            htmlLabels: false
+        }
+    });
+
+    const distinctRoles = [];
+    const distinctRoleMap = {};
+    flatTeams.forEach(team => {
+        ((team.staffing || {}).roles || []).forEach(role => {
+            const key = slugifyRole(role.role);
+            if (!key || distinctRoleMap[key]) {
+                return;
+            }
+            distinctRoleMap[key] = role.role;
+            distinctRoles.push(role.role);
+        });
+    });
+
+    const roleColorMap = {};
+    distinctRoles
+        .sort((left, right) => left.localeCompare(right))
+        .forEach((role, index) => {
+            roleColorMap[slugifyRole(role)] = rolePalette[index % rolePalette.length];
+        });
+
+    const streamAlignedCount = flatTeams.filter(team => team.teamType === 'stream-aligned').length;
+    const platformCount = flatTeams.filter(team => team.teamType === 'platform').length;
+    const totalHeadcount = flatTeams.reduce((sum, team) => sum + ((team.staffing || {}).suggestedHeadcount || 0), 0);
+    const totalRoles = flatTeams.reduce((sum, team) => sum + (((team.staffing || {}).roles || []).length), 0);
+    const totalGroupLeadershipHeadcount = (teamsData.groups || []).reduce((sum, group) => sum + (((group.groupLeadership || {}).suggestedHeadcount) || 0), 0);
+    const totalGroupLeadershipRoles = (teamsData.groups || []).reduce((sum, group) => sum + ((((group.groupLeadership || {}).roles) || []).length), 0);
+
+    document.getElementById('HeroNote').innerHTML = escapeHtml(teamsData.orgDesign.operatingModel || '');
+
+    document.getElementById('Summary').innerHTML =
+        '<div class="stat"><div class="stat-value">' + formatNumber(flatTeams.length) + '</div><div class="stat-label">Teams</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Suggested Headcount</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalGroupLeadershipHeadcount) + '</div><div class="stat-label">Group Leadership Headcount</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(streamAlignedCount) + '</div><div class="stat-label">Stream-aligned Teams</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(platformCount) + '</div><div class="stat-label">Platform Teams</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalRoles) + '</div><div class="stat-label">Team Role Blocks</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalGroupLeadershipRoles) + '</div><div class="stat-label">Group Role Blocks</div></div>';
+
+    document.getElementById('OverviewSummary').innerHTML =
+        '<div class="stat"><div class="stat-value">' + formatNumber((teamsData.groups || []).length) + '</div><div class="stat-label">Groups</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(flatTeams.length) + '</div><div class="stat-label">Teams</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(distinctRoles.length) + '</div><div class="stat-label">Distinct Roles</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Team Headcount</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalGroupLeadershipHeadcount) + '</div><div class="stat-label">Group Leadership Headcount</div></div>';
+
+    let groupsHtml = '';
+    (teamsData.groups || []).forEach(group => {
+        groupsHtml += '<div class="group">';
+        groupsHtml += '<div class="group-name">' + escapeHtml(group.name) + '</div>';
+        groupsHtml += '<div class="group-mission">' + escapeHtml(group.mission || '') + '</div>';
+        if (group.parentGroupName) {
+            groupsHtml += '<div class="group-mission"><strong>Parent group:</strong> ' + escapeHtml(group.parentGroupName) + '</div>';
+        }
+        if (group.groupLeadership && (group.groupLeadership.roles || []).length) {
+            groupsHtml += '<div class="group-leadership-card">';
+            groupsHtml += '<div class="section-title">Group Leadership</div>';
+            if (group.groupLeadership.purpose) {
+                groupsHtml += '<div class="group-mission">' + escapeHtml(group.groupLeadership.purpose) + '</div>';
+            }
+            groupsHtml += '<div class="meta-row">';
+            groupsHtml += '<div class="meta-pill">Leadership headcount: ' + escapeHtml(String(group.groupLeadership.suggestedHeadcount || 0)) + '</div>';
+            groupsHtml += '<div class="meta-pill">Role blocks: ' + escapeHtml(String((group.groupLeadership.roles || []).length)) + '</div>';
+            groupsHtml += '</div>';
+            groupsHtml += '<div class="role-summary">' + summarizeRoles(group.groupLeadership.roles || []) + '</div>';
+            if (group.groupLeadership.leadershipModel) {
+                groupsHtml += '<div class="group-mission">' + escapeHtml(group.groupLeadership.leadershipModel) + '</div>';
+            }
+            groupsHtml += '</div>';
+        }
+        groupsHtml += '<div class="team-grid">';
+
+        (group.teams || []).forEach(team => {
+            const staffing = team.staffing || {};
+            groupsHtml += '<a class="team-card" target="_blank" href="landing_pages/' + escapeHtml(team.id) + '.html">';
+            groupsHtml += '<div class="team-type">' + escapeHtml(team.teamType || 'team') + '</div>';
+            groupsHtml += '<div class="team-name">' + escapeHtml(team.name) + '</div>';
+            groupsHtml += '<div class="team-mission">' + escapeHtml(team.mission || '') + '</div>';
+
+            groupsHtml += '<div class="meta-row">';
+            groupsHtml += '<div class="meta-pill">Headcount: ' + escapeHtml(String(staffing.suggestedHeadcount || 0)) + '</div>';
+            groupsHtml += '<div class="meta-pill">Roles: ' + escapeHtml(String((staffing.roles || []).length)) + '</div>';
+            groupsHtml += '<div class="meta-pill">Customers: ' + escapeHtml(String((team.primaryCustomers || []).length)) + '</div>';
+            groupsHtml += '</div>';
+
+            if ((team.primaryCustomers || []).length) {
+                groupsHtml += '<div class="section-title">Primary Customers</div>';
+                (team.primaryCustomers || []).slice(0, 4).forEach(customer => {
+                    groupsHtml += '<div class="customer-pill"><img class="linked-icon" src="../customers/icons/' + escapeHtml(customer.icon || 'customer.png') + '" onerror="this.onerror=null;this.src=\'../customers/icons/customer.png\'">' + escapeHtml(customer.customerName || customer.customerId) + '</div>';
+                });
+            }
+
+            if ((team.ownedProductBricks || []).length) {
+                groupsHtml += '<div class="section-title">Owned Product Bricks</div>';
+                (team.ownedProductBricks || []).slice(0, 4).forEach(brick => {
+                    groupsHtml += '<div class="brick-pill"><img class="brick-icon" src="../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../product-bricks/icons/logo.png\'">' + escapeHtml(brick.brickName || brick.brickId) + '</div>';
+                });
+            }
+
+            groupsHtml += '<div class="section-title">Role Mix</div>';
+            groupsHtml += '<div class="role-summary">' + summarizeRoles(staffing.roles || []) + '</div>';
+
+            groupsHtml += '<div class="activity-row">Discoveries: ' + escapeHtml(String((team.relatedDiscoveries || []).length)) + ' | Initiatives: ' + escapeHtml(String((team.relatedInitiatives || []).length)) + ' | Releases: ' + escapeHtml(String((team.relatedReleases || []).length)) + '</div>';
+            groupsHtml += '</a>';
+        });
+
+        groupsHtml += '</div></div>';
+    });
+    document.getElementById('Groups').innerHTML = groupsHtml;
+
+    let overviewHtml = '<div class="overview-list">';
+    (teamsData.groups || []).forEach(group => {
+        overviewHtml += '<div class="overview-group">';
+        overviewHtml += '<div class="overview-group-name">' + escapeHtml(group.name) + '</div>';
+        if (group.groupLeadership && (group.groupLeadership.roles || []).length) {
+            overviewHtml += '<div class="overview-team-group-level">';
+            overviewHtml += '<div><div class="overview-team-name">Group Leadership</div><div class="overview-team-meta">Group-level coverage</div></div>';
+            overviewHtml += '<div class="overview-role-row">';
+            (group.groupLeadership.roles || []).forEach(role => {
+                const safeCount = Math.max(Number(role.count) || 0, 0);
+                const color = roleColorMap[slugifyRole(role.role)] || '#94a3b8';
+                overviewHtml += '<div class="role-dot-group">';
+                overviewHtml += '<div class="role-label">' + escapeHtml(role.role) + ' (' + escapeHtml(String(safeCount)) + ')</div>';
+                overviewHtml += '<div class="role-dots">';
+                for (let i = 0; i < safeCount; i++) {
+                    overviewHtml += '<div class="role-dot" style="background-color: ' + color + '"></div>';
+                }
+                overviewHtml += '</div>';
+                overviewHtml += '</div>';
+            });
+            overviewHtml += '</div>';
+            overviewHtml += '</div>';
+        }
+        (group.teams || []).forEach(team => {
+            overviewHtml += '<div class="overview-team">';
+            overviewHtml += '<div><a class="overview-team-link" target="_blank" href="landing_pages/' + escapeHtml(team.id) + '.html"><div class="overview-team-name">' + escapeHtml(team.name) + '</div><div class="overview-team-meta">' + escapeHtml(team.teamType || 'team') + '</div></a></div>';
+            overviewHtml += '<div class="overview-role-row">';
+            ((team.staffing || {}).roles || []).forEach(role => {
+                const safeCount = Math.max(Number(role.count) || 0, 0);
+                const color = roleColorMap[slugifyRole(role.role)] || '#94a3b8';
+                overviewHtml += '<div class="role-dot-group">';
+                overviewHtml += '<div class="role-label">' + escapeHtml(role.role) + ' (' + escapeHtml(String(safeCount)) + ')</div>';
+                overviewHtml += '<div class="role-dots">';
+                for (let i = 0; i < safeCount; i++) {
+                    overviewHtml += '<div class="role-dot" style="background-color: ' + color + '"></div>';
+                }
+                overviewHtml += '</div>';
+                overviewHtml += '</div>';
+            });
+            overviewHtml += '</div>';
+            overviewHtml += '</div>';
+        });
+        overviewHtml += '</div>';
+    });
+    overviewHtml += '</div>';
+    overviewHtml += '<div class="legend-row">';
+    distinctRoles
+        .sort((left, right) => left.localeCompare(right))
+        .forEach(role => {
+            overviewHtml += '<div class="legend-pill"><span class="legend-swatch" style="background-color: ' + roleColorMap[slugifyRole(role)] + '"></span>' + escapeHtml(role) + '</div>';
+        });
+    overviewHtml += '</div>';
+    document.getElementById('Overview').innerHTML = overviewHtml;
+
+    let principlesHtml = '<div class="section-title">Design Principles</div>';
+    principlesHtml += '<div>' + escapeHtml(teamsData.orgDesign.companyProfile || '') + '</div>';
+    principlesHtml += '<ul>';
+    (teamsData.orgDesign.designPrinciples || []).forEach(principle => {
+        principlesHtml += '<li>' + escapeHtml(principle) + '</li>';
+    });
+    principlesHtml += '</ul>';
+    document.getElementById('Principles').innerHTML = principlesHtml;
+
+    function teamTypeMeta(team) {
+        return [team.groupName || '', team.teamType || 'team'].filter(Boolean).join(' | ');
+    }
+
+    function dependencyTypeCatalog() {
+        return [
+            {id: 'depends_on', name: 'Explicit Depends On'},
+            {id: 'supported_by', name: 'Default Supporting Team'},
+            {id: 'shared_product_bricks', name: 'Shared Product Bricks'},
+            {id: 'shared_initiatives', name: 'Shared Initiatives'},
+            {id: 'shared_releases', name: 'Shared Releases'}
+        ];
+    }
+
+    function renderChecklistItems(items, kind, className, onChangeHandler, emptyClass) {
+        if (!items.length) {
+            return '<div class="' + emptyClass + '">No items available.</div>';
+        }
+        return items.map(item => {
+            const meta = kind === 'team' ? teamTypeMeta(item) : '';
+            return '<label class="' + (emptyClass === 'dependency-empty' ? 'dependency-check-item' : 'matrix-check-item') + '">' +
+                '<input type="checkbox" class="' + className + '" value="' + escapeHtml(item.id) + '" checked onchange="' + onChangeHandler + '()">' +
+                '<span><span>' + escapeHtml(item.name) + '</span>' +
+                (meta ? '<span class="' + (emptyClass === 'dependency-empty' ? 'dependency-check-meta' : 'matrix-check-meta') + '">' + escapeHtml(meta) + '</span>' : '') +
+                '</span></label>';
+        }).join('');
+    }
+
+    function setAllCheckboxes(selector, checked, renderer) {
+        document.querySelectorAll(selector).forEach(input => {
+            input.checked = checked;
+        });
+        if (renderer === 'dependencies') {
+            renderDependenciesView();
+            return;
+        }
+        renderMatrixView();
+    }
+
+    function selectedValues(selector) {
+        return new Set(Array.from(document.querySelectorAll(selector))
+            .filter(input => input.checked)
+            .map(input => input.value));
+    }
+
+    function teamCatalog() {
+        return flatTeams.slice().sort((left, right) => (left.name || '').localeCompare(right.name || ''));
+    }
+
+    function getTeamEdgeCatalog() {
+        const teamNameMap = {};
+        flatTeams.forEach(team => {
+            teamNameMap[team.id] = team.name || team.id;
+        });
+
+        const sharedEdgeMap = {};
+        const directEdges = [];
+        flatTeams.forEach(team => {
+            const dependencyData = team.dependencyData || {};
+
+            (dependencyData.explicitRelationships || []).forEach(item => {
+                directEdges.push({
+                    source: team.id,
+                    target: item.teamId,
+                    type: item.relationshipType || 'depends_on',
+                    typeLabel: item.relationshipLabel || item.relationshipType || 'relationship'
+                });
+            });
+
+            [
+                ['sharedProductBricks', 'shared_product_bricks', 'Shared Product Bricks'],
+                ['sharedInitiatives', 'shared_initiatives', 'Shared Initiatives'],
+                ['sharedReleases', 'shared_releases', 'Shared Releases']
+            ].forEach(config => {
+                const items = dependencyData[config[0]] || [];
+                items.forEach(item => {
+                    const pairKey = [team.id, item.teamId].sort().join('::') + '::' + config[1];
+                    if (!sharedEdgeMap[pairKey]) {
+                        const sortedPair = [team.id, item.teamId].sort();
+                        sharedEdgeMap[pairKey] = {
+                            source: sortedPair[0],
+                            target: sortedPair[1],
+                            type: config[1],
+                            typeLabel: config[2]
+                        };
+                    }
+                });
+            });
+        });
+
+        return {
+            teams: teamCatalog(),
+            dependencyTypes: dependencyTypeCatalog(),
+            edges: directEdges.concat(Object.values(sharedEdgeMap)).map(edge => ({
+                ...edge,
+                sourceName: teamNameMap[edge.source] || edge.source,
+                targetName: teamNameMap[edge.target] || edge.target
+            }))
+        };
+    }
+
+    function renderDependenciesControls(catalog) {
+        return '<div class="dependency-controls">' +
+            '<div class="dependency-control-group">' +
+            '<div class="dependency-control-title">Teams</div>' +
+            '<div class="dependency-actions">' +
+            '<button class="dependency-action" type="button" onclick="setAllCheckboxes(\'.dependency-team-checkbox\', true, \'dependencies\')">Show all</button>' +
+            '<button class="dependency-action" type="button" onclick="setAllCheckboxes(\'.dependency-team-checkbox\', false, \'dependencies\')">Hide all</button>' +
+            '</div><div class="dependency-checklist">' +
+            renderChecklistItems(catalog.teams, 'team', 'dependency-team-checkbox', 'renderDependenciesView', 'dependency-empty') +
+            '</div></div>' +
+            '<div class="dependency-control-group">' +
+            '<div class="dependency-control-title">Dependency Types</div>' +
+            '<div class="dependency-actions">' +
+            '<button class="dependency-action" type="button" onclick="setAllCheckboxes(\'.dependency-type-checkbox\', true, \'dependencies\')">Show all</button>' +
+            '<button class="dependency-action" type="button" onclick="setAllCheckboxes(\'.dependency-type-checkbox\', false, \'dependencies\')">Hide all</button>' +
+            '</div><div class="dependency-checklist">' +
+            renderChecklistItems(catalog.dependencyTypes, 'type', 'dependency-type-checkbox', 'renderDependenciesView', 'dependency-empty') +
+            '</div></div>' +
+            '<div class="dependency-legend"><div class="dependency-control-title">Legend</div>' +
+            '<div class="dependency-legend-items">' +
+            '<div class="dependency-legend-item"><span class="dependency-legend-swatch" style="background-color:#dbeafe; border-color:#2563eb;"></span><span>Team</span></div>' +
+            '<div class="dependency-legend-item"><span class="dependency-legend-swatch" style="background-color:#ecfccb; border-color:#65a30d;"></span><span>Shared dependency node</span></div>' +
+            '</div></div></div>';
+    }
+
+    function buildTeamGraph(catalog, selectedTeamIds, selectedTypeIds) {
+        return {
+            teams: catalog.teams.filter(team => selectedTeamIds.has(team.id)),
+            edges: catalog.edges.filter(edge =>
+                selectedTeamIds.has(edge.source) &&
+                selectedTeamIds.has(edge.target) &&
+                selectedTypeIds.has(edge.type)
+            )
+        };
+    }
+
+    function renderDependenciesView() {
+        const container = document.getElementById('DependenciesContent');
+        if (!container) {
+            return;
+        }
+
+        const catalog = getTeamEdgeCatalog();
+        if (!dependenciesInitialized) {
+            container.innerHTML = '<div class="dependencies-layout">' +
+                renderDependenciesControls(catalog) +
+                '<div><div id="DependenciesSummary" class="dependency-summary"></div><div id="DependenciesGraph" class="dependency-graph"></div></div>' +
+                '</div>';
+            dependenciesInitialized = true;
+        }
+
+        const selectedTeamIds = selectedValues('.dependency-team-checkbox');
+        const selectedTypeIds = selectedValues('.dependency-type-checkbox');
+        const graph = buildTeamGraph(catalog, selectedTeamIds, selectedTypeIds);
+
+        document.getElementById('DependenciesSummary').innerHTML =
+            '<div class="dependency-stat"><div class="dependency-stat-value">' + formatNumber(graph.teams.length) + '</div><div class="dependency-stat-label">Visible Teams</div></div>' +
+            '<div class="dependency-stat"><div class="dependency-stat-value">' + formatNumber(graph.edges.length) + '</div><div class="dependency-stat-label">Visible Dependencies</div></div>' +
+            '<div class="dependency-stat"><div class="dependency-stat-value">' + formatNumber(selectedTypeIds.size) + '</div><div class="dependency-stat-label">Active Types</div></div>';
+
+        const graphContainer = document.getElementById('DependenciesGraph');
+        if (!graph.teams.length || !graph.edges.length) {
+            graphContainer.innerHTML = '<div class="dependency-empty">Select at least two connected teams and one dependency type.</div>';
+            return;
+        }
+
+        let diagram = 'flowchart LR\n';
+        graph.teams.forEach(team => {
+            diagram += sanitizeMermaidId(team.id) + '["' + escapeMermaidLabel(team.name || team.id) + '"]\n';
+            diagram += 'style ' + sanitizeMermaidId(team.id) + ' fill:#dbeafe,stroke:#2563eb,stroke-width:1px\n';
+        });
+        graph.edges.forEach((edge, index) => {
+            const sourceId = sanitizeMermaidId(edge.source);
+            const targetId = sanitizeMermaidId(edge.target);
+            const label = escapeMermaidLabel(edge.typeLabel || edge.type || 'dependency');
+            if (edge.type.indexOf('shared_') === 0) {
+                const sharedId = sanitizeMermaidId('shared_' + edge.type + '_' + index);
+                diagram += sharedId + '(("' + label + '"))\n';
+                diagram += 'style ' + sharedId + ' fill:#ecfccb,stroke:#65a30d,stroke-width:1px\n';
+                diagram += sourceId + ' --- ' + sharedId + '\n';
+                diagram += sharedId + ' --- ' + targetId + '\n';
+            } else {
+                diagram += sourceId + ' -->|' + label + '| ' + targetId + '\n';
+            }
+        });
+
+        const graphId = 'teams-dependency-graph-' + Date.now();
+        graphContainer.innerHTML = '<div class="mermaid" id="' + graphId + '">' + diagram + '</div>';
+        mermaid.run({querySelector: '#' + graphId});
+    }
+
+    function renderMatrixControls(catalog) {
+        return '<div class="matrix-controls">' +
+            '<div class="matrix-control-group">' +
+            '<div class="matrix-control-title">Teams</div>' +
+            '<div class="matrix-actions">' +
+            '<button class="matrix-action" type="button" onclick="setAllCheckboxes(\'.matrix-team-checkbox\', true, \'matrix\')">Show all</button>' +
+            '<button class="matrix-action" type="button" onclick="setAllCheckboxes(\'.matrix-team-checkbox\', false, \'matrix\')">Hide all</button>' +
+            '</div><div class="matrix-checklist">' +
+            renderChecklistItems(catalog.teams, 'team', 'matrix-team-checkbox', 'renderMatrixView', 'matrix-empty') +
+            '</div></div>' +
+            '<div class="matrix-control-group">' +
+            '<div class="matrix-control-title">Dependency Types</div>' +
+            '<div class="matrix-actions">' +
+            '<button class="matrix-action" type="button" onclick="setAllCheckboxes(\'.matrix-type-checkbox\', true, \'matrix\')">Show all</button>' +
+            '<button class="matrix-action" type="button" onclick="setAllCheckboxes(\'.matrix-type-checkbox\', false, \'matrix\')">Hide all</button>' +
+            '</div><div class="matrix-checklist">' +
+            renderChecklistItems(catalog.dependencyTypes, 'type', 'matrix-type-checkbox', 'renderMatrixView', 'matrix-empty') +
+            '</div></div></div>';
+    }
+
+    function buildMatrixData(catalog, selectedTeamIds, selectedTypeIds) {
+        const teams = catalog.teams.filter(team => selectedTeamIds.has(team.id));
+        const counts = {};
+        const totals = {};
+        teams.forEach(rowTeam => {
+            counts[rowTeam.id] = {};
+            totals[rowTeam.id] = 0;
+            teams.forEach(colTeam => {
+                counts[rowTeam.id][colTeam.id] = 0;
+            });
+        });
+
+        catalog.edges.forEach(edge => {
+            if (!selectedTypeIds.has(edge.type) || !selectedTeamIds.has(edge.source) || !selectedTeamIds.has(edge.target)) {
+                return;
+            }
+            counts[edge.source][edge.target] += 1;
+            counts[edge.target][edge.source] += 1;
+            totals[edge.source] += 1;
+            totals[edge.target] += 1;
+        });
+
+        return {teams, counts, totals};
+    }
+
+    function renderMatrixView() {
+        const container = document.getElementById('MatrixContent');
+        if (!container) {
+            return;
+        }
+
+        const catalog = getTeamEdgeCatalog();
+        if (!matrixInitialized) {
+            container.innerHTML = '<div class="matrix-layout">' +
+                renderMatrixControls(catalog) +
+                '<div><div id="MatrixSummary" class="matrix-summary"></div><div id="MatrixTableWrap" class="matrix-table-wrap"></div></div>' +
+                '</div>';
+            matrixInitialized = true;
+        }
+
+        const selectedTeamIds = selectedValues('.matrix-team-checkbox');
+        const selectedTypeIds = selectedValues('.matrix-type-checkbox');
+        const matrix = buildMatrixData(catalog, selectedTeamIds, selectedTypeIds);
+
+        document.getElementById('MatrixSummary').innerHTML =
+            '<div class="matrix-stat"><div class="matrix-stat-value">' + formatNumber(matrix.teams.length) + '</div><div class="matrix-stat-label">Visible Teams</div></div>' +
+            '<div class="matrix-stat"><div class="matrix-stat-value">' + formatNumber(selectedTypeIds.size) + '</div><div class="matrix-stat-label">Active Types</div></div>' +
+            '<div class="matrix-stat"><div class="matrix-stat-value">' + formatNumber(catalog.edges.filter(edge => selectedTypeIds.has(edge.type) && selectedTeamIds.has(edge.source) && selectedTeamIds.has(edge.target)).length) + '</div><div class="matrix-stat-label">Visible Dependencies</div></div>';
+
+        const wrap = document.getElementById('MatrixTableWrap');
+        if (!matrix.teams.length) {
+            wrap.innerHTML = '<div class="matrix-empty" style="padding:14px">Select at least one team.</div>';
+            return;
+        }
+
+        let html = '<table class="matrix-table"><thead><tr><th class="matrix-corner">Team</th>';
+        matrix.teams.forEach(team => {
+            html += '<th><div class="matrix-col-label">' + escapeHtml(team.name || team.id) + '</div></th>';
+        });
+        html += '</tr><tr><th class="matrix-corner">Dependencies</th>';
+        matrix.teams.forEach(team => {
+            html += '<th><div class="matrix-count">' + formatNumber(matrix.totals[team.id] || 0) + '</div></th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        matrix.teams.forEach(rowTeam => {
+            html += '<tr><th class="matrix-row-head"><div class="matrix-row-label"><span>' + escapeHtml(rowTeam.name || rowTeam.id) + '</span><span class="matrix-count">' + formatNumber(matrix.totals[rowTeam.id] || 0) + '</span></div></th>';
+            matrix.teams.forEach(colTeam => {
+                const count = matrix.counts[rowTeam.id][colTeam.id] || 0;
+                html += '<td class="' + (count ? 'matrix-hit' : '') + '">' + (count ? escapeHtml(String(count)) : '') + '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+    }
+</script>
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../start/index.html",
+      "label": "Technical Design Collaboration Platform Home"
+    },
+    {
+      "label": "Teams"
+    }
+  ]
+};
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+</body>
+</html>
