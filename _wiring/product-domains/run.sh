@@ -16,6 +16,7 @@ scripts=(
 )
 
 domains=(
+  "digital-news-publishing-platform|Digital News Publishing Platform|Covers the audience, editorial, advertising, subscription, loyalty, partner-bundle, and data capabilities required to run a multi-brand digital news publisher across web, apps, print-linked editions, social, newsletters, and commercial partnerships."
   "technical-design-collaboration-platform|Technical Design Collaboration Platform|Product-led B2B SaaS company serving engineering organizations with AI-assisted technical design and collaboration workflows."
   "mental-wellbeing-community-platform|Mental Wellbeing Community Platform|Covers the member, employer, contributor, and trust workflows required to operate a digital mental wellbeing platform built around community support, live programming, on-demand content, and employer-sponsored access."
   "industrial-water-intelligence|Industrial Water Intelligence|The Industrial Water Intelligence domain covers connected water treatment, plant-system monitoring, enterprise water analytics, wastewater compliance, and reuse workflows used by water-intensive industrial operators to improve uptime, conserve water, reduce energy and chemistry waste, and prove financial impact."
