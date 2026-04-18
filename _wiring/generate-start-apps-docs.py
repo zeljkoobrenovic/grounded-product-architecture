@@ -36,6 +36,6 @@ with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
     html_file.write(template
                     .replace('${date}', date_string)
                     .replace('${apps}', json.dumps(apps))
-                    .replace('${domain_name}', 'AI-Generated Product Architectures')
+                    .replace('${domain_name}', 'AI-Generated Open-Source Product Architectures')
                     .replace('${domain_description}', 'Defining customer-centric product architecture rooted in reality,<br> combining the power of GenAI with <a target="_blank" href="https://grounded-architecture.io/">grounded architecture</a> principles. Available free on on <a target="_blank" href="https://github.com/zeljkoobrenovic/grounded-product-architecture">GitHub'))
 
