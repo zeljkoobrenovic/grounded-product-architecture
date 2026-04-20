@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
-            margin: 20px;
+            margin: 40px;
         }
 
         h1, h2, h3 {
@@ -20,14 +20,15 @@
 
         .hero {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 16px;
             margin-bottom: 12px;
+            margin-left: 20px;
         }
 
         .hero-logo {
-            width: 96px;
-            height: 96px;
+            width: 136px;
+            height: 136px;
             object-fit: contain;
             vertical-align: top;
         }
@@ -45,18 +46,48 @@
         }
 
         .row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin: 12px 0 20px;
+            margin: 30px 0 30px;
         }
 
         .card {
             border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 14px;
-            min-width: 180px;
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-width: 100px;
             flex: 1;
+            cursor: pointer;
+            transition: box-shadow 0.15s, border-color 0.15s;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .card.active {
+            border-width: 2px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .card.active.red {
+            border-color: crimson;
+        }
+
+        .card.active.yellow {
+            border-color: orange;
+        }
+
+        .card.active.green {
+            border-color: darkgreen;
+        }
+
+        .card.focus {
+            background: #fffbeb;
+        }
+
+        .card.active.focus {
+            border-color: #f59e0b;
         }
 
         .red {
@@ -65,18 +96,6 @@
 
         .yellow {
             background: #fff7d6;
-        }
-
-        .border.red {
-            border: 3px solid crimson;
-        }
-
-        .border.yellow {
-            border: 3px solid orange;
-        }
-
-        .border.green {
-            border: 3px solid darkgreen;
         }
 
         .green {
@@ -101,10 +120,32 @@
 
         .controls {
             margin-top: 24px;
+            margin-left: 6px;
+            margin-top: 44px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
-        input, select, button {
-            padding: 8px;
+        input[type="text"] {
+            padding: 8px 12px;
+            font-size: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            width: 400px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1d4ed8;
+            box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+        }
+
+        .filter-count {
+            color: #666;
+            font-size: 14px;
         }
 
         .tag {
@@ -139,38 +180,77 @@
             text-decoration: underline;
         }
 
-        details {
-            margin: 12px 0;
+        .domain-card {
+            box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+            display: inline-block;
+            padding: 16px;
+            border: 1px solid grey;
+            margin: 4px 4px 34px;
+            vertical-align: top;
+            border-radius: 10px;
+            width: calc(33% - 40px);
+            min-width: 280px;
+        }
+
+        @media (max-width: 800px) {
+            .domain-card {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+
+        details summary {
+            cursor: pointer;
+            margin-bottom: 6px;
+            font-size: 130%;
+        }
+
+        .in-focus {
+            background: #fffbeb;
+            border: 1px dashed darkred;
+        }
+
+        .focus-badge {
+            display: inline-block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #f59e0b;
+            color: white;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle;
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
 </head>
 <body>
-<div class="hero">
-    <img class="hero-logo" src="icons/logo.png" alt="Compliance">
+<div class="hero" >
+    <img class="hero-logo" id="heroLogo" src="icons/logo.png" alt="Compliance">
     <div class="hero-copy">
         <h1 id="heroTitle" style="vertical-align: top; font-size: 330%; margin-top: 0">Compliance Dashboard</h1>
         <div id="heroDescription" class="hero-description"></div>
     </div>
 </div>
-<div class="controls">
-    <select id="statusFilter">
-        <option value="">All statuses</option>
-        <option value="red">Red</option>
-        <option value="yellow">Yellow</option>
-        <option value="green">Green</option>
-    </select>
-    <input type="text" id="searchBox" placeholder="Search controls, domains, owners..."/>
+
+<div style="margin: 20px">
+    <div class="row" id="summary" style="margin-left: 6px"></div>
+
+    <div class="controls">
+        <input type="text" id="searchBox" placeholder="Search controls, domains, owners..."/>
+        <span id="filterCount" class="filter-count"></span>
+    </div>
+
+    <div id="domains"></div>
 </div>
 
-<div class="row" id="summary"></div>
-<div id="domains"></div>
-
 <script>
-    let currentData = ${data};
+    const currentData = ${data};
+    let activeStatus = '';
 
     function escapeHtml(value) {
-        return (value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')
@@ -248,69 +328,89 @@
         return weights ? (weighted / weights) : 0;
     }
 
-    function linkifyEvidence(links) {
-        if (!links || !links.length) return "<span class='muted'>No evidence links</span>";
-        return links.map(l => `<div><a href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></div>`).join("");
+    let filterFocus = false;
+
+    function toggleStatus(status) {
+        filterFocus = false;
+        activeStatus = activeStatus === status ? '' : status;
+        renderSummary();
+        renderDomains();
     }
 
-    function renderSummary(data) {
-        const score = overallMaturity(data);
-        const band = maturityBand(score, data.scoring_model);
-        const counts = countStatuses(data);
+    function toggleFocus() {
+        filterFocus = !filterFocus;
+        activeStatus = '';
+        renderSummary();
+        renderDomains();
+    }
+
+    function countInFocus(data) {
+        let count = 0;
+        data.domains.forEach(d => d.controls.forEach(c => { if (c.inFocus) count++; }));
+        return count;
+    }
+
+    function renderSummary() {
+        const score = overallMaturity(currentData);
+        const band = maturityBand(score, currentData.scoring_model);
+        const counts = countStatuses(currentData);
+        const focusCount = countInFocus(currentData);
         const totalControls = counts.red + counts.yellow + counts.green;
         document.getElementById("summary").innerHTML = `
-        <div class="card">
-          <h3>Overall maturity</h3>
-          <div><strong>${score.toFixed(2)} / 3.00</strong></div>
-          <div class="muted">${band ? band.label : "No maturity band found"}</div>
+        <div class="card focus ${filterFocus ? 'active' : ''}" onclick="toggleFocus()" style="margin-right: 24px">
+          <div style="font-size: 200%"><strong>${focusCount}</strong></div>
+          <div>In Focus</div>
         </div>
-        <div class="card red">
-          <h3>Red</h3>
-          <div><strong>${counts.red}</strong> controls</div>
+        <div class="card red ${activeStatus === 'red' ? 'active' : ''}" onclick="toggleStatus('red')">
+          <div style="font-size: 200%"><strong>${counts.red}</strong></div>
+          <div>Red</div>
         </div>
-        <div class="card yellow">
-          <h3>Yellow</h3>
-          <div><strong>${counts.yellow}</strong> controls</div>
+        <div class="card yellow ${activeStatus === 'yellow' ? 'active' : ''}" onclick="toggleStatus('yellow')">
+          <div style="font-size: 200%"><strong>${counts.yellow}</strong></div>
+          <div>Yellow</div>
         </div>
-        <div class="card green">
-          <h3>Green</h3>
-          <div><strong>${counts.green}</strong> controls</div>
+        <div class="card green ${activeStatus === 'green' ? 'active' : ''}" onclick="toggleStatus('green')">
+          <div style="font-size: 200%"><strong>${counts.green}</strong></div>
+          <div>Green</div>
         </div>
-        <div class="card">
-          <h3>Total controls</h3>
-          <div><strong>${totalControls}</strong></div>
+        <div class="card" onclick="toggleStatus('')" style="margin-left: 24px">
+          <div style="font-size: 200%"><strong>${score.toFixed(2)} / 3.00</strong></div>
+          <div>Overall maturity is ${band ? band.label.toLowerCase() : "No maturity band found"}</div>
         </div>
       `;
     }
 
-    function renderDomains(data) {
-        const statusFilter = document.getElementById("statusFilter").value.trim().toLowerCase();
+    function renderDomains() {
         const q = document.getElementById("searchBox").value.trim().toLowerCase();
+        let totalVisible = 0;
 
-        const html = data.domains.map(domain => {
+        const html = currentData.domains.map(domain => {
             const controls = domain.controls.filter(c => {
-                const matchesStatus = !statusFilter || c.status === statusFilter;
+                if (filterFocus && !c.inFocus) return false;
+                const matchesStatus = !activeStatus || c.status === activeStatus;
                 const blob = [domain.name, c.id, c.name, c.description, c.owner, c.notes].join(" ").toLowerCase();
                 const matchesSearch = !q || blob.includes(q);
                 return matchesStatus && matchesSearch;
             });
 
             if (!controls.length) return "";
+            totalVisible += controls.length;
 
             const avg = domainAverage({controls});
             return `
-          <details open style="box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px; width: 500px; display: inline-block; padding: 15px; border: 1px solid lightgrey; margin: 8px; vertical-align: top; border-radius: 12px">
-            <summary style="margin-bottom: 6px; font-size: 130%"><strong>${domain.name} ${avg.toFixed(2)} / 3.00</strong></summary>
+          <details open class="domain-card">
+            <summary><strong>${domain.name}</strong> <span class="muted" style="font-size: 70%">${avg.toFixed(2)} / 3.00</span></summary>
             <div class="muted">${domain.description || ""}</div>
+            <div style="border-bottom: 1px dashed lightgrey; margin-top: 10px"></div>
             <table>
               <tbody>
                 ${controls.map(c => `
-                  <tr>
+                  <tr class="${c.inFocus ? 'in-focus' : ''}">
                     <td style="width: 42px;">
                       <div class="${c.status}" style="height: 42px; width: 42px; border-radius: 10px"></div>
                     </td>
                     <td>
-                      <div><strong><a class="control-link" href="landing_pages/${encodeURIComponent(c.id)}.html" target="_blank" rel="noopener noreferrer">${c.name}</a></strong></div>
+                      <div><strong><a class="control-link" href="landing_pages/${encodeURIComponent(c.id)}.html" target="_blank" rel="noopener noreferrer">${c.name}</a></strong>${c.inFocus ? '<span class="focus-badge">In Focus</span>' : ''}</div>
                       <div class="muted">${c.description || ""}</div>
                     </td>
                   </tr>
@@ -322,22 +422,32 @@
         }).join("");
 
         document.getElementById("domains").innerHTML = html || "<p class='muted'>No controls match the current filters.</p>";
+
+        const countEl = document.getElementById("filterCount");
+        const totalAll = countStatuses(currentData);
+        const total = totalAll.red + totalAll.yellow + totalAll.green;
+        if (q || activeStatus || filterFocus) {
+            countEl.textContent = totalVisible + ' of ' + total + ' controls';
+        } else {
+            countEl.textContent = total + ' controls';
+        }
     }
 
-    function render() {
-        const metadata = currentData.metadata || {};
-        const pageTitle = metadata.title || "Compliance Dashboard";
-        document.title = pageTitle;
-        document.getElementById("heroTitle").textContent = pageTitle;
-        document.getElementById("heroDescription").innerHTML = escapeHtml(formatMetadataDescription(metadata));
-        renderSummary(currentData);
-        renderDomains(currentData);
+    // Initial render
+    const metadata = currentData.metadata || {};
+    const pageTitle = metadata.title || "Compliance Dashboard";
+    document.title = pageTitle;
+    document.getElementById("heroTitle").textContent = pageTitle;
+    document.getElementById("heroDescription").innerHTML = escapeHtml(formatMetadataDescription(metadata));
+    if (metadata.icon) {
+        const logo = document.getElementById("heroLogo");
+        logo.onerror = function() { this.onerror = null; this.src = 'icons/logo.png'; };
+        logo.src = 'icons/' + metadata.icon;
     }
+    renderSummary();
+    renderDomains();
 
-    render();
-
-    document.getElementById("statusFilter").addEventListener("change", () => currentData && render(currentData));
-    document.getElementById("searchBox").addEventListener("input", () => currentData && render(currentData));
+    document.getElementById("searchBox").addEventListener("input", renderDomains);
 </script>
 </body>
 </html>

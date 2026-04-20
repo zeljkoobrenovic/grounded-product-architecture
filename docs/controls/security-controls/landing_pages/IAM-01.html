@@ -15,12 +15,13 @@
             display: inline-block;
             padding: 5px 10px;
             border-radius: 999px;
-            background-color: #eef2ff;
-            color: #3730a3;
+            background-color: white;
+            color: grey;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            margin-bottom: 14px;
+            margin-bottom: 6px;
+            border: 1px solid grey;
         }
 
         h1 {
@@ -31,12 +32,12 @@
 
         .meta {
             color: #6b7280;
-            margin-bottom: 22px;
+            margin-bottom: 0px;
         }
 
         .section {
-            padding-top: 18px;
-            margin-top: 18px;
+            padding-top: 8px;
+            margin-top: 0;
         }
 
         .section-title {
@@ -44,7 +45,7 @@
             text-transform: uppercase;
             letter-spacing: 0.08em;
             color: #6b7280;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
 
         .description {
@@ -170,7 +171,7 @@
 
         .tabcontent {
             display: none;
-            padding: 0;
+            padding: 6px;
             border: 1px solid #ccc;
             border-top: none;
         }
@@ -181,13 +182,12 @@
         }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
 </head>
-<body>
-<table>
+<body onload="initTab()" onhashchange="initTab()">
+<table style="margin-left: 10px">
     <tr>
-        <td style="vertical-align: top; padding-top: 40px">
-            <img src="../icons/logo.png" style="width:108px; height:108px; margin-right:12px" alt="Compliance">
+        <td style="vertical-align: top;">
+            <img id="heroLogo" src="../icons/security.png" onerror="this.onerror=null;this.src='../icons/logo.png'" style="vertical-align: top; width:110px; height:110px; margin-right:12px" alt="Logo">
         </td>
         <td>
             <div class="eyebrow">Compliance Control</div>
@@ -197,19 +197,21 @@
     </tr>
 </table>
 
-<div class="tab">
-    <button class="tablinks active" onclick="openTab(event, 'control-tab')">Control</button>
-    <button class="tablinks" onclick="openTab(event, 'evidence-tab')">Evidence</button>
+<div style="margin: 16px">
+    <div class="tab">
+        <button id="tab_control-tab" class="tablinks" onclick="openTab('control-tab')">Control</button>
+        <button id="tab_evidence-tab" class="tablinks" onclick="openTab('evidence-tab')">Evidence</button>
+    </div>
+    <div id="control-tab" class="tabcontent" style="padding: 10px"></div>
+    <div id="evidence-tab" class="tabcontent" style="padding: 10px"></div>
 </div>
-<div id="control-tab" class="tabcontent" style="display:block; padding: 10px"></div>
-<div id="evidence-tab" class="tabcontent" style="padding: 10px"></div>
 
 <script>
-    const control = {"id": "IAM-01", "name": "MFA Enforcement", "description": "Enforce MFA for privileged access and critical business systems.", "priority": "High", "weight": 1.0, "status": "yellow", "score": 2, "owner": "", "last_reviewed": "", "target_date": "", "notes": "", "evidence_links": [], "evidence_examples": ["MFA policy", "IdP enforcement screenshot", "Coverage report by application"], "scoring_criteria": {"red": "No MFA for admins or key business systems.", "yellow": "MFA is enabled for some systems but not consistently enforced.", "green": "MFA is enforced for privileged users and critical systems with coverage evidence."}};
-    const domain = {"id": "IAM", "name": "Identity & Access Management", "description": "Access control, MFA, RBAC, reviews, and lifecycle management.", "weight": 1.4};
+    const control = {"id": "iam-01", "name": "MFA Enforcement", "description": "Enforce MFA for privileged access and critical business systems.", "priority": "High", "weight": 1.0, "status": "yellow", "score": 2, "owner": "", "last_reviewed": "", "target_date": "", "notes": "", "evidence_links": [], "evidence_examples": ["MFA policy", "IdP enforcement screenshot", "Coverage report by application"], "scoring_criteria": {"red": "No MFA for admins or key business systems.", "yellow": "MFA is enabled for some systems but not consistently enforced.", "green": "MFA is enforced for privileged users and critical systems with coverage evidence."}};
+    const domain = {"id": "iam", "name": "Identity & Access Management", "description": "Access control, MFA, RBAC, reviews, and lifecycle management.", "weight": 1.4};
 
     function escapeHtml(value) {
-        return String(value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')
@@ -230,11 +232,7 @@
     }
 
     document.getElementById('Title').innerHTML = escapeHtml(control.name || control.id || 'Compliance Control');
-    document.getElementById('Meta').innerHTML =
-        escapeHtml(domain.name || '')
-        + ' | ' + escapeHtml(control.id || '')
-        + ' | ' + escapeHtml((control.status || '').toUpperCase())
-        + ' | score ' + escapeHtml(control.score || '');
+    document.getElementById('Meta').innerHTML = escapeHtml(domain.name || '');
 
     let controlHtml = '';
     controlHtml += '<div class="section"><div class="section-title">Summary</div><div class="description">' + escapeHtml(control.description || '') + '</div></div>';
@@ -274,19 +272,29 @@
     document.getElementById('control-tab').innerHTML = controlHtml;
     document.getElementById('evidence-tab').innerHTML = evidenceHtml;
 
-    function openTab(evt, tabName) {
+    function initTab() {
+        let tabName = 'control-tab';
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (document.getElementById('tab_' + hash)) {
+                tabName = hash;
+            }
+        }
+        openTab(tabName);
+    }
+
+    function openTab(tabName) {
         const tabcontent = document.getElementsByClassName('tabcontent');
         for (let i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = 'none';
         }
-
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
         }
-
+        history.pushState({}, '', '#' + tabName);
         document.getElementById(tabName).style.display = 'block';
-        evt.currentTarget.className += ' active';
+        document.getElementById('tab_' + tabName).className += ' active';
     }
 </script>
 </body>

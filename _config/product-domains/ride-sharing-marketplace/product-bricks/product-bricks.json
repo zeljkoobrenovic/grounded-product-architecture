@@ -32,16 +32,16 @@
     "rendering": {
       "rows": [
         {
-          "row": 2,
+          "row": 1,
           "rootGroupNames": [
             "Rider Demand and Trip Experience",
-            "Driver Supply and Operations"
+            "Driver Supply and Operations",
+            "Marketplace Controls and Special Flows"
           ]
         },
         {
-          "row": 3,
+          "row": 2,
           "rootGroupNames": [
-            "Marketplace Controls and Special Flows",
             "Platform Foundation"
           ]
         }
@@ -63,6 +63,18 @@
               "name": "Trip Request and Intent Capture",
               "type": "full-stack",
               "description": "Captures rider pickup, destination, timing, ride type, account context, and trip intent before dispatch begins.",
+              "links": [
+                {
+                  "label": "The Architecture of Schemaless, Uber Engineering's Trip Datastore Using MySQL",
+                  "url": "https://www.uber.com/en-IT/blog/schemaless-part-two-architecture/",
+                  "note": "Explains the distributed trip datastore architecture behind core trip state."
+                },
+                {
+                  "label": "Using Triggers On Schemaless, Uber Engineering's Datastore Using MySQL",
+                  "url": "https://www.uber.com/blog/schemaless-part-three-datastore-triggers/",
+                  "note": "Shows how trip lifecycle changes feed billing, workflow, and downstream processing."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Request Capture and Validation",
@@ -98,6 +110,18 @@
                 }
               ],
               "brickDependencies": [
+                {
+                  "targetBrickId": "mapp",
+                  "type": "mobile-surface",
+                  "interface": "Mobile Experience SDK",
+                  "description": "Depends on Mobile App Experience Platform for realtime client state, analytics instrumentation, and resilient trip-request surfaces."
+                },
+                {
+                  "targetBrickId": "capi",
+                  "type": "client-api",
+                  "interface": "Client Experience API",
+                  "description": "Depends on Client API Composition and Server-Driven Experience to assemble rider-facing view models and action contracts without forcing mobile apps to own marketplace orchestration details."
+                },
                 {
                   "targetBrickId": "pric",
                   "type": "pricing",
@@ -174,6 +198,23 @@
               "name": "ETA, Maps and Routing Intelligence",
               "type": "service",
               "description": "Provides route estimation, pickup guidance, airport geofencing, and live map context for riders and drivers.",
+              "links": [
+                {
+                  "label": "ETA Phone Home: How Uber Engineers an Efficient Route",
+                  "url": "https://www.uber.com/en-US/blog/engineering-routing-engine/",
+                  "note": "Covers an in-house routing and ETA stack for pickup and trip-time estimation at marketplace scale."
+                },
+                {
+                  "label": "How We Built Uber Engineering's Highest Query per Second Service Using Go",
+                  "url": "https://www.uber.com/en-CI/blog/go-geofence-highest-query-per-second-service/",
+                  "note": "Explains the geofence service used for geo-based product availability, airports, and surge zones."
+                },
+                {
+                  "label": "Improving Uber's Mapping Accuracy with CatchME",
+                  "url": "https://www.uber.com/en-US/blog/mapping-accuracy-with-catchme/",
+                  "note": "Shows how mapping feedback loops improve route quality and ETA accuracy."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "ETA Prediction Models",
@@ -203,7 +244,14 @@
                   "type": "event"
                 }
               ],
-              "brickDependencies": [],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Edge and Traffic Control APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for low-latency routing calls, failover, and resilient map-serving paths."
+                }
+              ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "system": "Maps and traffic providers",
@@ -245,6 +293,18 @@
               "name": "Rider Identity, Wallet and Payments",
               "type": "full-stack",
               "description": "Manages rider identity, family or business profiles, payment methods, receipts, refunds, and billing context.",
+              "links": [
+                {
+                  "label": "Building High Throughput Payment Account Processing",
+                  "url": "https://www.uber.com/iq/en/blog/high-throughput-processing/",
+                  "note": "Describes hot-account financial processing and audit-safe money movement in a large payments platform."
+                },
+                {
+                  "label": "Use Passkeys Wherever You Sign in to Uber",
+                  "url": "https://www.uber.com/en-US/blog/use-passkeys-wherever-you-sign-in-to-uber/",
+                  "note": "Explains account authentication architecture for lower-friction, stronger identity security."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Identity and Account Graph",
@@ -269,7 +329,26 @@
                   "type": "api"
                 }
               ],
-              "brickDependencies": [],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "payx",
+                  "type": "payment-platform",
+                  "interface": "Payments Platform API",
+                  "description": "Depends on Payments Platform and Ledger for checkout orchestration, refunds, and auditable money movement."
+                },
+                {
+                  "targetBrickId": "risk",
+                  "type": "risk",
+                  "interface": "Risk Decision API",
+                  "description": "Depends on Fraud and Risk Decisioning for account-protection and payment-abuse checks."
+                },
+                {
+                  "targetBrickId": "mapp",
+                  "type": "mobile-surface",
+                  "interface": "Mobile Experience SDK",
+                  "description": "Depends on Mobile App Experience Platform for shared client-side identity, wallet, and receipt surfaces."
+                }
+              ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "system": "Payment processors",
@@ -308,6 +387,260 @@
                   "assetId": "audit-log",
                   "role": "publish",
                   "description": "Publishes events or audit records related to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "support-and-resolution",
+          "description": "",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "supp",
+              "name": "Support Automation and Issue Resolution",
+              "type": "full-stack",
+              "description": "Handles in-app support entry, issue classification, self-service refunds or corrections, agent context assembly, and trip-resolution workflows for riders and drivers.",
+              "links": [
+                {
+                  "label": "Architecting Uber Support with Customer Obsession Engineering",
+                  "url": "https://www.uber.com/blog/customer-obsession-engineering/",
+                  "note": "Explains an in-app support framework, self-service flows, agent tooling, and issue routing model."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Issue Intake and Classification",
+                  "description": "Captures issue type, trip context, and structured resolution intent from riders and drivers.",
+                  "type": "service"
+                },
+                {
+                  "title": "Self-Service Resolution Engine",
+                  "description": "Applies fixed rules and workflow components for refunds, adjustments, ratings, and trip corrections.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Agent Context and Routing Workspace",
+                  "description": "Assembles trip, payment, safety, and account context for faster routing and human resolution.",
+                  "type": "full-stack"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Support Workflow API",
+                  "description": "API for issue creation, self-service decisions, and case state transitions.",
+                  "type": "api"
+                },
+                {
+                  "title": "In-App Help Surface",
+                  "description": "Rider and driver self-service support experience across mobile and web.",
+                  "type": "ui"
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "trip",
+                  "type": "context",
+                  "interface": "Trip Request API",
+                  "description": "Depends on Trip Request and Intent Capture for trip-level issue context and lifecycle history."
+                },
+                {
+                  "targetBrickId": "ridp",
+                  "type": "billing",
+                  "interface": "Identity and Billing API",
+                  "description": "Depends on Rider Identity, Wallet and Payments for receipts, adjustments, and refund execution."
+                },
+                {
+                  "targetBrickId": "safe",
+                  "type": "trust",
+                  "interface": "Safety Toolkit API",
+                  "description": "Depends on Safety and Trust Operations for incidents, escalations, and sensitive trust workflows."
+                },
+                {
+                  "targetBrickId": "data",
+                  "type": "analytics",
+                  "interface": "Analytics API",
+                  "description": "Depends on Marketplace Intelligence and Analytics for support routing feedback and resolution-quality measurement."
+                },
+                {
+                  "targetBrickId": "capi",
+                  "type": "client-experience",
+                  "interface": "Client Experience API",
+                  "description": "Depends on Client API Composition and Server-Driven Experience to render contextual help entry points, issue panels, and server-controlled support actions consistently across apps."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [
+                {
+                  "system": "Rider and driver applications",
+                  "type": "channel-consumer",
+                  "interface": "Support Workflow API",
+                  "description": "Mobile and web clients depend on structured issue submission and self-service resolution flows."
+                }
+              ],
+              "dataDependencies": [
+                {
+                  "assetId": "trip-request-and-intent-capture",
+                  "role": "read",
+                  "description": "Reads Trip Request And Intent Capture to assemble issue context and support workflows.",
+                  "storeIds": [
+                    "trip-request-and-intent-capture-db"
+                  ]
+                },
+                {
+                  "assetId": "rider-identity-wallet-and-payments",
+                  "role": "read",
+                  "description": "Reads Rider Identity Wallet And Payments to support receipt lookup and financial issue handling.",
+                  "storeIds": [
+                    "rider-identity-wallet-and-payments-store"
+                  ]
+                },
+                {
+                  "assetId": "safety-and-trust-operations",
+                  "role": "read",
+                  "description": "Reads Safety And Trust Operations to route incidents into trust and safety workflows.",
+                  "storeIds": [
+                    "safety-and-trust-operations-stream"
+                  ]
+                },
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes support-case actions and resolution records to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "client-api-and-presentation",
+          "description": "",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "capi",
+              "name": "Client API Composition and Server-Driven Experience",
+              "type": "full-stack",
+              "description": "Provides mobile-focused backend-for-frontend composition, decomposed client APIs, server-driven view and action contracts, and AI-assisted product prototyping workflows for trip, support, and special marketplace flows.",
+              "links": [
+                {
+                  "label": "AI Prototyping Is Changing How We Build Products at Uber",
+                  "url": "https://www.uber.com/us/en/blog/ai-prototyping/",
+                  "note": "Shows how product, design, engineering, operations, policy, and legal can align faster around working prototypes."
+                },
+                {
+                  "label": "How Uber Built an Agentic System to Automate Design Specs in Minutes",
+                  "url": "https://www.uber.com/us/en/blog/automate-design-specs/",
+                  "note": "Supports AI-assisted design-to-engineering handoff and faster specification of client-facing product changes."
+                },
+                {
+                  "label": "Decomposing network calls on the Lyft mobile apps",
+                  "url": "https://diff.blog/post/decomposing-network-calls-on-the-lyft-mobile-apps-56594",
+                  "note": "Describes a move away from monolithic mobile endpoints toward decomposed APIs better aligned with client concerns."
+                },
+                {
+                  "label": "The Journey to Server Driven UI At Lyft Bikes and Scooters",
+                  "url": "https://eng.lyft.com/the-journey-to-server-driven-ui-at-lyft-bikes-and-scooters-c19264a0378e",
+                  "note": "Shows a move from business models to BFF-driven view models, reusable components, and server-controlled actions."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Backend for Frontend Orchestration",
+                  "description": "Aggregates trip, pricing, identity, and routing state into client-facing responses built for app flows rather than backend ownership boundaries.",
+                  "type": "service"
+                },
+                {
+                  "title": "Server-Driven Components and Actions",
+                  "description": "Defines reusable view models, semantic components, and action contracts so product changes can ship with less app-release coupling.",
+                  "type": "full-stack"
+                },
+                {
+                  "title": "Client Contract Decomposition Layer",
+                  "description": "Breaks large mobile responses into focused contracts and capability-gated payloads that are easier to evolve safely across rider and driver apps.",
+                  "type": "service"
+                },
+                {
+                  "title": "AI-Assisted Experience Prototyping",
+                  "description": "Turns product concepts, flow requirements, and design-system constraints into reviewable prototypes and implementation-ready experience specifications.",
+                  "type": "development"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Client Experience API",
+                  "description": "Mobile-facing API layer returning flow-specific view models, actions, and composed state.",
+                  "type": "api"
+                },
+                {
+                  "title": "View Model Schema",
+                  "description": "Schema contract for server-driven panels, actions, and capability-aware mobile rendering.",
+                  "type": "event"
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "trip",
+                  "type": "trip-state",
+                  "interface": "Trip Request API",
+                  "description": "Depends on Trip Request and Intent Capture for rider intent, trip lifecycle state, and demand context."
+                },
+                {
+                  "targetBrickId": "etar",
+                  "type": "routing",
+                  "interface": "ETA and Routing API",
+                  "description": "Depends on ETA, Maps and Routing Intelligence for pickup guidance, route context, and trip-state presentation."
+                },
+                {
+                  "targetBrickId": "ridp",
+                  "type": "identity",
+                  "interface": "Profile and Payment API",
+                  "description": "Depends on Rider Identity, Wallet and Payments for account, wallet, and receipt context in composed experiences."
+                },
+                {
+                  "targetBrickId": "mapp",
+                  "type": "mobile-platform",
+                  "interface": "Mobile Experience SDK",
+                  "description": "Depends on Mobile App Experience Platform for client capability signals, realtime synchronization, and mobile runtime integration."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [
+                {
+                  "system": "Rider and driver mobile applications",
+                  "type": "channel-consumer",
+                  "interface": "Client Experience API",
+                  "description": "Client applications consume composed APIs, server-driven panels, and action contracts instead of stitching many backend services directly."
+                }
+              ],
+              "dataDependencies": [
+                {
+                  "assetId": "trip-request-and-intent-capture",
+                  "role": "read",
+                  "description": "Reads Trip Request And Intent Capture to build client-facing trip and demand experiences.",
+                  "storeIds": [
+                    "trip-request-and-intent-capture-db"
+                  ]
+                },
+                {
+                  "assetId": "customer-profile",
+                  "role": "read",
+                  "description": "Reads Customer Profile to personalize experience composition and capability-aware UI contracts.",
+                  "storeIds": [
+                    "customer-profile-db"
+                  ]
+                },
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes composed action execution and contract-level diagnostics to Audit Log.",
                   "storeIds": [
                     "audit-log-stream"
                   ]
@@ -363,6 +696,18 @@
                   "type": "trust",
                   "interface": "Trust Verification API",
                   "description": "Depends on Safety and Trust Operations for identity and trust signals."
+                },
+                {
+                  "targetBrickId": "risk",
+                  "type": "risk",
+                  "interface": "Risk Decision API",
+                  "description": "Depends on Fraud and Risk Decisioning for supply-side integrity checks and suspicious onboarding pattern detection."
+                },
+                {
+                  "targetBrickId": "mapp",
+                  "type": "mobile-surface",
+                  "interface": "Mobile Experience SDK",
+                  "description": "Depends on Mobile App Experience Platform for driver-facing onboarding status, document flows, and mobile diagnostics."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
@@ -413,6 +758,13 @@
               "name": "Driver Earnings and Incentive Management",
               "type": "service",
               "description": "Calculates and explains driver earnings, incentives, adjustments, cash-out, and payout visibility.",
+              "links": [
+                {
+                  "label": "Building High Throughput Payment Account Processing",
+                  "url": "https://www.uber.com/iq/en/blog/high-throughput-processing/",
+                  "note": "Relevant to payout consistency, account-ledger throughput, and immutable financial changelogs."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Fare Breakdown Calculator",
@@ -443,6 +795,18 @@
                   "type": "pricing",
                   "interface": "Marketplace Pricing Events",
                   "description": "Depends on Dynamic Pricing and Incentives for fare and incentive logic."
+                },
+                {
+                  "targetBrickId": "payx",
+                  "type": "payout-ledger",
+                  "interface": "Payments Platform API",
+                  "description": "Depends on Payments Platform and Ledger for payout execution, balances, and auditable financial movement."
+                },
+                {
+                  "targetBrickId": "mapp",
+                  "type": "mobile-surface",
+                  "interface": "Mobile Experience SDK",
+                  "description": "Depends on Mobile App Experience Platform for driver-visible payout, earnings, and incentive surfaces."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
@@ -535,6 +899,18 @@
                   "type": "analytics",
                   "interface": "Reporting Feed",
                   "description": "Depends on Marketplace Intelligence and Analytics for reporting views."
+                },
+                {
+                  "targetBrickId": "payx",
+                  "type": "financial-control",
+                  "interface": "Payments Platform API",
+                  "description": "Depends on Payments Platform and Ledger for billing setup, invoicing, and reconciliation-aligned program controls."
+                },
+                {
+                  "targetBrickId": "apix",
+                  "type": "integration",
+                  "interface": "Partner API Gateway",
+                  "description": "Depends on Partner API and Integration Exchange for enterprise-facing configuration, exports, and downstream system connectivity."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [],
@@ -593,6 +969,18 @@
               "name": "Dispatch and Matching Engine",
               "type": "service",
               "description": "Matches rider demand to the best available driver or fleet supply while honoring geography, product rules, and trip quality constraints.",
+              "links": [
+                {
+                  "label": "Dynamic Pricing and Matching in Ride-Hailing Platforms",
+                  "url": "https://www.uber.com/blog/research/dynamic-pricing-and-matching-in-ride-hailing-platforms/",
+                  "note": "Connects industrial dispatch and matching decisions with pricing and waiting-time tradeoffs."
+                },
+                {
+                  "label": "ETA Phone Home: How Uber Engineers an Efficient Route",
+                  "url": "https://www.uber.com/en-US/blog/engineering-routing-engine/",
+                  "note": "Relevant because dispatch quality depends on fast, accurate pickup-time estimation."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Real-time Supply Selector",
@@ -640,6 +1028,18 @@
                   "type": "workflow",
                   "interface": "Reserve and Zone Rules API",
                   "description": "Depends on Reserve, Share and Airport Orchestration for special flow handling."
+                },
+                {
+                  "targetBrickId": "expm",
+                  "type": "decisioning",
+                  "interface": "Prediction and Feature API",
+                  "description": "Depends on Experimentation and ML Decisioning Platform for controlled matching policy changes and online decision support."
+                },
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Service Runtime APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for resilient low-latency dispatch execution under load."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [],
@@ -683,6 +1083,18 @@
               "name": "Dynamic Pricing and Incentives",
               "type": "service",
               "description": "Calculates upfront fares, surge multipliers, discounts, and driver incentives based on demand, supply, market rules, and product type.",
+              "links": [
+                {
+                  "label": "Dynamic Pricing and Matching in Ride-Hailing Platforms",
+                  "url": "https://www.uber.com/blog/research/dynamic-pricing-and-matching-in-ride-hailing-platforms/",
+                  "note": "Explains the algorithmic relationship between dynamic pricing, matching, waiting, and welfare."
+                },
+                {
+                  "label": "Under the Hood of Uber's Experimentation Platform",
+                  "url": "https://www.uber.com/en-US/blog/xp/",
+                  "note": "Relevant to pricing guardrails, launch control, and measuring treatment effects safely."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Quote and Fare Engine",
@@ -718,6 +1130,18 @@
                   "type": "analytics",
                   "interface": "Marketplace Signal Feed",
                   "description": "Depends on Marketplace Intelligence and Analytics for demand and conversion feedback."
+                },
+                {
+                  "targetBrickId": "expm",
+                  "type": "experimentation",
+                  "interface": "Experiment Assignment API",
+                  "description": "Depends on Experimentation and ML Decisioning Platform for controlled launches, policy tests, and pricing treatments."
+                },
+                {
+                  "targetBrickId": "payx",
+                  "type": "billing",
+                  "interface": "Payments Platform API",
+                  "description": "Depends on Payments Platform and Ledger for fee orchestration, settlement alignment, and refund-sensitive fare controls."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [],
@@ -753,6 +1177,18 @@
               "name": "Reserve, Share and Airport Orchestration",
               "type": "full-stack",
               "description": "Handles scheduled trips, shared-ride routing logic, and constrained pickup or drop-off operations such as airports and shuttles.",
+              "links": [
+                {
+                  "label": "How We Built Uber Engineering's Highest Query per Second Service Using Go",
+                  "url": "https://www.uber.com/en-CI/blog/go-geofence-highest-query-per-second-service/",
+                  "note": "Relevant to airport, venue, and neighborhood operating rules expressed as geofences."
+                },
+                {
+                  "label": "ETA Phone Home: How Uber Engineers an Efficient Route",
+                  "url": "https://www.uber.com/en-US/blog/engineering-routing-engine/",
+                  "note": "Important for pooled routing, scheduled pickup timing, and special-trip feasibility."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Scheduled Trip Planner",
@@ -794,6 +1230,24 @@
                   "type": "routing",
                   "interface": "ETA and Routing API",
                   "description": "Depends on ETA, Maps and Routing Intelligence for scheduling and pooled routing logic."
+                },
+                {
+                  "targetBrickId": "mapp",
+                  "type": "mobile-surface",
+                  "interface": "Mobile Experience SDK",
+                  "description": "Depends on Mobile App Experience Platform for rider and driver-facing special-trip messaging, sequencing, and realtime updates."
+                },
+                {
+                  "targetBrickId": "capi",
+                  "type": "client-api",
+                  "interface": "Client Experience API",
+                  "description": "Depends on Client API Composition and Server-Driven Experience to assemble reserve, pooling, and airport-specific panels without hardcoding all flow variants in the apps."
+                },
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Edge and Traffic Control APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for resilient operations in high-volume airport and scheduled-trip flows."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
@@ -842,7 +1296,39 @@
               "id": "safe",
               "name": "Safety and Trust Operations",
               "type": "full-stack",
-              "description": "Provides identity assurance, trip safety tooling, trust controls, incident workflows, and abuse or fraud prevention.",
+              "description": "Provides identity assurance, trip safety tooling, trust controls, privileged-access governance, incident workflows, and abuse or fraud prevention.",
+              "links": [
+                {
+                  "label": "Mastermind: Using Uber Engineering to Combat Fraud in Real Time",
+                  "url": "https://www.uber.com/blog/Mastermind/",
+                  "note": "Describes a real-time fraud rules engine for payment fraud, account takeover, collusion, and promo abuse."
+                },
+                {
+                  "label": "Fraud Detection: Using Relational Graph Learning to Detect Collusion",
+                  "url": "https://www.uber.com/us/en/blog/fraud-detection/",
+                  "note": "Shows how graph learning feeds downstream risk models for rider and driver fraud scoring."
+                },
+                {
+                  "label": "Architecting Uber Support with Customer Obsession Engineering",
+                  "url": "https://www.uber.com/blog/customer-obsession-engineering/",
+                  "note": "Relevant to incident workflows, self-service issue resolution, and trust operations tooling at marketplace scale."
+                },
+                {
+                  "label": "Superuser Gateway: Guardrails for Privileged Command Execution",
+                  "url": "https://www.uber.com/us/en/blog/superuser-gateway-guardrails/",
+                  "note": "Adds evidence for privileged operations, command guardrails, and auditable human access to production systems."
+                },
+                {
+                  "label": "Adding Determinism and Safety to Uber IAM Policy Changes",
+                  "url": "https://www.uber.com/us/en/blog/adding-determinism-and-safety-to-uber-iam-policy-changes/",
+                  "note": "Supports deterministic access-policy updates and safer identity and access governance."
+                },
+                {
+                  "label": "Building Uber's Multi-Cloud Secrets Management Platform to Enhance Security",
+                  "url": "https://www.uber.com/us/en/blog/building-ubers-multi-cloud-secrets-management-platform/",
+                  "note": "Supports secrets governance and secure access patterns across shared marketplace infrastructure."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Identity and Verification Controls",
@@ -858,6 +1344,16 @@
                   "title": "Incident and Trust Workflow Engine",
                   "description": "Routes support, fraud, and safety events into operational case handling.",
                   "type": "operations"
+                },
+                {
+                  "title": "Privileged Access and IAM Change Safety",
+                  "description": "Controls privileged commands, deterministic access-policy changes, review paths, and audit trails for sensitive operational actions.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Secrets and Sensitive Access Governance",
+                  "description": "Manages secrets, service credentials, and access boundaries for safety, trust, and production operations.",
+                  "type": "service"
                 }
               ],
               "interfaces": [
@@ -872,7 +1368,32 @@
                   "type": "ui"
                 }
               ],
-              "brickDependencies": [],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "payx",
+                  "type": "payment-platform",
+                  "interface": "Payments Platform API",
+                  "description": "Depends on Payments Platform and Ledger for authorization, capture, refund, and ledger integrity."
+                },
+                {
+                  "targetBrickId": "risk",
+                  "type": "risk-signal",
+                  "interface": "Risk Decision API",
+                  "description": "Depends on Fraud and Risk Decisioning for payment abuse, account takeover, and collusion signals."
+                },
+                {
+                  "targetBrickId": "supp",
+                  "type": "resolution",
+                  "interface": "Support Workflow API",
+                  "description": "Depends on Support Automation and Issue Resolution for operational follow-up and structured incident handling."
+                },
+                {
+                  "targetBrickId": "mapp",
+                  "type": "mobile-surface",
+                  "interface": "Mobile Experience SDK",
+                  "description": "Depends on Mobile App Experience Platform for in-app safety surfaces, realtime event delivery, and customer-visible trust controls."
+                }
+              ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "system": "Emergency and security partners",
@@ -920,6 +1441,802 @@
           ]
         },
         {
+          "name": "risk-and-decisioning",
+          "description": "",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "risk",
+              "name": "Fraud and Risk Decisioning",
+              "type": "service",
+              "description": "Provides real-time fraud rules, graph-based risk scoring, risk challenges, explainable risk models, and decision checkpoints for payment abuse, account takeover, collusion, and promotion misuse.",
+              "links": [
+                {
+                  "label": "Mastermind: Using Uber Engineering to Combat Fraud in Real Time",
+                  "url": "https://www.uber.com/blog/Mastermind/",
+                  "note": "Describes a low-latency fraud rules engine and checkpoint architecture."
+                },
+                {
+                  "label": "Fraud Detection: Using Relational Graph Learning to Detect Collusion",
+                  "url": "https://www.uber.com/us/en/blog/fraud-detection/",
+                  "note": "Shows how graph learning produces risk features for rider and driver fraud detection."
+                },
+                {
+                  "label": "How Uber Processes Early Chargeback Signals",
+                  "url": "https://www.uber.com/us/en/blog/how-uber-processes-early-chargeback-signals/",
+                  "note": "Adds evidence for fast payment-risk feedback loops and chargeback-aware financial decisioning."
+                },
+                {
+                  "label": "Stopping Uber Fraudsters Through Risk Challenges",
+                  "url": "https://www.uber.com/us/en/blog/stopping-uber-fraudsters-through-risk-challenges/",
+                  "note": "Shows how risk challenges can reduce fraud while controlling customer friction."
+                },
+                {
+                  "label": "Enabling Deep Model Explainability with Integrated Gradients at Uber",
+                  "url": "https://www.uber.com/us/en/blog/enabling-deep-model-explainability-with-integrated-gradients/",
+                  "note": "Relevant to explainability for high-impact ML decisions such as fraud, pricing, and marketplace risk."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Real-time Risk Rules Engine",
+                  "description": "Applies sub-second policy and fraud rules at key payment and account checkpoints.",
+                  "type": "service"
+                },
+                {
+                  "title": "Graph Risk Scoring",
+                  "description": "Computes rider and driver fraud scores from behavioral and relational signals.",
+                  "type": "service"
+                },
+                {
+                  "title": "Action and Review Controls",
+                  "description": "Routes blocks, holds, step-up checks, and analyst-review actions based on risk confidence.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Risk Challenges and Customer Friction Control",
+                  "description": "Selects challenge, hold, block, or allow outcomes based on fraud confidence, customer impact, and financial exposure.",
+                  "type": "service"
+                },
+                {
+                  "title": "Risk Model Explainability",
+                  "description": "Provides feature attribution and model diagnostics so risk teams can audit decisions, tune thresholds, and handle escalations.",
+                  "type": "operations"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Risk Decision API",
+                  "description": "API for synchronous risk decisions and asynchronous case actions.",
+                  "type": "api"
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "ridp",
+                  "type": "identity",
+                  "interface": "Identity and Billing API",
+                  "description": "Depends on Rider Identity, Wallet and Payments for account, billing, and payment context."
+                },
+                {
+                  "targetBrickId": "driv",
+                  "type": "eligibility",
+                  "interface": "Driver Eligibility API",
+                  "description": "Depends on Driver Onboarding and Compliance for supply identity and eligibility context."
+                },
+                {
+                  "targetBrickId": "trip",
+                  "type": "behavioral-context",
+                  "interface": "Request Events",
+                  "description": "Depends on Trip Request and Intent Capture for trip and request behavior signals."
+                },
+                {
+                  "targetBrickId": "dplt",
+                  "type": "graph-data",
+                  "interface": "Streaming Data API",
+                  "description": "Depends on Data Platform and Streaming Foundation for large-scale feature pipelines and relational fraud-signal computation."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": [
+                {
+                  "assetId": "identity-credential",
+                  "role": "read",
+                  "description": "Reads Identity Credential to support fraud and account-integrity checks.",
+                  "storeIds": [
+                    "identity-credential-db"
+                  ]
+                },
+                {
+                  "assetId": "transaction",
+                  "role": "read",
+                  "description": "Reads Transaction to evaluate payment abuse, chargebacks, and financial anomalies.",
+                  "storeIds": [
+                    "transaction-db"
+                  ]
+                },
+                {
+                  "assetId": "rider-identity-wallet-and-payments",
+                  "role": "read",
+                  "description": "Reads Rider Identity Wallet And Payments for account and payment risk features.",
+                  "storeIds": [
+                    "rider-identity-wallet-and-payments-store"
+                  ]
+                },
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes risk actions and analyst-review outcomes to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "expm",
+              "name": "Experimentation and ML Decisioning Platform",
+              "type": "service",
+              "description": "Provides experiment assignment, holdouts, treatment measurement, feature management, model serving, recommendation/search decisioning, GenAI tooling, and responsible AI governance for pricing, dispatch, support, and growth decisions.",
+              "links": [
+                {
+                  "label": "Under the Hood of Uber's Experimentation Platform",
+                  "url": "https://www.uber.com/en-US/blog/xp/",
+                  "note": "Explains an experimentation stack for launches, monitoring, and treatment measurement."
+                },
+                {
+                  "label": "Meet Michelangelo: Uber's Machine Learning Platform",
+                  "url": "https://www.uber.com/us/en/blog/michelangelo-machine-learning-platform/",
+                  "note": "Explains a shared ML workflow, feature store, training, deployment, and prediction infrastructure."
+                },
+                {
+                  "label": "Open Source and In-House: How Uber Optimizes LLM Training",
+                  "url": "https://www.uber.com/us/en/blog/open-source-and-in-house-how-uber-optimizes-llm-training/",
+                  "note": "Adds evidence for LLM training infrastructure, model iteration, and platform-level AI optimization."
+                },
+                {
+                  "label": "Under the Hood: Scaling Responsible AI at Uber",
+                  "url": "https://www.uber.com/blog/scaling-responsible-ai/",
+                  "note": "Shows responsible-AI controls, review workflows, and governance needs around AI-enabled product decisions."
+                },
+                {
+                  "label": "Innovative Recommendation Applications Using Two Tower Embeddings at Uber",
+                  "url": "https://www.uber.com/us/en/blog/innovative-recommendation-applications-using-two-tower-embeddings/",
+                  "note": "Supports recommendation and candidate-ranking use cases for marketplace discovery, growth, and operational decisioning."
+                },
+                {
+                  "label": "Making Uber's Experiment Evaluation Engine 100x Faster",
+                  "url": "https://www.uber.com/us/en/blog/making-ubers-experiment-evaluation-engine-100x-faster/",
+                  "note": "Highlights the need for fast, trusted experiment evaluation loops at marketplace scale."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Experiment Assignment and Holdouts",
+                  "description": "Manages treatments, universal holdouts, and rollout rules across product surfaces and decision services.",
+                  "type": "service"
+                },
+                {
+                  "title": "Feature and Model Serving",
+                  "description": "Serves reusable features, online predictions, and model versioning for marketplace decisions.",
+                  "type": "service"
+                },
+                {
+                  "title": "Treatment Measurement and Monitoring",
+                  "description": "Tracks experiment effects, regressions, and quality metrics for decisions in production.",
+                  "type": "operations"
+                },
+                {
+                  "title": "GenAI and LLM Platform Services",
+                  "description": "Supports LLM training, prompt and agent tooling, model evaluation, and reusable AI capabilities for product and operations teams.",
+                  "type": "service"
+                },
+                {
+                  "title": "Responsible AI and Model Governance",
+                  "description": "Applies model review, explainability, policy checks, and audit trails to AI-enabled marketplace decisions.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Recommendation and Search Decisioning",
+                  "description": "Serves embeddings, candidate ranking, and personalization decisions for marketplace search, feed, and growth surfaces.",
+                  "type": "service"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Experiment Assignment API",
+                  "description": "API for treatment assignment and launch control.",
+                  "type": "api"
+                },
+                {
+                  "title": "Prediction and Feature API",
+                  "description": "API for model predictions and online feature retrieval.",
+                  "type": "api"
+                },
+                {
+                  "title": "Model Governance and Evaluation API",
+                  "description": "API for model registration, evaluation status, explainability metadata, and responsible-AI review outcomes.",
+                  "type": "api"
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "dplt",
+                  "type": "data-platform",
+                  "interface": "Streaming Data API",
+                  "description": "Depends on Data Platform and Streaming Foundation for large-scale feature pipelines, batch and streaming ingestion, and durable data serving."
+                },
+                {
+                  "targetBrickId": "data",
+                  "type": "measurement",
+                  "interface": "Analytics API",
+                  "description": "Depends on Marketplace Intelligence and Analytics for experiment metrics and operational feedback loops."
+                },
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Service Runtime APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for resilient online serving, rollout control, and distributed model operations."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": [
+                {
+                  "assetId": "dispatch-and-matching",
+                  "role": "read",
+                  "description": "Reads Dispatch And Matching to support decision quality measurement and candidate scoring.",
+                  "storeIds": [
+                    "dispatch-and-matching-db"
+                  ]
+                },
+                {
+                  "assetId": "dynamic-pricing-and-incentives",
+                  "role": "read",
+                  "description": "Reads Dynamic Pricing And Incentives to support pricing experimentation and model monitoring.",
+                  "storeIds": [
+                    "dynamic-pricing-and-incentives-db"
+                  ]
+                },
+                {
+                  "assetId": "eta-maps-and-routing-intelligence",
+                  "role": "read",
+                  "description": "Reads Eta Maps And Routing Intelligence to support ETA-sensitive model features and experiment measurement.",
+                  "storeIds": [
+                    "eta-maps-and-routing-intelligence-db"
+                  ]
+                },
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes experiment and model deployment actions to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "payments-and-financial-control",
+          "description": "",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "payx",
+              "name": "Payments Platform and Ledger",
+              "type": "service",
+              "description": "Provides checkout orchestration, high-throughput account processing, collections, authorizations, captures, refunds, disbursements, double-entry bookkeeping, audit controls, and auditable money movement across rider and driver flows.",
+              "links": [
+                {
+                  "label": "Engineering Uber's Next-Gen Payments Platform",
+                  "url": "https://www.uber.com/en-US/blog/payments-platform/",
+                  "note": "Explains payments collections and disbursements architecture, double-entry bookkeeping, and exactly-once processing."
+                },
+                {
+                  "label": "Building High Throughput Payment Account Processing",
+                  "url": "https://www.uber.com/iq/en/blog/high-throughput-processing/",
+                  "note": "Covers hot-account financial processing, consistency guarantees, and immutable account changelogs."
+                },
+                {
+                  "label": "Unified Checkout: Streamlining Uber's Payment Ecosystem",
+                  "url": "https://www.uber.com/en-US/blog/unified-checkout/",
+                  "note": "Shows the shared checkout orchestration layer that decouples payment logic from line-of-business services."
+                },
+                {
+                  "label": "Automated Audit Framework For Internet Scale Financial Transactions",
+                  "url": "https://www.uber.com/us/en/blog/automated-audit-framework-for-internet-scale-financial-transactions/",
+                  "note": "Supports the financial correctness, reconciliation, and audit-control responsibilities of the payments brick."
+                },
+                {
+                  "label": "Ensuring Precision and Integrity: A Deep Dive into Uber's Accounting Data Testing Strategies",
+                  "url": "https://www.uber.com/us/en/blog/accounting-data-testing-strategies/",
+                  "note": "Adds evidence for automated testing and data-quality controls around accounting and ledger data."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Checkout and Payment Orchestration",
+                  "description": "Runs payment-method preparation, auth flows, actioning, and generic checkout operations across ride and mobility flows.",
+                  "type": "service"
+                },
+                {
+                  "title": "Collections and Disbursements Ledger",
+                  "description": "Maintains double-entry money movement, captures, refunds, and driver payout accounting.",
+                  "type": "service"
+                },
+                {
+                  "title": "Processor and Banking Integrations",
+                  "description": "Connects third-party processors, banks, local methods, and disbursement rails with retry-safe integration patterns.",
+                  "type": "integration"
+                },
+                {
+                  "title": "High-Throughput Account Processing",
+                  "description": "Processes hot accounts, immutable account changelogs, and financial state transitions with consistency and throughput guarantees.",
+                  "type": "service"
+                },
+                {
+                  "title": "Financial Audit and Data Testing Controls",
+                  "description": "Runs automated reconciliation, accounting-data validation, and audit workflows for payment and ledger correctness.",
+                  "type": "operations"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Payments Platform API",
+                  "description": "API for payment intents, authorization, capture, refunds, and payout actions.",
+                  "type": "api"
+                },
+                {
+                  "title": "Payment Events Stream",
+                  "description": "Event stream for payment confirmations, failures, refunds, and settlement outcomes.",
+                  "type": "event"
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "risk",
+                  "type": "risk",
+                  "interface": "Risk Decision API",
+                  "description": "Depends on Fraud and Risk Decisioning for payment abuse checks, step-up decisions, and checkout protection."
+                },
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Service Runtime APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for resilient processing, overload protection, and operational control."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "system": "Processors, banks, and local payment networks",
+                  "type": "financial-partner",
+                  "interface": "Payments and payout APIs",
+                  "description": "Executes authorizations, captures, settlements, and disbursements across global and local methods."
+                }
+              ],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": [
+                {
+                  "assetId": "payment-instrument-reference",
+                  "role": "read",
+                  "description": "Reads Payment Instrument Reference to orchestrate supported payment methods and payout rails.",
+                  "storeIds": [
+                    "payment-instrument-reference-db"
+                  ]
+                },
+                {
+                  "assetId": "transaction",
+                  "role": "write",
+                  "description": "Writes Transaction for financial events, ledger movements, and audit-safe money flows.",
+                  "storeIds": [
+                    "transaction-db"
+                  ]
+                },
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes payment and payout actions to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "mobile-app-and-edge-experience",
+          "description": "",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "mapp",
+              "name": "Mobile App Experience Platform",
+              "type": "full-stack",
+              "description": "Provides shared rider and driver mobile app foundations including realtime messaging, mobile networking failover, push delivery, cross-platform analytics instrumentation, mobile data workflows, and performance guardrails.",
+              "links": [
+                {
+                  "label": "Uber's Next Gen Push Platform on gRPC",
+                  "url": "https://www.uber.com/blog/ubers-next-gen-push-platform-on-grpc/",
+                  "note": "Explains the real-time messaging layer that keeps mobile apps synchronized with backend state."
+                },
+                {
+                  "label": "Engineering Failover Handling in Uber's Mobile Networking Infrastructure",
+                  "url": "https://www.uber.com/en-NL/blog/eng-failover-handling/",
+                  "note": "Shows the mobile-to-edge failover system for low-latency and resilient application traffic."
+                },
+                {
+                  "label": "How Uber Standardized Mobile Analytics for Cross-Platform Insights",
+                  "url": "https://www.uber.com/en-CL/blog/how-uber-standardized-mobile-analytics/",
+                  "note": "Covers shared analytics contracts and instrumentation across large mobile app surfaces."
+                },
+                {
+                  "label": "Measuring Performance for iOS Apps at Uber Scale",
+                  "url": "https://www.uber.com/en-IN/blog/measuring-performance-for-ios-apps-at-uber-scale/",
+                  "note": "Highlights the performance and reliability discipline behind large-scale app surfaces."
+                },
+                {
+                  "label": "Productionizing Envoy Mobile at Lyft",
+                  "url": "https://diff.blog/post/productionizing-envoy-mobile-at-lyft-117273",
+                  "note": "Relevant to moving mobile networking onto a shared proxy/runtime layer with stronger consistency and control."
+                },
+                {
+                  "label": "Observability for the Missing Hop",
+                  "url": "https://diff.blog/post/observability-for-the-missing-hop-42926",
+                  "note": "Shows how the mobile-to-edge hop can be treated as a first-class observability surface rather than a blind spot."
+                },
+                {
+                  "label": "YAML Generator for Funnel YAML Files: Streamlining the Mobile Data Workflow Process",
+                  "url": "https://www.uber.com/us/en/blog/streamlining-mobile-data-workflow-process/",
+                  "note": "Adds evidence for mobile analytics governance, funnel instrumentation, and cross-platform data workflow automation."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Real-Time Client Messaging",
+                  "description": "Delivers push-like streaming updates, acknowledgements, and message synchronization to rider and driver apps.",
+                  "type": "service"
+                },
+                {
+                  "title": "Mobile Networking and Edge Failover",
+                  "description": "Routes mobile traffic through the edge with failover, redirect, and connection management logic.",
+                  "type": "service"
+                },
+                {
+                  "title": "Mobile Analytics and Performance Layer",
+                  "description": "Standardizes analytics events, performance measurement, and production diagnostics across mobile surfaces.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Client Networking Observability",
+                  "description": "Measures the mobile-to-edge hop, request health, and runtime regressions so app networking issues can be debugged with the same rigor as backend traffic.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Mobile Data Workflow Governance",
+                  "description": "Standardizes funnel definitions, analytics schemas, and mobile event generation so product teams can compare rider and driver behavior across platforms.",
+                  "type": "operations"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Mobile Experience SDK",
+                  "description": "Shared client integration layer for mobile state sync, analytics, and platform services.",
+                  "type": "api"
+                },
+                {
+                  "title": "Realtime Messaging Channel",
+                  "description": "Bidirectional channel for near-real-time app updates and acknowledgements.",
+                  "type": "event"
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "infr",
+                  "type": "edge-runtime",
+                  "interface": "Edge and Traffic Control APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for traffic control, edge reliability, and runtime resilience."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "system": "Apple and Google mobile platforms",
+                  "type": "distribution",
+                  "interface": "OS and app-store services",
+                  "description": "Provides the mobile runtime, distribution, and push-notification primitives for rider and driver apps."
+                }
+              ],
+              "externalSystemsDependingOnThisBrick": [
+                {
+                  "system": "Rider and driver mobile applications",
+                  "type": "channel-consumer",
+                  "interface": "Mobile Experience SDK",
+                  "description": "App teams depend on this foundation for realtime updates, networking, analytics, and performance instrumentation."
+                }
+              ],
+              "dataDependencies": [
+                {
+                  "assetId": "customer-profile",
+                  "role": "read",
+                  "description": "Reads Customer Profile to personalize shared mobile app behavior.",
+                  "storeIds": [
+                    "customer-profile-db"
+                  ]
+                },
+                {
+                  "assetId": "customer-contact-point",
+                  "role": "read",
+                  "description": "Reads Customer Contact Point to support device and contact-aware mobile experiences.",
+                  "storeIds": [
+                    "customer-contact-point-db"
+                  ]
+                },
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes platform-side mobile actions and diagnostics to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "data-platform-and-streaming",
+          "description": "",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "dplt",
+              "name": "Data Platform and Streaming Foundation",
+              "type": "service",
+              "description": "Provides large-scale streaming ingestion, data replication, lakehouse storage, federated metadata, OLAP/search serving, and reusable data-processing foundations for analytics, ML, experimentation, and operational intelligence.",
+              "links": [
+                {
+                  "label": "From Batch to Streaming: Accelerating Data Freshness in Uber's Data Lake",
+                  "url": "https://www.uber.com/en-US/blog/from-batch-to-streaming-accelerating-data-freshness-in-ubers-data-lake/",
+                  "note": "Explains a Flink-based streaming ingestion and control plane for fresher analytics and ML data."
+                },
+                {
+                  "label": "Apache Hudi at Uber: Engineering for Trillion-Record-Scale Data Lake Operations",
+                  "url": "https://www.uber.com/us/en/blog/apache-hudi-at-uber/",
+                  "note": "Describes data-lake storage, ingestion, and a large-scale operational model."
+                },
+                {
+                  "label": "Database Federation: Decentralized and ACL-Compliant Hive Databases",
+                  "url": "https://www.uber.com/us/en/blog/database-federation/",
+                  "note": "Shows the metadata and ownership layer for decentralized analytical datasets at marketplace scale."
+                },
+                {
+                  "label": "Introducing uFowarder: The Consumer Proxy for Kafka Async Queuing",
+                  "url": "https://www.uber.com/us/en/blog/introducing-ufowarder/",
+                  "note": "Adds evidence for Kafka-based async queuing, consumer proxying, and resilient event movement."
+                },
+                {
+                  "label": "How Uber Scaled Data Replication to Move Petabytes Every Day",
+                  "url": "https://www.uber.com/us/en/blog/scaled-data-replication/",
+                  "note": "Supports the petabyte-scale replication and cross-store movement responsibilities of the data platform."
+                },
+                {
+                  "label": "Blazing Fast OLAP on Uber's Inventory and Catalog Data with Apache Pinot",
+                  "url": "https://www.uber.com/us/en/blog/blazing-fast-olap-on-ubers-inventory-and-catalog-data-with-apache-pinot/",
+                  "note": "Shows low-latency analytical serving patterns for marketplace inventory and catalog data."
+                },
+                {
+                  "label": "Powering Billion-Scale Vector Search with OpenSearch",
+                  "url": "https://www.uber.com/us/en/blog/powering-billion-scale-vector-search-with-opensearch/",
+                  "note": "Adds search and vector-index serving responsibilities for ML and discovery use cases."
+                },
+                {
+                  "label": "I/O Observability for Uber's Massive Petabyte-Scale Data Lake",
+                  "url": "https://www.uber.com/us/en/blog/i-o-observability-for-ubers-massive-petabyte-scale-data-lake/",
+                  "note": "Supports operational observability, cost control, and performance management for the data lake."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Streaming Ingestion Control Plane",
+                  "description": "Operates large numbers of ingestion jobs, job lifecycle automation, and regional failover for streaming data pipelines.",
+                  "type": "service"
+                },
+                {
+                  "title": "Data Lake Storage and Metadata",
+                  "description": "Provides transactional data-lake storage, schema evolution, indexing, and federated metadata management.",
+                  "type": "service"
+                },
+                {
+                  "title": "Shared Processing and Access Layer",
+                  "description": "Supports batch, streaming, and analytical access patterns for downstream marketplace, finance, and ML consumers.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Petabyte-Scale Data Replication",
+                  "description": "Moves large analytical and operational datasets across stores, regions, and processing systems while preserving freshness and recoverability.",
+                  "type": "service"
+                },
+                {
+                  "title": "OLAP and Search Serving Layer",
+                  "description": "Serves low-latency analytical queries, search indexes, and vector retrieval workloads for marketplace intelligence and ML products.",
+                  "type": "service"
+                },
+                {
+                  "title": "Data Lake Observability and Cost Control",
+                  "description": "Tracks I/O, freshness, ownership, chargeback, and performance signals for large-scale data platform operations.",
+                  "type": "operations"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Streaming Data API",
+                  "description": "Data interface for real-time and batch ingestion into shared analytical foundations.",
+                  "type": "api"
+                },
+                {
+                  "title": "Data Platform Events",
+                  "description": "Streaming interface for shared event movement, ingestion status, and data freshness signals.",
+                  "type": "event"
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Service Runtime APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for resilient distributed processing and operational control."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": [
+                {
+                  "assetId": "dispatch-and-matching",
+                  "role": "read",
+                  "description": "Reads Dispatch And Matching to feed analytical and ML data products.",
+                  "storeIds": [
+                    "dispatch-and-matching-db"
+                  ]
+                },
+                {
+                  "assetId": "dynamic-pricing-and-incentives",
+                  "role": "read",
+                  "description": "Reads Dynamic Pricing And Incentives to support experimentation, analytics, and model training.",
+                  "storeIds": [
+                    "dynamic-pricing-and-incentives-db"
+                  ]
+                },
+                {
+                  "assetId": "transaction",
+                  "role": "read",
+                  "description": "Reads Transaction to support finance analytics, fraud models, and operational reporting.",
+                  "storeIds": [
+                    "transaction-db"
+                  ]
+                },
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes ingestion and platform operations to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "runtime-and-reliability-foundation",
+          "description": "",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "infr",
+              "name": "Service Runtime and Reliability Foundation",
+              "type": "service",
+              "description": "Provides shared runtime, edge, traffic control, rate limiting, failover, observability, benchmark automation, test migration support, and change-safety foundations that keep marketplace service mesh and application traffic resilient at global scale.",
+              "links": [
+                {
+                  "label": "Uber's Rate Limiting System",
+                  "url": "https://www.uber.com/blog/ubers-rate-limiting-system/",
+                  "note": "Explains control-plane-directed overload protection built into a service mesh."
+                },
+                {
+                  "label": "From Monitoring to Observability: Our Ultra-Marathon to a Cloud-Native Platform",
+                  "url": "https://www.uber.com/en-US/blog/from-monitoring-to-observability-cloud-native/",
+                  "note": "Shows a modern observability platform direction and operating model."
+                },
+                {
+                  "label": "Engineering Failover Handling in Uber's Mobile Networking Infrastructure",
+                  "url": "https://www.uber.com/en-NL/blog/eng-failover-handling/",
+                  "note": "Relevant to edge traffic steering, regional fallback, and resilient request routing."
+                },
+                {
+                  "label": "FacetController: How we made infrastructure changes at Lyft simple",
+                  "url": "https://eng.lyft.com/facetcontroller-how-we-made-infrastructure-changes-at-lyft-simple-dab49f5b27c7",
+                  "note": "Highlights safer rollout control for infrastructure changes applied across shared Kubernetes-based platforms."
+                },
+                {
+                  "label": "How Uber Executed A JUnit Migration at Massive Scale",
+                  "url": "https://www.uber.com/us/en/blog/junit-migration/",
+                  "note": "Adds evidence for platform-supported test migration and developer productivity at large codebase scale."
+                },
+                {
+                  "label": "Ceilometer: Uber's Adaptive Benchmarking Framework",
+                  "url": "https://www.uber.com/us/en/blog/ceilometer-ubers-adaptive-benchmarking-framework/",
+                  "note": "Supports automated benchmarking, regression detection, and performance governance for shared services."
+                },
+                {
+                  "label": "Shifting E2E Testing Left at Uber",
+                  "url": "https://www.uber.com/us/en/blog/shifting-e2e-testing-left/",
+                  "note": "Shows how earlier testing and platform tooling reduce release risk across large distributed systems."
+                }
+              ],
+              "internalModules": [
+                {
+                  "title": "Traffic Control and Rate Limiting",
+                  "description": "Protects services through mesh-integrated rate limiting, caller controls, and overload mitigation.",
+                  "type": "service"
+                },
+                {
+                  "title": "Failover and Edge Reliability",
+                  "description": "Supports multi-region and edge failover patterns for low-latency, resilient request routing.",
+                  "type": "service"
+                },
+                {
+                  "title": "Observability and Operational Control",
+                  "description": "Provides metrics, diagnostics, and automated operational visibility for large-scale distributed systems.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Progressive Infrastructure Rollout Control",
+                  "description": "Applies infrastructure changes gradually with controller-driven safety, throttling, and per-cluster targeting to reduce shared-platform blast radius.",
+                  "type": "operations"
+                },
+                {
+                  "title": "Developer Productivity and Test Migration",
+                  "description": "Provides automation for large-scale test migrations, E2E shift-left workflows, and codebase-wide reliability improvements.",
+                  "type": "development"
+                },
+                {
+                  "title": "Adaptive Benchmarking and Regression Detection",
+                  "description": "Runs benchmark automation, performance baselines, and regression alerts for critical services and shared libraries.",
+                  "type": "operations"
+                }
+              ],
+              "interfaces": [
+                {
+                  "title": "Service Runtime APIs",
+                  "description": "Runtime configuration and control interface for distributed services and jobs.",
+                  "type": "api"
+                },
+                {
+                  "title": "Edge and Traffic Control APIs",
+                  "description": "Traffic-management interface for rate limiting, routing, and failover directives.",
+                  "type": "api"
+                }
+              ],
+              "brickDependencies": [],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": [
+                {
+                  "assetId": "audit-log",
+                  "role": "publish",
+                  "description": "Publishes runtime control, reliability actions, and platform operations to Audit Log.",
+                  "storeIds": [
+                    "audit-log-stream"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "data-and-partner-connectivity",
           "description": "",
           "subGroups": [],
@@ -928,7 +2245,39 @@
               "id": "data",
               "name": "Marketplace Intelligence and Analytics",
               "type": "service",
-              "description": "Provides KPI models, marketplace health monitoring, experimentation feedback, and business reporting across rider, driver, fleet, and trust workflows.",
+              "description": "Provides KPI models, marketplace health monitoring, experimentation feedback, search and recommendation intelligence, and business reporting across rider, driver, fleet, and trust workflows.",
+              "links": [
+                {
+                  "label": "Meet Michelangelo: Uber's Machine Learning Platform",
+                  "url": "https://www.uber.com/us/en/blog/michelangelo-machine-learning-platform/",
+                  "note": "Explains the shared ML workflow, feature store, training, and prediction infrastructure behind marketplace intelligence."
+                },
+                {
+                  "label": "Under the Hood of Uber's Experimentation Platform",
+                  "url": "https://www.uber.com/en-US/blog/xp/",
+                  "note": "Relevant to experimentation feedback loops, universal holdouts, and metric monitoring."
+                },
+                {
+                  "label": "Evolving Schemaless into a Distributed SQL Database",
+                  "url": "https://www.uber.com/blog/schemaless-sql-database/",
+                  "note": "Highlights the broader evolution of business-critical operational data infrastructure used across a scaled platform."
+                },
+                {
+                  "label": "Evolution and Scale of Uber's Delivery Search Platform",
+                  "url": "https://www.uber.com/us/en/blog/evolution-and-scale-of-ubers-delivery-search-platform/",
+                  "note": "Adds evidence for marketplace search systems that connect customer intent, inventory, ranking, and operational data."
+                },
+                {
+                  "label": "Innovative Recommendation Applications Using Two Tower Embeddings at Uber",
+                  "url": "https://www.uber.com/us/en/blog/innovative-recommendation-applications-using-two-tower-embeddings/",
+                  "note": "Supports recommendation intelligence, embedding-based retrieval, and candidate ranking across marketplace surfaces."
+                },
+                {
+                  "label": "The Journey Towards Metric Standardization",
+                  "url": "https://www.uber.com/us/en/blog/umetric/",
+                  "note": "Supports the KPI semantics, metric governance, and shared measurement responsibilities of the analytics brick."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Operational Data Model",
@@ -944,6 +2293,16 @@
                   "title": "Experiment and Quality Analytics",
                   "description": "Measures the impact of changes to dispatch, pricing, and trust workflows.",
                   "type": "operations"
+                },
+                {
+                  "title": "Search and Recommendation Intelligence",
+                  "description": "Builds retrieval, ranking, embedding, and marketplace-discovery analytics for search, feed, and growth surfaces.",
+                  "type": "service"
+                },
+                {
+                  "title": "Metric Governance and Semantic Standards",
+                  "description": "Maintains common metric definitions, ownership, quality checks, and documentation for marketplace KPI interpretation.",
+                  "type": "operations"
                 }
               ],
               "interfaces": [
@@ -958,7 +2317,20 @@
                   "type": "api"
                 }
               ],
-              "brickDependencies": [],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "dplt",
+                  "type": "data-platform",
+                  "interface": "Streaming Data API",
+                  "description": "Depends on Data Platform and Streaming Foundation for large-scale ingestion, shared metadata, and analytical data access."
+                },
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Service Runtime APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for reliable analytical serving, scheduled jobs, and operational controls."
+                }
+              ],
               "externalSystemsThisBrickDependsOn": [],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
@@ -985,11 +2357,23 @@
               "name": "Partner API and Integration Exchange",
               "type": "integration",
               "description": "Supports enterprise reporting, supplier integration, partner onboarding, and future external mobility or autonomy interfaces.",
+              "links": [
+                {
+                  "label": "Protocol Buffer Design: Principles and Practices for Collaborative Development",
+                  "url": "https://eng.lyft.com/protocol-buffer-design-principles-and-practices-for-collaborative-development-8f5aa7e6ed85",
+                  "note": "Useful reference for schema clarity, extensibility, and safe evolution of shared cross-platform contracts."
+                }
+              ],
               "internalModules": [
                 {
                   "title": "Partner Authentication and Contracts",
                   "description": "Manages partner access, versioning, and technical contracts.",
                   "type": "service"
+                },
+                {
+                  "title": "Schema and Compatibility Governance",
+                  "description": "Defines durable interface patterns, versioning rules, and compatibility checks for shared partner and client-facing contracts.",
+                  "type": "operations"
                 },
                 {
                   "title": "Integration Workflow Handlers",
@@ -1002,6 +2386,11 @@
                   "title": "Partner API Gateway",
                   "description": "Controlled API gateway for enterprise and partner access.",
                   "type": "api"
+                },
+                {
+                  "title": "Contract Schema",
+                  "description": "Shared schema layer for durable partner and cross-surface integration contracts.",
+                  "type": "api"
                 }
               ],
               "brickDependencies": [
@@ -1010,6 +2399,18 @@
                   "type": "workflow",
                   "interface": "Admin API",
                   "description": "Depends on Business and Fleet Controls for partner-facing setup and account management."
+                },
+                {
+                  "targetBrickId": "infr",
+                  "type": "runtime",
+                  "interface": "Service Runtime APIs",
+                  "description": "Depends on Service Runtime and Reliability Foundation for resilient external interface operations and traffic control."
+                },
+                {
+                  "targetBrickId": "payx",
+                  "type": "financial-integration",
+                  "interface": "Payments Platform API",
+                  "description": "Depends on Payments Platform and Ledger for enterprise billing, reconciliation, and finance-adjacent partner workflows."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [],

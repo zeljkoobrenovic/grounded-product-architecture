@@ -5,7 +5,9 @@
     <title>${domain_name}</title>
     <style>
         body {
-            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 40px;
+            text-align: center;
         }
 
         .group {
@@ -77,11 +79,6 @@
             filter: grayscale(100%);
         }
 
-        body {
-            margin: 40px;
-            text-align: center;
-        }
-
         .tab {
             overflow: hidden;
             border: 1px solid #ccc;
@@ -151,6 +148,17 @@
 <div style="margin-top: 10px"><img src="icons/logo.png" style="height: 164px; border: 1px solid lightgrey; border-radius: 20px; padding: 12px; margin: 8px;"></div>
 <div style="margin: 8px; margin-top: 0; font-size: 40px; color: #8c8c8c">${domain_name}</div>
 <div style="margin-bottom: 36px; font-size: 20px; color: #8c8c8c">${domain_description}</div>
+
+<div style="margin: -10px; padding: 6px" id="search_container">
+    <div style="margin-bottom: 30px; color: grey">
+        <input id="filter_all" type="text" placeholder="search..."
+               style="font-size: 16px; height: 32px; width: 320px"
+               onkeyup="update()">
+        <span id="summary_all"></span>
+    </div>
+    <div id="content_search"></div>
+</div>
+
 <div class="tab" id="tab_navigation">
 </div>
 
@@ -175,41 +183,89 @@
 </script>
 
 <script>
-    function update() {
+    // Pre-build a flat list with pre-lowercased fields for search
+    const allApps = [];
+    apps.forEach(tab => {
+        tab.apps.forEach(group => {
+            group.apps.forEach(app => {
+                allApps.push({
+                    app: app,
+                    name: (app.name || '').toLowerCase(),
+                    description: (app.description || '').toLowerCase(),
+                    source: (app.source || '').toLowerCase()
+                });
+            });
+        });
+    });
+
+    function renderAppCard(app) {
+        let html = '<div class="app">';
+        if (config.openInNewTab === false || app.openInNewTab === false) {
+            html += '<a href="' + app.link + '">';
+        } else {
+            html += '<a target="_blank" href="' + app.link + '">';
+        }
+        html += '<div style="height: 38px">';
+        html += '<div class="name">' + app.name + '</div>';
+        if (app.source) {
+            html += '<div class="source">source: ' + app.source + '</div>';
+        } else {
+            html += '<div class="source"></div>';
+        }
+        html += '</div>';
+        html += '<div><img class="icon" src="' + app.icon + '"></div>';
+        html += '<div class="description">' + app.description + '</div>';
+        html += '</a>';
+        html += '</div>';
+        return html;
+    }
+
+    function renderTabs() {
         apps.forEach(tab => {
             let html = '';
-            const contentId = 'content_' + tab.tab;
             tab.apps.forEach(group => {
                 html += '<div class="group">';
                 html += '<div class="group-title">' + group.group + '</div>';
                 group.apps.forEach(app => {
-                    html += '<div class="app">';
-                    if (config.openInNewTab === false || app.openInNewTab === false) {
-                        html += '    <a href="' + app.link + '">';
-                    } else {
-                        html += '    <a target="_blank" href="' + app.link + '">';
-                    }
-                    html += '    <div style="height: 38px">';
-                    html += '    <div class="name">' + app.name + '</div>';
-                    if (app.source) {
-                        html += '    <div class="source">source: ' + app.source + '</div>';
-                    } else {
-                        html += '    <div class="source"></div>';
-                    }
-                    html += '    </div>';
-                    html += '    <div><img class="icon" src="' + app.icon + '"></div>';
-                    html += '    <div class="description">' + app.description + '</div>';
-                    html += '    </a>';
-                    html += '    <br>';
-                    html += '</div>';
+                    html += renderAppCard(app);
                 });
                 html += '</div>';
             });
-            document.getElementById(contentId).innerHTML = html;
+            document.getElementById('content_' + tab.tab).innerHTML = html;
         });
-
     }
-    update();
+
+    function update() {
+        const filterText = document.getElementById('filter_all').value.trim().toLowerCase();
+
+        if (filterText) {
+            document.getElementById('tab_navigation').style.display = 'none';
+            document.getElementById('tab_content').style.display = 'none';
+            document.getElementById('content_search').style.display = 'block';
+
+            let html = '';
+            let count = 0;
+            allApps.forEach(entry => {
+                if (entry.name.includes(filterText) || entry.description.includes(filterText) || entry.source.includes(filterText)) {
+                    html += renderAppCard(entry.app);
+                    count++;
+                }
+            });
+            document.getElementById('content_search').innerHTML = html;
+            document.getElementById('summary_all').innerHTML = ' = ' + count + ' app' + (count !== 1 ? 's' : '');
+        } else {
+            document.getElementById('tab_navigation').style.display = '';
+            document.getElementById('tab_content').style.display = '';
+            document.getElementById('content_search').style.display = 'none';
+            document.getElementById('summary_all').innerHTML = '';
+        }
+    }
+
+    if (!config || !config.enableSearch) {
+        document.getElementById('search_container').style.display = 'none';
+    }
+
+    renderTabs();
 </script>
 </body>
 </html>

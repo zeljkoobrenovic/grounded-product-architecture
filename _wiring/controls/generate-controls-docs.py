@@ -48,6 +48,8 @@ def main():
         docs_root.mkdir(parents=True, exist_ok=True)
         if (TEMPLATE_ROOT / 'icons').exists():
             shutil.copytree(TEMPLATE_ROOT / 'icons', docs_root / 'icons', dirs_exist_ok=True)
+        if (CONFIG_ROOT / 'icons').exists():
+            shutil.copytree(CONFIG_ROOT / 'icons', docs_root / 'icons', dirs_exist_ok=True)
 
         compliance = json.loads(control['config'].read_text())
         rendered = render_template(TEMPLATE_PATH, {
@@ -73,6 +75,7 @@ def main():
                         'weight': domain.get('weight'),
                     }),
                     'scoring_model': json.dumps(compliance.get('scoring_model', {})),
+                    'icon': compliance.get('metadata', {}).get('icon', ''),
                 })
                 (landing_pages_root / f"{control['id']}.html").write_text(landing_rendered)
 
