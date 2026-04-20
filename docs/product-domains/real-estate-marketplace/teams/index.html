@@ -414,6 +414,7 @@
             border-radius: 20px;
             display: inline-block;
             border: 1px solid rgba(17, 24, 39, 0.12);
+            margin-right: 1px;
         }
 
         .role-label {
@@ -421,13 +422,14 @@
             color: #4b5563;
             white-space: nowrap;
             display: block;
+            margin-bottom: 3px;
         }
 
         .legend-row {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 16px;
+            margin: 0 0 16px 0;
         }
 
         .legend-pill {
@@ -436,8 +438,27 @@
             gap: 8px;
             padding: 6px 10px;
             border-radius: 999px;
+            border: 1px solid #d1d5db;
             background-color: #f8fafc;
             font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            color: inherit;
+        }
+
+        .legend-pill:hover,
+        .legend-pill.active {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .legend-pill.active {
+            box-shadow: inset 0 0 0 1px #4b5563;
+        }
+
+        .legend-count {
+            color: #6b7280;
+            font-size: 11px;
         }
 
         .legend-swatch {
@@ -777,6 +798,7 @@
 <div id="tab_content_home" class="tabcontent">
     <div class="tab-intro">A compact team topology view showing group and team names with one colored circle per staffing role block.</div>
     <div id="OverviewSummary" class="summary-strip"></div>
+    <div id="OverviewRoleFilter"></div>
     <div id="Overview"></div>
 </div>
 
@@ -881,14 +903,28 @@
 
     const distinctRoles = [];
     const distinctRoleMap = {};
-    flatTeams.forEach(team => {
-        ((team.staffing || {}).roles || []).forEach(role => {
-            const key = slugifyRole(role.role);
-            if (!key || distinctRoleMap[key]) {
-                return;
-            }
+    const roleInstanceCounts = {};
+
+    function registerRole(role) {
+        const key = slugifyRole(role.role);
+        if (!key) {
+            return;
+        }
+        if (!distinctRoleMap[key]) {
             distinctRoleMap[key] = role.role;
             distinctRoles.push(role.role);
+        }
+        roleInstanceCounts[key] = (roleInstanceCounts[key] || 0) + Math.max(Number(role.count) || 0, 0);
+    }
+
+    flatTeams.forEach(team => {
+        ((team.staffing || {}).roles || []).forEach(role => {
+            registerRole(role);
+        });
+    });
+    (teamsData.groups || []).forEach(group => {
+        (((group.groupLeadership || {}).roles) || []).forEach(role => {
+            registerRole(role);
         });
     });
 
@@ -910,19 +946,14 @@
 
     document.getElementById('Summary').innerHTML =
         '<div class="stat"><div class="stat-value">' + formatNumber(flatTeams.length) + '</div><div class="stat-label">Teams</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Suggested Headcount</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(totalGroupLeadershipHeadcount) + '</div><div class="stat-label">Group Leadership Headcount</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Headcount</div></div>' +
         '<div class="stat"><div class="stat-value">' + formatNumber(streamAlignedCount) + '</div><div class="stat-label">Stream-aligned Teams</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(platformCount) + '</div><div class="stat-label">Platform Teams</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(totalRoles) + '</div><div class="stat-label">Team Role Blocks</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(totalGroupLeadershipRoles) + '</div><div class="stat-label">Group Role Blocks</div></div>';
+        '<div class="stat"><div class="stat-value">' + formatNumber(platformCount) + '</div><div class="stat-label">Platform Teams</div></div>';
 
     document.getElementById('OverviewSummary').innerHTML =
-        '<div class="stat"><div class="stat-value">' + formatNumber((teamsData.groups || []).length) + '</div><div class="stat-label">Groups</div></div>' +
         '<div class="stat"><div class="stat-value">' + formatNumber(flatTeams.length) + '</div><div class="stat-label">Teams</div></div>' +
         '<div class="stat"><div class="stat-value">' + formatNumber(distinctRoles.length) + '</div><div class="stat-label">Distinct Roles</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Team Headcount</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(totalGroupLeadershipHeadcount) + '</div><div class="stat-label">Group Leadership Headcount</div></div>';
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Headcount</div></div>';
 
     let groupsHtml = '';
     (teamsData.groups || []).forEach(group => {
@@ -988,59 +1019,91 @@
     });
     document.getElementById('Groups').innerHTML = groupsHtml;
 
-    let overviewHtml = '<div class="overview-list">';
-    (teamsData.groups || []).forEach(group => {
-        overviewHtml += '<div class="overview-group">';
-        overviewHtml += '<div class="overview-group-name">' + escapeHtml(group.name) + '</div>';
-        if (group.groupLeadership && (group.groupLeadership.roles || []).length) {
-            overviewHtml += '<div class="overview-team-group-level">';
-            overviewHtml += '<div><div class="overview-team-name">Group Leadership</div><div class="overview-team-meta">Group-level coverage</div></div>';
-            overviewHtml += '<div class="overview-role-row">';
-            (group.groupLeadership.roles || []).forEach(role => {
-                const safeCount = Math.max(Number(role.count) || 0, 0);
-                const color = roleColorMap[slugifyRole(role.role)] || '#94a3b8';
-                overviewHtml += '<div class="role-dot-group">';
-                overviewHtml += '<div class="role-label">' + escapeHtml(role.role) + ' (' + escapeHtml(String(safeCount)) + ')</div>';
-                overviewHtml += '<div class="role-dots">';
-                for (let i = 0; i < safeCount; i++) {
-                    overviewHtml += '<div class="role-dot" style="background-color: ' + color + '"></div>';
-                }
+    let selectedOverviewRoleKey = '';
+
+    function roleMatchesFilter(role) {
+        return !selectedOverviewRoleKey || slugifyRole(role.role) === selectedOverviewRoleKey;
+    }
+
+    function hasMatchingRole(roles) {
+        return !selectedOverviewRoleKey || (roles || []).some(roleMatchesFilter);
+    }
+
+    function renderOverviewRoleDots(roles) {
+        let html = '<div class="overview-role-row">';
+        (roles || []).filter(roleMatchesFilter).forEach(role => {
+            const safeCount = Math.max(Number(role.count) || 0, 0);
+            const color = roleColorMap[slugifyRole(role.role)] || '#94a3b8';
+            html += '<div class="role-dot-group">';
+            html += '<div class="role-label">' + escapeHtml(role.role) + ' (' + escapeHtml(String(safeCount)) + ')</div>';
+            html += '<div class="role-dots">';
+            for (let i = 0; i < safeCount; i++) {
+                html += '<div class="role-dot" style="background-color: ' + color + '"></div>';
+            }
+            html += '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderOverviewRoleFilter() {
+        let html = '<div class="legend-row">';
+        html += '<button type="button" class="legend-pill' + (selectedOverviewRoleKey ? '' : ' active') + '" data-role-key="">Show all roles</button>';
+        distinctRoles
+            .sort((left, right) => left.localeCompare(right))
+            .forEach(role => {
+                const roleKey = slugifyRole(role);
+                html += '<button type="button" class="legend-pill' + (selectedOverviewRoleKey === roleKey ? ' active' : '') + '" data-role-key="' + escapeHtml(roleKey) + '">';
+                html += '<span class="legend-swatch" style="background-color: ' + roleColorMap[roleKey] + '"></span>';
+                html += '<span>' + escapeHtml(role) + '</span>';
+                html += '<span class="legend-count">' + escapeHtml(String(roleInstanceCounts[roleKey] || 0)) + '</span>';
+                html += '</button>';
+            });
+        html += '</div>';
+        document.getElementById('OverviewRoleFilter').innerHTML = html;
+        document.querySelectorAll('#OverviewRoleFilter .legend-pill').forEach(button => {
+            button.addEventListener('click', () => setOverviewRoleFilter(button.getAttribute('data-role-key') || ''));
+        });
+    }
+
+    function renderOverview() {
+        let overviewHtml = '<div class="overview-list">';
+        (teamsData.groups || []).forEach(group => {
+            const groupLeadershipRoles = ((group.groupLeadership || {}).roles) || [];
+            const visibleTeams = (group.teams || []).filter(team => hasMatchingRole(((team.staffing || {}).roles) || []));
+            const showGroupLeadership = group.groupLeadership && groupLeadershipRoles.length && hasMatchingRole(groupLeadershipRoles);
+            if (selectedOverviewRoleKey && !showGroupLeadership && !visibleTeams.length) {
+                return;
+            }
+            overviewHtml += '<div class="overview-group">';
+            overviewHtml += '<div class="overview-group-name">' + escapeHtml(group.name) + '</div>';
+            if (showGroupLeadership) {
+                overviewHtml += '<div class="overview-team-group-level">';
+                overviewHtml += '<div><div class="overview-team-name">Group Leadership</div><div class="overview-team-meta">Group-level coverage</div></div>';
+                overviewHtml += renderOverviewRoleDots(groupLeadershipRoles);
                 overviewHtml += '</div>';
+            }
+            visibleTeams.forEach(team => {
+                overviewHtml += '<div class="overview-team">';
+                overviewHtml += '<div><a class="overview-team-link" target="_blank" href="landing_pages/' + escapeHtml(team.id) + '.html"><div class="overview-team-name">' + escapeHtml(team.name) + '</div><div class="overview-team-meta">' + escapeHtml(team.teamType || 'team') + '</div></a></div>';
+                overviewHtml += renderOverviewRoleDots(((team.staffing || {}).roles) || []);
                 overviewHtml += '</div>';
             });
-            overviewHtml += '</div>';
-            overviewHtml += '</div>';
-        }
-        (group.teams || []).forEach(team => {
-            overviewHtml += '<div class="overview-team">';
-            overviewHtml += '<div><a class="overview-team-link" target="_blank" href="landing_pages/' + escapeHtml(team.id) + '.html"><div class="overview-team-name">' + escapeHtml(team.name) + '</div><div class="overview-team-meta">' + escapeHtml(team.teamType || 'team') + '</div></a></div>';
-            overviewHtml += '<div class="overview-role-row">';
-            ((team.staffing || {}).roles || []).forEach(role => {
-                const safeCount = Math.max(Number(role.count) || 0, 0);
-                const color = roleColorMap[slugifyRole(role.role)] || '#94a3b8';
-                overviewHtml += '<div class="role-dot-group">';
-                overviewHtml += '<div class="role-label">' + escapeHtml(role.role) + ' (' + escapeHtml(String(safeCount)) + ')</div>';
-                overviewHtml += '<div class="role-dots">';
-                for (let i = 0; i < safeCount; i++) {
-                    overviewHtml += '<div class="role-dot" style="background-color: ' + color + '"></div>';
-                }
-                overviewHtml += '</div>';
-                overviewHtml += '</div>';
-            });
-            overviewHtml += '</div>';
             overviewHtml += '</div>';
         });
         overviewHtml += '</div>';
-    });
-    overviewHtml += '</div>';
-    overviewHtml += '<div class="legend-row">';
-    distinctRoles
-        .sort((left, right) => left.localeCompare(right))
-        .forEach(role => {
-            overviewHtml += '<div class="legend-pill"><span class="legend-swatch" style="background-color: ' + roleColorMap[slugifyRole(role)] + '"></span>' + escapeHtml(role) + '</div>';
-        });
-    overviewHtml += '</div>';
-    document.getElementById('Overview').innerHTML = overviewHtml;
+        document.getElementById('Overview').innerHTML = overviewHtml;
+    }
+
+    function setOverviewRoleFilter(roleKey) {
+        selectedOverviewRoleKey = selectedOverviewRoleKey === roleKey ? '' : roleKey;
+        renderOverviewRoleFilter();
+        renderOverview();
+    }
+
+    renderOverviewRoleFilter();
+    renderOverview();
 
     let principlesHtml = '<div class="section-title">Design Principles</div>';
     principlesHtml += '<div>' + escapeHtml(teamsData.orgDesign.companyProfile || '') + '</div>';
