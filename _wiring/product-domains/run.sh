@@ -17,6 +17,9 @@ scripts=(
 )
 
 domains=(
+  "freight-logistics-orchestration|Freight Logistics Orchestration|Covers the shipper, carrier, broker, managed transportation, TMS, contract logistics, visibility, rating, tendering, settlement, and operations workflows required to plan, procure, execute, and optimize freight across truckload, LTL, intermodal, cross-border, and warehousing networks."
+  "local-on-demand-delivery-marketplace|Local On-Demand Delivery Marketplace|Covers the consumer, merchant, courier, grocery, retail, advertising, payment, dispatch, and trust workflows required to operate a multi-sided local delivery marketplace for restaurant meals, groceries, convenience, and everyday retail."
+  "public-cloud-services|Public Cloud Services|Public Cloud Services provides on-demand, API-first, globally distributed infrastructure, platform, data, AI, security, and operational services that let customers build, run, secure, and scale digital workloads without owning most underlying physical infrastructure."
   "ride-sharing-marketplace|Ride Sharing Marketplace|The Ride Sharing Marketplace domain covers the rider, driver, fleet, business-travel, and marketplace-operations workflows required to run an on-demand and scheduled rides platform with dynamic pricing, dispatch, trust, and multimodal extensions."
   "enterprise-crm-and-revenue-operations|Enterprise CRM and Revenue Operations|The Enterprise CRM and Revenue Operations domain covers lead-to-cash execution, customer service operations, customer data unification, workflow automation, and platform governance for large B2B and B2C organizations."
   "digital-news-publishing-platform|Digital News Publishing Platform|Covers the audience, editorial, advertising, subscription, loyalty, partner-bundle, and data capabilities required to run a multi-brand digital news publisher across web, apps, print-linked editions, social, newsletters, and commercial partnerships."

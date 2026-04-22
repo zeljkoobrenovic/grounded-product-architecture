@@ -1,6 +1,6 @@
-<DOMAIN-LINK> is https://www.dmgmedia.co.uk/
+<DOMAIN-LINK> is https://www.uberfreight.com/en-US and https://www.chrobinson.com/en-us/ and https://www.ryder.com/en-us/logistics/third-party-logistics
 
-Before starting, review [skills.md](./skills.md) for the capability set required to define a new product domain well. It captures the organizational design, architecture, product strategy, market research, goal setting, planning, and modeling skills this task depends on.
+Before starting, review [SKILLS.md](SKILLS.md) for the capability set required to define a new product domain well. It captures the organizational design, architecture, product strategy, market research, goal setting, planning, and modeling skills this task depends on.
 
 Create a new product domain under `_config/product-domains/` for a business domain in which <DOMAIN-LINK> operates.
 

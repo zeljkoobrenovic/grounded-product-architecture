@@ -502,18 +502,20 @@
         }
 
         .home-link-icon {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
+            width: 50px;
+            height: 50px;
             object-fit: cover;
             border: 1px solid #d1d5db;
             background-color: white;
+            vertical-align: top;
+            padding: 3px; border-radius: 8px;
         }
 
         .home-link-title {
             font-weight: bold;
             color: #1d4ed8;
             font-size: 120%;
+            vertical-align: top;
         }
 
         .home-link-meta {
@@ -1082,8 +1084,8 @@
             sectionHtml += '<div class="home-link-card">';
             sectionHtml += '<div class="home-link-head">';
             sectionHtml += '<img class="home-link-icon" src="../icons/' + escapeHomeHtml(capability.icon || 'capability.png') + '" onerror="this.onerror=null;this.src=\'../icons/capability.png\'">';
-            sectionHtml += '<div><div class="home-link-title">' + escapeHomeHtml('[EXPERIENCE] ' + capability.name) + '</div>';
-            sectionHtml += '<div class="home-link-meta"><a target="_blank" rel="noopener noreferrer" href="../capability_pages/' + escapeHomeHtml(capability.id) + '.html">Open capability page</a> | <a target="_blank" rel="noopener noreferrer" href="../index.html#Capabilities">Open capability catalog</a></div></div>';
+            sectionHtml += '<div style="vertical-align: top"><a target="_blank" rel="noopener noreferrer" href="../capability_pages/' + escapeHomeHtml(capability.id) + '.html"><div class="home-link-title"><div class="page-type-badge" style="font-size: 70%;">Experience</div><br>' + escapeHomeHtml(capability.name) + '</div>';
+            sectionHtml += '</a></div>';
             sectionHtml += '</div>';
             if (capability.description) {
                 sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(capability.description) + '</div>';
@@ -1150,9 +1152,9 @@
             sectionHtml += '<img class="home-link-icon" src="../../teams/icons/logo.png" onerror="this.onerror=null;this.src=\'../../teams/icons/logo.png\'">';
             sectionHtml += '<div>';
             if (team.teamType) {
-                sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(team.teamType) + '</div>';
+                sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(team.teamType) + ' team</div>';
             }
-            sectionHtml += '<div class="home-link-title">' + escapeHomeHtml('[TEAM] ' + team.teamName) + '</div><div class="home-link-meta">' + escapeHomeHtml(team.roleLabel || '') + (team.groupName ? ' | ' + escapeHomeHtml(team.groupName) : '') + '</div></div>';
+            sectionHtml += '<div class="home-link-title">' + escapeHomeHtml('' + team.teamName) + '</div><div class="home-link-meta">' + escapeHomeHtml(team.roleLabel || '') + (team.groupName ? ' | ' + escapeHomeHtml(team.groupName) : '') + '</div></div>';
             sectionHtml += '</div>';
             sectionHtml += '</a>';
         });
@@ -1658,6 +1660,21 @@
         return tableHtml;
     }
 
+    function dependencyText(value, fallback) {
+        const text = String(value || '').trim();
+        return text || fallback || '';
+    }
+
+    function dependencyEdgeLabel(item, defaultType, defaultInterface) {
+        const type = dependencyText(item && item.type, defaultType).toLowerCase();
+        const iface = dependencyText(item && item.interface, defaultInterface).toUpperCase();
+        return escapeMermaidLabel([type, iface].filter(Boolean).join('\\n'));
+    }
+
+    function externalSystemName(item) {
+        return dependencyText(item && (item.system || item.name), 'External System');
+    }
+
     function renderExternalDependencyTable(items, subjectLabel) {
         let tableHtml = '<table class="activity-table">';
         tableHtml += '<thead><tr><th>' + escapeHomeHtml(subjectLabel || 'External System') + '</th><th>Type</th><th>Interface</th><th>Description</th></tr></thead><tbody>';
@@ -1665,7 +1682,7 @@
             tableHtml += '<tr>';
             tableHtml += '<td><div class="dependency-entity">';
             tableHtml += '<img class="dependency-entity-icon" src="../icons/external-system.png" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
-            tableHtml += '<span>' + escapeHomeHtml(item.system || '') + '</span>';
+            tableHtml += '<span>' + escapeHomeHtml(externalSystemName(item)) + '</span>';
             tableHtml += '</div></td>';
             tableHtml += '<td>' + escapeHomeHtml(item.type || '') + '</td>';
             tableHtml += '<td>' + escapeHomeHtml(item.interface || '') + '</td>';
@@ -1733,7 +1750,7 @@
             const linkedBrick = all_bricks.find(candidate => candidate.id === item.targetBrickId) || {};
             const nodeId = 'brickDep' + index;
             const nodeLabel = escapeMermaidLabel(linkedBrick.name || item.targetBrickId || 'Brick Dependency');
-            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            const edgeLabel = dependencyEdgeLabel(item, 'dependency', '');
             chart += nodeId + '[\"' + nodeLabel + '\"]\n';
             chart += 'current -->|' + edgeLabel + '| ' + nodeId + '\n';
         });
@@ -1741,23 +1758,23 @@
         incomingBrickDependencies.forEach((item, index) => {
             const nodeId = 'incomingBrickDep' + index;
             const nodeLabel = escapeMermaidLabel(item.sourceBrickName || item.sourceBrickId || 'Dependent Brick');
-            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            const edgeLabel = dependencyEdgeLabel(item, 'dependency', '');
             chart += nodeId + '[\"' + nodeLabel + '\"]\n';
             chart += nodeId + ' -->|' + edgeLabel + '| current\n';
         });
 
         externalSystemsThisBrickDependsOn.forEach((item, index) => {
             const nodeId = 'externalOutgoingDep' + index;
-            const nodeLabel = escapeMermaidLabel(item.system || 'External System');
-            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            const nodeLabel = escapeMermaidLabel(externalSystemName(item));
+            const edgeLabel = dependencyEdgeLabel(item, 'external', '');
             chart += nodeId + '[\"' + nodeLabel + '\"]\n';
             chart += 'current -->|' + edgeLabel + '| ' + nodeId + '\n';
         });
 
         externalSystemsDependingOnThisBrick.forEach((item, index) => {
             const nodeId = 'externalIncomingDep' + index;
-            const nodeLabel = escapeMermaidLabel(item.system || 'External System');
-            const edgeLabel = escapeMermaidLabel([item.type.toLowerCase(), item.interface.toUpperCase()].filter(Boolean).join('\\n'));
+            const nodeLabel = escapeMermaidLabel(externalSystemName(item));
+            const edgeLabel = dependencyEdgeLabel(item, 'external', '');
             chart += nodeId + '[\"' + nodeLabel + '\"]\n';
             chart += nodeId + ' -->|' + edgeLabel + '| current\n';
         });
