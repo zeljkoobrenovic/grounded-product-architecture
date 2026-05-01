@@ -1,41 +1,136 @@
-import json
-import os
-import shutil
+import copy
 import datetime
+import json
+import shutil
+from pathlib import Path
+from urllib.parse import urlparse
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs'))
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
-date_string = datetime.date.today().strftime('%Y-%m-%d')
+DATE_STRING = datetime.date.today().strftime('%Y-%m-%d')
 
-apps = json.load(open('../_config/start-apps/apps.json'))
-
-templates_root = '../_templates/start/'
-apps_root = '../_config/start-apps/'
+TEMPLATES_ROOT = REPO_ROOT / '_templates' / 'start'
+PACKAGES_ROOT = REPO_ROOT / '_config' / 'start-packages'
+DOCS_ROOT = REPO_ROOT / 'docs'
+DOCS_PACKAGES_ROOT = DOCS_ROOT / 'start-packages'
 
 
 def copy_icons(icons_path, docs_folder):
-    if os.path.exists(icons_path):
-        for filename in os.listdir(icons_path):
-            src = os.path.join(icons_path, filename)
-            dst = os.path.join(docs_folder, 'icons', filename)
-            if os.path.isfile(src):
-                shutil.copy2(src, dst)
+    if not icons_path.exists():
+        return
+
+    icons_folder = docs_folder / 'icons'
+    icons_folder.mkdir(parents=True, exist_ok=True)
+
+    for src in sorted(icons_path.iterdir()):
+        if src.is_file():
+            shutil.copy2(src, icons_folder / src.name)
 
 
-docs_folder = 'start-apps/'
+def is_external_url(value):
+    parsed = urlparse(value)
+    return bool(parsed.scheme or parsed.netloc)
 
-if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
-os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 
-copy_icons(templates_root + 'icons', docs_folder)
-copy_icons(apps_root + 'icons', docs_folder)
+def rebase_start_apps_url(value):
+    if not isinstance(value, str) or is_external_url(value):
+        return value
 
-with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
-    template = open(templates_root + 'index.html').read()
-    html_file.write(template
-                    .replace('${date}', date_string)
-                    .replace('${apps}', json.dumps(apps))
-                    .replace('${domain_name}', 'AI-Generated Open-Source Product Architectures')
-                    .replace('${domain_description}', 'Defining customer-centric product architecture rooted in reality,<br> combining the power of GenAI with <a target="_blank" href="https://grounded-architecture.io/">grounded architecture</a> principles. Available free on on <a target="_blank" href="https://github.com/zeljkoobrenovic/grounded-product-architecture">GitHub</a>'))
+    # Existing start-app configs were authored one level higher at docs/start-apps.
+    if value.startswith('../product-domains/'):
+        return '../' + value
 
+    return value
+
+
+def rebase_app_links(apps):
+    apps = copy.deepcopy(apps)
+    for tab in apps.get('apps', []):
+        for group in tab.get('apps', []):
+            for app in group.get('apps', []):
+                for field in ('link', 'icon'):
+                    if field in app:
+                        app[field] = rebase_start_apps_url(app[field])
+    return apps
+
+
+def package_title(package_name):
+    return package_name.replace('-', ' ').replace('_', ' ').title()
+
+
+def package_config(apps, package_name):
+    config = apps.get('config', {})
+    name = config.get('name') or config.get('domainName') or config.get('domain_name') or config.get('title')
+    description = config.get('description') or config.get('domainDescription') or config.get('domain_description')
+
+    if not name:
+        raise ValueError(f'Missing config.name in {PACKAGES_ROOT / package_name / "apps.json"}')
+    if not description:
+        raise ValueError(f'Missing config.description in {PACKAGES_ROOT / package_name / "apps.json"}')
+
+    return {
+        'domain_name': name,
+        'domain_description': description,
+        'package_title': config.get('packageTitle') or config.get('package_title') or name or package_title(package_name),
+    }
+
+
+def package_sources():
+    if not PACKAGES_ROOT.exists():
+        raise FileNotFoundError(f'Missing start packages folder: {PACKAGES_ROOT}')
+
+    packages = []
+    for package_folder in sorted(PACKAGES_ROOT.iterdir()):
+        if not package_folder.is_dir() or package_folder.name.startswith('.'):
+            continue
+        apps_json = package_folder / 'apps.json'
+        if apps_json.exists():
+            packages.append(package_folder)
+
+    if not packages:
+        raise FileNotFoundError(f'No start package apps.json files found in: {PACKAGES_ROOT}')
+
+    return packages
+
+
+def render_package(package_folder, template):
+    package_name = package_folder.name
+    with (package_folder / 'apps.json').open(encoding='utf-8') as apps_file:
+        apps = json.load(apps_file)
+
+    output_folder = DOCS_PACKAGES_ROOT / package_name
+    if output_folder.exists():
+        shutil.rmtree(output_folder)
+    output_folder.mkdir(parents=True, exist_ok=True)
+
+    copy_icons(TEMPLATES_ROOT / 'icons', output_folder)
+    copy_icons(package_folder / 'icons', output_folder)
+
+    rendered_apps = rebase_app_links(apps)
+    config = package_config(apps, package_name)
+
+    with (output_folder / 'index.html').open('w', encoding='utf-8') as html_file:
+        html_file.write(
+            template
+            .replace('${date}', DATE_STRING)
+            .replace('${apps}', json.dumps(rendered_apps))
+            .replace('${domain_name}', config['domain_name'])
+            .replace('${domain_description}', config['domain_description'])
+        )
+
+    return config['package_title'], output_folder
+
+
+def main():
+    template = (TEMPLATES_ROOT / 'index.html').read_text(encoding='utf-8')
+    rendered_packages = []
+
+    for package_folder in package_sources():
+        rendered_packages.append(render_package(package_folder, template))
+
+    for package_title_value, output_folder in rendered_packages:
+        print(f'Generated {package_title_value}: {output_folder.relative_to(REPO_ROOT)}')
+
+
+if __name__ == '__main__':
+    main()

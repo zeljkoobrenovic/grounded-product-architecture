@@ -17,6 +17,8 @@ scripts=(
 )
 
 domains=(
+  "enterprise-architecture-management-platform|Enterprise Architecture Management Platform|Enterprise Architecture Management Platform covers SaaS products that maintain a living model of enterprise capabilities, applications, technologies, processes, risks, roadmaps, and transformation decisions so business and technology leaders can govern change with shared evidence."
+  "premium-body-care-and-home-fragrance|Premium Body Care and Home Fragrance|Covers the customer, store, ecommerce, loyalty, gifting, refill, assortment, and fulfillment workflows required to run an omnichannel premium body care, bath, home fragrance, and wellbeing retail business."
   "freight-logistics-orchestration|Freight Logistics Orchestration|Covers the shipper, carrier, broker, managed transportation, TMS, contract logistics, visibility, rating, tendering, settlement, and operations workflows required to plan, procure, execute, and optimize freight across truckload, LTL, intermodal, cross-border, and warehousing networks."
   "local-on-demand-delivery-marketplace|Local On-Demand Delivery Marketplace|Covers the consumer, merchant, courier, grocery, retail, advertising, payment, dispatch, and trust workflows required to operate a multi-sided local delivery marketplace for restaurant meals, groceries, convenience, and everyday retail."
   "public-cloud-services|Public Cloud Services|Public Cloud Services provides on-demand, API-first, globally distributed infrastructure, platform, data, AI, security, and operational services that let customers build, run, secure, and scale digital workloads without owning most underlying physical infrastructure."
