@@ -46,6 +46,88 @@ def company_objective_items(payload):
     return payload.get('companyObjectives', [])
 
 
+def slugify_id(text):
+    value = str(text or '').strip().lower()
+    chars = []
+    last_dash = False
+    for ch in value:
+        if ch.isalnum():
+            chars.append(ch)
+            last_dash = False
+        elif not last_dash:
+            chars.append('-')
+            last_dash = True
+    return ''.join(chars).strip('-') or 'objective'
+
+
+def normalize_company_objective(item, payload, index):
+    timeframe = payload.get('timeframe') or payload.get('quarter') or 'period'
+    timeframe_slug = slugify_id(timeframe)
+
+    if isinstance(item, str):
+        title = item.strip()
+        return {
+            'id': f"co-{timeframe_slug}-{slugify_id(title)}",
+            'title': title,
+            'name': title,
+            'statement': title,
+            'description': title,
+            'objectiveType': 'company',
+            'status': payload.get('status', '')
+        }
+
+    if not isinstance(item, dict):
+        title = f"Company objective {index + 1}"
+        return {
+            'id': f"co-{timeframe_slug}-{index + 1}",
+            'title': title,
+            'name': title,
+            'statement': title,
+            'description': title,
+            'objectiveType': 'company',
+            'status': payload.get('status', '')
+        }
+
+    normalized = dict(item)
+    title = (
+        normalized.get('title')
+        or normalized.get('name')
+        or normalized.get('statement')
+        or normalized.get('description')
+        or f"Company objective {index + 1}"
+    )
+    normalized['id'] = normalized.get('id') or f"co-{timeframe_slug}-{slugify_id(title)}"
+    normalized['title'] = title
+    normalized['name'] = normalized.get('name') or title
+    normalized['statement'] = normalized.get('statement') or normalized.get('description') or title
+    normalized['description'] = normalized.get('description') or normalized.get('statement') or title
+    normalized['objectiveType'] = normalized.get('objectiveType') or 'company'
+    normalized['status'] = normalized.get('status') or payload.get('status', '')
+    return normalized
+
+
+def normalize_source_objective(item):
+    if not isinstance(item, dict):
+        title = str(item or 'Objective').strip() or 'Objective'
+        return {
+            'id': slugify_id(title),
+            'title': title,
+            'name': title,
+            'objective': title,
+            'description': title,
+            'keyResults': []
+        }
+
+    normalized = dict(item)
+    title = normalized.get('title') or normalized.get('name') or normalized.get('objective') or normalized.get('id') or 'Objective'
+    objective = normalized.get('objective') or normalized.get('description') or normalized.get('statement') or title
+    normalized['title'] = title
+    normalized['name'] = normalized.get('name') or title
+    normalized['objective'] = objective
+    normalized['description'] = normalized.get('description') or objective
+    return normalized
+
+
 def build_activity_lookup(delivery_path):
     if not os.path.exists(delivery_path):
         return {}
@@ -144,8 +226,12 @@ def company_objective_page_id(company_objective, payload):
 
 def prepare_payload(payload, initiative_lookup, release_lookup, discovery_lookup, enriched_initiatives=None, enriched_releases=None):
     prepared = copy.deepcopy(payload)
+    prepared['companyObjectives'] = [
+        normalize_company_objective(item, prepared, index)
+        for index, item in enumerate(company_objective_items(prepared))
+    ]
     prepared['objectives'] = [
-        enrich_source_objective_links(item, initiative_lookup, release_lookup)
+        enrich_source_objective_links(normalize_source_objective(item), initiative_lookup, release_lookup)
         for item in objective_items(prepared)
     ]
 

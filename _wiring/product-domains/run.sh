@@ -17,6 +17,7 @@ scripts=(
 )
 
 domains=(
+  "internet-number-registry-and-routing-trust|Internet Number Registry and Routing Trust|Internet Number Registry and Routing Trust covers the member, registry, routing security, DNS, policy, and measurement services needed to distribute and maintain Internet number resources and help operators keep Internet routing data trustworthy."
   "enterprise-architecture-management-platform|Enterprise Architecture Management Platform|Enterprise Architecture Management Platform covers SaaS products that maintain a living model of enterprise capabilities, applications, technologies, processes, risks, roadmaps, and transformation decisions so business and technology leaders can govern change with shared evidence."
   "premium-body-care-and-home-fragrance|Premium Body Care and Home Fragrance|Covers the customer, store, ecommerce, loyalty, gifting, refill, assortment, and fulfillment workflows required to run an omnichannel premium body care, bath, home fragrance, and wellbeing retail business."
   "freight-logistics-orchestration|Freight Logistics Orchestration|Covers the shipper, carrier, broker, managed transportation, TMS, contract logistics, visibility, rating, tendering, settlement, and operations workflows required to plan, procure, execute, and optimize freight across truckload, LTL, intermodal, cross-border, and warehousing networks."

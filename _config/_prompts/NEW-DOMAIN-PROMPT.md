@@ -1,4 +1,4 @@
-<DOMAIN-LINK> is ...
+<DOMAIN-LINK> is RIPE NCC, a Regional Internet Registry (RIR) other RIRs (ARIN, APNIC, LACNIC, AFRINIC) regarding policy, as well as commercial entities in infrastructure services like Verisign, DDoS-Guard, and DNS providers.
 
 Before starting, review [SKILLS.md](_config/_prompts/SKILLS.md) for the capability set required to define a new product domain well. It captures the organizational design, architecture, product strategy, market research, goal setting, planning, and modeling skills this task depends on.
 

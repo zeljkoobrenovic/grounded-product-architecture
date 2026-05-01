@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 
 def slugify(text):
@@ -130,10 +131,307 @@ def load_product_capabilities_payload(path, default_title='Product Experiences',
     }
 
 
+DATA_ASSET_ROOT_GROUP_DEFINITIONS = {
+    'people-accounts-access': {
+        'name': 'People, Accounts, and Access Data',
+        'description': 'Profiles, accounts, credentials, consent, entitlements, and access records used to identify people and govern their access.'
+    },
+    'commercial-financial': {
+        'name': 'Commercial and Financial Data',
+        'description': 'Pricing, payment, billing, subscription, revenue, settlement, ledger, and other commercial records.'
+    },
+    'product-catalog-content': {
+        'name': 'Product, Catalog, and Content Data',
+        'description': 'Catalogs, listings, inventory, content, media, products, and merchandising data exposed through customer or operator experiences.'
+    },
+    'operations-workflow-events': {
+        'name': 'Operational Workflow and Event Data',
+        'description': 'Orders, bookings, trips, tasks, incidents, service requests, workflow states, and operational events used to run the domain.'
+    },
+    'risk-governance-security': {
+        'name': 'Risk, Governance, Security, and Compliance Data',
+        'description': 'Risk signals, safety records, audit trails, policies, controls, approvals, and compliance evidence.'
+    },
+    'architecture-portfolio-planning': {
+        'name': 'Architecture, Portfolio, and Planning Data',
+        'description': 'Architecture models, portfolio records, capabilities, roadmaps, standards, and planning evidence.'
+    },
+    'analytics-metrics-insights': {
+        'name': 'Analytics, Metrics, and Insight Data',
+        'description': 'Metrics, telemetry, experiments, measurements, forecasts, recommendations, and derived analytical insight.'
+    },
+    'integration-platform-technical': {
+        'name': 'Integration, Platform, and Technical Data',
+        'description': 'API, connector, integration, runtime, infrastructure, configuration, and platform operations data.'
+    },
+    'reference-master-data': {
+        'name': 'Reference and Master Data',
+        'description': 'Reusable reference, policy, rule, taxonomy, and master data used to standardize domain behavior.'
+    },
+    'core-domain-records': {
+        'name': 'Core Domain Records',
+        'description': 'Primary domain records that do not fit a more specialized data group.'
+    }
+}
+
+
+DATA_ASSET_ROOT_GROUP_ORDER = [
+    'people-accounts-access',
+    'commercial-financial',
+    'product-catalog-content',
+    'operations-workflow-events',
+    'risk-governance-security',
+    'architecture-portfolio-planning',
+    'analytics-metrics-insights',
+    'integration-platform-technical',
+    'reference-master-data',
+    'core-domain-records'
+]
+
+
+DATA_ASSET_SUBGROUP_DEFINITIONS = {
+    'core-records': {
+        'name': 'Core Records',
+        'description': 'Durable domain entities and business objects.'
+    },
+    'events-and-logs': {
+        'name': 'Events and Logs',
+        'description': 'Append-only events, logs, state changes, and operational traces.'
+    },
+    'financial-records': {
+        'name': 'Financial Records',
+        'description': 'Commercial, payment, billing, ledger, and settlement records.'
+    },
+    'analytics-and-derived-data': {
+        'name': 'Analytics and Derived Data',
+        'description': 'Aggregated, calculated, scored, predicted, or insight-oriented datasets.'
+    },
+    'reference-and-policy-data': {
+        'name': 'Reference and Policy Data',
+        'description': 'Reference lists, policies, rules, configuration, and taxonomies.'
+    },
+    'documents-and-evidence': {
+        'name': 'Documents and Evidence',
+        'description': 'Documents, media, knowledge, files, and evidence packages.'
+    }
+}
+
+
+DATA_ASSET_SUBGROUP_ORDER = [
+    'core-records',
+    'financial-records',
+    'events-and-logs',
+    'reference-and-policy-data',
+    'documents-and-evidence',
+    'analytics-and-derived-data'
+]
+
+
+def _asset_text(asset):
+    values = [
+        asset.get('id', ''),
+        asset.get('name', ''),
+        asset.get('kind', ''),
+        asset.get('description', ''),
+        asset.get('businessMeaning', ''),
+        asset.get('ownerTeamId', ''),
+        asset.get('systemOfRecordBrickId', ''),
+        ' '.join(asset.get('tags', []) or [])
+    ]
+    return ' '.join(str(value).lower() for value in values if value)
+
+
+def _asset_identity_text(asset):
+    values = [
+        asset.get('id', ''),
+        asset.get('name', ''),
+        asset.get('kind', ''),
+        ' '.join(asset.get('tags', []) or [])
+    ]
+    return ' '.join(str(value).lower() for value in values if value)
+
+
+def _text_has_any(text, keywords):
+    normalized_text = re.sub(r'[^a-z0-9]+', ' ', text or '').strip()
+    tokens = set(normalized_text.split())
+    for keyword in keywords:
+        normalized_keyword = re.sub(r'[^a-z0-9]+', ' ', keyword.lower()).strip()
+        if not normalized_keyword:
+            continue
+        if ' ' in normalized_keyword:
+            if normalized_keyword in normalized_text:
+                return True
+        elif normalized_keyword in tokens:
+            return True
+    return False
+
+
+def data_asset_root_group_key(asset):
+    text = _asset_text(asset)
+    identity_text = _asset_identity_text(asset)
+    kind = str(asset.get('kind', '')).lower()
+
+    finance_keywords = [
+        'payment', 'transaction', 'ledger', 'invoice', 'billing', 'payout', 'subscription',
+        'pricing', 'price', 'quote', 'proposal', 'spend', 'revenue', 'cost', 'budget',
+        'costs', 'settlement', 'tariff', 'financial', 'finance', 'commerce', 'commission',
+        'rate'
+    ]
+    product_keywords = [
+        'catalog', 'content', 'listing', 'property', 'inventory', 'menu', 'media',
+        'article', 'product', 'sku', 'assortment', 'creative',
+        'knowledge', 'course', 'playlist', 'episode', 'track', 'classified'
+    ]
+    operations_keywords = [
+        'order', 'booking', 'delivery', 'dispatch', 'trip', 'ride', 'shipment',
+        'workflow', 'work-item', 'work item', 'service-request', 'service request',
+        'case', 'operation', 'task', 'status', 'event', 'availability', 'assignment',
+        'session orchestration', 'charging session', 'fulfillment'
+    ]
+    risk_keywords = [
+        'risk', 'fraud', 'safety', 'security', 'audit', 'governance', 'compliance',
+        'control', 'approval', 'permission', 'policy', 'vulnerability', 'incident',
+        'evidence', 'entitlement', 'legal'
+    ]
+    people_keywords = [
+        'customer', 'consumer', 'user', 'member', 'employee', 'traveler', 'rider',
+        'driver', 'courier', 'merchant account', 'host', 'guest', 'partner account',
+        'shipper account', 'carrier profile', 'seller', 'buyer', 'account', 'profile',
+        'contact', 'consent', 'identity', 'credential', 'session-token',
+        'session token', 'access', 'role', 'tenant'
+    ]
+
+    if _text_has_any(text, [
+        'architecture', 'relationship', 'application inventory', 'capability',
+        'technology standard', 'portfolio', 'roadmap', 'initiative', 'metamodel',
+        'standard', 'process model', 'transformation'
+    ]):
+        return 'architecture-portfolio-planning'
+    if _text_has_any(identity_text, finance_keywords):
+        return 'commercial-financial'
+    if _text_has_any(identity_text, product_keywords):
+        return 'product-catalog-content'
+    if _text_has_any(identity_text, risk_keywords):
+        return 'risk-governance-security'
+    if _text_has_any(identity_text, operations_keywords):
+        return 'operations-workflow-events'
+    if _text_has_any(text, people_keywords):
+        return 'people-accounts-access'
+    if _text_has_any(text, product_keywords):
+        return 'product-catalog-content'
+    if _text_has_any(text, operations_keywords):
+        return 'operations-workflow-events'
+    if _text_has_any(text, finance_keywords):
+        return 'commercial-financial'
+    if _text_has_any(text, risk_keywords):
+        return 'risk-governance-security'
+    if _text_has_any(text, [
+        'metric', 'analytics', 'insight', 'telemetry', 'experiment', 'score',
+        'forecast', 'recommendation', 'measurement', 'report', 'benchmark',
+        'statistic', 'propensity', 'signal', 'quality', 'performance'
+    ]):
+        return 'analytics-metrics-insights'
+    if _text_has_any(text, [
+        'api', 'integration', 'connector', 'runtime', 'infrastructure', 'cloud',
+        'configuration', 'config', 'deployment', 'environment', 'system', 'token',
+        'log'
+    ]):
+        return 'integration-platform-technical'
+    if kind == 'reference-data':
+        return 'reference-master-data'
+    return 'core-domain-records'
+
+
+def data_asset_subgroup_key(asset):
+    text = _asset_identity_text(asset)
+    kind = str(asset.get('kind', '')).lower()
+    kind_terms = set(re.sub(r'[^a-z0-9]+', ' ', kind).split())
+
+    if 'financial' in kind_terms or _text_has_any(text, [
+        'ledger', 'payment', 'billing', 'invoice', 'settlement', 'transaction',
+        'payout', 'revenue', 'pricing', 'price', 'quote', 'proposal', 'spend',
+        'cost', 'budget', 'tariff'
+    ]):
+        return 'financial-records'
+    if {'event', 'log', 'stream'} & kind_terms or _text_has_any(text, ['event', 'log', 'telemetry', 'stream']):
+        return 'events-and-logs'
+    if kind == 'reference-data' or _text_has_any(text, ['reference', 'policy', 'rule', 'taxonomy', 'config', 'standard']):
+        return 'reference-and-policy-data'
+    if 'document' in kind or _text_has_any(text, ['document', 'evidence', 'media', 'content', 'article', 'knowledge', 'file']):
+        return 'documents-and-evidence'
+    if any(token in kind for token in ['analytics', 'derived', 'metric', 'cache']) or _text_has_any(text, [
+        'metric', 'analytics', 'insight', 'score', 'forecast', 'recommendation',
+        'measurement', 'report', 'benchmark', 'statistic', 'performance'
+    ]):
+        return 'analytics-and-derived-data'
+    return 'core-records'
+
+
+def group_data_assets(assets):
+    root_index = {}
+    sub_index = {}
+
+    for asset in assets or []:
+        root_key = data_asset_root_group_key(asset)
+        subgroup_key = data_asset_subgroup_key(asset)
+
+        if root_key not in root_index:
+            root_info = DATA_ASSET_ROOT_GROUP_DEFINITIONS[root_key]
+            root_index[root_key] = {
+                'name': root_info['name'],
+                'description': root_info['description'],
+                'subGroups': []
+            }
+            sub_index[root_key] = {}
+
+        if subgroup_key not in sub_index[root_key]:
+            subgroup_info = DATA_ASSET_SUBGROUP_DEFINITIONS[subgroup_key]
+            subgroup = {
+                'name': subgroup_info['name'],
+                'description': subgroup_info['description'],
+                'assets': []
+            }
+            sub_index[root_key][subgroup_key] = subgroup
+            root_index[root_key]['subGroups'].append(subgroup)
+
+        sub_index[root_key][subgroup_key]['assets'].append(asset)
+
+    def root_order(item):
+        key, _ = item
+        return DATA_ASSET_ROOT_GROUP_ORDER.index(key) if key in DATA_ASSET_ROOT_GROUP_ORDER else len(DATA_ASSET_ROOT_GROUP_ORDER)
+
+    def subgroup_order(subgroup):
+        name = subgroup.get('name', '')
+        for key in DATA_ASSET_SUBGROUP_ORDER:
+            if DATA_ASSET_SUBGROUP_DEFINITIONS[key]['name'] == name:
+                return DATA_ASSET_SUBGROUP_ORDER.index(key)
+        return len(DATA_ASSET_SUBGROUP_ORDER)
+
+    groups = []
+    for root_key, root_group in sorted(root_index.items(), key=root_order):
+        root_group['subGroups'] = sorted(root_group.get('subGroups', []), key=subgroup_order)
+        groups.append(root_group)
+    return groups
+
+
+def flatten_data_asset_groups(groups):
+    assets = []
+
+    def walk(group):
+        assets.extend(group.get('assets', []) or [])
+        for subgroup in group.get('subGroups', []) or []:
+            walk(subgroup)
+
+    for group in groups or []:
+        walk(group)
+    return assets
+
+
 def load_data_assets_payload(path, default_title='Data Assets', default_description=''):
     if not os.path.exists(path):
         return {
             'metadata': {'title': default_title, 'description': default_description},
+            'rootGroups': [],
             'assets': [],
             'stores': []
         }
@@ -144,10 +442,15 @@ def load_data_assets_payload(path, default_title='Data Assets', default_descript
         metadata['title'] = default_title
     if 'description' not in metadata:
         metadata['description'] = default_description
+    root_groups = payload.get('rootGroups') or payload.get('assetGroups') or payload.get('dataAssetGroups') or []
+    assets = payload.get('assets') or flatten_data_asset_groups(root_groups)
+    if assets and not root_groups:
+        root_groups = group_data_assets(assets)
 
     return {
         'metadata': metadata,
-        'assets': payload.get('assets', []),
+        'rootGroups': root_groups,
+        'assets': assets,
         'stores': payload.get('stores', [])
     }
 

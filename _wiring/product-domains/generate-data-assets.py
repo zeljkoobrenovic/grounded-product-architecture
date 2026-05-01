@@ -1,6 +1,11 @@
 import json
 import os
-from product_bricks_support import load_product_bricks_payload, flatten_product_bricks
+from product_bricks_support import (
+    flatten_data_asset_groups,
+    flatten_product_bricks,
+    group_data_assets,
+    load_product_bricks_payload,
+)
 
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -583,7 +588,7 @@ def build_data_assets_payload(domain_id):
             'description': f'Starter catalog of key business, PII, and security-sensitive data assets for the {titleize_asset_id(domain_id)} domain.',
             'modelVersion': '1.0'
         },
-        'assets': assets,
+        'rootGroups': group_data_assets(assets),
         'stores': build_store_records(assets)
     }
 
@@ -596,9 +601,10 @@ def enrich_domain_bricks_with_data_dependencies(domain_id):
         return False
 
     payload = load_json(product_bricks_path, {})
-    assets_payload = load_json(data_assets_path, {'assets': []})
+    assets_payload = load_json(data_assets_path, {'assets': [], 'rootGroups': []})
+    assets = assets_payload.get('assets') or flatten_data_asset_groups(assets_payload.get('rootGroups', []))
     original = json.dumps(payload, sort_keys=True)
-    enriched = enrich_payload_with_data_dependencies(payload, assets_payload.get('assets', []))
+    enriched = enrich_payload_with_data_dependencies(payload, assets)
     updated = json.dumps(enriched, sort_keys=True)
     if updated == original:
         return False

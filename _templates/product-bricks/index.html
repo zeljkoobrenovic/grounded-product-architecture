@@ -134,6 +134,10 @@
         }
 
         .bricks-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 18px;
             margin-bottom: 18px;
         }
 
@@ -147,6 +151,28 @@
 
         .bricks-toggle input {
             margin: 0;
+        }
+
+        .bricks-status-filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+        }
+
+        .bricks-status-filter {
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background-color: #f8fafc;
+        }
+
+        .status-swatch {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(17, 17, 17, 0.16);
         }
 
         .map {
@@ -202,6 +228,7 @@
             font-size: 12px;
             width: 140px;
             max-width: 144px;
+            box-sizing: border-box;
             overflow: hidden;
             background-color: var(--surface-fallback);
             box-shadow: var(--card-shadow);
@@ -308,6 +335,31 @@
             background-color: white;
         }
 
+        .dependency-subtabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .dependency-subtab {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            color: #374151;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        .dependency-subtab.active {
+            background-color: #1d4ed8;
+            border-color: #1d4ed8;
+            color: white;
+        }
+
         .capabilities-panel {
             padding: 18px;
             background-color: white;
@@ -323,6 +375,46 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 18px;
+        }
+
+        .data-group {
+            padding-top: 16px;
+            margin-top: 18px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .data-group:first-child {
+            margin-top: 0;
+        }
+
+        .data-group-depth-1 {
+            margin-left: 14px;
+            padding-left: 14px;
+            border-left: 3px solid #e5e7eb;
+        }
+
+        .data-group-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .data-group-title {
+            font-size: 22px;
+            color: #111827;
+        }
+
+        .data-group-count {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .data-group-description {
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 12px;
         }
 
         .data-grid {
@@ -566,6 +658,24 @@
             margin-bottom: 18px;
         }
 
+        .dependency-top-options {
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+        }
+
+        .dependency-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #374151;
+            font-size: 13px;
+        }
+
+        .dependency-option input {
+            margin: 0;
+        }
+
         .dependency-control-title {
             font-size: 12px;
             color: #6b7280;
@@ -662,19 +772,22 @@
         .dependency-graph-stat {
             border: 1px solid #d1d5db;
             border-radius: 8px;
-            background-color: #f8fafc;
-            padding: 10px 12px;
-            min-width: 120px;
+            padding: 8px;
         }
 
         .dependency-graph-stat-value {
-            font-size: 24px;
+            font-size: 14px;
             color: #1d4ed8;
         }
 
         .activity-muted {
             color: #6b7280;
             font-size: 90%;
+        }
+
+        .empty-state {
+            color: #6b7280;
+            font-style: italic;
         }
 
         .dependency-graph-stat-label {
@@ -896,13 +1009,42 @@
         const explicitCapabilities = capabilitiesPayload.capabilities || capabilitiesPayload.capabilities || [];
         const brickRendering = bricksMetadata.rendering || bricksMetadata.render || {};
         const brickTypes = bricksMetadata.types || [];
+        const brickStatuses = bricksMetadata.statuses || [];
         const typeColorMap = {};
+        const statusMap = {};
+        let brickStatusControlsInitialized = false;
         let dependenciesInitialized = false;
+        let activeDependencySubtab = 'declared';
+        const dependencySelectionState = {
+            declared: {
+                capabilityIds: null,
+                typeIds: null
+            },
+            data: {
+                brickIds: null,
+                assetIds: null,
+                aggregate: false
+            },
+            capabilities: {
+                brickIds: null,
+                capabilityIds: null,
+                aggregate: false
+            }
+        };
         let matrixInitialized = false;
 
         brickTypes.forEach(type => {
             typeColorMap[type.id.toLowerCase()] = type;
             typeColorMap[type.name.toLowerCase()] = type;
+        });
+
+        brickStatuses.forEach(status => {
+            if (status.id) {
+                statusMap[String(status.id).toLowerCase()] = status;
+            }
+            if (status.name) {
+                statusMap[String(status.name).toLowerCase()] = status;
+            }
         });
 
         mermaid.initialize({
@@ -918,6 +1060,23 @@
                 return typeColorMap[type.toLowerCase()].color;
             }
             return 'var(--surface-fallback)';
+        }
+
+        function normalizeStatus(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function statusDefinitionOf(status) {
+            const normalized = normalizeStatus(status);
+            return statusMap[normalized] || {
+                id: normalized || 'unspecified',
+                name: status || 'unspecified',
+                color: '#6b7280'
+            };
+        }
+
+        function statusColorOf(status) {
+            return statusDefinitionOf(status).color || '#6b7280';
         }
 
         function slugify(value) {
@@ -966,6 +1125,83 @@
             return !toggle || toggle.checked;
         }
 
+        function shouldShowBrickStatus() {
+            const toggle = document.getElementById('brickStatusToggle');
+            return Boolean(toggle && toggle.checked);
+        }
+
+        function getBrickStatusOptions() {
+            const counts = {};
+            getBrickCatalog().forEach(brick => {
+                const statusId = normalizeStatus(brick.status) || 'unspecified';
+                counts[statusId] = (counts[statusId] || 0) + 1;
+            });
+            const options = brickStatuses.map(status => {
+                const statusId = normalizeStatus(status.id || status.name);
+                return {
+                    id: statusId,
+                    name: status.name || status.id || statusId,
+                    color: status.color || '#6b7280',
+                    count: counts[statusId] || 0
+                };
+            });
+            Object.keys(counts).forEach(statusId => {
+                if (!options.some(option => option.id === statusId)) {
+                    const status = statusDefinitionOf(statusId);
+                    options.push({
+                        id: statusId,
+                        name: status.name || statusId,
+                        color: status.color || '#6b7280',
+                        count: counts[statusId] || 0
+                    });
+                }
+            });
+            return options;
+        }
+
+        function ensureBrickStatusControls() {
+            const container = document.getElementById('BrickStatusFilters');
+            if (!container || brickStatusControlsInitialized) {
+                return;
+            }
+            const options = getBrickStatusOptions();
+            if (!options.length) {
+                container.style.display = 'none';
+                brickStatusControlsInitialized = true;
+                return;
+            }
+            container.innerHTML = options.map(status => {
+                const id = 'brickStatusFilter_' + status.id;
+                return `
+                    <label class="bricks-toggle bricks-status-filter" for="${escapeHtml(id)}">
+                        <input type="checkbox" class="brick-status-filter-input" id="${escapeHtml(id)}" value="${escapeHtml(status.id)}" checked onchange="updateBricksView()">
+                        <span class="status-swatch" style="background-color: ${escapeHtml(status.color)}"></span>
+                        <span>${escapeHtml(status.name)} (${status.count})</span>
+                    </label>
+                `;
+            }).join('');
+            brickStatusControlsInitialized = true;
+        }
+
+        function selectedBrickStatuses() {
+            const checkboxes = Array.from(document.querySelectorAll('.brick-status-filter-input'));
+            if (!checkboxes.length) {
+                return new Set(getBrickStatusOptions().map(status => status.id));
+            }
+            return new Set(checkboxes.filter(input => input.checked).map(input => normalizeStatus(input.value)));
+        }
+
+        function shouldRenderBrick(item) {
+            return selectedBrickStatuses().has(normalizeStatus(item.status) || 'unspecified');
+        }
+
+        function statusBorderStyle(item) {
+            if (!shouldShowBrickStatus()) {
+                return '';
+            }
+            return `border-color: ${statusColorOf(item.status)}; border-width: 3px;`;
+        }
+
         function renderBrick(item) {
             const structureCards = [
                 ...((item.interfaces || []).map(intf => ({
@@ -988,7 +1224,7 @@
                 `).join('')}</div>`
                 : '';
             const brickCard = `
-                <div class="brick-card${item.isHighlighted ? ' highlighted' : ''}" style="background-color: ${item.color}">
+                <div class="brick-card${item.isHighlighted ? ' highlighted' : ''}" style="background-color: ${item.color}; ${statusBorderStyle(item)}">
                     <div class="brick-card-main">
                         <img class="brick-icon" src="icons/${item.id}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
                         <div class="brick-name">
@@ -1044,18 +1280,39 @@
             }));
         }
 
+        function filterGroupByStatus(group) {
+            const subGroups = (group.subGroups || [])
+                .map(filterGroupByStatus)
+                .filter(Boolean);
+            const bricks = (group.bricks || []).filter(shouldRenderBrick);
+            if (!subGroups.length && !bricks.length) {
+                return null;
+            }
+            return {
+                ...group,
+                subGroups,
+                bricks
+            };
+        }
+
         function filterHierarchyForRow(items, targetRow) {
             return items.filter(group => group.row === targetRow);
         }
 
         function renderMap(items) {
             const groupRows = buildGroupRowLookup();
-            const normalizedItems = applyRowsToHierarchy(items, groupRows);
+            const normalizedItems = applyRowsToHierarchy(items, groupRows)
+                .map(filterGroupByStatus)
+                .filter(Boolean);
             const rows = Array.from(new Set(
                 Object.values(groupRows)
                     .map(value => Number(value) || 1)
                     .concat([1])
             )).sort((left, right) => left - right);
+
+            if (!normalizedItems.length) {
+                return '<div class="empty-state">No bricks match the selected statuses.</div>';
+            }
 
             return `
                 <div class="map">
@@ -1354,13 +1611,23 @@
             `;
         }
 
+        function flattenDataAssetGroups(groups) {
+            let assets = [];
+            (groups || []).forEach(group => {
+                assets = assets.concat(group.assets || []);
+                assets = assets.concat(flattenDataAssetGroups(group.subGroups || []));
+            });
+            return assets;
+        }
+
         function renderDataView() {
             const container = document.getElementById('DataContent');
             if (!container) {
                 return;
             }
 
-            const assets = dataAssetsPayload.assets || [];
+            const assetGroups = dataAssetsPayload.rootGroups || [];
+            const assets = dataAssetsPayload.assets || flattenDataAssetGroups(assetGroups);
             const stores = dataAssetsPayload.stores || [];
             const totalStoreRefs = assets.reduce((sum, asset) => sum + ((asset.stores || []).length), 0);
             const governedAssets = assets.filter(asset => String(asset.personalDataLevel || 'none').toLowerCase() !== 'none' || String(asset.classification || '').toLowerCase() === 'restricted').length;
@@ -1398,6 +1665,52 @@
                 return `<ul class="data-meta-list">${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
             }
 
+            function renderAssetCard(asset) {
+                const usage = buildDataAssetUsage(asset.id);
+                return `
+                    <div class="data-card">
+                        <div class="data-card-head">
+                            <img class="data-card-icon" src="icons/data.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
+                            <div class="data-card-title">${escapeHtml(asset.name || asset.id)}</div>
+                        </div>
+                        ${asset.description ? `<div class="data-card-copy">${escapeHtml(asset.description)}</div>` : ''}
+                        <div class="data-card-subtitle">Metadata</div>
+                        ${renderMetaList(asset)}
+                        <div class="data-card-subtitle">Stores</div>
+                        ${renderStoreList(asset)}
+                        <div class="data-card-subtitle">Producing Bricks</div>
+                        ${renderDataBrickPills(usage.producingBricks)}
+                        <div class="data-card-subtitle">Consuming Bricks</div>
+                        ${renderDataBrickPills(usage.consumingBricks)}
+                    </div>
+                `;
+            }
+
+            function renderAssetGroup(group, depth = 0) {
+                const directAssets = group.assets || [];
+                const childGroups = group.subGroups || [];
+                const totalAssets = flattenDataAssetGroups([group]).length;
+                const directAssetMarkup = directAssets.length
+                    ? `<div class="data-grid">${directAssets.map(renderAssetCard).join('')}</div>`
+                    : '';
+                const childMarkup = childGroups.map(child => renderAssetGroup(child, depth + 1)).join('');
+                return `
+                    <section class="data-group data-group-depth-${depth}">
+                        <div class="data-group-header">
+                            <div class="data-group-title">${escapeHtml(group.name || 'Data Assets')}</div>
+                            <div class="data-group-count">${totalAssets} ${totalAssets === 1 ? 'asset' : 'assets'}</div>
+                        </div>
+                        ${group.description ? `<div class="data-group-description">${escapeHtml(group.description)}</div>` : ''}
+                        ${directAssetMarkup}
+                        ${childMarkup}
+                    </section>
+                `;
+            }
+
+            const assetMarkup = assetGroups.length
+                ? assetGroups.map(group => renderAssetGroup(group)).join('')
+                : `<div class="data-grid">${assets.map(renderAssetCard).join('')}</div>`;
+
             container.innerHTML = `
                 <div class="data-summary">
                     <div class="dependency-graph-stat">
@@ -1417,118 +1730,293 @@
                         <div class="dependency-graph-stat-label">Governed Assets</div>
                     </div>
                 </div>
-                <div class="data-grid">
-                    ${assets.length ? assets.map(asset => {
-                        const usage = buildDataAssetUsage(asset.id);
-                        return `
-                            <div class="data-card">
-                                <div class="data-card-head">
-                                    <img class="data-card-icon" src="icons/data.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
-                                    <div class="data-card-title">${escapeHtml(asset.name || asset.id)}</div>
-                                </div>
-                                ${asset.description ? `<div class="data-card-copy">${escapeHtml(asset.description)}</div>` : ''}
-                                <div class="data-card-subtitle">Metadata</div>
-                                ${renderMetaList(asset)}
-                                <div class="data-card-subtitle">Stores</div>
-                                ${renderStoreList(asset)}
-                                <div class="data-card-subtitle">Producing Bricks</div>
-                                ${renderDataBrickPills(usage.producingBricks)}
-                                <div class="data-card-subtitle">Consuming Bricks</div>
-                                ${renderDataBrickPills(usage.consumingBricks)}
-                            </div>
-                        `;
-                    }).join('') : '<div class="activity-muted">No data assets are defined for this domain yet.</div>'}
-                </div>
+                ${assets.length ? assetMarkup : '<div class="activity-muted">No data assets are defined for this domain yet.</div>'}
             `;
         }
 
-        function getDependencyCatalog() {
-            const capabilities = getCapabilityCatalogItems();
-            const brickCatalog = getBrickCatalog();
-            const referencedBrickIds = new Set();
+        function sortByDisplayName(left, right) {
+            return (left.name || left.id || '').localeCompare(right.name || right.id || '');
+        }
+
+        function getAllDataAssets() {
+            const assetGroups = dataAssetsPayload.rootGroups || [];
+            return dataAssetsPayload.assets || flattenDataAssetGroups(assetGroups);
+        }
+
+        function getDeclaredDependencyCatalog() {
+            const capabilities = getCapabilityCatalogItems().slice().sort(sortByDisplayName);
+            const bricks = getBrickCatalog().slice().sort(sortByDisplayName);
             const dependencyTypes = new Set();
-            capabilities.forEach(capability => {
-                (capability.brickDependencies || []).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
-                (capability.brickDependencies || []).forEach(dep => referencedBrickIds.add(dep.targetBrickId || ''));
+            bricks.forEach(brick => {
+                (brick.brickDependencies || []).forEach(dep => {
+                    if (dep.targetBrickId) {
+                        dependencyTypes.add(dep.type || 'unspecified');
+                    }
+                });
             });
             return {
-                capabilities: capabilities,
-                bricks: brickCatalog.filter(item => referencedBrickIds.has(item.id)),
+                capabilities,
+                bricks,
                 dependencyTypes: Array.from(dependencyTypes).sort((left, right) => left.localeCompare(right))
             };
         }
 
-        function renderChecklistItems(items, kind) {
-            if (!items.length) {
-                return '<div class="dependency-empty">No items available.</div>';
-            }
-
-            return items.map(item => {
-                if (kind === 'capability') {
-                    return `
-                        <label class="dependency-check-item">
-                            <input type="checkbox" class="dependency-capability-checkbox" value="${item.id}" checked onchange="renderDependenciesView()">
-                            <span>
-                                <span>${item.name}</span>
-                                <span class="dependency-check-meta">${item.domain}${item.group && item.group !== item.domain ? ' / ' + item.group : ''}</span>
-                            </span>
-                        </label>
-                    `;
+        function getDataDependencyCatalog() {
+            const assetLookup = {};
+            getAllDataAssets().forEach(asset => {
+                if (asset.id) {
+                    assetLookup[asset.id] = asset;
                 }
-                return `
-                    <label class="dependency-check-item">
-                        <input type="checkbox" class="dependency-type-checkbox" value="${item}" checked onchange="renderDependenciesView()">
-                        <span>${item}</span>
-                    </label>
-                `;
-            }).join('');
+            });
+
+            const referencedAssetIds = new Set();
+            const bricks = getBrickCatalog().filter(brick => {
+                const dependencies = brick.dataDependencies || [];
+                dependencies.forEach(dep => {
+                    if (dep.assetId) {
+                        referencedAssetIds.add(dep.assetId);
+                    }
+                });
+                return dependencies.some(dep => dep.assetId);
+            }).sort(sortByDisplayName);
+
+            const assets = Array.from(referencedAssetIds).map(assetId => {
+                return assetLookup[assetId] || {
+                    id: assetId,
+                    name: assetId,
+                    kind: 'unlisted'
+                };
+            }).sort(sortByDisplayName);
+
+            return {bricks, assets};
         }
 
-        function renderDependenciesControls(catalog) {
+        function getCapabilityDependencyCatalog() {
+            const capabilities = getCapabilityCatalogItems().slice().sort(sortByDisplayName);
+            const referencedBrickIds = new Set();
+            capabilities.forEach(capability => {
+                (capability.brickDependencies || []).forEach(dep => {
+                    if (dep.targetBrickId) {
+                        referencedBrickIds.add(dep.targetBrickId);
+                    }
+                });
+            });
+            const bricks = getBrickCatalog()
+                .filter(brick => referencedBrickIds.has(brick.id))
+                .sort(sortByDisplayName);
+            return {capabilities, bricks};
+        }
+
+        function renderDependencySubtabs() {
+            const container = document.getElementById('DependencySubtabs');
+            if (!container) {
+                return;
+            }
+            const tabs = [
+                {id: 'declared', label: 'Declared brick dependencies'},
+                {id: 'data', label: 'Brick dependencies via data assets'},
+                {id: 'capabilities', label: 'Brick dependencies via capabilities'}
+            ];
+            container.innerHTML = tabs.map(tab => `
+                <button class="dependency-subtab${activeDependencySubtab === tab.id ? ' active' : ''}" type="button" onclick="setDependencySubtab('${tab.id}')">
+                    ${tab.label}
+                </button>
+            `).join('');
+        }
+
+        function dependencyStateFor(subtab) {
+            return dependencySelectionState[subtab] || {};
+        }
+
+        function renderDependencyControlGroup(title, className, items, checkedValues, renderLabel) {
+            const checkedSet = checkedValues ? new Set(checkedValues) : null;
+            const checklist = items.length
+                ? items.map(item => {
+                    const value = String(item.id || item);
+                    const checked = !checkedSet || checkedSet.has(value) ? 'checked' : '';
+                    return `
+                        <label class="dependency-check-item">
+                            <input type="checkbox" class="${className}" value="${escapeHtml(value)}" ${checked} onchange="renderActiveDependencyGraph()">
+                            ${renderLabel(item)}
+                        </label>
+                    `;
+                }).join('')
+                : '<div class="dependency-empty">No items available.</div>';
             return `
-                <div class="dependency-controls">
-                    <div class="dependency-control-group">
-                        <div class="dependency-control-title">Product Capabilities</div>
-                        <div class="dependency-actions">
-                            <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.dependency-capability-checkbox', true)">Show all</button>
-                            <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.dependency-capability-checkbox', false)">Hide all</button>
-                        </div>
-                        <div class="dependency-checklist">
-                            ${renderChecklistItems(catalog.capabilities, 'capability')}
-                        </div>
+                <div class="dependency-control-group">
+                    <div class="dependency-control-title">${title}</div>
+                    <div class="dependency-actions">
+                        <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.${className}', true)">Show all</button>
+                        <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.${className}', false)">Hide all</button>
                     </div>
-                    <div class="dependency-control-group">
-                        <div class="dependency-control-title">Dependency Types</div>
-                        <div class="dependency-actions">
-                            <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.dependency-type-checkbox', true)">Show all</button>
-                            <button class="dependency-action" type="button" onclick="setAllDependencyCheckboxes('.dependency-type-checkbox', false)">Hide all</button>
-                        </div>
-                        <div class="dependency-checklist">
-                            ${renderChecklistItems(catalog.dependencyTypes, 'type')}
-                        </div>
-                    </div>
-                    <div class="dependency-node-legend">
-                        <div class="dependency-control-title">Node Legend</div>
-                        <div class="dependency-node-legend-items">
+                    <div class="dependency-checklist">${checklist}</div>
+                </div>
+            `;
+        }
+
+        function renderCapabilityControlLabel(capability) {
+            const meta = [capability.domain, capability.group && capability.group !== capability.domain ? capability.group : '']
+                .filter(Boolean)
+                .join(' / ');
+            return `
+                <span>
+                    <span>${escapeHtml(capability.name || capability.id)}</span>
+                    ${meta ? `<span class="dependency-check-meta">${escapeHtml(meta)}</span>` : ''}
+                </span>
+            `;
+        }
+
+        function renderBrickControlLabel(brick) {
+            const meta = [brick.domain, brick.group && brick.group !== brick.domain ? brick.group : '', brick.type]
+                .filter(Boolean)
+                .join(' / ');
+            return `
+                <span>
+                    <span>${escapeHtml(brick.name || brick.id)}</span>
+                    ${meta ? `<span class="dependency-check-meta">${escapeHtml(meta)}</span>` : ''}
+                </span>
+            `;
+        }
+
+        function renderAssetControlLabel(asset) {
+            const meta = [asset.kind, asset.classification].filter(Boolean).join(' / ');
+            return `
+                <span>
+                    <span>${escapeHtml(asset.name || asset.id)}</span>
+                    ${meta ? `<span class="dependency-check-meta">${escapeHtml(meta)}</span>` : ''}
+                </span>
+            `;
+        }
+
+        function renderTypeControlLabel(type) {
+            return `<span>${escapeHtml(type)}</span>`;
+        }
+
+        function renderDependencyNodeLegend(items) {
+            return `
+                <div class="dependency-node-legend">
+                    <div class="dependency-control-title">Node Legend</div>
+                    <div class="dependency-node-legend-items">
+                        ${items.map(item => `
                             <div class="dependency-node-legend-item">
-                                <span class="dependency-node-legend-swatch" style="background-color:#fde68a; border-color:#d97706;"></span>
-                                <span>Product capability</span>
+                                <span class="dependency-node-legend-swatch" style="background-color:${item.fill}; border-color:${item.stroke};"></span>
+                                <span>${item.label}</span>
                             </div>
-                            <div class="dependency-node-legend-item">
-                                <span class="dependency-node-legend-swatch" style="background-color:#dbeafe; border-color:#2563eb;"></span>
-                                <span>Product brick</span>
-                            </div>
-                        </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
+        }
+
+        function renderDeclaredDependencyControls() {
+            const catalog = getDeclaredDependencyCatalog();
+            const state = dependencyStateFor('declared');
+            return `
+                <div class="dependency-controls">
+                    ${renderDependencyControlGroup('Product Capabilities', 'dependency-declared-capability-checkbox', catalog.capabilities, state.capabilityIds, renderCapabilityControlLabel)}
+                    ${renderDependencyControlGroup('Dependency Types', 'dependency-declared-type-checkbox', catalog.dependencyTypes, state.typeIds, renderTypeControlLabel)}
+                    ${renderDependencyNodeLegend([
+                        {fill: '#dbeafe', stroke: '#2563eb', label: 'Product brick'}
+                    ])}
+                </div>
+            `;
+        }
+
+        function renderDataDependencyControls() {
+            const catalog = getDataDependencyCatalog();
+            const state = dependencyStateFor('data');
+            return `
+                <div class="dependency-controls">
+                    <div class="dependency-top-options">
+                        <label class="dependency-option" for="dependencyDataAggregateToggle">
+                            <input type="checkbox" id="dependencyDataAggregateToggle" ${state.aggregate ? 'checked' : ''} onchange="renderActiveDependencyGraph()">
+                            <span>Aggregate dependencies</span>
+                        </label>
+                    </div>
+                    ${renderDependencyControlGroup('Product Bricks', 'dependency-data-brick-checkbox', catalog.bricks, state.brickIds, renderBrickControlLabel)}
+                    ${renderDependencyControlGroup('Data Assets', 'dependency-data-asset-checkbox', catalog.assets, state.assetIds, renderAssetControlLabel)}
+                    ${renderDependencyNodeLegend([
+                        {fill: '#dbeafe', stroke: '#2563eb', label: 'Product brick'},
+                        {fill: '#dcfce7', stroke: '#16a34a', label: 'Data asset'}
+                    ])}
+                </div>
+            `;
+        }
+
+        function renderCapabilityDependencyControls() {
+            const catalog = getCapabilityDependencyCatalog();
+            const state = dependencyStateFor('capabilities');
+            return `
+                <div class="dependency-controls">
+                    <div class="dependency-top-options">
+                        <label class="dependency-option" for="dependencyCapabilityAggregateToggle">
+                            <input type="checkbox" id="dependencyCapabilityAggregateToggle" ${state.aggregate ? 'checked' : ''} onchange="renderActiveDependencyGraph()">
+                            <span>Aggregate brick links</span>
+                        </label>
+                    </div>
+                    ${renderDependencyControlGroup('Product Capabilities', 'dependency-capability-capability-checkbox', catalog.capabilities, state.capabilityIds, renderCapabilityControlLabel)}
+                    ${renderDependencyControlGroup('Product Bricks', 'dependency-capability-brick-checkbox', catalog.bricks, state.brickIds, renderBrickControlLabel)}
+                    ${renderDependencyNodeLegend([
+                        {fill: '#fde68a', stroke: '#d97706', label: 'Product capability'},
+                        {fill: '#dbeafe', stroke: '#2563eb', label: 'Product brick'}
+                    ])}
+                </div>
+            `;
+        }
+
+        function renderActiveDependencyControls() {
+            const container = document.getElementById('DependencyControls');
+            if (!container) {
+                return;
+            }
+            if (activeDependencySubtab === 'data') {
+                container.innerHTML = renderDataDependencyControls();
+                return;
+            }
+            if (activeDependencySubtab === 'capabilities') {
+                container.innerHTML = renderCapabilityDependencyControls();
+                return;
+            }
+            container.innerHTML = renderDeclaredDependencyControls();
         }
 
         function setAllDependencyCheckboxes(selector, checked) {
             document.querySelectorAll(selector).forEach(input => {
                 input.checked = checked;
             });
-            renderDependenciesView();
+            renderActiveDependencyGraph();
+        }
+
+        function readDependencyControlState() {
+            if (!dependenciesInitialized) {
+                return;
+            }
+            if (activeDependencySubtab === 'declared') {
+                dependencySelectionState.declared.capabilityIds = Array.from(selectedValues('.dependency-declared-capability-checkbox'));
+                dependencySelectionState.declared.typeIds = Array.from(selectedValues('.dependency-declared-type-checkbox'));
+                return;
+            }
+            if (activeDependencySubtab === 'data') {
+                const aggregateToggle = document.getElementById('dependencyDataAggregateToggle');
+                dependencySelectionState.data.brickIds = Array.from(selectedValues('.dependency-data-brick-checkbox'));
+                dependencySelectionState.data.assetIds = Array.from(selectedValues('.dependency-data-asset-checkbox'));
+                dependencySelectionState.data.aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
+                return;
+            }
+            if (activeDependencySubtab === 'capabilities') {
+                const aggregateToggle = document.getElementById('dependencyCapabilityAggregateToggle');
+                dependencySelectionState.capabilities.capabilityIds = Array.from(selectedValues('.dependency-capability-capability-checkbox'));
+                dependencySelectionState.capabilities.brickIds = Array.from(selectedValues('.dependency-capability-brick-checkbox'));
+                dependencySelectionState.capabilities.aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
+            }
+        }
+
+        function setDependencySubtab(subtab) {
+            readDependencyControlState();
+            activeDependencySubtab = subtab;
+            renderDependencySubtabs();
+            renderActiveDependencyControls();
+            renderActiveDependencyGraph();
         }
 
         function setAllMatrixCheckboxes(selector, checked) {
@@ -1544,45 +2032,286 @@
                 .map(input => input.value));
         }
 
-        function buildDependencyGraph(catalog, selectedCapabilityIds, selectedDependencyTypes) {
-            const selectedCapabilities = catalog.capabilities.filter(item => selectedCapabilityIds.has(item.id));
-            const graphNodes = [];
-            const graphEdges = [];
-            const brickNodes = {};
+        function addGraphNode(nodesById, node) {
+            if (node.id && !nodesById[node.id]) {
+                nodesById[node.id] = node;
+            }
+        }
 
-            selectedCapabilities.forEach(item => {
-                graphNodes.push({
-                    id: item.id,
-                    label: item.name || item.id,
-                    nodeClass: 'capabilityNode'
+        function graphBrickNode(brick) {
+            return {
+                id: 'brick:' + brick.id,
+                label: brick.name || brick.id,
+                nodeClass: 'brickNode'
+            };
+        }
+
+        function graphCapabilityNode(capability) {
+            return {
+                id: 'capability:' + capability.id,
+                label: capability.name || capability.id,
+                nodeClass: 'capabilityNode'
+            };
+        }
+
+        function graphDataAssetNode(asset) {
+            return {
+                id: 'asset:' + asset.id,
+                label: asset.name || asset.id,
+                nodeClass: 'dataAssetNode'
+            };
+        }
+
+        function mermaidNodeId(value) {
+            return String(value || '').replace(/[^a-zA-Z0-9_]/g, '_');
+        }
+
+        function selectedCapabilityBrickIds(capabilities, selectedCapabilityIds, brickLookup) {
+            const brickIds = new Set();
+            const allCapabilitiesSelected = !capabilities.length || capabilities.every(capability => selectedCapabilityIds.has(capability.id));
+            if (allCapabilitiesSelected) {
+                Object.keys(brickLookup).forEach(brickId => brickIds.add(brickId));
+                return brickIds;
+            }
+            capabilities.forEach(capability => {
+                if (!selectedCapabilityIds.has(capability.id)) {
+                    return;
+                }
+                if (brickLookup[capability.id]) {
+                    brickIds.add(capability.id);
+                }
+                (capability.brickDependencies || []).forEach(dep => {
+                    if (dep.targetBrickId) {
+                        brickIds.add(dep.targetBrickId);
+                    }
                 });
+            });
+            return brickIds;
+        }
 
-                (item.brickDependencies || []).forEach(dep => {
-                    if (!selectedDependencyTypes.has(dep.type || 'unspecified')) {
+        function buildDeclaredDependencyGraph(catalog, selectedCapabilityIds, selectedDependencyTypes) {
+            const brickLookup = buildBrickLookup();
+            const scopedBrickIds = selectedCapabilityBrickIds(catalog.capabilities, selectedCapabilityIds, brickLookup);
+            const nodesById = {};
+            const edges = [];
+
+            catalog.bricks.forEach(brick => {
+                if (!scopedBrickIds.has(brick.id)) {
+                    return;
+                }
+                (brick.brickDependencies || []).forEach(dep => {
+                    const dependencyType = dep.type || 'unspecified';
+                    if (!dep.targetBrickId || !selectedDependencyTypes.has(dependencyType)) {
                         return;
                     }
-                    const targetBrick = catalog.bricks.find(candidate => candidate.id === dep.targetBrickId) || {};
-                    if (!dep.targetBrickId) {
-                        return;
-                    }
-                    brickNodes[dep.targetBrickId] = {
+                    const targetBrick = brickLookup[dep.targetBrickId] || {
                         id: dep.targetBrickId,
-                        label: targetBrick.name || dep.targetBrickId,
-                        nodeClass: 'brickNode'
+                        name: dep.targetBrickId
                     };
-                    graphEdges.push({
-                        source: item.id,
-                        target: dep.targetBrickId,
-                        label: [dep.type, dep.interface].filter(Boolean).join(' / ')
+                    addGraphNode(nodesById, graphBrickNode(brick));
+                    addGraphNode(nodesById, graphBrickNode(targetBrick));
+                    edges.push({
+                        source: 'brick:' + brick.id,
+                        target: 'brick:' + dep.targetBrickId,
+                        label: [dependencyType, dep.interface].filter(Boolean).join(' / ')
                     });
                 });
             });
 
-            Object.values(brickNodes).forEach(item => graphNodes.push(item));
+            return {
+                nodes: Object.values(nodesById),
+                edges,
+                scopedBrickCount: scopedBrickIds.size
+            };
+        }
+
+        function isDataProducerRole(role) {
+            return ['own', 'write', 'publish', 'replicate', 'delete'].includes(String(role || '').toLowerCase());
+        }
+
+        function buildDataDependencyGraph(catalog, selectedBrickIds, selectedAssetIds, aggregate) {
+            if (aggregate) {
+                return buildAggregatedDataDependencyGraph(catalog, selectedBrickIds, selectedAssetIds);
+            }
+
+            const assetLookup = {};
+            catalog.assets.forEach(asset => {
+                assetLookup[asset.id] = asset;
+            });
+            const nodesById = {};
+            const edges = [];
+
+            catalog.bricks.forEach(brick => {
+                if (!selectedBrickIds.has(brick.id)) {
+                    return;
+                }
+                (brick.dataDependencies || []).forEach(dep => {
+                    if (!dep.assetId || !selectedAssetIds.has(dep.assetId)) {
+                        return;
+                    }
+                    const asset = assetLookup[dep.assetId] || {
+                        id: dep.assetId,
+                        name: dep.assetId
+                    };
+                    addGraphNode(nodesById, graphBrickNode(brick));
+                    addGraphNode(nodesById, graphDataAssetNode(asset));
+                    const brickNodeId = 'brick:' + brick.id;
+                    const assetNodeId = 'asset:' + dep.assetId;
+                    edges.push({
+                        source: isDataProducerRole(dep.role) ? brickNodeId : assetNodeId,
+                        target: isDataProducerRole(dep.role) ? assetNodeId : brickNodeId,
+                        label: dep.role || 'uses'
+                    });
+                });
+            });
 
             return {
-                nodes: graphNodes,
-                edges: graphEdges
+                nodes: Object.values(nodesById),
+                edges
+            };
+        }
+
+        function buildAggregatedDataDependencyGraph(catalog, selectedBrickIds, selectedAssetIds) {
+            const brickLookup = {};
+            catalog.bricks.forEach(brick => {
+                brickLookup[brick.id] = brick;
+            });
+            const assetToBrickIds = {};
+            catalog.bricks.forEach(brick => {
+                if (!selectedBrickIds.has(brick.id)) {
+                    return;
+                }
+                (brick.dataDependencies || []).forEach(dep => {
+                    if (!dep.assetId || !selectedAssetIds.has(dep.assetId)) {
+                        return;
+                    }
+                    if (!assetToBrickIds[dep.assetId]) {
+                        assetToBrickIds[dep.assetId] = new Set();
+                    }
+                    assetToBrickIds[dep.assetId].add(brick.id);
+                });
+            });
+
+            const pairLookup = {};
+            Object.entries(assetToBrickIds).forEach(([assetId, brickIds]) => {
+                const ids = Array.from(brickIds).sort((left, right) => left.localeCompare(right));
+                for (let i = 0; i < ids.length; i++) {
+                    for (let j = i + 1; j < ids.length; j++) {
+                        const key = ids[i] + '::' + ids[j];
+                        if (!pairLookup[key]) {
+                            pairLookup[key] = new Set();
+                        }
+                        pairLookup[key].add(assetId);
+                    }
+                }
+            });
+
+            const nodesById = {};
+            const edges = [];
+            Object.entries(pairLookup).forEach(([key, assetIds]) => {
+                const [sourceId, targetId] = key.split('::');
+                addGraphNode(nodesById, graphBrickNode(brickLookup[sourceId] || {id: sourceId, name: sourceId}));
+                addGraphNode(nodesById, graphBrickNode(brickLookup[targetId] || {id: targetId, name: targetId}));
+                const count = assetIds.size;
+                edges.push({
+                    source: 'brick:' + sourceId,
+                    target: 'brick:' + targetId,
+                    label: String(count),
+                    direction: 'undirected',
+                    width: Math.min(10, 1 + count)
+                });
+            });
+
+            return {
+                nodes: Object.values(nodesById),
+                edges
+            };
+        }
+
+        function buildCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds, aggregate) {
+            if (aggregate) {
+                return buildAggregatedCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds);
+            }
+
+            const brickLookup = {};
+            catalog.bricks.forEach(brick => {
+                brickLookup[brick.id] = brick;
+            });
+            const nodesById = {};
+            const edges = [];
+
+            catalog.capabilities.forEach(capability => {
+                if (!selectedCapabilityIds.has(capability.id)) {
+                    return;
+                }
+                (capability.brickDependencies || []).forEach(dep => {
+                    if (!dep.targetBrickId || !selectedBrickIds.has(dep.targetBrickId)) {
+                        return;
+                    }
+                    const brick = brickLookup[dep.targetBrickId] || {
+                        id: dep.targetBrickId,
+                        name: dep.targetBrickId
+                    };
+                    addGraphNode(nodesById, graphCapabilityNode(capability));
+                    addGraphNode(nodesById, graphBrickNode(brick));
+                    edges.push({
+                        source: 'capability:' + capability.id,
+                        target: 'brick:' + dep.targetBrickId,
+                        label: dep.type || 'uses'
+                    });
+                });
+            });
+
+            return {
+                nodes: Object.values(nodesById),
+                edges
+            };
+        }
+
+        function buildAggregatedCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds) {
+            const brickLookup = {};
+            catalog.bricks.forEach(brick => {
+                brickLookup[brick.id] = brick;
+            });
+            const pairLookup = {};
+            catalog.capabilities.forEach(capability => {
+                if (!selectedCapabilityIds.has(capability.id)) {
+                    return;
+                }
+                const brickIds = Array.from(new Set((capability.brickDependencies || [])
+                    .map(dep => dep.targetBrickId)
+                    .filter(brickId => brickId && selectedBrickIds.has(brickId))))
+                    .sort((left, right) => left.localeCompare(right));
+                for (let i = 0; i < brickIds.length; i++) {
+                    for (let j = i + 1; j < brickIds.length; j++) {
+                        const key = brickIds[i] + '::' + brickIds[j];
+                        if (!pairLookup[key]) {
+                            pairLookup[key] = new Set();
+                        }
+                        pairLookup[key].add(capability.id);
+                    }
+                }
+            });
+
+            const nodesById = {};
+            const edges = [];
+            Object.entries(pairLookup).forEach(([key, capabilityIds]) => {
+                const [sourceId, targetId] = key.split('::');
+                addGraphNode(nodesById, graphBrickNode(brickLookup[sourceId] || {id: sourceId, name: sourceId}));
+                addGraphNode(nodesById, graphBrickNode(brickLookup[targetId] || {id: targetId, name: targetId}));
+                const count = capabilityIds.size;
+                edges.push({
+                    source: 'brick:' + sourceId,
+                    target: 'brick:' + targetId,
+                    label: String(count),
+                    direction: 'undirected',
+                    width: Math.min(10, 1 + count)
+                });
+            });
+
+            return {
+                nodes: Object.values(nodesById),
+                edges
             };
         }
 
@@ -1595,70 +2324,149 @@
             `;
         }
 
+        function renderDependencyMermaid(graph, emptyMessage) {
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (!graphContainer) {
+                return;
+            }
+            if (!graph.nodes.length || !graph.edges.length) {
+                graphContainer.innerHTML = `<div class="dependency-empty">${escapeHtml(emptyMessage)}</div>`;
+                return;
+            }
+
+            let chart = 'flowchart LR\n\n';
+            graph.nodes.forEach(node => {
+                chart += mermaidNodeId(node.id) + '["' + escapeMermaidLabel(node.label) + '"]\n';
+            });
+            graph.edges.forEach(edge => {
+                const operator = edge.direction === 'undirected' ? '---' : '-->';
+                const label = edge.label ? '|' + escapeMermaidLabel(edge.label) + '|' : '';
+                chart += mermaidNodeId(edge.source) + ' ' + operator + label + ' ' + mermaidNodeId(edge.target) + '\n';
+            });
+            chart += '\nclassDef capabilityNode fill:#fde68a,stroke:#d97706,color:#7c2d12,stroke-width:2px;\n';
+            chart += 'classDef brickNode fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;\n';
+            chart += 'classDef dataAssetNode fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;\n';
+
+            const classGroups = {
+                capabilityNode: [],
+                brickNode: [],
+                dataAssetNode: []
+            };
+            graph.nodes.forEach(node => {
+                if (classGroups[node.nodeClass]) {
+                    classGroups[node.nodeClass].push(mermaidNodeId(node.id));
+                }
+            });
+            Object.entries(classGroups).forEach(([className, nodeIds]) => {
+                if (nodeIds.length) {
+                    chart += 'class ' + nodeIds.join(',') + ' ' + className + ';\n';
+                }
+            });
+            graph.edges.forEach((edge, index) => {
+                if (edge.width) {
+                    chart += 'linkStyle ' + index + ' stroke-width:' + edge.width + 'px;\n';
+                }
+            });
+
+            graphContainer.innerHTML = '<div class="mermaid">' + chart + '</div>';
+            mermaid.run({querySelector: '#DependenciesGraph .mermaid'});
+        }
+
+        function renderDependencySummary(stats) {
+            const summary = document.getElementById('DependenciesSummary');
+            if (!summary) {
+                return;
+            }
+            summary.innerHTML = stats.map(stat => `
+                <div class="dependency-graph-stat">
+                    <span class="dependency-graph-stat-value">${stat.value}</span>
+                    <span class="dependency-graph-stat-label">${stat.label}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderDeclaredDependencyGraph() {
+            const catalog = getDeclaredDependencyCatalog();
+            const selectedCapabilityIds = selectedValues('.dependency-declared-capability-checkbox');
+            const selectedDependencyTypes = selectedValues('.dependency-declared-type-checkbox');
+            const graph = buildDeclaredDependencyGraph(catalog, selectedCapabilityIds, selectedDependencyTypes);
+            renderDependencySummary([
+                {value: graph.scopedBrickCount, label: 'Scoped Bricks'},
+                {value: graph.edges.length, label: 'Declared Links'}
+            ]);
+            renderDependencyMermaid(graph, 'Select capabilities and dependency types to render declared brick dependencies.');
+        }
+
+        function renderDataDependencyGraph() {
+            const catalog = getDataDependencyCatalog();
+            const selectedBrickIds = selectedValues('.dependency-data-brick-checkbox');
+            const selectedAssetIds = selectedValues('.dependency-data-asset-checkbox');
+            const aggregateToggle = document.getElementById('dependencyDataAggregateToggle');
+            const aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
+            const graph = buildDataDependencyGraph(catalog, selectedBrickIds, selectedAssetIds, aggregate);
+            renderDependencySummary([
+                {value: selectedBrickIds.size, label: 'Bricks'},
+                {value: selectedAssetIds.size, label: 'Assets'},
+                {value: graph.edges.length, label: aggregate ? 'Shared Asset Links' : 'Data Links'}
+            ]);
+            renderDependencyMermaid(graph, aggregate
+                ? 'Select at least two bricks sharing selected data assets to render aggregated dependencies.'
+                : 'Select bricks and data assets to render data-asset dependency links.');
+        }
+
+        function renderCapabilityDependencyGraph() {
+            const catalog = getCapabilityDependencyCatalog();
+            const selectedCapabilityIds = selectedValues('.dependency-capability-capability-checkbox');
+            const selectedBrickIds = selectedValues('.dependency-capability-brick-checkbox');
+            const aggregateToggle = document.getElementById('dependencyCapabilityAggregateToggle');
+            const aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
+            const graph = buildCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds, aggregate);
+            renderDependencySummary([
+                {value: selectedCapabilityIds.size, label: 'Capabilities'},
+                {value: selectedBrickIds.size, label: 'Bricks'},
+                {value: graph.edges.length, label: aggregate ? 'Shared Capability Links' : 'Capability Links'}
+            ]);
+            renderDependencyMermaid(graph, aggregate
+                ? 'Select at least two bricks sharing selected capabilities to render aggregated brick links.'
+                : 'Select bricks and capabilities to render capability dependency links.');
+        }
+
+        function renderActiveDependencyGraph() {
+            if (activeDependencySubtab === 'data') {
+                renderDataDependencyGraph();
+                return;
+            }
+            if (activeDependencySubtab === 'capabilities') {
+                renderCapabilityDependencyGraph();
+                return;
+            }
+            renderDeclaredDependencyGraph();
+        }
+
         function renderDependenciesView() {
             const container = document.getElementById('DependenciesContent');
             if (!container) {
                 return;
             }
 
-            const catalog = getDependencyCatalog();
             if (!dependenciesInitialized) {
                 container.innerHTML = `
+                    <div class="dependency-subtabs" id="DependencySubtabs"></div>
                     <div class="dependencies-layout">
-                        ${renderDependenciesControls(catalog)}
+                        <div id="DependencyControls"></div>
                         ${renderDependencyGraphShell()}
                     </div>
                 `;
                 dependenciesInitialized = true;
+                renderDependencySubtabs();
+                renderActiveDependencyControls();
             }
 
-            const selectedCapabilityIds = selectedValues('.dependency-capability-checkbox');
-            const selectedDependencyTypes = selectedValues('.dependency-type-checkbox');
-            const graph = buildDependencyGraph(catalog, selectedCapabilityIds, selectedDependencyTypes);
-
-            document.getElementById('DependenciesSummary').innerHTML = `
-                <div class="dependency-graph-stat">
-                    <div class="dependency-graph-stat-value">${selectedCapabilityIds.size}</div>
-                    <div class="dependency-graph-stat-label">Capabilities Shown</div>
-                </div>
-                <div class="dependency-graph-stat">
-                    <div class="dependency-graph-stat-value">${graph.nodes.length}</div>
-                    <div class="dependency-graph-stat-label">Nodes</div>
-                </div>
-                <div class="dependency-graph-stat">
-                    <div class="dependency-graph-stat-value">${graph.edges.length}</div>
-                    <div class="dependency-graph-stat-label">Dependencies</div>
-                </div>
-            `;
-
-            if (!graph.nodes.length || !graph.edges.length) {
-                document.getElementById('DependenciesGraph').innerHTML = '<div class="dependency-empty">Select capabilities and dependency types to render the dependency map.</div>';
-                return;
-            }
-
-            let chart = 'flowchart LR\n\n';
-            graph.nodes.forEach(node => {
-                chart += node.id.replaceAll('-', '_') + '["' + escapeMermaidLabel(node.label) + '"]\n';
-            });
-            graph.edges.forEach(edge => {
-                chart += edge.source.replaceAll('-', '_') + ' -->|' + escapeMermaidLabel(edge.label) + '| ' + edge.target.replaceAll('-', '_') + '\n';
-            });
-            chart += '\nclassDef capabilityNode fill:#fde68a,stroke:#d97706,color:#7c2d12,stroke-width:2px;\n';
-            chart += 'classDef brickNode fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;\n';
-            const capabilityNodeIds = graph.nodes.filter(node => node.nodeClass === 'capabilityNode').map(node => node.id.replaceAll('-', '_'));
-            const brickNodeIds = graph.nodes.filter(node => node.nodeClass === 'brickNode').map(node => node.id.replaceAll('-', '_'));
-            if (capabilityNodeIds.length) {
-                chart += 'class ' + capabilityNodeIds.join(',') + ' capabilityNode;\n';
-            }
-            if (brickNodeIds.length) {
-                chart += 'class ' + brickNodeIds.join(',') + ' brickNode;\n';
-            }
-
-            document.getElementById('DependenciesGraph').innerHTML = '<div class="mermaid">' + chart + '</div>';
-            mermaid.run({querySelector: '#DependenciesGraph .mermaid'});
+            renderActiveDependencyGraph();
         }
 
         function updateBricksView() {
+            ensureBrickStatusControls();
             document.getElementById('Current').innerHTML = renderMap(rootGroups);
             document.getElementById('Legend').innerHTML = renderLegend();
         }
@@ -1953,6 +2761,11 @@
                     <input type="checkbox" id="brickStructureToggle" onchange="updateBricksView()">
                     <span>Show internal modules</span>
                 </label>
+                <label class="bricks-toggle" for="brickStatusToggle">
+                    <input type="checkbox" id="brickStatusToggle" onchange="updateBricksView()">
+                    <span>Show status</span>
+                </label>
+                <div class="bricks-status-filters" id="BrickStatusFilters"></div>
             </div>
             <div id="Current"></div>
             <div class="legend" id="Legend"></div>
