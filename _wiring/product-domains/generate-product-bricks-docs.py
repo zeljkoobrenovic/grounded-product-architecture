@@ -27,7 +27,10 @@ def load_json_if_exists(path, default_value):
 def load_json_from_paths(paths, default_value):
     for path in paths:
         if os.path.exists(path):
-            return json.load(open(path))
+            payload = json.load(open(path))
+            if isinstance(payload, dict) and isinstance(payload.get('items'), list):
+                return payload.get('items')
+            return payload
     return default_value
 
 

@@ -36,6 +36,8 @@ All generated HTML files are intended to be self-contained and easy to publish a
   - HTML templates used to generate the static site.
 - `_wiring/`
   - Python generator scripts that wire `_config/...` and `_templates/...` into `docs/...`.
+- `_skills/`
+  - Repo-local Codex skill guidance for cross-cutting modeling workflows that span source data, generators, templates, and generated documentation.
 - `docs/`
   - Generated static website output.
 - `_prompts/`
@@ -90,6 +92,7 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 ## Working Rules For Agents
 
 - Treat `_config/**` and `_templates/**` as the primary editable sources.
+- Treat `_skills/**` as repo-local agent guidance, not product-domain source data.
 - Treat `docs/**` as generated output unless the user explicitly asks for a direct patch there.
 - Preserve the repository's no-framework approach. Do not introduce React, build tooling, npm dependencies, or external JS libraries unless explicitly requested.
 - Keep generated pages self-contained. Avoid solutions that depend on shared runtime infrastructure or client-side package bundling.

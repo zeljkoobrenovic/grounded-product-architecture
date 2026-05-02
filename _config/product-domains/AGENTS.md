@@ -4,13 +4,26 @@
 
 Use this folder-level guide when creating or extending any product domain under `_config/product-domains/<domain-id>/`.
 
-This playbook captures the working pattern used to build the `bike-mobility` domain end to end:
+This playbook captures the working pattern used to build the `<domain-id>` domain end to end:
 
 - define the strategic model in `_config/product-domains/<domain-id>/`
 - keep strategy grounded in customers, JTBD, KPIs, delivery, product bricks, and evidence
 - generate the matching static documentation in `docs/product-domains/<domain-id>/`
 
 Prefer evolving the existing model and generator conventions over inventing a new schema.
+
+## Local Modeling Skills
+
+Use this `AGENTS.md` file for always-on repository rules, source-vs-generated policy, folder structure, ID conventions, validation, generator workflow, and completion checks.
+
+For deeper product-domain modeling guidance, use the repo-local skill library under `_skills/product-domains/`:
+
+- Start with `_skills/product-domains/SKILLS-OVERVIEW.md` to choose the relevant skill or skill cluster.
+- Load only the relevant `SKILL.md` files for the task, such as market research, competition analysis, customer segmentation, JTBD, KPI architecture, product-brick architecture, delivery design, team topology, roadmap design, or structured JSON authoring.
+- Use `_skills/product-domains/meta-skills/new-product-domain-definition/SKILL.md` when creating a complete new domain end to end.
+- Use `_skills/product-domains/meta-skills/grounded-product-architecture-modeling/SKILL.md` when checking or repairing coherence across customers, strategy, delivery, product bricks, teams, and planning artifacts.
+
+The `_skills/product-domains` directory is repository-local guidance. It is not an automatically discovered Codex skill location unless separately installed or linked into `${CODEX_HOME:-~/.codex}/skills`. Keep the detailed modeling guidance in `_skills/product-domains`; keep this file focused on operational rules that should apply to every product-domain edit.
 
 ## Core Principle
 
@@ -237,9 +250,9 @@ Define:
 
 - `teams/teams.json`
 
-For a mature domain, teams should reflect a realistic operating model. The `bike-mobility` pattern used a domain-oriented layout with shared platform and control functions.
+For a mature domain, teams should reflect a realistic operating model. The `<domain-id>` pattern used a domain-oriented layout with shared platform and control functions.
 
-For a company around 500 people, think in terms of:
+For a company around 250 people, think in terms of:
 
 - market or value-stream teams
 - platform and shared services
@@ -345,7 +358,7 @@ Use a scoped workflow:
 3. Run the needed generator scripts
 4. Restore the original config in a `finally` block
 
-This was the safest pattern used for `bike-mobility`.
+This was the safest pattern used for `<domain-id>`.
 
 ### Generators commonly used
 
