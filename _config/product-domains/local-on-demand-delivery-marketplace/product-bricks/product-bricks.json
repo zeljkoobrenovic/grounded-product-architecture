@@ -30,7 +30,7 @@
         }
       ]
     },
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -52,7 +52,7 @@
         "color": "#c9daf8ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -68,7 +68,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -86,25 +218,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Personalized marketplace entry surface for restaurants, grocery, convenience, retail, offers, subscription benefits, and reorder missions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Home feed orchestration",
-                  "description": "Combines location, time-of-day, cuisine, basket, promotion, and loyalty signals into a ranked entry feed.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-consumer-home-ui",
+                      "name": "Consumer home UI",
+                      "type": "web-component",
+                      "description": "Web and app entry point for local ordering sessions.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-home-feed-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Consumer home UI",
-                  "description": "Web and app entry point for local ordering sessions.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-home-feed-orchestration",
+                      "name": "Home feed orchestration",
+                      "type": "service",
+                      "description": "Combines location, time-of-day, cuisine, basket, promotion, and loyalty signals into a ranked entry feed."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "reco",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-home-feed-orchestration",
                   "type": "composition",
-                  "interface": "Personalized recommendation feed",
                   "description": "Uses consumer preference and reorder candidates."
                 }
               ],
@@ -113,11 +267,11 @@
               "dataDependencies": [
                 {
                   "assetId": "consumer-profile",
+                  "moduleIds": [
+                    "module-home-feed-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads consumer preferences, address, and membership state.",
-                  "storeIds": [
-                    "consumer-profile-db"
-                  ]
+                  "description": "Reads consumer preferences, address, and membership state."
                 }
               ]
             },
@@ -127,25 +281,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Keyword search, cuisine/category browse, grocery item search, ranking, filtering, and availability-aware result ordering.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Local ranking engine",
-                  "description": "Ranks stores and items using distance, delivery promise, availability, conversion, fees, quality, and promotion context.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-search-and-browse-ui",
+                      "name": "Search and browse UI",
+                      "type": "web-component",
+                      "description": "Consumer-facing discovery surface across verticals.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-local-ranking-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Search and browse UI",
-                  "description": "Consumer-facing discovery surface across verticals.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-local-ranking-engine",
+                      "name": "Local ranking engine",
+                      "type": "service",
+                      "description": "Ranks stores and items using distance, delivery promise, availability, conversion, fees, quality, and promotion context."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "catl",
+                  "moduleId": "module-catalog-normalization-service",
+                  "sourceModuleId": "module-local-ranking-engine",
                   "type": "data",
-                  "interface": "Store and item catalog",
                   "description": "Depends on normalized menus, item content, store hours, and availability."
                 }
               ],
@@ -154,11 +330,11 @@
               "dataDependencies": [
                 {
                   "assetId": "merchant-catalog",
+                  "moduleIds": [
+                    "module-local-ranking-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads menu, item, assortment, and availability data.",
-                  "storeIds": [
-                    "merchant-catalog-db"
-                  ]
+                  "description": "Reads menu, item, assortment, and availability data."
                 }
               ]
             },
@@ -168,18 +344,39 @@
               "type": "service",
               "status": "invest",
               "description": "Personalized recommendations for stores, items, bundles, reorders, grocery replenishment, and cross-vertical discovery.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Mission classifier",
-                  "description": "Detects quick meal, planned meal, grocery top-up, convenience, and retail missions from behavior.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-api",
+                      "name": "Recommendation API",
+                      "type": "api",
+                      "description": "Feeds personalized modules into home, search, cart, and checkout.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-mission-classifier",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Recommendation API",
-                  "description": "Feeds personalized modules into home, search, cart, and checkout.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-mission-classifier",
+                      "name": "Mission classifier",
+                      "type": "service",
+                      "description": "Detects quick meal, planned meal, grocery top-up, convenience, and retail missions from behavior."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -188,11 +385,11 @@
               "dataDependencies": [
                 {
                   "assetId": "order-history",
+                  "moduleIds": [
+                    "module-mission-classifier"
+                  ],
                   "role": "read",
-                  "description": "Reads order and session history for personalization.",
-                  "storeIds": [
-                    "order-history-warehouse"
-                  ]
+                  "description": "Reads order and session history for personalization."
                 }
               ]
             },
@@ -202,25 +399,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Store profile pages, menu browsing, item modifiers, photos, ratings, allergens, substitutions, and grocery item detail.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Item detail composer",
-                  "description": "Assembles price, availability, options, dietary attributes, photos, and trust signals.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-storefront-ui",
+                      "name": "Storefront UI",
+                      "type": "web-component",
+                      "description": "Consumer menu and assortment detail surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-item-detail-composer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Storefront UI",
-                  "description": "Consumer menu and assortment detail surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-item-detail-composer",
+                      "name": "Item detail composer",
+                      "type": "service",
+                      "description": "Assembles price, availability, options, dietary attributes, photos, and trust signals."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rate",
+                  "moduleId": "module-quality-signal-aggregator",
+                  "sourceModuleId": "module-item-detail-composer",
                   "type": "composition",
-                  "interface": "Review summary API",
                   "description": "Uses quality and review signals in decision surfaces."
                 }
               ],
@@ -229,11 +448,11 @@
               "dataDependencies": [
                 {
                   "assetId": "merchant-catalog",
+                  "moduleIds": [
+                    "module-item-detail-composer"
+                  ],
                   "role": "read",
-                  "description": "Reads store, menu, item, option, and assortment content.",
-                  "storeIds": [
-                    "merchant-catalog-db"
-                  ]
+                  "description": "Reads store, menu, item, option, and assortment content."
                 }
               ]
             },
@@ -243,18 +462,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Store ratings, item reviews, delivery quality signals, defect feedback, and marketplace quality ranking inputs.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Quality signal aggregator",
-                  "description": "Combines ratings, refunds, lateness, substitutions, cancellations, and support signals.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-review-and-rating-ui",
+                      "name": "Review and rating UI",
+                      "type": "web-component",
+                      "description": "Consumer and merchant feedback capture and display.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-quality-signal-aggregator",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Review and rating UI",
-                  "description": "Consumer and merchant feedback capture and display.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-quality-signal-aggregator",
+                      "name": "Quality signal aggregator",
+                      "type": "service",
+                      "description": "Combines ratings, refunds, lateness, substitutions, cancellations, and support signals."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -263,11 +503,11 @@
               "dataDependencies": [
                 {
                   "assetId": "quality-signal",
+                  "moduleIds": [
+                    "module-quality-signal-aggregator"
+                  ],
                   "role": "own",
-                  "description": "Owns reviews, ratings, and defect quality signals.",
-                  "storeIds": [
-                    "quality-signal-db"
-                  ]
+                  "description": "Owns reviews, ratings, and defect quality signals."
                 }
               ]
             }
@@ -284,25 +524,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Multi-item basket state, fees preview, item modifiers, substitutions, unavailable-item handling, and group order coordination.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Basket pricing preview",
-                  "description": "Maintains basket state with taxes, fees, discounts, and expected substitutions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-basket-ui",
+                      "name": "Basket UI",
+                      "type": "web-component",
+                      "description": "Consumer cart and item-editing flow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-basket-pricing-preview",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Basket UI",
-                  "description": "Consumer cart and item-editing flow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-basket-pricing-preview",
+                      "name": "Basket pricing preview",
+                      "type": "service",
+                      "description": "Maintains basket state with taxes, fees, discounts, and expected substitutions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "pric",
+                  "moduleId": "module-pricing-api",
+                  "sourceModuleId": "module-basket-pricing-preview",
                   "type": "composition",
-                  "interface": "Price and fee preview API",
                   "description": "Uses current basket economics before checkout."
                 }
               ],
@@ -311,11 +573,11 @@
               "dataDependencies": [
                 {
                   "assetId": "basket-state",
+                  "moduleIds": [
+                    "module-basket-pricing-preview"
+                  ],
                   "role": "own",
-                  "description": "Owns active basket state and substitution preferences.",
-                  "storeIds": [
-                    "basket-state-db"
-                  ]
+                  "description": "Owns active basket state and substitution preferences."
                 }
               ]
             },
@@ -325,43 +587,66 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Checkout, payment authorization, stored payment methods, tips, credits, service fees, delivery fees, and regulatory payment disclosures.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Payment orchestration",
-                  "description": "Routes payment authorization, wallet, credits, and refundability checks.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-checkout-ui",
+                      "name": "Checkout UI",
+                      "type": "web-component",
+                      "description": "Consumer payment, tip, address, and delivery option flow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-payment-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Checkout UI",
-                  "description": "Consumer payment, tip, address, and delivery option flow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-payment-orchestration",
+                      "name": "Payment orchestration",
+                      "type": "service",
+                      "description": "Routes payment authorization, wallet, credits, and refundability checks."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "payl",
+                  "moduleId": "module-marketplace-ledger",
+                  "sourceModuleId": "module-payment-orchestration",
                   "type": "integration",
-                  "interface": "Ledger and payout services",
                   "description": "Requires reliable transaction posting and settlement state."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Payment processors",
-                  "description": "Card, wallet, local payment, and fraud screening providers."
+                  "description": "Card, wallet, local payment, and fraud screening providers.",
+                  "sourceModuleId": "module-payment-orchestration"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-payment-orchestration"
+                  ],
                   "role": "own",
-                  "description": "Owns consumer order payment transaction state.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Owns consumer order payment transaction state."
                 }
               ]
             },
@@ -371,25 +656,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Subscription programs, free delivery benefits, credits, partner benefits, churn prevention, and member value explanation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Benefit eligibility engine",
-                  "description": "Determines delivery-fee, service-fee, credit, and partner benefit eligibility by basket and market.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-membership-management-ui",
+                      "name": "Membership management UI",
+                      "type": "web-component",
+                      "description": "Join, trial, renewal, cancellation, and benefit explanation surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-benefit-eligibility-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Membership management UI",
-                  "description": "Join, trial, renewal, cancellation, and benefit explanation surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-benefit-eligibility-engine",
+                      "name": "Benefit eligibility engine",
+                      "type": "service",
+                      "description": "Determines delivery-fee, service-fee, credit, and partner benefit eligibility by basket and market."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "pric",
+                  "moduleId": "module-pricing-api",
+                  "sourceModuleId": "module-benefit-eligibility-engine",
                   "type": "composition",
-                  "interface": "Pricing and promotion engine",
                   "description": "Applies membership-linked benefits during basket and checkout."
                 }
               ],
@@ -398,11 +705,11 @@
               "dataDependencies": [
                 {
                   "assetId": "membership-record",
+                  "moduleIds": [
+                    "module-benefit-eligibility-engine"
+                  ],
                   "role": "own",
-                  "description": "Owns active subscription state and benefit history.",
-                  "storeIds": [
-                    "membership-record-db"
-                  ]
+                  "description": "Owns active subscription state and benefit history."
                 }
               ]
             },
@@ -412,25 +719,47 @@
               "type": "service",
               "status": "invest",
               "description": "Canonical order lifecycle from placement through merchant acceptance, preparation, courier pickup, delivery, cancellation, refund, and dispute.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Order state machine",
-                  "description": "Maintains valid state transitions, ownership handoffs, and exception handling.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-order-api",
+                      "name": "Order API",
+                      "type": "api",
+                      "description": "Canonical order state API used by consumer, merchant, courier, support, and finance surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-order-state-machine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Order API",
-                  "description": "Canonical order state API used by consumer, merchant, courier, support, and finance surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-order-state-machine",
+                      "name": "Order state machine",
+                      "type": "service",
+                      "description": "Maintains valid state transitions, ownership handoffs, and exception handling."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "disp",
+                  "moduleId": "module-assignment-optimizer",
+                  "sourceModuleId": "module-order-state-machine",
                   "type": "event",
-                  "interface": "Dispatch events",
                   "description": "Coordinates fulfillment state with courier assignment."
                 }
               ],
@@ -439,12 +768,11 @@
               "dataDependencies": [
                 {
                   "assetId": "order-record",
+                  "moduleIds": [
+                    "module-order-state-machine"
+                  ],
                   "role": "own",
-                  "description": "Owns canonical order state and event history.",
-                  "storeIds": [
-                    "order-record-db",
-                    "order-event-stream"
-                  ]
+                  "description": "Owns canonical order state and event history."
                 }
               ]
             },
@@ -454,53 +782,78 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Consumer-facing estimated time of arrival, map tracking, preparation visibility, courier arrival notifications, and exception updates.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "ETA explanation service",
-                  "description": "Combines preparation, dispatch, route, and delay signals into customer-readable promises.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-live-order-tracker",
+                      "name": "Live order tracker",
+                      "type": "web-component",
+                      "description": "Map and status timeline across app, web, SMS, push, and email.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-eta-explanation-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Live order tracker",
-                  "description": "Map and status timeline across app, web, SMS, push, and email.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-eta-explanation-service",
+                      "name": "ETA explanation service",
+                      "type": "service",
+                      "description": "Combines preparation, dispatch, route, and delay signals into customer-readable promises."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "disp",
+                  "moduleId": "module-assignment-optimizer",
+                  "sourceModuleId": "module-eta-explanation-service",
                   "type": "event",
-                  "interface": "Courier location stream",
                   "description": "Uses dispatch and courier location events."
                 },
                 {
                   "targetBrickId": "orde",
+                  "moduleId": "module-order-state-machine",
+                  "sourceModuleId": "module-eta-explanation-service",
                   "type": "event",
-                  "interface": "Order state events",
                   "description": "Uses canonical order state updates."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Push notification providers",
-                  "description": "Mobile notification delivery."
+                  "description": "Mobile notification delivery.",
+                  "sourceModuleId": "module-eta-explanation-service"
                 },
                 {
                   "name": "Mapping providers",
-                  "description": "Map rendering, geocoding, and route visualization."
+                  "description": "Map rendering, geocoding, and route visualization.",
+                  "sourceModuleId": "module-eta-explanation-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "delivery-event",
+                  "moduleIds": [
+                    "module-eta-explanation-service"
+                  ],
                   "role": "read",
-                  "description": "Reads courier, route, and order tracking events.",
-                  "storeIds": [
-                    "delivery-event-stream"
-                  ]
+                  "description": "Reads courier, route, and order tracking events."
                 }
               ]
             },
@@ -510,43 +863,66 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Self-service help, refunds, credits, missing item claims, late-order recovery, support case routing, and agent tooling.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Resolution policy engine",
-                  "description": "Determines refund, credit, escalation, and merchant or courier claim workflows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-help-and-support-ui",
+                      "name": "Help and support UI",
+                      "type": "web-component",
+                      "description": "Consumer, merchant, courier, and agent resolution workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-resolution-policy-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Help and support UI",
-                  "description": "Consumer, merchant, courier, and agent resolution workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-resolution-policy-engine",
+                      "name": "Resolution policy engine",
+                      "type": "service",
+                      "description": "Determines refund, credit, escalation, and merchant or courier claim workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "risk",
+                  "moduleId": "module-risk-decision-engine",
+                  "sourceModuleId": "module-resolution-policy-engine",
                   "type": "policy",
-                  "interface": "Abuse and eligibility signals",
                   "description": "Uses trust signals to prevent refund and promotion abuse."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Contact-center platform",
-                  "description": "Agent routing, conversation history, and workforce operations."
+                  "description": "Agent routing, conversation history, and workforce operations.",
+                  "sourceModuleId": "module-resolution-policy-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "support-case",
+                  "moduleIds": [
+                    "module-resolution-policy-engine"
+                  ],
                   "role": "own",
-                  "description": "Owns issue, resolution, and escalation records.",
-                  "storeIds": [
-                    "support-case-db"
-                  ]
+                  "description": "Owns issue, resolution, and escalation records."
                 }
               ]
             }
@@ -570,43 +946,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Restaurant, grocery, convenience, and retail partner onboarding, contracts, tax data, bank details, KYC/KYB, and store activation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Partner activation workflow",
-                  "description": "Tracks onboarding tasks from lead through compliant live store.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-onboarding-portal",
+                      "name": "Merchant onboarding portal",
+                      "type": "web-component",
+                      "description": "Partner sign-up, verification, and launch readiness workspace.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-partner-activation-workflow",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Merchant onboarding portal",
-                  "description": "Partner sign-up, verification, and launch readiness workspace.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-partner-activation-workflow",
+                      "name": "Partner activation workflow",
+                      "type": "service",
+                      "description": "Tracks onboarding tasks from lead through compliant live store."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-unified-identity-service",
+                  "sourceModuleId": "module-partner-activation-workflow",
                   "type": "policy",
-                  "interface": "Identity and compliance checks",
                   "description": "Uses identity, sanctions, tax, and payment compliance verification."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "KYB providers",
-                  "description": "Business verification, tax, and sanctions screening."
+                  "description": "Business verification, tax, and sanctions screening.",
+                  "sourceModuleId": "module-partner-activation-workflow"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "merchant-account",
+                  "moduleIds": [
+                    "module-partner-activation-workflow"
+                  ],
                   "role": "own",
-                  "description": "Owns merchant account, contract, and activation state.",
-                  "storeIds": [
-                    "merchant-account-db"
-                  ]
+                  "description": "Owns merchant account, contract, and activation state."
                 }
               ]
             },
@@ -616,36 +1015,58 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Menu authoring, grocery item catalog, SKU mapping, modifier groups, item availability, photos, nutrition, allergens, and out-of-stock handling.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Catalog normalization service",
-                  "description": "Normalizes menus, options, retail SKUs, and cross-market attributes.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-catalog-management-portal",
+                      "name": "Catalog management portal",
+                      "type": "web-component",
+                      "description": "Merchant and operator catalog maintenance workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-catalog-normalization-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Catalog management portal",
-                  "description": "Merchant and operator catalog maintenance workflow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-catalog-normalization-service",
+                      "name": "Catalog normalization service",
+                      "type": "service",
+                      "description": "Normalizes menus, options, retail SKUs, and cross-market attributes."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "POS and inventory systems",
-                  "description": "Menu, price, and stock synchronization."
+                  "description": "Menu, price, and stock synchronization.",
+                  "sourceModuleId": "module-catalog-normalization-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "merchant-catalog",
+                  "moduleIds": [
+                    "module-catalog-normalization-service"
+                  ],
                   "role": "own",
-                  "description": "Owns catalog, menu, SKU, option, and availability records.",
-                  "storeIds": [
-                    "merchant-catalog-db"
-                  ]
+                  "description": "Owns catalog, menu, SKU, option, and availability records."
                 }
               ]
             },
@@ -655,18 +1076,39 @@
               "type": "service",
               "status": "invest",
               "description": "Consumer fees, delivery fees, service fees, merchant-funded offers, vouchers, item discounts, affordability programs, and fee transparency.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Offer and fee calculator",
-                  "description": "Calculates basket-level economics using market, distance, demand, membership, and promotion rules.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-pricing-api",
+                      "name": "Pricing API",
+                      "type": "api",
+                      "description": "Shared price, fee, tax, discount, and voucher calculation interface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-offer-and-fee-calculator",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Pricing API",
-                  "description": "Shared price, fee, tax, discount, and voucher calculation interface.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-offer-and-fee-calculator",
+                      "name": "Offer and fee calculator",
+                      "type": "service",
+                      "description": "Calculates basket-level economics using market, distance, demand, membership, and promotion rules."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -675,11 +1117,11 @@
               "dataDependencies": [
                 {
                   "assetId": "pricing-rule",
+                  "moduleIds": [
+                    "module-offer-and-fee-calculator"
+                  ],
                   "role": "own",
-                  "description": "Owns fee, promotion, and pricing rule state.",
-                  "storeIds": [
-                    "pricing-rule-db"
-                  ]
+                  "description": "Owns fee, promotion, and pricing rule state."
                 }
               ]
             },
@@ -689,43 +1131,66 @@
               "type": "integration",
               "status": "invest",
               "description": "Merchant order tablet, POS injection, accept/reject flows, prep-time updates, substitution communication, and store busy-mode controls.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "POS order adapter",
-                  "description": "Maps marketplace order states into restaurant and retailer POS workflows.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-order-manager",
+                      "name": "Merchant order manager",
+                      "type": "web-component",
+                      "description": "Order acceptance, prep, substitution, and handoff surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-pos-order-adapter",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Merchant order manager",
-                  "description": "Order acceptance, prep, substitution, and handoff surface.",
-                  "type": "ui"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-pos-order-adapter",
+                      "name": "POS order adapter",
+                      "type": "integration",
+                      "description": "Maps marketplace order states into restaurant and retailer POS workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "orde",
+                  "moduleId": "module-order-api",
+                  "sourceModuleId": "module-pos-order-adapter",
                   "type": "event",
-                  "interface": "Order state API",
                   "description": "Updates canonical order state as merchants accept and prepare orders."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Restaurant and retailer POS systems",
-                  "description": "Order injection and menu sync integrations."
+                  "description": "Order injection and menu sync integrations.",
+                  "sourceModuleId": "module-pos-order-adapter"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "merchant-operation-event",
+                  "moduleIds": [
+                    "module-pos-order-adapter"
+                  ],
                   "role": "own",
-                  "description": "Owns merchant accept, prep, delay, and handoff events.",
-                  "storeIds": [
-                    "merchant-operation-event-stream"
-                  ]
+                  "description": "Owns merchant accept, prep, delay, and handoff events."
                 }
               ]
             }
@@ -742,25 +1207,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Merchant-funded promotions, lifecycle campaigns, audience targeting, winback offers, first-order incentives, and offer performance measurement.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Campaign eligibility service",
-                  "description": "Controls audience, budget, offer, and campaign eligibility constraints.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-promotion-console",
+                      "name": "Merchant promotion console",
+                      "type": "web-component",
+                      "description": "Self-service promotion creation and reporting.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-campaign-eligibility-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Merchant promotion console",
-                  "description": "Self-service promotion creation and reporting.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-campaign-eligibility-service",
+                      "name": "Campaign eligibility service",
+                      "type": "service",
+                      "description": "Controls audience, budget, offer, and campaign eligibility constraints."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "pric",
+                  "moduleId": "module-pricing-api",
+                  "sourceModuleId": "module-campaign-eligibility-service",
                   "type": "composition",
-                  "interface": "Promotion calculation API",
                   "description": "Applies promotional economics during basket and checkout."
                 }
               ],
@@ -769,11 +1256,11 @@
               "dataDependencies": [
                 {
                   "assetId": "promotion-campaign",
+                  "moduleIds": [
+                    "module-campaign-eligibility-service"
+                  ],
                   "role": "own",
-                  "description": "Owns promotion, budget, and redemption records.",
-                  "storeIds": [
-                    "promotion-campaign-db"
-                  ]
+                  "description": "Owns promotion, budget, and redemption records."
                 }
               ]
             },
@@ -783,31 +1270,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Self-service ad buying, sponsored restaurants, sponsored products, auction ranking, campaign budgets, attribution, and advertiser reporting.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Ads auction and pacing",
-                  "description": "Runs sponsored placement eligibility, bidding, pacing, and budget control.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-ads-manager",
+                      "name": "Ads manager",
+                      "type": "web-component",
+                      "description": "Campaign setup and measurement for merchants and CPG advertisers.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-ads-auction-and-pacing",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Ads manager",
-                  "description": "Campaign setup and measurement for merchants and CPG advertisers.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-ads-auction-and-pacing",
+                      "name": "Ads auction and pacing",
+                      "type": "service",
+                      "description": "Runs sponsored placement eligibility, bidding, pacing, and budget control."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "srch",
+                  "moduleId": "module-local-ranking-engine",
+                  "sourceModuleId": "module-ads-auction-and-pacing",
                   "type": "composition",
-                  "interface": "Search placement service",
                   "description": "Places sponsored results inside discovery flows."
                 },
                 {
                   "targetBrickId": "data",
+                  "moduleId": "module-analytics-and-feature-apis",
+                  "sourceModuleId": "module-ads-auction-and-pacing",
                   "type": "measurement",
-                  "interface": "Attribution datasets",
                   "description": "Uses campaign impression, click, order, and incrementality signals."
                 }
               ],
@@ -816,12 +1326,11 @@
               "dataDependencies": [
                 {
                   "assetId": "ads-campaign",
+                  "moduleIds": [
+                    "module-ads-auction-and-pacing"
+                  ],
                   "role": "own",
-                  "description": "Owns ad campaign, auction, impression, click, and spend records.",
-                  "storeIds": [
-                    "ads-campaign-db",
-                    "ads-event-stream"
-                  ]
+                  "description": "Owns ad campaign, auction, impression, click, and spend records."
                 }
               ]
             },
@@ -831,25 +1340,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Merchant sales reporting, operations diagnostics, customer insights, retention analysis, prep-time performance, ads measurement, and financial reconciliation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Merchant performance mart",
-                  "description": "Aggregates orders, conversion, quality, operations, promotions, and payout metrics.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-analytics-dashboard",
+                      "name": "Merchant analytics dashboard",
+                      "type": "web-component",
+                      "description": "Self-service reporting and action guidance for merchant operators.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-merchant-performance-mart",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Merchant analytics dashboard",
-                  "description": "Self-service reporting and action guidance for merchant operators.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-performance-mart",
+                      "name": "Merchant performance mart",
+                      "type": "service",
+                      "description": "Aggregates orders, conversion, quality, operations, promotions, and payout metrics."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "data",
+                  "moduleId": "module-analytics-and-feature-apis",
+                  "sourceModuleId": "module-merchant-performance-mart",
                   "type": "data",
-                  "interface": "Marketplace analytics warehouse",
                   "description": "Depends on governed analytics datasets."
                 }
               ],
@@ -858,11 +1389,11 @@
               "dataDependencies": [
                 {
                   "assetId": "merchant-performance-metric",
+                  "moduleIds": [
+                    "module-merchant-performance-mart"
+                  ],
                   "role": "own",
-                  "description": "Owns merchant performance and operational analytics marts.",
-                  "storeIds": [
-                    "merchant-performance-warehouse"
-                  ]
+                  "description": "Owns merchant performance and operational analytics marts."
                 }
               ]
             },
@@ -872,43 +1403,66 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Grocery, convenience, pharmacy, and retail partner onboarding, picker workflow integration, substitution control, weighted items, and aisle-level catalog operations.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Retail fulfillment adapter",
-                  "description": "Connects marketplace orders with retailer picker, inventory, and substitution workflows.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-retail-operations-console",
+                      "name": "Retail operations console",
+                      "type": "web-component",
+                      "description": "Retail order, substitution, and inventory management surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-retail-fulfillment-adapter",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Retail operations console",
-                  "description": "Retail order, substitution, and inventory management surface.",
-                  "type": "ui"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-retail-fulfillment-adapter",
+                      "name": "Retail fulfillment adapter",
+                      "type": "integration",
+                      "description": "Connects marketplace orders with retailer picker, inventory, and substitution workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "catl",
+                  "moduleId": "module-catalog-normalization-service",
+                  "sourceModuleId": "module-retail-fulfillment-adapter",
                   "type": "data",
-                  "interface": "Retail SKU catalog",
                   "description": "Uses SKU, stock, unit, and substitution data."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Retail inventory and picking systems",
-                  "description": "Availability, picker workflow, and substitution integrations."
+                  "description": "Availability, picker workflow, and substitution integrations.",
+                  "sourceModuleId": "module-retail-fulfillment-adapter"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "retail-inventory-snapshot",
+                  "moduleIds": [
+                    "module-retail-fulfillment-adapter"
+                  ],
                   "role": "own",
-                  "description": "Owns near-real-time retail inventory and substitution state.",
-                  "storeIds": [
-                    "retail-inventory-cache"
-                  ]
+                  "description": "Owns near-real-time retail inventory and substitution state."
                 }
               ]
             }
@@ -932,43 +1486,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Courier signup, identity verification, background checks, vehicle setup, market access, document compliance, and activation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Courier activation workflow",
-                  "description": "Coordinates identity, eligibility, vehicle, documents, and training status.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-courier-onboarding-app",
+                      "name": "Courier onboarding app",
+                      "type": "mobile-component",
+                      "description": "Signup, verification, training, and market activation flow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-courier-activation-workflow",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Courier onboarding app",
-                  "description": "Signup, verification, training, and market activation flow.",
-                  "type": "mobile_app"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-courier-activation-workflow",
+                      "name": "Courier activation workflow",
+                      "type": "service",
+                      "description": "Coordinates identity, eligibility, vehicle, documents, and training status."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-unified-identity-service",
+                  "sourceModuleId": "module-courier-activation-workflow",
                   "type": "policy",
-                  "interface": "Identity verification services",
                   "description": "Requires identity and compliance verification."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Background check providers",
-                  "description": "Market-specific eligibility checks where legally required."
+                  "description": "Market-specific eligibility checks where legally required.",
+                  "sourceModuleId": "module-courier-activation-workflow"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "courier-profile",
+                  "moduleIds": [
+                    "module-courier-activation-workflow"
+                  ],
                   "role": "own",
-                  "description": "Owns courier profile, activation, and work-access state.",
-                  "storeIds": [
-                    "courier-profile-db"
-                  ]
+                  "description": "Owns courier profile, activation, and work-access state."
                 }
               ]
             },
@@ -978,25 +1555,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Real-time courier availability, zones, boosts, quests, supply shaping, scheduled shifts, and market heatmaps.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Supply shaping engine",
-                  "description": "Calculates incentive and availability needs by zone, time, weather, and expected demand.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-courier-availability-ui",
+                      "name": "Courier availability UI",
+                      "type": "mobile-component",
+                      "description": "Courier work-status, incentive, and market demand surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-supply-shaping-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Courier availability UI",
-                  "description": "Courier work-status, incentive, and market demand surface.",
-                  "type": "mobile_app"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-supply-shaping-engine",
+                      "name": "Supply shaping engine",
+                      "type": "service",
+                      "description": "Calculates incentive and availability needs by zone, time, weather, and expected demand."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "disp",
+                  "moduleId": "module-assignment-optimizer",
+                  "sourceModuleId": "module-supply-shaping-engine",
                   "type": "data",
-                  "interface": "Demand forecast and dispatch capacity",
                   "description": "Uses market demand and courier utilization signals."
                 }
               ],
@@ -1005,11 +1604,11 @@
               "dataDependencies": [
                 {
                   "assetId": "courier-availability",
+                  "moduleIds": [
+                    "module-supply-shaping-engine"
+                  ],
                   "role": "own",
-                  "description": "Owns courier online, zone, shift, and incentive eligibility state.",
-                  "storeIds": [
-                    "courier-availability-db"
-                  ]
+                  "description": "Owns courier online, zone, shift, and incentive eligibility state."
                 }
               ]
             },
@@ -1019,43 +1618,66 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Courier pay calculation, tips, incentives, adjustments, instant cashout, tax documents, earnings explanation, and payout support.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Courier pay calculator",
-                  "description": "Calculates delivery pay, distance pay, time pay, boosts, tips, and adjustments under market-specific policies.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-courier-earnings-ui",
+                      "name": "Courier earnings UI",
+                      "type": "mobile-component",
+                      "description": "Earnings, payout, tip, tax, and adjustment surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-courier-pay-calculator",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Courier earnings UI",
-                  "description": "Earnings, payout, tip, tax, and adjustment surface.",
-                  "type": "mobile_app"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-courier-pay-calculator",
+                      "name": "Courier pay calculator",
+                      "type": "service",
+                      "description": "Calculates delivery pay, distance pay, time pay, boosts, tips, and adjustments under market-specific policies."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "payl",
+                  "moduleId": "module-marketplace-ledger",
+                  "sourceModuleId": "module-courier-pay-calculator",
                   "type": "integration",
-                  "interface": "Payout ledger",
                   "description": "Posts courier earnings and payout obligations."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Banking and payout providers",
-                  "description": "Courier payouts and instant cashout."
+                  "description": "Courier payouts and instant cashout.",
+                  "sourceModuleId": "module-courier-pay-calculator"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "courier-earnings-record",
+                  "moduleIds": [
+                    "module-courier-pay-calculator"
+                  ],
                   "role": "own",
-                  "description": "Owns courier earnings, tip, incentive, and payout records.",
-                  "storeIds": [
-                    "courier-earnings-db"
-                  ]
+                  "description": "Owns courier earnings, tip, incentive, and payout records."
                 }
               ]
             }
@@ -1072,44 +1694,66 @@
               "type": "service",
               "status": "invest",
               "description": "Real-time order dispatch, courier matching, pickup assignment, offer acceptance, reassignment, and marketplace balance controls.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Assignment optimizer",
-                  "description": "Matches orders to couriers using location, mode, prep time, reliability, cost, batching, and fairness constraints.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-dispatch-operations-console",
+                      "name": "Dispatch operations console",
+                      "type": "web-component",
+                      "description": "Live city operations, exception, and manual intervention surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-assignment-optimizer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Dispatch operations console",
-                  "description": "Live city operations, exception, and manual intervention surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-assignment-optimizer",
+                      "name": "Assignment optimizer",
+                      "type": "service",
+                      "description": "Matches orders to couriers using location, mode, prep time, reliability, cost, batching, and fairness constraints."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "prep",
+                  "moduleId": "module-merchant-order-manager",
+                  "sourceModuleId": "module-assignment-optimizer",
                   "type": "event",
-                  "interface": "Merchant prep events",
                   "description": "Uses prep-time and ready-for-pickup state."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Mapping and routing providers",
-                  "description": "Travel-time, route, and geospatial services."
+                  "description": "Travel-time, route, and geospatial services.",
+                  "sourceModuleId": "module-assignment-optimizer"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "dispatch-assignment",
+                  "moduleIds": [
+                    "module-assignment-optimizer"
+                  ],
                   "role": "own",
-                  "description": "Owns courier assignment, offer, acceptance, and reassignment state.",
-                  "storeIds": [
-                    "dispatch-assignment-db",
-                    "delivery-event-stream"
-                  ]
+                  "description": "Owns courier assignment, offer, acceptance, and reassignment state."
                 }
               ]
             },
@@ -1119,36 +1763,58 @@
               "type": "service",
               "status": "invest",
               "description": "Travel-time prediction, geocoding, dropoff validation, delivery zones, routing, weather-aware ETA, and courier navigation context.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "ETA prediction model",
-                  "description": "Predicts prep, pickup, route, handoff, and dropoff times for consumer and operations use.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-eta-and-route-api",
+                      "name": "ETA and route API",
+                      "type": "api",
+                      "description": "Shared interface for promise, dispatch, tracking, and courier navigation.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-eta-prediction-model",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "ETA and route API",
-                  "description": "Shared interface for promise, dispatch, tracking, and courier navigation.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-eta-prediction-model",
+                      "name": "ETA prediction model",
+                      "type": "service",
+                      "description": "Predicts prep, pickup, route, handoff, and dropoff times for consumer and operations use."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Maps, traffic, and geocoding providers",
-                  "description": "Routing, address validation, and travel-time inputs."
+                  "description": "Routing, address validation, and travel-time inputs.",
+                  "sourceModuleId": "module-eta-prediction-model"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "geospatial-event",
+                  "moduleIds": [
+                    "module-eta-prediction-model"
+                  ],
                   "role": "own",
-                  "description": "Owns address, zone, route, ETA, and location-derived events.",
-                  "storeIds": [
-                    "geospatial-event-stream"
-                  ]
+                  "description": "Owns address, zone, route, ETA, and location-derived events."
                 }
               ]
             },
@@ -1158,25 +1824,47 @@
               "type": "service",
               "status": "invest",
               "description": "Order batching, route sequencing, multi-merchant pickup, stacked deliveries, and lateness-risk controls.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Batch optimizer",
-                  "description": "Selects eligible order combinations while protecting customer promise and courier economics.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-batch-decision-api",
+                      "name": "Batch decision API",
+                      "type": "api",
+                      "description": "Provides batching options to dispatch and ETA systems.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-batch-optimizer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Batch decision API",
-                  "description": "Provides batching options to dispatch and ETA systems.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-batch-optimizer",
+                      "name": "Batch optimizer",
+                      "type": "service",
+                      "description": "Selects eligible order combinations while protecting customer promise and courier economics."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rout",
+                  "moduleId": "module-eta-and-route-api",
+                  "sourceModuleId": "module-batch-decision-api",
                   "type": "composition",
-                  "interface": "Route and ETA API",
                   "description": "Uses travel-time and route-sequencing estimates."
                 }
               ],
@@ -1185,11 +1873,11 @@
               "dataDependencies": [
                 {
                   "assetId": "delivery-event",
+                  "moduleIds": [
+                    "module-batch-optimizer"
+                  ],
                   "role": "read",
-                  "description": "Reads historical and live delivery events for batching decisions.",
-                  "storeIds": [
-                    "delivery-event-stream"
-                  ]
+                  "description": "Reads historical and live delivery events for batching decisions."
                 }
               ]
             },
@@ -1199,43 +1887,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Courier safety toolkit, emergency support, incident reporting, delivery proof, unsafe-location handling, and trust-sensitive escalations.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Incident triage service",
-                  "description": "Routes courier, consumer, and merchant safety incidents to the right operational path.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-safety-toolkit",
+                      "name": "Safety toolkit",
+                      "type": "mobile-component",
+                      "description": "Courier in-app safety and incident reporting interface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-incident-triage-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Safety toolkit",
-                  "description": "Courier in-app safety and incident reporting interface.",
-                  "type": "mobile_app"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-incident-triage-service",
+                      "name": "Incident triage service",
+                      "type": "service",
+                      "description": "Routes courier, consumer, and merchant safety incidents to the right operational path."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "risk",
+                  "moduleId": "module-risk-decision-engine",
+                  "sourceModuleId": "module-incident-triage-service",
                   "type": "policy",
-                  "interface": "Trust and safety policy signals",
                   "description": "Uses risk rules for incident escalation and account action."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Emergency and safety vendors",
-                  "description": "Market-specific emergency escalation and safety tooling."
+                  "description": "Market-specific emergency escalation and safety tooling.",
+                  "sourceModuleId": "module-incident-triage-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "safety-incident",
+                  "moduleIds": [
+                    "module-incident-triage-service"
+                  ],
                   "role": "own",
-                  "description": "Owns safety incident and emergency escalation records.",
-                  "storeIds": [
-                    "safety-incident-db"
-                  ]
+                  "description": "Owns safety incident and emergency escalation records."
                 }
               ]
             }
@@ -1259,36 +1970,58 @@
               "type": "service",
               "status": "invest",
               "description": "Consumer, merchant, courier, employee, and partner identity, authentication, authorization, device trust, and account recovery.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Unified identity service",
-                  "description": "Maintains account identity, authentication factors, permissions, and device trust.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-identity-api",
+                      "name": "Identity API",
+                      "type": "api",
+                      "description": "Authentication and account access services for all marketplace actors.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-unified-identity-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Identity API",
-                  "description": "Authentication and account access services for all marketplace actors.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-unified-identity-service",
+                      "name": "Unified identity service",
+                      "type": "service",
+                      "description": "Maintains account identity, authentication factors, permissions, and device trust."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Identity verification providers",
-                  "description": "Document, biometric, and account verification."
+                  "description": "Document, biometric, and account verification.",
+                  "sourceModuleId": "module-unified-identity-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-unified-identity-service"
+                  ],
                   "role": "own",
-                  "description": "Owns account, credential, and access-control state.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Owns account, credential, and access-control state."
                 }
               ]
             },
@@ -1298,25 +2031,47 @@
               "type": "service",
               "status": "invest",
               "description": "Payment fraud, refund abuse, promo abuse, fake accounts, merchant abuse, courier collusion, restricted items, and marketplace policy enforcement.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Risk decision engine",
-                  "description": "Combines rules, models, and case outcomes into account, transaction, and order decisions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-risk-decision-api",
+                      "name": "Risk decision API",
+                      "type": "api",
+                      "description": "Real-time risk checks for checkout, onboarding, support, and payout flows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-risk-decision-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Risk decision API",
-                  "description": "Real-time risk checks for checkout, onboarding, support, and payout flows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-risk-decision-engine",
+                      "name": "Risk decision engine",
+                      "type": "service",
+                      "description": "Combines rules, models, and case outcomes into account, transaction, and order decisions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-identity-api",
+                  "sourceModuleId": "module-risk-decision-engine",
                   "type": "data",
-                  "interface": "Identity and device signals",
                   "description": "Uses account and device trust signals."
                 }
               ],
@@ -1325,12 +2080,11 @@
               "dataDependencies": [
                 {
                   "assetId": "risk-signal",
+                  "moduleIds": [
+                    "module-risk-decision-engine"
+                  ],
                   "role": "own",
-                  "description": "Owns risk signals, decisions, and policy actions.",
-                  "storeIds": [
-                    "risk-signal-db",
-                    "risk-event-stream"
-                  ]
+                  "description": "Owns risk signals, decisions, and policy actions."
                 }
               ]
             },
@@ -1340,36 +2094,58 @@
               "type": "service",
               "status": "invest",
               "description": "Financial ledger, merchant settlement, courier payout, consumer refunds, tax calculation, invoicing, reserves, and reconciliation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Marketplace ledger",
-                  "description": "Posts consumer charges, platform fees, merchant receivables, courier payables, refunds, taxes, and adjustments.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-ledger-api",
+                      "name": "Ledger API",
+                      "type": "api",
+                      "description": "Financial posting and settlement interface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-marketplace-ledger",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Ledger API",
-                  "description": "Financial posting and settlement interface.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-marketplace-ledger",
+                      "name": "Marketplace ledger",
+                      "type": "service",
+                      "description": "Posts consumer charges, platform fees, merchant receivables, courier payables, refunds, taxes, and adjustments."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Payment, banking, and tax providers",
-                  "description": "Payment acquiring, payouts, invoicing, and tax calculation."
+                  "description": "Payment acquiring, payouts, invoicing, and tax calculation.",
+                  "sourceModuleId": "module-marketplace-ledger"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "ledger-entry",
+                  "moduleIds": [
+                    "module-marketplace-ledger"
+                  ],
                   "role": "own",
-                  "description": "Owns immutable financial postings and settlement records.",
-                  "storeIds": [
-                    "ledger-entry-db"
-                  ]
+                  "description": "Owns immutable financial postings and settlement records."
                 }
               ]
             }
@@ -1386,25 +2162,47 @@
               "type": "service",
               "status": "invest",
               "description": "A/B testing, holdouts, causal measurement, marketplace incrementality, metric guardrails, and product decision dashboards.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Experiment assignment service",
-                  "description": "Provides consistent actor-level assignment and guardrail measurement across surfaces.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-experimentation-console",
+                      "name": "Experimentation console",
+                      "type": "web-component",
+                      "description": "Experiment setup, monitoring, and readout workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-experiment-assignment-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Experimentation console",
-                  "description": "Experiment setup, monitoring, and readout workflow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-experiment-assignment-service",
+                      "name": "Experiment assignment service",
+                      "type": "service",
+                      "description": "Provides consistent actor-level assignment and guardrail measurement across surfaces."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "data",
+                  "moduleId": "module-analytics-and-feature-apis",
+                  "sourceModuleId": "module-experiment-assignment-service",
                   "type": "data",
-                  "interface": "Analytics datasets",
                   "description": "Uses governed marketplace metrics and event streams."
                 }
               ],
@@ -1413,11 +2211,11 @@
               "dataDependencies": [
                 {
                   "assetId": "experiment-assignment",
+                  "moduleIds": [
+                    "module-experiment-assignment-service"
+                  ],
                   "role": "own",
-                  "description": "Owns assignment, exposure, and experiment readout state.",
-                  "storeIds": [
-                    "experiment-assignment-db"
-                  ]
+                  "description": "Owns assignment, exposure, and experiment readout state."
                 }
               ]
             },
@@ -1427,36 +2225,58 @@
               "type": "service",
               "status": "invest",
               "description": "Governed event streams, core metrics, forecasting datasets, ranking features, business intelligence, and ML feature pipelines.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Marketplace metric layer",
-                  "description": "Publishes standard definitions for GMV/GTV, orders, active users, defect rates, utilization, and profitability.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-analytics-and-feature-apis",
+                      "name": "Analytics and feature APIs",
+                      "type": "api",
+                      "description": "Data access for analytics, ML, and product reporting.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-marketplace-metric-layer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Analytics and feature APIs",
-                  "description": "Data access for analytics, ML, and product reporting.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-marketplace-metric-layer",
+                      "name": "Marketplace metric layer",
+                      "type": "service",
+                      "description": "Publishes standard definitions for GMV/GTV, orders, active users, defect rates, utilization, and profitability."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Cloud data warehouse and streaming platform",
-                  "description": "Event ingestion, storage, transformation, and query execution."
+                  "description": "Event ingestion, storage, transformation, and query execution.",
+                  "sourceModuleId": "module-marketplace-metric-layer"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "marketplace-metric",
+                  "moduleIds": [
+                    "module-marketplace-metric-layer"
+                  ],
                   "role": "own",
-                  "description": "Owns standard business and product metric datasets.",
-                  "storeIds": [
-                    "marketplace-metric-warehouse"
-                  ]
+                  "description": "Owns standard business and product metric datasets."
                 }
               ]
             },
@@ -1466,25 +2286,47 @@
               "type": "integration",
               "status": "invest",
               "description": "APIs and webhooks for merchants, aggregators, POS providers, retail partners, couriers, ads buyers, and enterprise integrations.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Developer gateway",
-                  "description": "Manages API authentication, rate limits, webhooks, schemas, and partner environments.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-developer-portal",
+                      "name": "Developer portal",
+                      "type": "web-component",
+                      "description": "Documentation, keys, test tools, and integration health.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-developer-gateway",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Developer portal",
-                  "description": "Documentation, keys, test tools, and integration health.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-developer-gateway",
+                      "name": "Developer gateway",
+                      "type": "service",
+                      "description": "Manages API authentication, rate limits, webhooks, schemas, and partner environments."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-identity-api",
+                  "sourceModuleId": "module-developer-gateway",
                   "type": "policy",
-                  "interface": "Partner identity and access",
                   "description": "Uses partner authentication and authorization."
                 }
               ],
@@ -1492,17 +2334,18 @@
               "externalSystemsDependingOnThisBrick": [
                 {
                   "name": "Merchant and aggregator systems",
-                  "description": "External order, menu, inventory, and reporting integrations."
+                  "description": "External order, menu, inventory, and reporting integrations.",
+                  "moduleId": "module-developer-gateway"
                 }
               ],
               "dataDependencies": [
                 {
                   "assetId": "api-usage-log",
+                  "moduleIds": [
+                    "module-developer-gateway"
+                  ],
                   "role": "own",
-                  "description": "Owns partner API usage, webhook, and integration-health records.",
-                  "storeIds": [
-                    "api-usage-log-db"
-                  ]
+                  "description": "Owns partner API usage, webhook, and integration-health records."
                 }
               ]
             },
@@ -1512,25 +2355,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "City operations, live marketplace health, incident response, manual interventions, regulatory reporting, and operational playbooks.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Market health monitor",
-                  "description": "Tracks demand, supply, prep, cancellations, lateness, support, and incident metrics by zone.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-operations-control-room",
+                      "name": "Operations control room",
+                      "type": "web-component",
+                      "description": "Internal city operations and incident management surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-market-health-monitor",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Operations control room",
-                  "description": "Internal city operations and incident management surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-market-health-monitor",
+                      "name": "Market health monitor",
+                      "type": "service",
+                      "description": "Tracks demand, supply, prep, cancellations, lateness, support, and incident metrics by zone."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "data",
+                  "moduleId": "module-marketplace-metric-layer",
+                  "sourceModuleId": "module-market-health-monitor",
                   "type": "data",
-                  "interface": "Marketplace metrics",
                   "description": "Uses operational health metrics and alerts."
                 }
               ],
@@ -1539,11 +2404,11 @@
               "dataDependencies": [
                 {
                   "assetId": "operations-incident",
+                  "moduleIds": [
+                    "module-market-health-monitor"
+                  ],
                   "role": "own",
-                  "description": "Owns operational incident, playbook, and manual intervention records.",
-                  "storeIds": [
-                    "operations-incident-db"
-                  ]
+                  "description": "Owns operational incident, playbook, and manual intervention records."
                 }
               ]
             }

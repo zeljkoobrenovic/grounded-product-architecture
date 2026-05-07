@@ -7,6 +7,21 @@ from pathlib import Path
 
 
 LOWER_ID_RE = re.compile(r'^[a-z0-9][a-z0-9._:-]*$')
+PRODUCT_BRICK_LAYER_IDS = {'ui', 'interfaces', 'bus', 'stateless-service', 'service', 'integration'}
+PRODUCT_BRICK_MODULE_TYPES = {
+    'web-component',
+    'mobile-component',
+    'bff',
+    'api',
+    'backoffice-interface',
+    'message-queue',
+    'message-consumer',
+    'daemon',
+    'stateless-service',
+    'stateful-service',
+    'service',
+    'integration',
+}
 
 
 def load_json(path, errors):
@@ -35,6 +50,211 @@ def collect_bricks(payload):
 
     walk(payload.get('rootGroups', []) if isinstance(payload, dict) else payload)
     return bricks
+
+
+def iter_product_bricks(payload):
+    def walk(node):
+        if isinstance(node, dict):
+            for brick in node.get('bricks', []) or []:
+                if isinstance(brick, dict):
+                    yield brick
+            for key in ('rootGroups', 'subGroups'):
+                for child in node.get(key, []) or []:
+                    yield from walk(child)
+        elif isinstance(node, list):
+            for child in node:
+                yield from walk(child)
+
+    yield from walk(payload.get('rootGroups', []) if isinstance(payload, dict) else payload)
+
+
+def module_ids_for_brick(brick):
+    module_ids = set()
+    for layer in brick.get('layers', []) or []:
+        if not isinstance(layer, dict):
+            continue
+        for module in layer.get('modules', []) or []:
+            if isinstance(module, dict) and module.get('id'):
+                module_ids.add(str(module.get('id')).strip())
+    return module_ids
+
+
+def module_dependency_id(dependency):
+    if isinstance(dependency, dict):
+        return str(
+            dependency.get('moduleId')
+            or dependency.get('targetModuleId')
+            or dependency.get('id')
+            or dependency.get('module')
+            or dependency.get('target')
+            or ''
+        ).strip()
+    return str(dependency or '').strip()
+
+
+def validate_product_bricks_model(domain_dir, payload, errors):
+    metadata = payload.get('metadata', {}) if isinstance(payload, dict) else {}
+    modules_config = metadata.get('modulesConfig', {}) if isinstance(metadata, dict) else {}
+    layer_type_ids = {item.get('id') for item in modules_config.get('layerTypes', []) or [] if isinstance(item, dict)}
+    module_type_ids = {item.get('id') for item in modules_config.get('moduleTypes', []) or [] if isinstance(item, dict)}
+    if layer_type_ids and layer_type_ids != PRODUCT_BRICK_LAYER_IDS:
+        errors.append(f'{domain_dir.name}: modulesConfig.layerTypes must match the supported product-brick layers')
+    if module_type_ids and module_type_ids != PRODUCT_BRICK_MODULE_TYPES:
+        errors.append(f'{domain_dir.name}: modulesConfig.moduleTypes must match the supported product-brick module types')
+    for module_type in modules_config.get('moduleTypes', []) or []:
+        if not isinstance(module_type, dict):
+            continue
+        module_type_id = module_type.get('id')
+        if module_type_id in PRODUCT_BRICK_MODULE_TYPES and not str(module_type.get('color', '')).strip():
+            errors.append(f'{domain_dir.name}: modulesConfig.moduleTypes.{module_type_id} is missing color')
+
+    bricks = list(iter_product_bricks(payload))
+    brick_lookup = {}
+    for brick in bricks:
+        brick_id = str(brick.get('id', '')).strip()
+        if not brick_id:
+            errors.append(f'{domain_dir.name}: product brick without id: {brick.get("name", "<missing-name>")}')
+            continue
+        if brick_id not in brick_lookup:
+            brick_lookup[brick_id] = brick
+
+    for brick in bricks:
+        brick_id = str(brick.get('id', '')).strip() or '<missing-id>'
+        if 'interfaces' in brick:
+            errors.append(f'{domain_dir.name}: brick {brick_id} uses legacy top-level interfaces')
+        if 'internalModules' in brick:
+            errors.append(f'{domain_dir.name}: brick {brick_id} uses legacy top-level internalModules')
+
+        layers = brick.get('layers', [])
+        if layers and not isinstance(layers, list):
+            errors.append(f'{domain_dir.name}: brick {brick_id} layers must be an array')
+            layers = []
+
+        brick_module_ids = set()
+        brick_modules = []
+        for layer in layers or []:
+            if not isinstance(layer, dict):
+                errors.append(f'{domain_dir.name}: brick {brick_id} has non-object layer entry')
+                continue
+            layer_id = str(layer.get('layer', '')).strip()
+            if not layer_id:
+                errors.append(f'{domain_dir.name}: brick {brick_id} has layer without layer id')
+            elif layer_id not in PRODUCT_BRICK_LAYER_IDS:
+                errors.append(f'{domain_dir.name}: brick {brick_id} uses unsupported layer: {layer_id}')
+            modules = layer.get('modules', [])
+            if modules and not isinstance(modules, list):
+                errors.append(f'{domain_dir.name}: brick {brick_id} layer {layer_id or "<missing-layer>"} modules must be an array')
+                continue
+            for module in modules or []:
+                if not isinstance(module, dict):
+                    errors.append(f'{domain_dir.name}: brick {brick_id} layer {layer_id or "<missing-layer>"} has non-object module')
+                    continue
+                module_id = str(module.get('id', '')).strip()
+                if not module_id:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} has module without id')
+                    continue
+                if not module_id.startswith('module-'):
+                    errors.append(f'{domain_dir.name}: brick {brick_id} module id must start with module-: {module_id}')
+                module_type = str(module.get('type', '')).strip()
+                if module_type and module_type not in PRODUCT_BRICK_MODULE_TYPES:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} module {module_id} uses unsupported type: {module_type}')
+                if module_id in brick_module_ids:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} has duplicate module id: {module_id}')
+                brick_module_ids.add(module_id)
+                brick_modules.append(module)
+
+        for module in brick_modules:
+            module_id = str(module.get('id', '')).strip()
+            dependencies = module.get('dependencies', {})
+            if not dependencies:
+                continue
+            if not isinstance(dependencies, dict):
+                errors.append(f'{domain_dir.name}: brick {brick_id} module {module_id} dependencies must be an object')
+                continue
+            module_dependencies = dependencies.get('modules', [])
+            if isinstance(module_dependencies, (str, dict)):
+                module_dependencies = [module_dependencies]
+            if module_dependencies and not isinstance(module_dependencies, list):
+                errors.append(f'{domain_dir.name}: brick {brick_id} module {module_id} dependencies.modules must be an array')
+                continue
+            for dependency in module_dependencies:
+                target_module_id = module_dependency_id(dependency)
+                if not target_module_id:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} module {module_id} dependency is missing moduleId')
+                    continue
+                if target_module_id == module_id:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} module {module_id} depends on itself')
+                target_brick_id = ''
+                if isinstance(dependency, dict):
+                    target_brick_id = str(dependency.get('targetBrickId') or dependency.get('brickId') or '').strip()
+                if target_brick_id and target_brick_id in brick_lookup:
+                    target_module_ids = module_ids_for_brick(brick_lookup[target_brick_id])
+                    if target_module_id not in target_module_ids:
+                        errors.append(f'{domain_dir.name}: brick {brick_id} module {module_id} dependency on {target_brick_id} references missing moduleId: {target_module_id}')
+                elif target_module_id not in brick_module_ids:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} module {module_id} references missing dependency moduleId: {target_module_id}')
+
+        for dependency in brick.get('brickDependencies', []) or []:
+            if not isinstance(dependency, dict):
+                continue
+            if 'interface' in dependency:
+                errors.append(f'{domain_dir.name}: brick {brick_id} dependency uses legacy interface field')
+            target_brick_id = str(dependency.get('targetBrickId', '')).strip()
+            target_module_id = str(dependency.get('moduleId', '')).strip()
+            source_module_id = str(dependency.get('sourceModuleId', '')).strip()
+            if target_brick_id and not target_module_id:
+                errors.append(f'{domain_dir.name}: brick {brick_id} dependency on {target_brick_id} is missing moduleId')
+            if source_module_id and source_module_id not in brick_module_ids:
+                errors.append(f'{domain_dir.name}: brick {brick_id} dependency references missing sourceModuleId: {source_module_id}')
+            if target_brick_id and target_brick_id in brick_lookup and target_module_id:
+                target_module_ids = module_ids_for_brick(brick_lookup[target_brick_id])
+                if target_module_id not in target_module_ids:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} dependency on {target_brick_id} references missing moduleId: {target_module_id}')
+
+        for data_dependency in brick.get('dataDependencies', []) or []:
+            if not isinstance(data_dependency, dict):
+                continue
+            if 'storeId' in data_dependency or 'storeIds' in data_dependency:
+                errors.append(f'{domain_dir.name}: brick {brick_id} data dependency uses legacy storeIds field')
+            module_ids = data_dependency.get('moduleIds', [])
+            if isinstance(module_ids, str):
+                module_ids = [module_ids]
+            if data_dependency.get('assetId') and not module_ids:
+                errors.append(f'{domain_dir.name}: brick {brick_id} data dependency on {data_dependency.get("assetId")} is missing moduleIds')
+            for module_id in module_ids:
+                if module_id not in brick_module_ids:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} data dependency references missing moduleId: {module_id}')
+
+        for field_name in ('externalSystemsThisBrickDependsOn', 'externalSystemDependencies'):
+            for external_dependency in brick.get(field_name, []) or []:
+                if not isinstance(external_dependency, dict):
+                    continue
+                source_module_id = str(
+                    external_dependency.get('sourceModuleId')
+                    or external_dependency.get('moduleId')
+                    or external_dependency.get('module')
+                    or ''
+                ).strip()
+                if not source_module_id:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} {field_name} entry is missing sourceModuleId')
+                    continue
+                if source_module_id not in brick_module_ids:
+                    errors.append(f'{domain_dir.name}: brick {brick_id} {field_name} references missing sourceModuleId: {source_module_id}')
+
+        for external_dependency in brick.get('externalSystemsDependingOnThisBrick', []) or []:
+            if not isinstance(external_dependency, dict):
+                continue
+            target_module_id = str(
+                external_dependency.get('moduleId')
+                or external_dependency.get('targetModuleId')
+                or external_dependency.get('module')
+                or ''
+            ).strip()
+            if not target_module_id:
+                errors.append(f'{domain_dir.name}: brick {brick_id} externalSystemsDependingOnThisBrick entry is missing moduleId')
+                continue
+            if target_module_id not in brick_module_ids:
+                errors.append(f'{domain_dir.name}: brick {brick_id} externalSystemsDependingOnThisBrick references missing moduleId: {target_module_id}')
 
 
 def iter_id_values(node, path=''):
@@ -157,6 +377,7 @@ def validate_domain(domain_dir, strict_ids=False):
         payload = load_json(product_bricks_path, errors)
         if payload is not None:
             bricks = collect_bricks(payload)
+            validate_product_bricks_model(domain_dir, payload, errors)
             duplicate_bricks = sorted(brick_id for brick_id, values in bricks.items() if len(values) > 1)
             for brick_id in duplicate_bricks:
                 errors.append(f'{domain_dir.name}: duplicate product brick id: {brick_id}')

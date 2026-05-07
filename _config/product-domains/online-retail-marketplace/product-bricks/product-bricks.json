@@ -24,7 +24,7 @@
         }
       ]
     },
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -46,7 +46,7 @@
         "color": "#c9daf8ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -62,7 +62,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -80,25 +212,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Personalized entry surfaces that route shoppers into high-intent categories, replenishment missions, and promotional discovery.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Home feed composition",
-                  "description": "Builds personalized modules, deals, and recency-aware shortcuts.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-shopping-home-ui",
+                      "name": "Shopping home UI",
+                      "type": "web-component",
+                      "description": "Web and app entry surface for shopping sessions.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-home-feed-composition",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Shopping home UI",
-                  "description": "Web and app entry surface for shopping sessions.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-home-feed-composition",
+                      "name": "Home feed composition",
+                      "type": "service",
+                      "description": "Builds personalized modules, deals, and recency-aware shortcuts."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "reco",
+                  "moduleId": "module-recommendation-apis",
+                  "sourceModuleId": "module-home-feed-composition",
                   "type": "composition",
-                  "interface": "Recommendation bundle API",
                   "description": "Uses recommendation candidates and replenishment signals."
                 }
               ],
@@ -107,19 +261,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-home-feed-composition"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-home-feed-composition"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             },
@@ -129,25 +283,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Search, browse, filters, category navigation, and ranking for broad and explicit shopping intent.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Search index and ranking",
-                  "description": "Indexes catalog entities and ranks offer relevance.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-search-ui",
+                      "name": "Search UI",
+                      "type": "web-component",
+                      "description": "Keyword, browse, and filter shopping surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-search-index-and-ranking",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Search UI",
-                  "description": "Keyword, browse, and filter shopping surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-search-index-and-ranking",
+                      "name": "Search index and ranking",
+                      "type": "service",
+                      "description": "Indexes catalog entities and ranks offer relevance."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "list",
+                  "moduleId": "module-catalog-authoring-pipeline",
+                  "sourceModuleId": "module-search-index-and-ranking",
                   "type": "data",
-                  "interface": "Catalog content graph",
                   "description": "Depends on normalized product attributes and category content."
                 }
               ],
@@ -156,11 +332,11 @@
               "dataDependencies": [
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-search-index-and-ranking"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Search Browse Facets.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Search Browse Facets."
                 }
               ]
             },
@@ -170,31 +346,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Conversational and guided shopping assistance that clarifies product tradeoffs and helps shoppers narrow broad intent.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Intent interpretation and grounding",
-                  "description": "Transforms natural-language shopping questions into catalog-aware comparisons and suggestions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-assistant-conversation-ui",
+                      "name": "Assistant conversation UI",
+                      "type": "web-component",
+                      "description": "In-session guided shopping interaction.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-intent-interpretation-and-grounding",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Assistant conversation UI",
-                  "description": "In-session guided shopping interaction.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-intent-interpretation-and-grounding",
+                      "name": "Intent interpretation and grounding",
+                      "type": "service",
+                      "description": "Transforms natural-language shopping questions into catalog-aware comparisons and suggestions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sear",
+                  "moduleId": "module-search-index-and-ranking",
+                  "sourceModuleId": "module-intent-interpretation-and-grounding",
                   "type": "composition",
-                  "interface": "Search and browse services",
                   "description": "Uses ranked catalog results and attribute data."
                 },
                 {
                   "targetBrickId": "pdet",
+                  "moduleId": "module-offer-and-content-assembly",
+                  "sourceModuleId": "module-intent-interpretation-and-grounding",
                   "type": "context",
-                  "interface": "Product detail graph",
                   "description": "Uses product content and offer context for grounded assistance."
                 }
               ],
@@ -203,19 +402,19 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-intent-interpretation-and-grounding"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-intent-interpretation-and-grounding"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -225,31 +424,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Product detail pages, offer presentation, compatibility guidance, and structured comparison logic.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Offer and content assembly",
-                  "description": "Assembles product content, seller offers, shipping promise, and merchandising context.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-detail-page-ui",
+                      "name": "Detail page UI",
+                      "type": "web-component",
+                      "description": "Primary product decision surface for shoppers.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-offer-and-content-assembly",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Detail page UI",
-                  "description": "Primary product decision surface for shoppers.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-offer-and-content-assembly",
+                      "name": "Offer and content assembly",
+                      "type": "service",
+                      "description": "Assembles product content, seller offers, shipping promise, and merchandising context."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "revi",
+                  "moduleId": "module-review-moderation-and-ranking",
+                  "sourceModuleId": "module-offer-and-content-assembly",
                   "type": "composition",
-                  "interface": "Review and Q&A feed",
                   "description": "Uses reviews and answer signals in purchase decisions."
                 },
                 {
                   "targetBrickId": "deli",
+                  "moduleId": "module-promise-apis",
+                  "sourceModuleId": "module-offer-and-content-assembly",
                   "type": "context",
-                  "interface": "Promise calculation API",
                   "description": "Uses delivery promise state in final decision-making."
                 }
               ],
@@ -258,19 +480,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-offer-and-content-assembly"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-offer-and-content-assembly"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             },
@@ -280,25 +502,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Ratings, reviews, question-answer content, and shopper trust feedback loops.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Review moderation and ranking",
-                  "description": "Ranks and moderates review content and quality signals.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-review-surfaces",
+                      "name": "Review surfaces",
+                      "type": "web-component",
+                      "description": "Review summaries, filters, and question-answer views.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-review-moderation-and-ranking",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Review surfaces",
-                  "description": "Review summaries, filters, and question-answer views.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-review-moderation-and-ranking",
+                      "name": "Review moderation and ranking",
+                      "type": "service",
+                      "description": "Ranks and moderates review content and quality signals."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "risk",
+                  "moduleId": "module-risk-scoring-and-enforcement",
+                  "sourceModuleId": "module-review-moderation-and-ranking",
                   "type": "policy",
-                  "interface": "Abuse and integrity policy checks",
                   "description": "Uses fraud and abuse controls to defend review integrity."
                 }
               ],
@@ -307,19 +551,19 @@
               "dataDependencies": [
                 {
                   "assetId": "reviews-ratings-q-a",
+                  "moduleIds": [
+                    "module-review-moderation-and-ranking"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Reviews Ratings Q A.",
-                  "storeIds": [
-                    "reviews-ratings-q-a-store"
-                  ]
+                  "description": "Acts as the primary owning brick for Reviews Ratings Q A."
                 },
                 {
                   "assetId": "catalog-authoring-content",
+                  "moduleIds": [
+                    "module-review-moderation-and-ranking"
+                  ],
                   "role": "query",
-                  "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows.",
-                  "storeIds": [
-                    "catalog-authoring-content-stream"
-                  ]
+                  "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -329,25 +573,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Promotional placements, deal eligibility, badges, and merchandising programs that stimulate conversion.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Promotion orchestration",
-                  "description": "Schedules, validates, and merchandises promotional offers.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-promotion-surfaces",
+                      "name": "Promotion surfaces",
+                      "type": "web-component",
+                      "description": "Deal pages, badging, and offer modules.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-promotion-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Promotion surfaces",
-                  "description": "Deal pages, badging, and offer modules.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-promotion-orchestration",
+                      "name": "Promotion orchestration",
+                      "type": "service",
+                      "description": "Schedules, validates, and merchandises promotional offers."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "price",
+                  "moduleId": "module-offer-health-monitoring",
+                  "sourceModuleId": "module-promotion-orchestration",
                   "type": "context",
-                  "interface": "Offer health API",
                   "description": "Uses price and buyability status to ensure offer quality."
                 }
               ],
@@ -356,19 +622,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-promotion-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-promotion-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             }
@@ -385,25 +651,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Cart state, save-for-later, and basket-building utilities prior to checkout.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Cart state orchestration",
-                  "description": "Maintains line items, availability, and basket promotions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-cart-ui",
+                      "name": "Cart UI",
+                      "type": "web-component",
+                      "description": "Basket review and purchase staging surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-cart-state-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Cart UI",
-                  "description": "Basket review and purchase staging surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-cart-state-orchestration",
+                      "name": "Cart state orchestration",
+                      "type": "service",
+                      "description": "Maintains line items, availability, and basket promotions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "price",
+                  "moduleId": "module-offer-health-monitoring",
+                  "sourceModuleId": "module-cart-state-orchestration",
                   "type": "data",
-                  "interface": "Offer and pricing API",
                   "description": "Uses current price and buyability state."
                 }
               ],
@@ -412,35 +700,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-cart-state-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-cart-state-orchestration"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-cart-state-orchestration"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "checkout-payments",
+                  "moduleIds": [
+                    "module-cart-state-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Checkout Payments to support domain workflows.",
-                  "storeIds": [
-                    "checkout-payments-db"
-                  ]
+                  "description": "Reads Checkout Payments to support domain workflows."
                 }
               ]
             },
@@ -450,31 +738,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Checkout, payment authorization, address selection, and order placement flow.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Payment and order placement",
-                  "description": "Handles transaction completion and order creation.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-checkout-ui",
+                      "name": "Checkout UI",
+                      "type": "web-component",
+                      "description": "Purchase completion surface across web and mobile.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-payment-and-order-placement",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Checkout UI",
-                  "description": "Purchase completion surface across web and mobile.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-payment-and-order-placement",
+                      "name": "Payment and order placement",
+                      "type": "service",
+                      "description": "Handles transaction completion and order creation."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-identity-apis",
+                  "sourceModuleId": "module-payment-and-order-placement",
                   "type": "identity",
-                  "interface": "Account and entitlement API",
                   "description": "Uses saved addresses, payment methods, and household entitlements."
                 },
                 {
                   "targetBrickId": "deli",
+                  "moduleId": "module-promise-apis",
+                  "sourceModuleId": "module-payment-and-order-placement",
                   "type": "context",
-                  "interface": "Promise API",
                   "description": "Uses final delivery options and promise state."
                 }
               ],
@@ -483,35 +794,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-payment-and-order-placement"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-payment-and-order-placement"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-payment-and-order-placement"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-payment-and-order-placement"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -521,25 +832,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Order history, shipment visibility, exception handling, and delivery event communication.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Order state timeline",
-                  "description": "Tracks order progression and exception states after purchase.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-orders-ui",
+                      "name": "Orders UI",
+                      "type": "web-component",
+                      "description": "Order visibility and tracking surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-order-state-timeline",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Orders UI",
-                  "description": "Order visibility and tracking surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-order-state-timeline",
+                      "name": "Order state timeline",
+                      "type": "service",
+                      "description": "Tracks order progression and exception states after purchase."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "deli",
+                  "moduleId": "module-promise-apis",
+                  "sourceModuleId": "module-order-state-timeline",
                   "type": "event",
-                  "interface": "Delivery event feed",
                   "description": "Uses network and shipment events to show promise status."
                 }
               ],
@@ -548,11 +881,11 @@
               "dataDependencies": [
                 {
                   "assetId": "order-management-tracking",
+                  "moduleIds": [
+                    "module-order-state-timeline"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Order Management Tracking.",
-                  "storeIds": [
-                    "order-management-tracking-stream"
-                  ]
+                  "description": "Acts as the primary owning brick for Order Management Tracking."
                 }
               ]
             },
@@ -562,31 +895,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Promise calculation, carrier routing, last-mile eventing, and shopper-visible delivery commitments.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Promise calculation engine",
-                  "description": "Converts network capacity and inventory into shopper-visible promise windows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-promise-apis",
+                      "name": "Promise APIs",
+                      "type": "api",
+                      "description": "Delivery promise and shipment event interfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-promise-calculation-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Promise APIs",
-                  "description": "Delivery promise and shipment event interfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-promise-calculation-engine",
+                      "name": "Promise calculation engine",
+                      "type": "service",
+                      "description": "Converts network capacity and inventory into shopper-visible promise windows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "invn",
+                  "moduleId": "module-forecast-and-replenishment-engine",
+                  "sourceModuleId": "module-promise-calculation-engine",
                   "type": "data",
-                  "interface": "Inventory availability feed",
                   "description": "Uses current inventory and node allocation state."
                 },
                 {
                   "targetBrickId": "fbao",
+                  "moduleId": "module-inbound-orchestration",
+                  "sourceModuleId": "module-promise-calculation-engine",
                   "type": "composition",
-                  "interface": "Fulfillment network services",
                   "description": "Uses Amazon fulfillment network capabilities."
                 }
               ],
@@ -595,19 +951,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-promise-calculation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-promise-calculation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             },
@@ -617,31 +973,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Reverse-logistics workflows, refund handling, exchange logic, and policy-aware issue recovery.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Reverse-logistics orchestration",
-                  "description": "Coordinates return method, refund state, and item disposition.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-returns-ui",
+                      "name": "Returns UI",
+                      "type": "web-component",
+                      "description": "Self-service return and refund experience.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-reverse-logistics-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Returns UI",
-                  "description": "Self-service return and refund experience.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-reverse-logistics-orchestration",
+                      "name": "Reverse-logistics orchestration",
+                      "type": "service",
+                      "description": "Coordinates return method, refund state, and item disposition."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "care",
+                  "moduleId": "module-case-orchestration",
+                  "sourceModuleId": "module-reverse-logistics-orchestration",
                   "type": "fallback",
-                  "interface": "Case management API",
                   "description": "Escalates complex exceptions into support resolution."
                 },
                 {
                   "targetBrickId": "risk",
+                  "moduleId": "module-policy-decision-apis",
+                  "sourceModuleId": "module-reverse-logistics-orchestration",
                   "type": "policy",
-                  "interface": "Abuse policy API",
                   "description": "Uses return-abuse and fraud checks."
                 }
               ],
@@ -650,11 +1029,11 @@
               "dataDependencies": [
                 {
                   "assetId": "returns-refunds-exchanges",
+                  "moduleIds": [
+                    "module-reverse-logistics-orchestration"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Returns Refunds Exchanges.",
-                  "storeIds": [
-                    "returns-refunds-exchanges-stream"
-                  ]
+                  "description": "Acts as the primary owning brick for Returns Refunds Exchanges."
                 }
               ]
             },
@@ -664,25 +1043,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Prime sign-up, membership state, benefit eligibility, and retention-oriented value communication.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Prime entitlement service",
-                  "description": "Maintains membership state and benefit eligibility.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-prime-ui",
+                      "name": "Prime UI",
+                      "type": "web-component",
+                      "description": "Membership, benefit, and renewal surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-prime-entitlement-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Prime UI",
-                  "description": "Membership, benefit, and renewal surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-prime-entitlement-service",
+                      "name": "Prime entitlement service",
+                      "type": "service",
+                      "description": "Maintains membership state and benefit eligibility."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-identity-apis",
+                  "sourceModuleId": "module-prime-entitlement-service",
                   "type": "identity",
-                  "interface": "Account and household API",
                   "description": "Uses account and household-state foundations."
                 }
               ],
@@ -691,19 +1092,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-prime-entitlement-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-prime-entitlement-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             }
@@ -727,25 +1128,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Merchant registration, compliance, tax, verification, and account health setup.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Merchant onboarding workflow",
-                  "description": "Guides merchants through registration and verification.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-seller-onboarding-ui",
+                      "name": "Seller onboarding UI",
+                      "type": "web-component",
+                      "description": "Account setup and compliance workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-merchant-onboarding-workflow",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Seller onboarding UI",
-                  "description": "Account setup and compliance workflow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-onboarding-workflow",
+                      "name": "Merchant onboarding workflow",
+                      "type": "service",
+                      "description": "Guides merchants through registration and verification."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-identity-apis",
+                  "sourceModuleId": "module-merchant-onboarding-workflow",
                   "type": "identity",
-                  "interface": "Account platform",
                   "description": "Uses shared account and entitlement primitives."
                 }
               ],
@@ -754,35 +1177,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-merchant-onboarding-workflow"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-merchant-onboarding-workflow"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-merchant-onboarding-workflow"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-merchant-onboarding-workflow"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -792,25 +1215,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Product content creation, variation logic, compliance attributes, and listing publication.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Catalog authoring pipeline",
-                  "description": "Validates, enriches, and publishes listing content.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-listing-management-ui",
+                      "name": "Listing management UI",
+                      "type": "web-component",
+                      "description": "Seller listing authoring and maintenance workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-catalog-authoring-pipeline",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Listing management UI",
-                  "description": "Seller listing authoring and maintenance workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-catalog-authoring-pipeline",
+                      "name": "Catalog authoring pipeline",
+                      "type": "service",
+                      "description": "Validates, enriches, and publishes listing content."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "bran",
+                  "moduleId": "module-brand-rights-and-enforcement",
+                  "sourceModuleId": "module-catalog-authoring-pipeline",
                   "type": "policy",
-                  "interface": "Brand authorization checks",
                   "description": "Uses brand rights and ownership controls."
                 }
               ],
@@ -819,35 +1264,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-catalog-authoring-pipeline"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-catalog-authoring-pipeline"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-catalog-authoring-pipeline"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-catalog-authoring-pipeline"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -857,25 +1302,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Brand ownership, counterfeit defense, content control, and enforcement workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Brand rights and enforcement",
-                  "description": "Handles ownership validation and enforcement actions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-brand-registry-ui",
+                      "name": "Brand Registry UI",
+                      "type": "web-component",
+                      "description": "Brand ownership and abuse-resolution workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-brand-rights-and-enforcement",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Brand Registry UI",
-                  "description": "Brand ownership and abuse-resolution workflow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-brand-rights-and-enforcement",
+                      "name": "Brand rights and enforcement",
+                      "type": "service",
+                      "description": "Handles ownership validation and enforcement actions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "auth",
+                  "moduleId": "module-listing-trust-engine",
+                  "sourceModuleId": "module-brand-rights-and-enforcement",
                   "type": "composition",
-                  "interface": "Authenticity policy services",
                   "description": "Uses authenticity signals and listing trust controls."
                 }
               ],
@@ -884,19 +1351,19 @@
               "dataDependencies": [
                 {
                   "assetId": "brand-protection-registry",
+                  "moduleIds": [
+                    "module-brand-rights-and-enforcement"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Brand Protection Registry.",
-                  "storeIds": [
-                    "brand-protection-registry-store"
-                  ]
+                  "description": "Acts as the primary owning brick for Brand Protection Registry."
                 },
                 {
                   "assetId": "catalog-authoring-content",
+                  "moduleIds": [
+                    "module-brand-rights-and-enforcement"
+                  ],
                   "role": "query",
-                  "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows.",
-                  "storeIds": [
-                    "catalog-authoring-content-stream"
-                  ]
+                  "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -906,25 +1373,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Price competitiveness, buy box monitoring, offer health, and suppression awareness.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Offer health monitoring",
-                  "description": "Tracks buyability, competitiveness, and suppression issues.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-offer-health-ui",
+                      "name": "Offer health UI",
+                      "type": "web-component",
+                      "description": "Seller-facing offer competitiveness and buyability console.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-offer-health-monitoring",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Offer health UI",
-                  "description": "Seller-facing offer competitiveness and buyability console.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-offer-health-monitoring",
+                      "name": "Offer health monitoring",
+                      "type": "service",
+                      "description": "Tracks buyability, competitiveness, and suppression issues."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "repr",
+                  "moduleId": "module-commerce-reporting-model",
+                  "sourceModuleId": "module-offer-health-monitoring",
                   "type": "feedback",
-                  "interface": "Retail performance analytics",
                   "description": "Uses performance feedback for commercial prioritization."
                 }
               ],
@@ -933,19 +1422,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-offer-health-monitoring"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-offer-health-monitoring"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             }
@@ -962,25 +1451,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Inbound planning, receiving, prep compliance, and operational workflow for FBA inventory.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Inbound orchestration",
-                  "description": "Coordinates shipments into Amazon fulfillment nodes.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-fba-operations-ui",
+                      "name": "FBA operations UI",
+                      "type": "web-component",
+                      "description": "Inbound creation and network handoff workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-inbound-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "FBA operations UI",
-                  "description": "Inbound creation and network handoff workflow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-inbound-orchestration",
+                      "name": "Inbound orchestration",
+                      "type": "service",
+                      "description": "Coordinates shipments into Amazon fulfillment nodes."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "invn",
+                  "moduleId": "module-forecast-and-replenishment-engine",
+                  "sourceModuleId": "module-inbound-orchestration",
                   "type": "data",
-                  "interface": "Inventory planning feed",
                   "description": "Uses replenishment and capacity guidance."
                 }
               ],
@@ -989,19 +1500,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-inbound-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-inbound-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             },
@@ -1011,25 +1522,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Forecasting, replenishment, availability control, and stock-risk management across Amazon and merchant nodes.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Forecast and replenishment engine",
-                  "description": "Predicts availability risks and replenishment needs.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-inventory-planning-ui",
+                      "name": "Inventory planning UI",
+                      "type": "web-component",
+                      "description": "Seller-facing stock health and replenishment workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-forecast-and-replenishment-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Inventory planning UI",
-                  "description": "Seller-facing stock health and replenishment workflow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-forecast-and-replenishment-engine",
+                      "name": "Forecast and replenishment engine",
+                      "type": "service",
+                      "description": "Predicts availability risks and replenishment needs."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "repr",
+                  "moduleId": "module-commerce-reporting-model",
+                  "sourceModuleId": "module-forecast-and-replenishment-engine",
                   "type": "feedback",
-                  "interface": "Demand analytics feed",
                   "description": "Uses traffic and sales signals for forecasting."
                 }
               ],
@@ -1038,11 +1571,11 @@
               "dataDependencies": [
                 {
                   "assetId": "order-management-tracking",
+                  "moduleIds": [
+                    "module-forecast-and-replenishment-engine"
+                  ],
                   "role": "query",
-                  "description": "Queries Order Management Tracking to support search, analytics, or decision flows.",
-                  "storeIds": [
-                    "order-management-tracking-stream"
-                  ]
+                  "description": "Queries Order Management Tracking to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -1052,25 +1585,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Merchant-managed order handling, promise management, shipping eventing, and operational service quality.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Merchant fulfillment workflow",
-                  "description": "Coordinates merchant-side shipment handling and status events.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-fulfillment-ui",
+                      "name": "Merchant fulfillment UI",
+                      "type": "web-component",
+                      "description": "Seller-facing operational workflow for self-fulfilled orders.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-merchant-fulfillment-workflow",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Merchant fulfillment UI",
-                  "description": "Seller-facing operational workflow for self-fulfilled orders.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-fulfillment-workflow",
+                      "name": "Merchant fulfillment workflow",
+                      "type": "service",
+                      "description": "Coordinates merchant-side shipment handling and status events."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "deli",
+                  "moduleId": "module-promise-apis",
+                  "sourceModuleId": "module-merchant-fulfillment-workflow",
                   "type": "contract",
-                  "interface": "Promise API",
                   "description": "Uses promise requirements and event expectations."
                 }
               ],
@@ -1079,19 +1634,19 @@
               "dataDependencies": [
                 {
                   "assetId": "order-management-tracking",
+                  "moduleIds": [
+                    "module-merchant-fulfillment-workflow"
+                  ],
                   "role": "query",
-                  "description": "Queries Order Management Tracking to support search, analytics, or decision flows.",
-                  "storeIds": [
-                    "order-management-tracking-stream"
-                  ]
+                  "description": "Queries Order Management Tracking to support search, analytics, or decision flows."
                 },
                 {
                   "assetId": "seller-identity-onboarding",
+                  "moduleIds": [
+                    "module-merchant-fulfillment-workflow"
+                  ],
                   "role": "read",
-                  "description": "Reads Seller Identity Onboarding to support domain workflows.",
-                  "storeIds": [
-                    "seller-identity-onboarding-db"
-                  ]
+                  "description": "Reads Seller Identity Onboarding to support domain workflows."
                 }
               ]
             },
@@ -1101,25 +1656,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Seller balances, fee explanation, reserve logic, settlement timing, and billing reconciliation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Merchant ledger service",
-                  "description": "Tracks charges, reserves, disbursements, and reconciliation state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-financial-account-ui",
+                      "name": "Financial account UI",
+                      "type": "web-component",
+                      "description": "Seller-facing payouts, balance, and fee views.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-merchant-ledger-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Financial account UI",
-                  "description": "Seller-facing payouts, balance, and fee views.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-merchant-ledger-service",
+                      "name": "Merchant ledger service",
+                      "type": "service",
+                      "description": "Tracks charges, reserves, disbursements, and reconciliation state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sell",
+                  "moduleId": "module-merchant-onboarding-workflow",
+                  "sourceModuleId": "module-merchant-ledger-service",
                   "type": "identity",
-                  "interface": "Merchant account state",
                   "description": "Uses seller identity and compliance state."
                 }
               ],
@@ -1128,35 +1705,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-merchant-ledger-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-merchant-ledger-service"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-merchant-ledger-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "seller-identity-onboarding",
+                  "moduleIds": [
+                    "module-merchant-ledger-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Seller Identity Onboarding to support domain workflows.",
-                  "storeIds": [
-                    "seller-identity-onboarding-db"
-                  ]
+                  "description": "Reads Seller Identity Onboarding to support domain workflows."
                 }
               ]
             },
@@ -1166,31 +1743,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Sponsored Products, Sponsored Brands, Sponsored Display, and related retail-intent ad products.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Retail media serving and optimization",
-                  "description": "Handles campaign delivery, bidding, and placement optimization.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-ads-console-ui",
+                      "name": "Ads console UI",
+                      "type": "web-component",
+                      "description": "Campaign setup and optimization workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-retail-media-serving-and-optimization",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Ads console UI",
-                  "description": "Campaign setup and optimization workflow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-retail-media-serving-and-optimization",
+                      "name": "Retail media serving and optimization",
+                      "type": "service",
+                      "description": "Handles campaign delivery, bidding, and placement optimization."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "price",
+                  "moduleId": "module-offer-health-monitoring",
+                  "sourceModuleId": "module-retail-media-serving-and-optimization",
                   "type": "context",
-                  "interface": "Offer health feed",
                   "description": "Uses buyability context to avoid poor retail outcomes."
                 },
                 {
                   "targetBrickId": "invn",
+                  "moduleId": "module-forecast-and-replenishment-engine",
+                  "sourceModuleId": "module-retail-media-serving-and-optimization",
                   "type": "context",
-                  "interface": "Inventory availability feed",
                   "description": "Uses availability context to limit wasted spend."
                 }
               ],
@@ -1199,11 +1799,11 @@
               "dataDependencies": [
                 {
                   "assetId": "brand-protection-registry",
+                  "moduleIds": [
+                    "module-retail-media-serving-and-optimization"
+                  ],
                   "role": "read",
-                  "description": "Reads Brand Protection Registry to support domain workflows.",
-                  "storeIds": [
-                    "brand-protection-registry-store"
-                  ]
+                  "description": "Reads Brand Protection Registry to support domain workflows."
                 }
               ]
             },
@@ -1213,25 +1813,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Audience building, programmatic buying, retargeting, and off-surface media orchestration.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Audience and programmatic orchestration",
-                  "description": "Builds addressable audiences and media controls for DSP workflows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-dsp-workflow-ui",
+                      "name": "DSP workflow UI",
+                      "type": "web-component",
+                      "description": "Audience planning and media control surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-audience-and-programmatic-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "DSP workflow UI",
-                  "description": "Audience planning and media control surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-audience-and-programmatic-orchestration",
+                      "name": "Audience and programmatic orchestration",
+                      "type": "service",
+                      "description": "Builds addressable audiences and media controls for DSP workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-measurement-apis",
+                  "sourceModuleId": "module-audience-and-programmatic-orchestration",
                   "type": "insight",
-                  "interface": "Measurement features",
                   "description": "Uses advanced measurement and experimentation context."
                 }
               ],
@@ -1240,19 +1862,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-audience-and-programmatic-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-audience-and-programmatic-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             },
@@ -1262,25 +1884,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Operational and commercial reporting across traffic, conversion, sales, inventory, and campaign performance.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Commerce reporting model",
-                  "description": "Builds seller and advertiser-facing performance reporting views.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-reporting-ui",
+                      "name": "Reporting UI",
+                      "type": "web-component",
+                      "description": "Operational and commercial analytics surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-commerce-reporting-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Reporting UI",
-                  "description": "Operational and commercial analytics surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-commerce-reporting-model",
+                      "name": "Commerce reporting model",
+                      "type": "service",
+                      "description": "Builds seller and advertiser-facing performance reporting views."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-measurement-apis",
+                  "sourceModuleId": "module-commerce-reporting-model",
                   "type": "platform",
-                  "interface": "Measurement warehouse",
                   "description": "Uses shared measurement and experiment data."
                 }
               ],
@@ -1289,19 +1933,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-commerce-reporting-model"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-commerce-reporting-model"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             }
@@ -1325,18 +1969,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Shared account, household, entitlement, and merchant identity platform.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Account graph and entitlements",
-                  "description": "Maintains shopper, seller, and household identity state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-identity-apis",
+                      "name": "Identity APIs",
+                      "type": "api",
+                      "description": "Authenticated account and entitlement interfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-account-graph-and-entitlements",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Identity APIs",
-                  "description": "Authenticated account and entitlement interfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-account-graph-and-entitlements",
+                      "name": "Account graph and entitlements",
+                      "type": "service",
+                      "description": "Maintains shopper, seller, and household identity state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1345,35 +2010,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-account-graph-and-entitlements"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-account-graph-and-entitlements"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-account-graph-and-entitlements"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-account-graph-and-entitlements"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -1383,25 +2048,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Abuse detection, policy enforcement, account-risk controls, and trust interventions across commerce flows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Risk scoring and enforcement",
-                  "description": "Scores and enforces abuse, fraud, and policy risks.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-policy-decision-apis",
+                      "name": "Policy decision APIs",
+                      "type": "api",
+                      "description": "Trust and risk decisions for dependent workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-risk-scoring-and-enforcement",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Policy decision APIs",
-                  "description": "Trust and risk decisions for dependent workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-risk-scoring-and-enforcement",
+                      "name": "Risk scoring and enforcement",
+                      "type": "service",
+                      "description": "Scores and enforces abuse, fraud, and policy risks."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-account-graph-and-entitlements",
+                  "sourceModuleId": "module-risk-scoring-and-enforcement",
                   "type": "identity",
-                  "interface": "Account graph",
                   "description": "Uses identity state to evaluate risk patterns."
                 }
               ],
@@ -1410,27 +2097,27 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-risk-scoring-and-enforcement"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-risk-scoring-and-enforcement"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-risk-scoring-and-enforcement"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 }
               ]
             },
@@ -1440,25 +2127,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Listing legitimacy, authenticity signals, and trust controls that protect shoppers and brands.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Listing trust engine",
-                  "description": "Scores content legitimacy, brand authorization, and authenticity indicators.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-trust-signal-apis",
+                      "name": "Trust signal APIs",
+                      "type": "api",
+                      "description": "Product and offer trust signal interfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-listing-trust-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Trust signal APIs",
-                  "description": "Product and offer trust signal interfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-listing-trust-engine",
+                      "name": "Listing trust engine",
+                      "type": "service",
+                      "description": "Scores content legitimacy, brand authorization, and authenticity indicators."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "bran",
+                  "moduleId": "module-brand-rights-and-enforcement",
+                  "sourceModuleId": "module-listing-trust-engine",
                   "type": "rights",
-                  "interface": "Brand ownership graph",
                   "description": "Uses brand-rights and enforcement context."
                 }
               ],
@@ -1467,35 +2176,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-listing-trust-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-listing-trust-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-listing-trust-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-listing-trust-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -1505,25 +2214,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Case management, support escalation, policy-guided recovery, and cross-party issue resolution.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Case orchestration",
-                  "description": "Routes and resolves support cases across shopper and seller flows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-support-ui",
+                      "name": "Support UI",
+                      "type": "web-component",
+                      "description": "Self-service and assisted support surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-case-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Support UI",
-                  "description": "Self-service and assisted support surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-case-orchestration",
+                      "name": "Case orchestration",
+                      "type": "service",
+                      "description": "Routes and resolves support cases across shopper and seller flows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "risk",
+                  "moduleId": "module-risk-scoring-and-enforcement",
+                  "sourceModuleId": "module-case-orchestration",
                   "type": "policy",
-                  "interface": "Policy decision services",
                   "description": "Uses trust and policy rules in resolution workflows."
                 }
               ],
@@ -1532,35 +2263,35 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-case-orchestration"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-case-orchestration"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-case-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-case-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 }
               ]
             }
@@ -1577,25 +2308,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Personalized merchandising, replenishment suggestions, and recirculation logic across shopping surfaces.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Recommendation model serving",
-                  "description": "Serves personalized product and category suggestions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-apis",
+                      "name": "Recommendation APIs",
+                      "type": "api",
+                      "description": "Recommendation interfaces for home and detail surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-recommendation-model-serving",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Recommendation APIs",
-                  "description": "Recommendation interfaces for home and detail surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-model-serving",
+                      "name": "Recommendation model serving",
+                      "type": "service",
+                      "description": "Serves personalized product and category suggestions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-measurement-apis",
+                  "sourceModuleId": "module-recommendation-model-serving",
                   "type": "insight",
-                  "interface": "Measurement features",
                   "description": "Uses shared behavior and experiment signals."
                 }
               ],
@@ -1604,19 +2357,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-recommendation-model-serving"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-recommendation-model-serving"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             },
@@ -1626,18 +2379,39 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Shared measurement, experimentation, incrementality analysis, and decision-support platform across commerce flows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Experiment and measurement platform",
-                  "description": "Runs experiments and builds shared commerce reporting datasets.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-measurement-apis",
+                      "name": "Measurement APIs",
+                      "type": "api",
+                      "description": "Experiment, reporting, and causal measurement interfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-experiment-and-measurement-platform",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Measurement APIs",
-                  "description": "Experiment, reporting, and causal measurement interfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-experiment-and-measurement-platform",
+                      "name": "Experiment and measurement platform",
+                      "type": "service",
+                      "description": "Runs experiments and builds shared commerce reporting datasets."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1646,19 +2420,19 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-experiment-and-measurement-platform"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-experiment-and-measurement-platform"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -1668,25 +2442,47 @@
               "type": "integration",
               "status": "sustaining",
               "description": "APIs and integration surfaces for reporting, partner tooling, and ecosystem commerce workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Partner integration gateway",
-                  "description": "Exposes commerce and reporting workflows to internal and external consumers.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-partner-api-gateway",
+                      "name": "Partner API gateway",
+                      "type": "api",
+                      "description": "Programmatic workflow and reporting interfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-partner-integration-gateway",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Partner API gateway",
-                  "description": "Programmatic workflow and reporting interfaces.",
-                  "type": "api"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-partner-integration-gateway",
+                      "name": "Partner integration gateway",
+                      "type": "integration",
+                      "description": "Exposes commerce and reporting workflows to internal and external consumers."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-measurement-apis",
+                  "sourceModuleId": "module-partner-api-gateway",
                   "type": "data",
-                  "interface": "Measurement data APIs",
                   "description": "Uses shared measurement outputs for integrations."
                 }
               ],
@@ -1695,19 +2491,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-partner-api-gateway"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "search-browse-facets",
+                  "moduleIds": [
+                    "module-partner-api-gateway"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows.",
-                  "storeIds": [
-                    "search-browse-facets-db"
-                  ]
+                  "description": "Reads Search Browse Facets to support domain workflows."
                 }
               ]
             }

@@ -25,7 +25,7 @@
         }
       ]
     },
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -47,7 +47,7 @@
         "color": "#c9daf8ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -63,7 +63,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -81,31 +213,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Personalized member home that assembles topic cues, next-best actions, and recovery paths.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Intent orchestration",
-                  "description": "Builds personalized home modules from member context and recent support behavior.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-home-feed-ui",
+                      "name": "Home feed UI",
+                      "type": "web-component",
+                      "description": "Primary member-facing home surface across web and mobile.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-intent-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Home feed UI",
-                  "description": "Primary member-facing home surface across web and mobile.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-intent-orchestration",
+                      "name": "Intent orchestration",
+                      "type": "service",
+                      "description": "Builds personalized home modules from member context and recent support behavior."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "reco",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-intent-orchestration",
                   "type": "composition",
-                  "interface": "Recommendation API",
                   "description": "Uses recommendation candidates to compose the member home."
                 },
                 {
                   "targetBrickId": "topics",
+                  "moduleId": "module-topic-taxonomy-api",
+                  "sourceModuleId": "module-intent-orchestration",
                   "type": "data",
-                  "interface": "Topic taxonomy",
                   "description": "Uses topic pathways to organize support entry points."
                 }
               ],
@@ -114,19 +269,19 @@
               "dataDependencies": [
                 {
                   "assetId": "member-profile",
+                  "moduleIds": [
+                    "module-intent-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads member identity and preference data.",
-                  "storeIds": [
-                    "member-profile-db"
-                  ]
+                  "description": "Reads member identity and preference data."
                 },
                 {
                   "assetId": "support-interaction",
+                  "moduleIds": [
+                    "module-intent-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads recent support behavior to personalize the home feed.",
-                  "storeIds": [
-                    "support-interaction-stream"
-                  ]
+                  "description": "Reads recent support behavior to personalize the home feed."
                 }
               ]
             },
@@ -136,18 +291,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Structured topic graph for everyday mental wellbeing concerns, life stages, and support journeys.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Topic graph management",
-                  "description": "Maintains topic definitions, synonyms, pathways, and cross-links.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-topic-taxonomy-api",
+                      "name": "Topic taxonomy API",
+                      "type": "api",
+                      "description": "Provides topic and pathway metadata to product surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-topic-graph-management",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Topic taxonomy API",
-                  "description": "Provides topic and pathway metadata to product surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-topic-graph-management",
+                      "name": "Topic graph management",
+                      "type": "service",
+                      "description": "Maintains topic definitions, synonyms, pathways, and cross-links."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -161,25 +337,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Recommendation engine for live sessions, content, communities, and next-step support actions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Recommendation ranking",
-                  "description": "Ranks support options using member behavior, topic affinity, and program context.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-api",
+                      "name": "Recommendation API",
+                      "type": "api",
+                      "description": "Serves personalized support recommendations to member surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-recommendation-ranking",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Recommendation API",
-                  "description": "Serves personalized support recommendations to member surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-ranking",
+                      "name": "Recommendation ranking",
+                      "type": "service",
+                      "description": "Ranks support options using member behavior, topic affinity, and program context."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ai-intel",
+                  "moduleId": "module-intelligence-api",
+                  "sourceModuleId": "module-recommendation-ranking",
                   "type": "insight",
-                  "interface": "Recommendation features",
                   "description": "Uses intelligence features to improve support relevance."
                 }
               ],
@@ -188,11 +386,11 @@
               "dataDependencies": [
                 {
                   "assetId": "support-interaction",
+                  "moduleIds": [
+                    "module-recommendation-ranking"
+                  ],
                   "role": "read",
-                  "description": "Learns from member support behavior.",
-                  "storeIds": [
-                    "support-interaction-stream"
-                  ]
+                  "description": "Learns from member support behavior."
                 }
               ]
             },
@@ -202,25 +400,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Searches content, sessions, communities, and contributors by intent and topic.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Unified support search",
-                  "description": "Indexes support resources and retrieves relevant results by topic and format.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-search-ui-and-api",
+                      "name": "Search UI and API",
+                      "type": "web-component",
+                      "description": "Search interface for explicit member support intent.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-unified-support-search",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Search UI and API",
-                  "description": "Search interface for explicit member support intent.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-unified-support-search",
+                      "name": "Unified support search",
+                      "type": "service",
+                      "description": "Indexes support resources and retrieves relevant results by topic and format."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "topics",
+                  "moduleId": "module-topic-taxonomy-api",
+                  "sourceModuleId": "module-unified-support-search",
                   "type": "data",
-                  "interface": "Topic taxonomy",
                   "description": "Uses topic metadata to improve query resolution."
                 }
               ],
@@ -234,25 +454,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Tracks member reflections, streaks, saved support actions, and habit progress.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Habit and reflection state",
-                  "description": "Stores progress state and generates lightweight recovery prompts.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-progress-ui",
+                      "name": "Progress UI",
+                      "type": "web-component",
+                      "description": "Member-facing progress and reflection surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-habit-and-reflection-state",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Progress UI",
-                  "description": "Member-facing progress and reflection surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-habit-and-reflection-state",
+                      "name": "Habit and reflection state",
+                      "type": "service",
+                      "description": "Stores progress state and generates lightweight recovery prompts."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "notif",
+                  "moduleId": "module-notification-rules-engine",
+                  "sourceModuleId": "module-habit-and-reflection-state",
                   "type": "composition",
-                  "interface": "Reminder rules",
                   "description": "Uses notification rules to sustain habit loops."
                 }
               ],
@@ -261,11 +503,11 @@
               "dataDependencies": [
                 {
                   "assetId": "support-interaction",
+                  "moduleIds": [
+                    "module-habit-and-reflection-state"
+                  ],
                   "role": "read",
-                  "description": "Reads meaningful support actions to compute progress state.",
-                  "storeIds": [
-                    "support-interaction-stream"
-                  ]
+                  "description": "Reads meaningful support actions to compute progress state."
                 }
               ]
             },
@@ -275,25 +517,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Cross-channel reminders, event prompts, re-engagement nudges, and follow-up notifications.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Notification rules engine",
-                  "description": "Schedules and sends reminders across email, push, and in-product surfaces.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-notification-api",
+                      "name": "Notification API",
+                      "type": "api",
+                      "description": "Notification orchestration interface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-notification-rules-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Notification API",
-                  "description": "Notification orchestration interface.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-notification-rules-engine",
+                      "name": "Notification rules engine",
+                      "type": "service",
+                      "description": "Schedules and sends reminders across email, push, and in-product surfaces."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "privacy",
+                  "moduleId": "module-privacy-policy-api",
+                  "sourceModuleId": "module-notification-api",
                   "type": "policy",
-                  "interface": "Consent enforcement API",
                   "description": "Uses consent policy before sending notifications."
                 }
               ],
@@ -302,18 +566,19 @@
                   "system": "Email and Push Providers",
                   "type": "communication",
                   "interface": "Delivery APIs",
-                  "description": "Depends on external messaging providers to deliver notifications."
+                  "description": "Depends on external messaging providers to deliver notifications.",
+                  "sourceModuleId": "module-notification-rules-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-notification-rules-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads consent preferences before messaging members.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads consent preferences before messaging members."
                 }
               ]
             }
@@ -330,25 +595,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Member-facing community feed for supportive posts, comments, and reactions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Community stream orchestration",
-                  "description": "Assembles community content and moderation state for member view.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-community-feed-ui",
+                      "name": "Community feed UI",
+                      "type": "web-component",
+                      "description": "Member-facing community stream.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-community-stream-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Community feed UI",
-                  "description": "Member-facing community stream.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-community-stream-orchestration",
+                      "name": "Community stream orchestration",
+                      "type": "service",
+                      "description": "Assembles community content and moderation state for member view."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "moderation",
+                  "moduleId": "module-moderation-queue-and-escalation-engine",
+                  "sourceModuleId": "module-community-stream-orchestration",
                   "type": "policy",
-                  "interface": "Moderation decision API",
                   "description": "Uses safety decisions and content state before content is shown."
                 }
               ],
@@ -357,11 +644,11 @@
               "dataDependencies": [
                 {
                   "assetId": "community-post",
+                  "moduleIds": [
+                    "module-community-stream-orchestration"
+                  ],
                   "role": "own",
-                  "description": "Owns core community content objects.",
-                  "storeIds": [
-                    "community-post-db"
-                  ]
+                  "description": "Owns core community content objects."
                 }
               ]
             },
@@ -371,31 +658,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Schedules, streams, and manages live support sessions and event participation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Live session runtime",
-                  "description": "Manages session setup, attendance, and live-state transitions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-live-session-ui",
+                      "name": "Live session UI",
+                      "type": "web-component",
+                      "description": "Member and contributor live session experience.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-live-session-runtime",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Live session UI",
-                  "description": "Member and contributor live session experience.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-live-session-runtime",
+                      "name": "Live session runtime",
+                      "type": "service",
+                      "description": "Manages session setup, attendance, and live-state transitions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "session-scheduling",
+                  "moduleId": "module-scheduling-api",
+                  "sourceModuleId": "module-live-session-runtime",
                   "type": "data",
-                  "interface": "Session schedule API",
                   "description": "Uses session definitions and availability."
                 },
                 {
                   "targetBrickId": "moderation",
+                  "moduleId": "module-moderation-queue-and-escalation-engine",
+                  "sourceModuleId": "module-live-session-runtime",
                   "type": "policy",
-                  "interface": "Live moderation controls",
                   "description": "Uses moderation and escalation controls during live sessions."
                 }
               ],
@@ -404,18 +714,19 @@
                   "system": "Video Streaming Provider",
                   "type": "media",
                   "interface": "Streaming API",
-                  "description": "Depends on third-party video delivery infrastructure."
+                  "description": "Depends on third-party video delivery infrastructure.",
+                  "sourceModuleId": "module-live-session-runtime"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "session-recording",
+                  "moduleIds": [
+                    "module-live-session-runtime"
+                  ],
                   "role": "write",
-                  "description": "Writes session recordings for on-demand reuse when permitted.",
-                  "storeIds": [
-                    "session-recording-store"
-                  ]
+                  "description": "Writes session recordings for on-demand reuse when permitted."
                 }
               ]
             },
@@ -425,25 +736,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Question submission, moderation, and response workflows for live and asynchronous support questions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Question intake and routing",
-                  "description": "Captures participant questions and routes them through moderation and contributor workflows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-question-ui",
+                      "name": "Question UI",
+                      "type": "web-component",
+                      "description": "Member-facing question and answer surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-question-intake-and-routing",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Question UI",
-                  "description": "Member-facing question and answer surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-question-intake-and-routing",
+                      "name": "Question intake and routing",
+                      "type": "service",
+                      "description": "Captures participant questions and routes them through moderation and contributor workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "moderation",
+                  "moduleId": "module-moderation-queue-and-escalation-engine",
+                  "sourceModuleId": "module-question-intake-and-routing",
                   "type": "policy",
-                  "interface": "Moderation queue",
                   "description": "Uses moderation controls before questions are answered."
                 }
               ],
@@ -457,25 +790,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Membership and participation model for topic-specific communities, circles, and cohort spaces.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Community membership state",
-                  "description": "Manages joins, follows, and participation settings for topic spaces.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-community-membership-ui",
+                      "name": "Community membership UI",
+                      "type": "web-component",
+                      "description": "User experience for discovering and joining topic circles.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-community-membership-state",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Community membership UI",
-                  "description": "User experience for discovering and joining topic circles.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-community-membership-state",
+                      "name": "Community membership state",
+                      "type": "service",
+                      "description": "Manages joins, follows, and participation settings for topic spaces."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "community",
+                  "moduleId": "module-community-feed-ui",
+                  "sourceModuleId": "module-community-membership-state",
                   "type": "composition",
-                  "interface": "Community feed",
                   "description": "Uses community content surfaces to make circles active."
                 }
               ],
@@ -489,25 +844,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Scoped messaging and follow-up workflows for member continuity after sessions or support events.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Secure follow-up messaging",
-                  "description": "Supports bounded message threads and reminders tied to support actions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-messaging-api",
+                      "name": "Messaging API",
+                      "type": "api",
+                      "description": "Interface for structured follow-up communications.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-secure-follow-up-messaging",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Messaging API",
-                  "description": "Interface for structured follow-up communications.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-secure-follow-up-messaging",
+                      "name": "Secure follow-up messaging",
+                      "type": "service",
+                      "description": "Supports bounded message threads and reminders tied to support actions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "privacy",
+                  "moduleId": "module-privacy-policy-api",
+                  "sourceModuleId": "module-messaging-api",
                   "type": "policy",
-                  "interface": "Messaging policy API",
                   "description": "Uses privacy and consent controls before enabling follow-up messaging."
                 }
               ],
@@ -517,7 +894,8 @@
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     },
     {
       "name": "Employer Solutions",
@@ -534,25 +912,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Employer packaging, pricing, seat logic, and contract lifecycle support.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Commercial packaging rules",
-                  "description": "Maintains team-plan pricing, seat structure, and contract terms.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-commercial-workflow-ui",
+                      "name": "Commercial workflow UI",
+                      "type": "web-component",
+                      "description": "Internal and employer-facing plan and contract workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-commercial-packaging-rules",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Commercial workflow UI",
-                  "description": "Internal and employer-facing plan and contract workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-commercial-packaging-rules",
+                      "name": "Commercial packaging rules",
+                      "type": "service",
+                      "description": "Maintains team-plan pricing, seat structure, and contract terms."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "billing",
+                  "moduleId": "module-billing-api",
+                  "sourceModuleId": "module-commercial-packaging-rules",
                   "type": "financial",
-                  "interface": "Subscription ledger API",
                   "description": "Uses billing workflows for invoicing and recurring revenue operations."
                 }
               ],
@@ -561,18 +961,19 @@
                   "system": "CRM and Contracting Tools",
                   "type": "commercial",
                   "interface": "Sales and contract APIs",
-                  "description": "Depends on CRM and contract-management systems."
+                  "description": "Depends on CRM and contract-management systems.",
+                  "sourceModuleId": "module-commercial-packaging-rules"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "employer-account",
+                  "moduleIds": [
+                    "module-commercial-packaging-rules"
+                  ],
                   "role": "write",
-                  "description": "Creates and updates employer commercial state.",
-                  "storeIds": [
-                    "employer-account-db"
-                  ]
+                  "description": "Creates and updates employer commercial state."
                 }
               ]
             },
@@ -582,25 +983,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Employer setup, employee access paths, launch configuration, and activation workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Onboarding state machine",
-                  "description": "Tracks employer launch readiness, access code logic, and cohort activation.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-onboarding-ui",
+                      "name": "Onboarding UI",
+                      "type": "web-component",
+                      "description": "Employer launch and configuration workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-onboarding-state-machine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Onboarding UI",
-                  "description": "Employer launch and configuration workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-onboarding-state-machine",
+                      "name": "Onboarding state machine",
+                      "type": "service",
+                      "description": "Tracks employer launch readiness, access code logic, and cohort activation."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "identity",
+                  "moduleId": "module-identity-api",
+                  "sourceModuleId": "module-onboarding-state-machine",
                   "type": "identity",
-                  "interface": "Access provisioning API",
                   "description": "Uses identity provisioning to create admin and member access."
                 }
               ],
@@ -609,11 +1032,11 @@
               "dataDependencies": [
                 {
                   "assetId": "employer-account",
+                  "moduleIds": [
+                    "module-onboarding-state-machine"
+                  ],
                   "role": "read",
-                  "description": "Reads employer configuration and launch state.",
-                  "storeIds": [
-                    "employer-account-db"
-                  ]
+                  "description": "Reads employer configuration and launch state."
                 }
               ]
             },
@@ -623,31 +1046,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Operational control surface for employer program setup, access, and reviews.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Employer operations shell",
-                  "description": "Assembles employer controls, launch steps, and account health views.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-admin-console-ui",
+                      "name": "Admin console UI",
+                      "type": "web-component",
+                      "description": "Employer-facing administrative workspace.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-employer-operations-shell",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Admin console UI",
-                  "description": "Employer-facing administrative workspace.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-employer-operations-shell",
+                      "name": "Employer operations shell",
+                      "type": "service",
+                      "description": "Assembles employer controls, launch steps, and account health views."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "engagement-analytics",
+                  "moduleId": "module-employer-reporting-ui-and-api",
+                  "sourceModuleId": "module-admin-console-ui",
                   "type": "composition",
-                  "interface": "Aggregate reporting API",
                   "description": "Uses aggregate program reporting in the employer console."
                 },
                 {
                   "targetBrickId": "privacy",
+                  "moduleId": "module-privacy-policy-engine",
+                  "sourceModuleId": "module-employer-operations-shell",
                   "type": "policy",
-                  "interface": "Reporting privacy guardrails",
                   "description": "Uses privacy rules to ensure employer-safe reporting."
                 }
               ],
@@ -656,11 +1102,11 @@
               "dataDependencies": [
                 {
                   "assetId": "employer-account",
+                  "moduleIds": [
+                    "module-employer-operations-shell"
+                  ],
                   "role": "read",
-                  "description": "Reads employer account configuration.",
-                  "storeIds": [
-                    "employer-account-db"
-                  ]
+                  "description": "Reads employer account configuration."
                 }
               ]
             },
@@ -670,31 +1116,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Aggregate employer-safe analytics on activation, repeat use, topics, and event participation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Aggregate reporting service",
-                  "description": "Builds employer-safe insights from member and event activity data.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-employer-reporting-ui-and-api",
+                      "name": "Employer reporting UI and API",
+                      "type": "web-component",
+                      "description": "Aggregate reporting surfaces for employer buyers and operators.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-aggregate-reporting-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Employer reporting UI and API",
-                  "description": "Aggregate reporting surfaces for employer buyers and operators.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-aggregate-reporting-service",
+                      "name": "Aggregate reporting service",
+                      "type": "service",
+                      "description": "Builds employer-safe insights from member and event activity data."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "privacy",
+                  "moduleId": "module-privacy-policy-engine",
+                  "sourceModuleId": "module-aggregate-reporting-service",
                   "type": "policy",
-                  "interface": "Aggregation policy",
                   "description": "Uses privacy rules to keep reporting aggregate and compliant."
                 },
                 {
                   "targetBrickId": "ai-intel",
+                  "moduleId": "module-intelligence-model-serving",
+                  "sourceModuleId": "module-aggregate-reporting-service",
                   "type": "insight",
-                  "interface": "Demand and health models",
                   "description": "Uses intelligence models to surface account health and topic demand."
                 }
               ],
@@ -703,11 +1172,11 @@
               "dataDependencies": [
                 {
                   "assetId": "engagement-aggregate",
+                  "moduleIds": [
+                    "module-aggregate-reporting-service"
+                  ],
                   "role": "own",
-                  "description": "Owns aggregate employer reporting outputs.",
-                  "storeIds": [
-                    "engagement-aggregate-store"
-                  ]
+                  "description": "Owns aggregate employer reporting outputs."
                 }
               ]
             },
@@ -717,31 +1186,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Program design, event packaging, staffing, and launch workflows for employer-specific live events.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Event program orchestration",
-                  "description": "Coordinates employer event requests, contributor staffing, and event setup.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-event-program-ui",
+                      "name": "Event program UI",
+                      "type": "web-component",
+                      "description": "Internal and employer-facing workflows for planning live events.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-event-program-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Event program UI",
-                  "description": "Internal and employer-facing workflows for planning live events.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-event-program-orchestration",
+                      "name": "Event program orchestration",
+                      "type": "service",
+                      "description": "Coordinates employer event requests, contributor staffing, and event setup."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "session-scheduling",
+                  "moduleId": "module-scheduling-api",
+                  "sourceModuleId": "module-event-program-orchestration",
                   "type": "composition",
-                  "interface": "Scheduling API",
                   "description": "Uses contributor and session availability to staff employer events."
                 },
                 {
                   "targetBrickId": "live",
+                  "moduleId": "module-live-session-runtime",
+                  "sourceModuleId": "module-event-program-orchestration",
                   "type": "composition",
-                  "interface": "Live session runtime",
                   "description": "Uses live delivery to execute employer events."
                 }
               ],
@@ -751,7 +1243,8 @@
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     },
     {
       "name": "Contributor Network",
@@ -768,25 +1261,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Contributor identity, credentials, topic coverage, and opportunity fit surfaces.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Contributor profile service",
-                  "description": "Stores contributor identity, credentials, and coverage metadata.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-contributor-profile-ui",
+                      "name": "Contributor profile UI",
+                      "type": "web-component",
+                      "description": "Contributor-facing and member-visible profile experiences.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-contributor-profile-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Contributor profile UI",
-                  "description": "Contributor-facing and member-visible profile experiences.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-contributor-profile-service",
+                      "name": "Contributor profile service",
+                      "type": "service",
+                      "description": "Stores contributor identity, credentials, and coverage metadata."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "moderation",
+                  "moduleId": "module-moderation-queue-and-escalation-engine",
+                  "sourceModuleId": "module-contributor-profile-service",
                   "type": "policy",
-                  "interface": "Trust policy API",
                   "description": "Uses trust status and compliance checks before contributor activation."
                 }
               ],
@@ -795,11 +1310,11 @@
               "dataDependencies": [
                 {
                   "assetId": "contributor-profile",
+                  "moduleIds": [
+                    "module-contributor-profile-service"
+                  ],
                   "role": "own",
-                  "description": "Owns contributor identity and credential objects.",
-                  "storeIds": [
-                    "contributor-profile-db"
-                  ]
+                  "description": "Owns contributor identity and credential objects."
                 }
               ]
             },
@@ -809,25 +1324,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Contributor publishing workflows for recorded sessions, articles, and structured support content.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Publishing workflow service",
-                  "description": "Supports content drafting, review, approval, and publishing.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-contributor-studio-ui",
+                      "name": "Contributor studio UI",
+                      "type": "web-component",
+                      "description": "Contributor-facing publishing and content management workspace.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-publishing-workflow-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Contributor studio UI",
-                  "description": "Contributor-facing publishing and content management workspace.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-publishing-workflow-service",
+                      "name": "Publishing workflow service",
+                      "type": "service",
+                      "description": "Supports content drafting, review, approval, and publishing."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "moderation",
+                  "moduleId": "module-moderation-queue-and-escalation-engine",
+                  "sourceModuleId": "module-publishing-workflow-service",
                   "type": "policy",
-                  "interface": "Content review queue",
                   "description": "Uses content moderation and review before publication."
                 }
               ],
@@ -836,11 +1373,11 @@
               "dataDependencies": [
                 {
                   "assetId": "session-recording",
+                  "moduleIds": [
+                    "module-publishing-workflow-service"
+                  ],
                   "role": "write",
-                  "description": "Stores recorded content and publishing metadata.",
-                  "storeIds": [
-                    "session-recording-store"
-                  ]
+                  "description": "Stores recorded content and publishing metadata."
                 }
               ]
             },
@@ -850,25 +1387,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Scheduling, availability, booking, and session slot coordination for contributors and employers.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Scheduling engine",
-                  "description": "Matches contributor availability, session slots, and employer requests.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-scheduling-api",
+                      "name": "Scheduling API",
+                      "type": "api",
+                      "description": "Scheduling interface for contributors, live sessions, and employer events.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-scheduling-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Scheduling API",
-                  "description": "Scheduling interface for contributors, live sessions, and employer events.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-scheduling-engine",
+                      "name": "Scheduling engine",
+                      "type": "service",
+                      "description": "Matches contributor availability, session slots, and employer requests."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "contributor-profile",
+                  "moduleId": "module-contributor-profile-service",
+                  "sourceModuleId": "module-scheduling-engine",
                   "type": "data",
-                  "interface": "Contributor availability profile",
                   "description": "Uses contributor profile and availability metadata."
                 }
               ],
@@ -882,25 +1441,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Cross-platform moderation, trust review, escalation handling, and incident workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Moderation queue and escalation engine",
-                  "description": "Processes content, session, and participant safety concerns.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-moderation-operations-ui",
+                      "name": "Moderation operations UI",
+                      "type": "web-component",
+                      "description": "Internal trust and safety workspace.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-moderation-queue-and-escalation-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Moderation operations UI",
-                  "description": "Internal trust and safety workspace.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-moderation-queue-and-escalation-engine",
+                      "name": "Moderation queue and escalation engine",
+                      "type": "service",
+                      "description": "Processes content, session, and participant safety concerns."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "care-match",
+                  "moduleId": "module-referral-guidance-api",
+                  "sourceModuleId": "module-moderation-queue-and-escalation-engine",
                   "type": "policy",
-                  "interface": "Escalation guidance API",
                   "description": "Uses escalation paths and referral guidance for higher-risk situations."
                 }
               ],
@@ -909,11 +1490,11 @@
               "dataDependencies": [
                 {
                   "assetId": "community-post",
+                  "moduleIds": [
+                    "module-moderation-queue-and-escalation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads community content for moderation decisions.",
-                  "storeIds": [
-                    "community-post-db"
-                  ]
+                  "description": "Reads community content for moderation decisions."
                 }
               ]
             },
@@ -923,25 +1504,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Contributor earnings visibility, payout workflows, and settlement history.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Contributor earnings service",
-                  "description": "Calculates earnings and exposes payout statements to contributors.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-contributor-earnings-ui",
+                      "name": "Contributor earnings UI",
+                      "type": "web-component",
+                      "description": "Contributor-facing earnings and payout experience.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-contributor-earnings-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Contributor earnings UI",
-                  "description": "Contributor-facing earnings and payout experience.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-contributor-earnings-service",
+                      "name": "Contributor earnings service",
+                      "type": "service",
+                      "description": "Calculates earnings and exposes payout statements to contributors."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "billing",
+                  "moduleId": "module-billing-api",
+                  "sourceModuleId": "module-contributor-earnings-service",
                   "type": "financial",
-                  "interface": "Settlement API",
                   "description": "Uses revenue and settlement workflows to fund contributor payouts."
                 }
               ],
@@ -950,24 +1553,26 @@
                   "system": "Payout Provider",
                   "type": "financial",
                   "interface": "Payout API",
-                  "description": "Depends on an external payout processor."
+                  "description": "Depends on an external payout processor.",
+                  "sourceModuleId": "module-contributor-earnings-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "payout-ledger",
+                  "moduleIds": [
+                    "module-contributor-earnings-service"
+                  ],
                   "role": "own",
-                  "description": "Owns contributor payout and settlement records.",
-                  "storeIds": [
-                    "payout-ledger-db"
-                  ]
+                  "description": "Owns contributor payout and settlement records."
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     },
     {
       "name": "Trust and Foundations",
@@ -984,18 +1589,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Account creation, authentication, pseudonymous participation, and role-based access control.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Identity and access service",
-                  "description": "Manages login, account state, and role-based access.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-identity-api",
+                      "name": "Identity API",
+                      "type": "api",
+                      "description": "Authentication and authorization interface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-identity-and-access-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Identity API",
-                  "description": "Authentication and authorization interface.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-identity-and-access-service",
+                      "name": "Identity and access service",
+                      "type": "service",
+                      "description": "Manages login, account state, and role-based access."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1004,18 +1630,19 @@
                   "system": "Identity Provider",
                   "type": "security",
                   "interface": "Authentication API",
-                  "description": "Depends on an external identity provider where needed."
+                  "description": "Depends on an external identity provider where needed.",
+                  "sourceModuleId": "module-identity-and-access-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "member-profile",
+                  "moduleIds": [
+                    "module-identity-and-access-service"
+                  ],
                   "role": "read",
-                  "description": "Uses member profile data for account state.",
-                  "storeIds": [
-                    "member-profile-db"
-                  ]
+                  "description": "Uses member profile data for account state."
                 }
               ]
             },
@@ -1025,18 +1652,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Consent enforcement, pseudonymity controls, and employer-safe data separation policies.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Privacy policy engine",
-                  "description": "Evaluates consent state and reporting rules across all sensitive workflows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-privacy-policy-api",
+                      "name": "Privacy policy API",
+                      "type": "api",
+                      "description": "Policy enforcement interface for consent and data separation.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-privacy-policy-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Privacy policy API",
-                  "description": "Policy enforcement interface for consent and data separation.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-privacy-policy-engine",
+                      "name": "Privacy policy engine",
+                      "type": "service",
+                      "description": "Evaluates consent state and reporting rules across all sensitive workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1045,11 +1693,11 @@
               "dataDependencies": [
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-privacy-policy-engine"
+                  ],
                   "role": "own",
-                  "description": "Owns auditable consent state.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Owns auditable consent state."
                 }
               ]
             },
@@ -1059,25 +1707,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Rules and workflows for escalating members toward appropriate support and external care options.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Referral decision engine",
-                  "description": "Determines next-step support and escalation options based on policy and member context.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-referral-guidance-api",
+                      "name": "Referral guidance API",
+                      "type": "api",
+                      "description": "Support escalation and referral guidance interface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-referral-decision-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Referral guidance API",
-                  "description": "Support escalation and referral guidance interface.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-referral-decision-engine",
+                      "name": "Referral decision engine",
+                      "type": "service",
+                      "description": "Determines next-step support and escalation options based on policy and member context."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "resource-directory",
+                  "moduleId": "module-resource-catalog-service",
+                  "sourceModuleId": "module-referral-guidance-api",
                   "type": "composition",
-                  "interface": "Resource directory API",
                   "description": "Uses resource and care options to support escalation paths."
                 }
               ],
@@ -1091,18 +1761,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Trusted directory of resources, partner organizations, and next-step support options.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Resource catalog service",
-                  "description": "Stores and serves support resources and referral destinations.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-resource-directory-ui",
+                      "name": "Resource directory UI",
+                      "type": "web-component",
+                      "description": "Member and support-facing resource navigation experience.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-resource-catalog-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Resource directory UI",
-                  "description": "Member and support-facing resource navigation experience.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-resource-catalog-service",
+                      "name": "Resource catalog service",
+                      "type": "service",
+                      "description": "Stores and serves support resources and referral destinations."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1111,7 +1802,8 @@
                   "system": "Partner Care Providers",
                   "type": "partner",
                   "interface": "Referral and information interfaces",
-                  "description": "Depends on external support providers and partner organizations."
+                  "description": "Depends on external support providers and partner organizations.",
+                  "sourceModuleId": "module-resource-catalog-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
@@ -1123,18 +1815,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Subscriptions, invoicing, employer billing, settlement, and financial operations.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Subscription and ledger service",
-                  "description": "Maintains subscription state, invoices, and settlement data.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-billing-api",
+                      "name": "Billing API",
+                      "type": "api",
+                      "description": "Billing and settlement interface for subscriptions and payouts.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-subscription-and-ledger-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Billing API",
-                  "description": "Billing and settlement interface for subscriptions and payouts.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-subscription-and-ledger-service",
+                      "name": "Subscription and ledger service",
+                      "type": "service",
+                      "description": "Maintains subscription state, invoices, and settlement data."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1143,26 +1856,27 @@
                   "system": "Payment Processor",
                   "type": "financial",
                   "interface": "Payments API",
-                  "description": "Depends on an external payment processor for billing collection."
+                  "description": "Depends on an external payment processor for billing collection.",
+                  "sourceModuleId": "module-subscription-and-ledger-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "employer-account",
+                  "moduleIds": [
+                    "module-subscription-and-ledger-service"
+                  ],
                   "role": "read",
-                  "description": "Reads employer subscription state for invoicing.",
-                  "storeIds": [
-                    "employer-account-db"
-                  ]
+                  "description": "Reads employer subscription state for invoicing."
                 },
                 {
                   "assetId": "payout-ledger",
+                  "moduleIds": [
+                    "module-subscription-and-ledger-service"
+                  ],
                   "role": "read",
-                  "description": "Reads payout records to support settlement reconciliation.",
-                  "storeIds": [
-                    "payout-ledger-db"
-                  ]
+                  "description": "Reads payout records to support settlement reconciliation."
                 }
               ]
             },
@@ -1172,18 +1886,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Cross-domain intelligence layer for recommendations, topic demand forecasting, and account health signals.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Intelligence model serving",
-                  "description": "Generates recommendation features, demand forecasts, and account health signals.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-intelligence-api",
+                      "name": "Intelligence API",
+                      "type": "api",
+                      "description": "Serves model features and account intelligence across the platform.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-intelligence-model-serving",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Intelligence API",
-                  "description": "Serves model features and account intelligence across the platform.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-intelligence-model-serving",
+                      "name": "Intelligence model serving",
+                      "type": "service",
+                      "description": "Generates recommendation features, demand forecasts, and account health signals."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1192,25 +1927,26 @@
               "dataDependencies": [
                 {
                   "assetId": "support-interaction",
+                  "moduleIds": [
+                    "module-intelligence-model-serving"
+                  ],
                   "role": "read",
-                  "description": "Reads support interaction data to train and serve intelligence signals.",
-                  "storeIds": [
-                    "support-interaction-stream"
-                  ]
+                  "description": "Reads support interaction data to train and serve intelligence signals."
                 },
                 {
                   "assetId": "engagement-aggregate",
+                  "moduleIds": [
+                    "module-intelligence-model-serving"
+                  ],
                   "role": "read",
-                  "description": "Reads aggregate program data for account-health and topic-demand models.",
-                  "storeIds": [
-                    "engagement-aggregate-store"
-                  ]
+                  "description": "Reads aggregate program data for account-health and topic-demand models."
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     }
   ]
 }

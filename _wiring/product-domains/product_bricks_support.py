@@ -3,6 +3,163 @@ import os
 import re
 
 
+PRODUCT_BRICK_LAYER_ORDER = [
+    'ui',
+    'interfaces',
+    'bus',
+    'stateless-service',
+    'service',
+    'integration'
+]
+
+
+PRODUCT_BRICK_LAYER_LABELS = {
+    'ui': 'UI',
+    'interfaces': 'Interfaces',
+    'bus': 'Bus',
+    'stateless-service': 'Stateless Service',
+    'service': 'Service',
+    'integration': 'Integration'
+}
+
+
+PRODUCT_BRICK_LAYER_DESCRIPTIONS = {
+    'ui': 'User-facing web, mobile, backoffice, and operator experience modules.',
+    'interfaces': 'APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.',
+    'bus': 'Message queues, event consumers, daemons, and asynchronous processing modules.',
+    'stateless-service': 'Stateless orchestration services that aggregate other services without owning durable state.',
+    'service': 'Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.',
+    'integration': 'Connectors, adapters, and integration modules for external systems, devices, or partner platforms.'
+}
+
+
+PRODUCT_BRICK_LAYER_HOSTS_MODULES = {
+    'ui': ['web-component', 'mobile-component'],
+    'interfaces': ['bff', 'api', 'backoffice-interface'],
+    'bus': ['message-queue', 'message-consumer', 'daemon'],
+    'stateless-service': ['stateless-service'],
+    'service': ['stateful-service', 'service'],
+    'integration': ['integration']
+}
+
+
+PRODUCT_BRICK_MODULE_TYPE_DESCRIPTIONS = {
+    'web-component': 'A browser-based user interface module.',
+    'mobile-component': 'A mobile application user interface module.',
+    'bff': 'A backend-for-frontend module that shapes APIs for a specific client experience.',
+    'api': 'A programmatic API module exposed to product clients, partners, or other systems.',
+    'backoffice-interface': 'An internal operations or administration interface module.',
+    'message-queue': 'A queue module used for asynchronous communication between modules or systems.',
+    'message-consumer': 'A consumer module that processes messages or events from a bus.',
+    'daemon': 'A background worker or daemon module.',
+    'stateless-service': 'A service module that orchestrates work without owning durable state.',
+    'stateful-service': 'A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.',
+    'service': 'A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.',
+    'integration': 'A connector or adapter module for an external system, partner, device, or platform.'
+}
+
+
+PRODUCT_BRICK_MODULE_TYPE_COLORS = {
+    'web-component': '#dbeafe',
+    'mobile-component': '#ede9fe',
+    'bff': '#fef3c7',
+    'api': '#e0f2fe',
+    'backoffice-interface': '#fce7f3',
+    'message-queue': '#ffedd5',
+    'message-consumer': '#fef9c3',
+    'daemon': '#e5e7eb',
+    'stateless-service': '#ccfbf1',
+    'stateful-service': '#dcfce7',
+    'service': '#d1fae5',
+    'integration': '#fae8ff'
+}
+
+
+def default_modules_config():
+    module_type_ids = []
+    seen_module_type_ids = set()
+    for layer_id in PRODUCT_BRICK_LAYER_ORDER:
+        for module_type_id in PRODUCT_BRICK_LAYER_HOSTS_MODULES.get(layer_id, []):
+            if module_type_id in seen_module_type_ids:
+                continue
+            seen_module_type_ids.add(module_type_id)
+            module_type_ids.append(module_type_id)
+
+    return {
+        'layerTypes': [
+            {
+                'id': layer_id,
+                'name': product_brick_layer_label(layer_id).lower(),
+                'description': product_brick_layer_description(layer_id),
+                'hostsModules': list(PRODUCT_BRICK_LAYER_HOSTS_MODULES.get(layer_id, []))
+            }
+            for layer_id in PRODUCT_BRICK_LAYER_ORDER
+        ],
+        'moduleTypes': [
+            {
+                'id': module_type_id,
+                'name': module_type_id.replace('_', ' ').replace('-', ' '),
+                'description': PRODUCT_BRICK_MODULE_TYPE_DESCRIPTIONS.get(
+                    module_type_id,
+                    f"A {module_type_id.replace('_', ' ').replace('-', ' ')} module used in product-brick architecture models."
+                ),
+                'color': PRODUCT_BRICK_MODULE_TYPE_COLORS.get(module_type_id, '#f3f4f6')
+            }
+            for module_type_id in module_type_ids
+        ]
+    }
+
+
+UI_MODULE_TYPES = {
+    'mobile-component',
+    'web-component',
+    'ui',
+    'web',
+    'mobile',
+    'mobile_app'
+}
+
+
+INTERFACE_MODULE_TYPES = {
+    'bff',
+    'api',
+    'backoffice-interface'
+}
+
+
+BUS_MODULE_TYPES = {
+    'message-queue',
+    'message-consumer',
+    'daemon',
+    'event'
+}
+
+
+STATELESS_SERVICE_MODULE_TYPES = {
+    'stateless-service'
+}
+
+
+SERVICE_MODULE_TYPES = {
+    'stateful-service',
+    'service'
+}
+
+
+INTEGRATION_MODULE_TYPES = {
+    'integration',
+    'device',
+    'network'
+}
+
+
+ALLOWED_PRODUCT_BRICK_MODULE_TYPES = {
+    module_type_id
+    for module_type_ids in PRODUCT_BRICK_LAYER_HOSTS_MODULES.values()
+    for module_type_id in module_type_ids
+}
+
+
 def slugify(text):
     value = (text or '').strip().lower()
     chars = []
@@ -15,6 +172,17 @@ def slugify(text):
             chars.append('-')
             last_dash = True
     return ''.join(chars).strip('-')
+
+
+def product_brick_module_id(value):
+    module_slug = slugify(value)
+    if module_slug.startswith('module-'):
+        return module_slug
+    return 'module-' + (module_slug or 'module')
+
+
+def product_brick_generated_id(brick):
+    return slugify((brick or {}).get('name') or (brick or {}).get('title') or 'brick') or 'brick'
 
 
 def normalize_product_brick_rendering(metadata, root_groups, path=''):
@@ -66,23 +234,624 @@ def normalize_product_brick_rendering(metadata, root_groups, path=''):
     return normalized_metadata
 
 
+def normalize_product_brick_metadata(metadata, root_groups, path=''):
+    metadata = normalize_product_brick_rendering(dict(metadata or {}), root_groups, path)
+
+    if 'brickTypes' not in metadata and 'types' in metadata:
+        metadata['brickTypes'] = metadata.get('types', [])
+    if 'brickStatuses' not in metadata and 'statuses' in metadata:
+        metadata['brickStatuses'] = metadata.get('statuses', [])
+    metadata.pop('types', None)
+    metadata.pop('statuses', None)
+
+    metadata['modulesConfig'] = default_modules_config()
+
+    ordered_metadata = {}
+    for key in ('title', 'description', 'rendering', 'brickTypes', 'brickStatuses', 'modulesConfig'):
+        if key in metadata:
+            ordered_metadata[key] = metadata[key]
+    for key, value in metadata.items():
+        if key not in ordered_metadata:
+            ordered_metadata[key] = value
+    return ordered_metadata
+
+
+def product_brick_module_layer_id(module, source_field=''):
+    module_type = str((module or {}).get('type', '')).strip().lower()
+
+    if module_type in UI_MODULE_TYPES:
+        return 'ui'
+    if module_type in INTERFACE_MODULE_TYPES:
+        return 'interfaces'
+    if module_type in BUS_MODULE_TYPES:
+        return 'bus'
+    if module_type in STATELESS_SERVICE_MODULE_TYPES:
+        return 'stateless-service'
+    if module_type in SERVICE_MODULE_TYPES:
+        return 'service'
+    if module_type in INTEGRATION_MODULE_TYPES:
+        return 'integration'
+
+    # Older domain files used many domain-specific labels for service-shaped modules
+    # such as analytics, policy, governance, finance, workflow, and runtime.
+    if source_field == 'interfaces':
+        return 'interfaces'
+    return 'service'
+
+
+def canonical_product_brick_module_type(module, layer_id):
+    module_type = str((module or {}).get('type', '')).strip().lower()
+    module_name = str((module or {}).get('name') or (module or {}).get('title') or '').strip().lower()
+    module_text = ' '.join([module_type, module_name])
+
+    if module_type in ALLOWED_PRODUCT_BRICK_MODULE_TYPES:
+        return module_type
+    if layer_id == 'ui':
+        if 'mobile' in module_text or 'app' in module_text:
+            return 'mobile-component'
+        return 'web-component'
+    if layer_id == 'interfaces':
+        if 'backoffice' in module_text or 'operator' in module_text or 'admin' in module_text:
+            return 'backoffice-interface'
+        if 'bff' in module_text:
+            return 'bff'
+        return 'api'
+    if layer_id == 'bus':
+        if 'queue' in module_text or 'broker' in module_text:
+            return 'message-queue'
+        if 'daemon' in module_text or 'worker' in module_text or 'job' in module_text:
+            return 'daemon'
+        return 'message-consumer'
+    if layer_id == 'stateless-service':
+        return 'stateless-service'
+    if layer_id == 'integration':
+        return 'integration'
+    return 'service'
+
+
+def product_brick_layer_label(layer_id):
+    return PRODUCT_BRICK_LAYER_LABELS.get(layer_id, str(layer_id or '').replace('-', ' ').title())
+
+
+def product_brick_layer_description(layer_id):
+    return PRODUCT_BRICK_LAYER_DESCRIPTIONS.get(layer_id, '')
+
+
+def _module_name(module, fallback):
+    if isinstance(module, dict):
+        for key in ('title', 'name', 'id'):
+            value = str(module.get(key, '')).strip()
+            if value:
+                return value
+    return str(fallback or 'module').strip() or 'module'
+
+
+def _ensure_layer(layers, layer_id, layer_metadata=None):
+    if layer_id not in layers:
+        layer_info = dict(layer_metadata or {})
+        if 'description' not in layer_info:
+            layer_info['description'] = product_brick_layer_description(layer_id)
+        layer_info['modules'] = {}
+        layers[layer_id] = layer_info
+    elif layer_metadata:
+        for key, value in layer_metadata.items():
+            if key not in ('layer', 'modules') and key not in layers[layer_id]:
+                layers[layer_id][key] = value
+    return layers[layer_id]
+
+
+def _add_module_to_layers(layers, module, source_field='', fallback_name='', source_layer_id=''):
+    if not module:
+        return
+
+    if isinstance(module, dict):
+        module_info = dict(module)
+    else:
+        module_info = {'title': str(module), 'type': ''}
+
+    nested_modules = module_info.pop('internalModules', []) or []
+    layer_id = source_layer_id or product_brick_module_layer_id(module_info, source_field)
+    module_name = _module_name(module_info, fallback_name)
+    module_info['type'] = canonical_product_brick_module_type(module_info, layer_id)
+    if module_info.get('title') == module_name and not module_info.get('name'):
+        module_info.pop('title', None)
+    if not module_info.get('name'):
+        module_info['name'] = module_name
+    module_info = {
+        'name': module_info.get('name', module_name),
+        **{key: value for key, value in module_info.items() if key != 'name'}
+    }
+
+    layer = _ensure_layer(layers, layer_id)
+    modules = layer.setdefault('modules', {})
+    module_key = module_name
+    if module_key in modules and modules[module_key] != module_info:
+        suffix = 2
+        while f'{module_name} {suffix}' in modules:
+            suffix += 1
+        module_key = f'{module_name} {suffix}'
+    modules[module_key] = module_info
+
+    for index, nested_module in enumerate(nested_modules):
+        nested_name = _module_name(nested_module, f'{module_name} module {index + 1}')
+        _add_module_to_layers(layers, nested_module, 'internalModules', nested_name)
+
+
+def _add_existing_layer_modules(layers, layer_id, layer_config):
+    if not isinstance(layer_config, dict):
+        return
+
+    layer_metadata = {key: value for key, value in layer_config.items() if key not in ('layer', 'modules')}
+    _ensure_layer(layers, layer_id, layer_metadata)
+    modules = layer_config.get('modules', {})
+
+    if isinstance(modules, dict):
+        for module_name, module in modules.items():
+            if isinstance(module, dict):
+                module_info = dict(module)
+            else:
+                module_info = {'title': str(module), 'type': ''}
+            _add_module_to_layers(layers, module_info, 'layers', module_name, layer_id)
+        return
+
+    if isinstance(modules, list):
+        for index, module in enumerate(modules):
+            _add_module_to_layers(layers, module, 'layers', f'{layer_id} module {index + 1}', layer_id)
+
+
+def compact_product_brick_layers(layers):
+    ordered_layers = []
+    ordered_keys = list(PRODUCT_BRICK_LAYER_ORDER)
+    ordered_keys.extend(key for key in layers.keys() if key not in PRODUCT_BRICK_LAYER_ORDER)
+    used_module_ids = set()
+
+    for layer_id in ordered_keys:
+        layer_config = layers.get(layer_id)
+        if not isinstance(layer_config, dict):
+            continue
+        modules = layer_config.get('modules', {})
+        if not modules:
+            continue
+        ordered_layer = {'layer': layer_id}
+        for key, value in layer_config.items():
+            if key != 'modules' and value:
+                ordered_layer[key] = value
+        ordered_modules = []
+        for module in modules.values():
+            module_info = dict(module or {})
+            base_module_id = product_brick_module_id(module_info.get('id') or module_info.get('name') or 'module')
+            module_id = base_module_id
+            suffix = 2
+            while module_id in used_module_ids:
+                module_id = f'{base_module_id}-{suffix}'
+                suffix += 1
+            used_module_ids.add(module_id)
+
+            ordered_module = {'id': module_id}
+            for key in ('name', 'type', 'description', 'data', 'dependencies'):
+                if key in module_info:
+                    ordered_module[key] = module_info[key]
+            for key, value in module_info.items():
+                if key not in ordered_module and key != 'id':
+                    ordered_module[key] = value
+            ordered_modules.append(ordered_module)
+
+        ordered_layer['modules'] = ordered_modules
+        ordered_layers.append(ordered_layer)
+
+    return ordered_layers
+
+
+def normalize_brick_layers(brick):
+    layers = {}
+    existing_layers = brick.get('layers', {}) if isinstance(brick, dict) else {}
+
+    if isinstance(existing_layers, dict) and existing_layers:
+        for layer_id in PRODUCT_BRICK_LAYER_ORDER:
+            if layer_id in existing_layers:
+                _add_existing_layer_modules(layers, layer_id, existing_layers[layer_id])
+        for layer_id, layer_config in existing_layers.items():
+            if layer_id not in PRODUCT_BRICK_LAYER_ORDER:
+                _add_existing_layer_modules(layers, layer_id, layer_config)
+        return compact_product_brick_layers(layers)
+
+    if isinstance(existing_layers, list) and existing_layers:
+        layer_items = [
+            item for item in existing_layers
+            if isinstance(item, dict) and item.get('layer')
+        ]
+        layer_items.sort(key=lambda item: (
+            PRODUCT_BRICK_LAYER_ORDER.index(item.get('layer'))
+            if item.get('layer') in PRODUCT_BRICK_LAYER_ORDER
+            else len(PRODUCT_BRICK_LAYER_ORDER),
+            item.get('layer', '')
+        ))
+        for layer_config in layer_items:
+            _add_existing_layer_modules(layers, layer_config.get('layer'), layer_config)
+        return compact_product_brick_layers(layers)
+
+    for index, module in enumerate((brick or {}).get('interfaces', []) or []):
+        _add_module_to_layers(layers, module, 'interfaces', f'interface {index + 1}')
+    for index, module in enumerate((brick or {}).get('internalModules', []) or []):
+        _add_module_to_layers(layers, module, 'internalModules', f'module {index + 1}')
+
+    return compact_product_brick_layers(layers)
+
+
+def normalize_product_brick(brick):
+    if not isinstance(brick, dict):
+        return brick
+
+    layers = normalize_brick_layers(brick)
+    normalized_brick = {}
+    inserted_id = False
+    inserted_layers = False
+    brick_id = str(brick.get('id', '')).strip()
+
+    for key, value in brick.items():
+        if key == 'id':
+            normalized_brick['id'] = brick_id or product_brick_generated_id(brick)
+            inserted_id = True
+            continue
+        if key in ('interfaces', 'internalModules', 'layers'):
+            if layers and not inserted_layers:
+                normalized_brick['layers'] = layers
+                inserted_layers = True
+            continue
+        normalized_brick[key] = value
+
+    if not inserted_id:
+        normalized_brick = {'id': product_brick_generated_id(brick), **normalized_brick}
+
+    if layers and not inserted_layers:
+        normalized_brick['layers'] = layers
+
+    return normalized_brick
+
+
+def normalize_product_brick_group(group):
+    if not isinstance(group, dict):
+        return group
+
+    normalized_group = dict(group)
+    normalized_group['subGroups'] = [
+        normalize_product_brick_group(sub_group)
+        for sub_group in group.get('subGroups', []) or []
+    ]
+    normalized_group['bricks'] = [
+        normalize_product_brick(brick)
+        for brick in group.get('bricks', []) or []
+    ]
+    return normalized_group
+
+
+def iter_product_bricks_in_root_groups(root_groups):
+    def walk_group(group):
+        if not isinstance(group, dict):
+            return
+        for brick in group.get('bricks', []) or []:
+            if isinstance(brick, dict):
+                yield brick
+        for sub_group in group.get('subGroups', []) or []:
+            yield from walk_group(sub_group)
+
+    for root_group in root_groups or []:
+        yield from walk_group(root_group)
+
+
+def product_brick_module_entries(brick):
+    entries = []
+    for layer in (brick or {}).get('layers', []) or []:
+        if not isinstance(layer, dict):
+            continue
+        layer_id = str(layer.get('layer', '')).strip()
+        for module in layer.get('modules', []) or []:
+            if not isinstance(module, dict):
+                continue
+            module_id = str(module.get('id', '')).strip()
+            if not module_id:
+                continue
+            entries.append({
+                'id': module_id,
+                'name': str(module.get('name', '')).strip(),
+                'type': str(module.get('type', '')).strip(),
+                'description': str(module.get('description', '')).strip(),
+                'layer': layer_id,
+                'module': module
+            })
+    return entries
+
+
+def data_dependency_module_priority(dependency):
+    role = str((dependency or {}).get('role', '')).strip().lower()
+    if role == 'publish':
+        return ['bus', 'service', 'stateless-service', 'interfaces', 'integration', 'ui']
+    if role in {'own', 'write', 'replicate', 'delete'}:
+        return ['service', 'stateless-service', 'bus', 'interfaces', 'integration', 'ui']
+    if role in {'query', 'read'}:
+        return ['service', 'stateless-service', 'interfaces', 'bus', 'integration', 'ui']
+    return ['service', 'stateless-service', 'interfaces', 'bus', 'integration', 'ui']
+
+
+def select_data_dependency_module_ids(brick, dependency):
+    entries = product_brick_module_entries(brick)
+    module_ids = {entry['id'] for entry in entries}
+    requested_module_ids = dependency.get('moduleIds') or dependency.get('moduleId') or []
+    if isinstance(requested_module_ids, str):
+        requested_module_ids = [requested_module_ids]
+    requested_module_ids = [
+        str(module_id).strip()
+        for module_id in requested_module_ids
+        if str(module_id).strip() in module_ids
+    ]
+    if requested_module_ids:
+        return requested_module_ids
+
+    asset_id = str((dependency or {}).get('assetId', '')).strip()
+    explicit_module_ids = []
+    for entry in entries:
+        module_data = entry.get('module', {}).get('data', [])
+        if not isinstance(module_data, list):
+            module_data = [module_data]
+        for data_item in module_data:
+            data_asset_id = data_item.get('assetId') if isinstance(data_item, dict) else data_item
+            if str(data_asset_id or '').strip() == asset_id:
+                explicit_module_ids.append(entry['id'])
+                break
+    if explicit_module_ids:
+        return explicit_module_ids
+
+    for layer_id in data_dependency_module_priority(dependency):
+        layer_module_ids = [entry['id'] for entry in entries if entry.get('layer') == layer_id]
+        if layer_module_ids:
+            return layer_module_ids
+    return [entries[0]['id']] if entries else []
+
+
+def normalize_data_dependency_item(brick, dependency):
+    if not isinstance(dependency, dict):
+        return dependency
+
+    normalized_dependency = {}
+    if dependency.get('assetId'):
+        normalized_dependency['assetId'] = dependency.get('assetId')
+
+    module_ids = select_data_dependency_module_ids(brick, dependency)
+    if module_ids:
+        normalized_dependency['moduleIds'] = module_ids
+
+    for key in ('role', 'description'):
+        if key in dependency:
+            normalized_dependency[key] = dependency[key]
+
+    for key, value in dependency.items():
+        if key in ('assetId', 'moduleId', 'moduleIds', 'storeId', 'storeIds', 'role', 'description'):
+            continue
+        normalized_dependency[key] = value
+
+    return normalized_dependency
+
+
+def normalize_data_dependencies(root_groups):
+    for brick in iter_product_bricks_in_root_groups(root_groups):
+        if 'dataDependencies' not in brick:
+            continue
+        brick['dataDependencies'] = [
+            normalize_data_dependency_item(brick, dependency)
+            for dependency in brick.get('dataDependencies', []) or []
+        ]
+    return root_groups
+
+
+def _module_dependency_tokens(value):
+    tokens = set()
+    for token in re.sub(r'[^a-z0-9]+', ' ', str(value or '').lower()).split():
+        if not token:
+            continue
+        tokens.add(token)
+        if token.endswith('s') and len(token) > 3:
+            tokens.add(token[:-1])
+    return tokens
+
+
+def _dependency_text(dependency):
+    if not isinstance(dependency, dict):
+        return ''
+    return ' '.join(
+        str(dependency.get(key, '')).strip()
+        for key in ('interface', 'moduleId', 'targetModuleId', 'type', 'description')
+        if str(dependency.get(key, '')).strip()
+    )
+
+
+def _dependency_has_terms(text, terms):
+    text_tokens = _module_dependency_tokens(text)
+    for term in terms:
+        term_tokens = _module_dependency_tokens(term)
+        if term_tokens and term_tokens <= text_tokens:
+            return True
+    return False
+
+
+def dependency_layer_priority(dependency, source=False):
+    text = _dependency_text(dependency)
+    default_priority = (
+        ['service', 'stateless-service', 'interfaces', 'bus', 'integration', 'ui']
+        if source
+        else ['interfaces', 'service', 'stateless-service', 'bus', 'integration', 'ui']
+    )
+    priority = []
+
+    if _dependency_has_terms(text, ['dashboard', 'workspace', 'portal', 'console', 'screen', 'ui']):
+        priority.append('ui')
+    if _dependency_has_terms(text, ['api', 'apis', 'bff', 'endpoint', 'gateway', 'rest', 'graphql', 'webhook', 'webhooks', 'import', 'export']):
+        priority.append('interfaces')
+    if _dependency_has_terms(text, ['event', 'events', 'queue', 'stream', 'feed', 'message', 'messages', 'notification', 'notifications']):
+        priority.append('bus')
+    if _dependency_has_terms(text, ['connector', 'connectors', 'adapter', 'integration', 'erp', 'saml', 'oidc', 'scim']):
+        priority.append('integration')
+    if _dependency_has_terms(text, ['orchestration', 'workflow', 'service', 'state', 'ledger', 'policy']):
+        priority.append('service')
+
+    for layer_id in default_priority:
+        if layer_id not in priority:
+            priority.append(layer_id)
+    return priority
+
+
+def select_first_module_id(brick, layer_priority):
+    entries = product_brick_module_entries(brick)
+    for layer_id in layer_priority:
+        for entry in entries:
+            if entry.get('layer') == layer_id:
+                return entry.get('id', '')
+    return entries[0].get('id', '') if entries else ''
+
+
+def module_entry_score(entry, reference, layer_priority):
+    reference_tokens = _module_dependency_tokens(reference)
+    if not reference_tokens:
+        return 0
+
+    module_text = ' '.join([
+        entry.get('id', ''),
+        entry.get('name', ''),
+        entry.get('type', ''),
+        entry.get('description', ''),
+        entry.get('layer', '')
+    ])
+    module_tokens = _module_dependency_tokens(module_text)
+    score = len(reference_tokens & module_tokens)
+
+    reference_slug = slugify(reference)
+    name_slug = slugify(entry.get('name', ''))
+    type_slug = slugify(entry.get('type', ''))
+    if reference_slug and (reference_slug == name_slug or reference_slug == entry.get('id', '')):
+        score += 50
+    elif reference_slug and name_slug and (reference_slug in name_slug or name_slug in reference_slug):
+        score += 20
+    if type_slug and type_slug in reference_slug:
+        score += 8
+    if entry.get('layer') in layer_priority:
+        score += max(0, len(layer_priority) - layer_priority.index(entry.get('layer')))
+    return score
+
+
+def select_module_id_for_reference(brick, reference, layer_priority):
+    reference = str(reference or '').strip()
+    entries = product_brick_module_entries(brick)
+    if not entries:
+        return ''
+    if reference:
+        normalized_reference_id = product_brick_module_id(reference)
+        reference_slug = slugify(reference)
+        for entry in entries:
+            if entry.get('id') in (reference, normalized_reference_id):
+                return entry.get('id', '')
+            if slugify(entry.get('name', '')) == reference_slug:
+                return entry.get('id', '')
+
+        scored_entries = sorted(
+            entries,
+            key=lambda entry: (
+                -module_entry_score(entry, reference, layer_priority),
+                layer_priority.index(entry.get('layer')) if entry.get('layer') in layer_priority else len(layer_priority),
+                entry.get('id', '')
+            )
+        )
+        if module_entry_score(scored_entries[0], reference, layer_priority) > 0:
+            return scored_entries[0].get('id', '')
+
+    return select_first_module_id(brick, layer_priority)
+
+
+def normalize_brick_dependency_item(source_brick, dependency, brick_lookup):
+    if not isinstance(dependency, dict):
+        return dependency
+
+    target_brick_id = str(dependency.get('targetBrickId', '')).strip()
+    target_brick = brick_lookup.get(target_brick_id, {})
+    target_priority = dependency_layer_priority(dependency, source=False)
+    source_priority = dependency_layer_priority(dependency, source=True)
+
+    target_module_id = select_module_id_for_reference(
+        target_brick,
+        dependency.get('moduleId') or dependency.get('targetModuleId') or dependency.get('interface', ''),
+        target_priority
+    )
+    if not target_module_id and dependency.get('interface'):
+        target_module_id = product_brick_module_id(dependency.get('interface'))
+
+    source_module_id = select_module_id_for_reference(
+        source_brick,
+        dependency.get('sourceModuleId', ''),
+        source_priority
+    )
+
+    normalized_dependency = {}
+    if target_brick_id:
+        normalized_dependency['targetBrickId'] = target_brick_id
+    if target_module_id:
+        normalized_dependency['moduleId'] = target_module_id
+    if source_module_id:
+        normalized_dependency['sourceModuleId'] = source_module_id
+
+    for key in ('type', 'description'):
+        if key in dependency:
+            normalized_dependency[key] = dependency[key]
+
+    for key, value in dependency.items():
+        if key in ('targetBrickId', 'moduleId', 'targetModuleId', 'sourceModuleId', 'interface', 'type', 'description'):
+            continue
+        normalized_dependency[key] = value
+
+    return normalized_dependency
+
+
+def normalize_brick_dependencies(root_groups):
+    brick_lookup = {}
+    for brick in iter_product_bricks_in_root_groups(root_groups):
+        brick_id = str(brick.get('id', '')).strip()
+        if brick_id and brick_id not in brick_lookup:
+            brick_lookup[brick_id] = brick
+
+    for brick in iter_product_bricks_in_root_groups(root_groups):
+        if 'brickDependencies' not in brick:
+            continue
+        brick['brickDependencies'] = [
+            normalize_brick_dependency_item(brick, dependency, brick_lookup)
+            for dependency in brick.get('brickDependencies', []) or []
+        ]
+    return root_groups
+
+
+def normalize_product_brick_root_groups(root_groups):
+    normalized_root_groups = [
+        normalize_product_brick_group(group)
+        for group in root_groups or []
+    ]
+    normalize_data_dependencies(normalized_root_groups)
+    return normalize_brick_dependencies(normalized_root_groups)
+
+
 def load_product_bricks_payload(path, default_title='Product Bricks', default_description=''):
     if not os.path.exists(path):
-        return {'metadata': {'title': default_title, 'description': default_description}, 'rootGroups': []}
+        return {
+            'metadata': normalize_product_brick_metadata({'title': default_title, 'description': default_description}, []),
+            'rootGroups': []
+        }
 
     payload = json.load(open(path))
 
     if isinstance(payload, list):
+        root_groups = normalize_product_brick_root_groups(payload)
         return {
-            'metadata': {
-                'title': default_title,
-                'description': default_description
-            },
-            'rootGroups': payload
+            'metadata': normalize_product_brick_metadata({'title': default_title, 'description': default_description}, root_groups),
+            'rootGroups': root_groups
         }
 
     root_groups = payload.get('rootGroups', payload.get('bricks', []))
-    metadata = normalize_product_brick_rendering(dict(payload.get('metadata', {})), root_groups, path)
+    metadata = normalize_product_brick_metadata(dict(payload.get('metadata', {})), root_groups, path)
     if 'title' not in metadata:
         metadata['title'] = default_title
     if 'description' not in metadata:
@@ -90,7 +859,7 @@ def load_product_bricks_payload(path, default_title='Product Bricks', default_de
 
     return {
         'metadata': metadata,
-        'rootGroups': root_groups
+        'rootGroups': normalize_product_brick_root_groups(root_groups)
     }
 
 
@@ -492,10 +1261,10 @@ def flatten_product_bricks(payload):
                 'id': node.get('id', ''),
                 'name': node.get('name', ''),
                 'type': node.get('type', ''),
+                'status': node.get('status', ''),
                 'description': node.get('description', ''),
                 'links': node.get('links', []),
-                'internalModules': node.get('internalModules', []),
-                'interfaces': node.get('interfaces', []),
+                'layers': normalize_brick_layers(node),
                 'dataDependencies': node.get('dataDependencies', []),
                 'brickDependencies': node.get('brickDependencies', []),
                 'externalSystemsThisBrickDependsOn': node.get('externalSystemsThisBrickDependsOn', node.get('externalSystemDependencies', [])),
@@ -604,12 +1373,12 @@ def build_bricks_lookup(product_bricks_payload):
             'id': str(item['id']),
             'name': item.get('name', str(item['id'])),
             'type': item.get('type', ''),
+            'status': item.get('status', ''),
             'description': item.get('description', ''),
             'links': item.get('links', []),
             'domain': item.get('domain', ''),
             'group': item.get('group', ''),
-            'internalModules': item.get('internalModules', []),
-            'interfaces': item.get('interfaces', []),
+            'layers': item.get('layers', {}),
             'dataDependencies': item.get('dataDependencies', []),
             'brickDependencies': item.get('brickDependencies', []),
             'externalSystemsThisBrickDependsOn': item.get('externalSystemsThisBrickDependsOn', item.get('externalSystemDependencies', [])),
@@ -660,8 +1429,7 @@ def legacy_bricks_to_payload(items, title='Product Bricks', description=''):
             'type': item.get('type', ''),
             'description': item.get('description', ''),
             'links': item.get('links', []),
-            'internalModules': item.get('internalModules', []),
-            'interfaces': item.get('interfaces', []),
+            'layers': normalize_brick_layers(item),
             'dataDependencies': item.get('dataDependencies', []),
             'brickDependencies': item.get('brickDependencies', []),
             'externalSystemsThisBrickDependsOn': item.get('externalSystemsThisBrickDependsOn', item.get('externalSystemDependencies', [])),
@@ -690,8 +1458,7 @@ def legacy_bricks_to_payload(items, title='Product Bricks', description=''):
                                 'type': child.get('type', ''),
                                 'description': child.get('description', ''),
                                 'links': child.get('links', []),
-                                'internalModules': child.get('internalModules', []),
-                                'interfaces': child.get('interfaces', []),
+                                'layers': normalize_brick_layers(child),
                                 'dataDependencies': child.get('dataDependencies', []),
                                 'brickDependencies': child.get('brickDependencies', []),
                                 'externalSystemsThisBrickDependsOn': child.get('externalSystemsThisBrickDependsOn', child.get('externalSystemDependencies', [])),

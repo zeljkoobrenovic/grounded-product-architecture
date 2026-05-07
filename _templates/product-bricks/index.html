@@ -288,14 +288,34 @@
             line-height: 1.05;
         }
 
-        .brick-structure-card.structure-interface {
+        .brick-structure-card.structure-ui {
+            background: rgba(245, 208, 254, 0.85);
+            border-color: rgba(134, 25, 143, 0.24);
+        }
+
+        .brick-structure-card.structure-interfaces {
             background: rgba(219, 234, 254, 0.9);
             border-color: rgba(30, 64, 175, 0.28);
         }
 
-        .brick-structure-card.structure-module {
+        .brick-structure-card.structure-bus {
+            background: rgba(254, 243, 199, 0.9);
+            border-color: rgba(180, 83, 9, 0.24);
+        }
+
+        .brick-structure-card.structure-stateless-service {
+            background: rgba(207, 250, 254, 0.9);
+            border-color: rgba(14, 116, 144, 0.24);
+        }
+
+        .brick-structure-card.structure-service {
             background: rgba(220, 252, 231, 0.9);
             border-color: rgba(22, 101, 52, 0.24);
+        }
+
+        .brick-structure-card.structure-integration {
+            background: rgba(252, 231, 243, 0.9);
+            border-color: rgba(157, 23, 77, 0.24);
         }
 
         .brick-structure-card .structure-card-type {
@@ -1008,8 +1028,9 @@
         const capabilityRootGroups = capabilitiesPayload.rootGroups || [];
         const explicitCapabilities = capabilitiesPayload.capabilities || capabilitiesPayload.capabilities || [];
         const brickRendering = bricksMetadata.rendering || bricksMetadata.render || {};
-        const brickTypes = bricksMetadata.types || [];
-        const brickStatuses = bricksMetadata.statuses || [];
+        const brickTypes = bricksMetadata.brickTypes || [];
+        const brickStatuses = bricksMetadata.brickStatuses || [];
+        const modulesConfig = bricksMetadata.modulesConfig || {};
         const typeColorMap = {};
         const statusMap = {};
         let brickStatusControlsInitialized = false;
@@ -1120,6 +1141,115 @@
             };
         }
 
+        const configuredLayerTypes = modulesConfig.layerTypes || [];
+        const moduleLayerOrder = configuredLayerTypes.length
+            ? configuredLayerTypes.map(layer => layer.id).filter(Boolean)
+            : ['ui', 'interfaces', 'bus', 'stateless-service', 'service', 'integration'];
+        const moduleLayerLabels = configuredLayerTypes.reduce((lookup, layer) => {
+            lookup[layer.id] = layer.name || layer.id;
+            return lookup;
+        }, {
+            'ui': 'UI',
+            'interfaces': 'Interfaces',
+            'bus': 'Bus',
+            'stateless-service': 'Stateless Service',
+            'service': 'Service',
+            'integration': 'Integration'
+        });
+        const moduleTypeDefinitions = (modulesConfig.moduleTypes || []).reduce((lookup, moduleType) => {
+            if (moduleType && moduleType.id) {
+                lookup[moduleType.id] = moduleType;
+            }
+            return lookup;
+        }, {});
+
+        function moduleLayerLabel(layerId) {
+            return moduleLayerLabels[layerId] || String(layerId || '').replaceAll('-', ' ');
+        }
+
+        function moduleLayerClass(layerId) {
+            return 'structure-' + slugify(layerId || 'service');
+        }
+
+        function moduleTypeColor(moduleTypeId) {
+            const moduleType = moduleTypeDefinitions[String(moduleTypeId || '').toLowerCase()] || {};
+            return moduleType.color || '#f3f4f6';
+        }
+
+        function normalizeLayerModules(layerId, layerConfig) {
+            const modules = layerConfig && layerConfig.modules ? layerConfig.modules : {};
+            if (Array.isArray(modules)) {
+                return modules.map((module, index) => {
+                    const moduleInfo = module && typeof module === 'object' ? module : { title: String(module || '') };
+                    return {
+                        ...moduleInfo,
+                        layerId,
+                        layerLabel: moduleLayerLabel(layerId),
+                        displayName: moduleInfo.title || moduleInfo.name || moduleInfo.id || moduleLayerLabel(layerId) + ' module ' + (index + 1)
+                    };
+                });
+            }
+            return Object.entries(modules).map(([moduleName, module]) => {
+                const moduleInfo = module && typeof module === 'object' ? module : { title: String(module || '') };
+                return {
+                    ...moduleInfo,
+                    layerId,
+                    layerLabel: moduleLayerLabel(layerId),
+                    displayName: moduleInfo.title || moduleInfo.name || moduleInfo.id || moduleName
+                };
+            });
+        }
+
+        function layerItemsOf(brick) {
+            const layers = brick.layers || [];
+            if (Array.isArray(layers)) {
+                return [
+                    ...layers.filter(layer => moduleLayerOrder.includes(layer.layer)),
+                    ...layers.filter(layer => !moduleLayerOrder.includes(layer.layer))
+                ].sort((left, right) => {
+                    const leftIndex = moduleLayerOrder.includes(left.layer) ? moduleLayerOrder.indexOf(left.layer) : moduleLayerOrder.length;
+                    const rightIndex = moduleLayerOrder.includes(right.layer) ? moduleLayerOrder.indexOf(right.layer) : moduleLayerOrder.length;
+                    return leftIndex - rightIndex || String(left.layer || '').localeCompare(String(right.layer || ''));
+                });
+            }
+            return [
+                ...moduleLayerOrder.filter(layerId => layers[layerId]).map(layerId => ({ layer: layerId, ...layers[layerId] })),
+                ...Object.keys(layers).filter(layerId => !moduleLayerOrder.includes(layerId)).map(layerId => ({ layer: layerId, ...layers[layerId] }))
+            ];
+        }
+
+        function layeredModulesOf(brick) {
+            return layerItemsOf(brick).flatMap(layer => normalizeLayerModules(layer.layer, layer));
+        }
+
+        function moduleByIdForBrick(brick, moduleId) {
+            if (!moduleId) {
+                return null;
+            }
+            return layeredModulesOf(brick || {}).find(module => module.id === moduleId) || null;
+        }
+
+        function moduleNameForBrick(brick, moduleId) {
+            const moduleInfo = moduleByIdForBrick(brick, moduleId);
+            if (!moduleInfo) {
+                return moduleId || '';
+            }
+            return moduleInfo.displayName || moduleInfo.name || moduleInfo.id || moduleId;
+        }
+
+        function brickDependencyEdgeLabel(sourceBrick, targetBrick, dependency) {
+            const dependencyType = dependency.type || 'unspecified';
+            const sourceModule = moduleNameForBrick(sourceBrick, dependency.sourceModuleId);
+            const targetModule = moduleNameForBrick(targetBrick, dependency.moduleId);
+            const modulePath = [sourceModule, targetModule].filter(Boolean).join(' -> ');
+            return [dependencyType, modulePath].filter(Boolean).join(' / ');
+        }
+
+        function dataDependencyModuleNames(brick, dependency) {
+            const moduleIds = Array.isArray(dependency.moduleIds) ? dependency.moduleIds : (dependency.moduleIds ? [dependency.moduleIds] : []);
+            return moduleIds.map(moduleId => moduleNameForBrick(brick, moduleId)).filter(Boolean).join(', ');
+        }
+
         function shouldShowBrickStructure() {
             const toggle = document.getElementById('brickStructureToggle');
             return !toggle || toggle.checked;
@@ -1203,23 +1333,12 @@
         }
 
         function renderBrick(item) {
-            const structureCards = [
-                ...((item.interfaces || []).map(intf => ({
-                    kind: 'interface',
-                    type: intf.type || 'interface',
-                    name: intf.title || intf.name || 'interface'
-                }))),
-                ...((item.internalModules || []).map(module => ({
-                    kind: 'module',
-                    type: module.type || 'module',
-                    name: module.title || module.name || 'module'
-                })))
-            ];
+            const structureCards = layeredModulesOf(item);
             const structureMarkup = shouldShowBrickStructure() && structureCards.length
                 ? `<div class="brick-structure-list">${structureCards.map(structure => `
-                    <div class="brick-structure-card structure-${escapeHtml(structure.kind)}" title="${escapeHtml(structure.name)}">
-                        <div class="structure-card-type">${escapeHtml(structure.type)}</div>
-                        <div>${escapeHtml(structure.name)}</div>
+                    <div class="brick-structure-card ${escapeHtml(moduleLayerClass(structure.layerId))}" style="background-color: ${escapeHtml(moduleTypeColor(structure.type))}; border-color: rgba(17,17,17,0.18);" title="${escapeHtml(structure.layerLabel + ': ' + structure.displayName)}">
+                        <div class="structure-card-type">${escapeHtml(structure.type || structure.layerLabel)}</div>
+                        <div>${escapeHtml(structure.displayName)}</div>
                     </div>
                 `).join('')}</div>`
                 : '';
@@ -2113,7 +2232,7 @@
                     edges.push({
                         source: 'brick:' + brick.id,
                         target: 'brick:' + dep.targetBrickId,
-                        label: [dependencyType, dep.interface].filter(Boolean).join(' / ')
+                        label: brickDependencyEdgeLabel(brick, targetBrick, dep)
                     });
                 });
             });
@@ -2160,7 +2279,7 @@
                     edges.push({
                         source: isDataProducerRole(dep.role) ? brickNodeId : assetNodeId,
                         target: isDataProducerRole(dep.role) ? assetNodeId : brickNodeId,
-                        label: dep.role || 'uses'
+                        label: [dep.role || 'uses', dataDependencyModuleNames(brick, dep)].filter(Boolean).join(' / ')
                     });
                 });
             });
@@ -2749,7 +2868,7 @@
             <div class="bricks-toolbar">
                 <label class="bricks-toggle" for="brickStructureToggle">
                     <input type="checkbox" id="brickStructureToggle" onchange="updateBricksView()">
-                    <span>Show internal modules</span>
+                    <span>Show modules</span>
                 </label>
                 <label class="bricks-toggle" for="brickStatusToggle">
                     <input type="checkbox" id="brickStatusToggle" onchange="updateBricksView()">

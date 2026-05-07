@@ -367,6 +367,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
                             .replace('${all_capabilities}', json.dumps(flat_capabilities))
+                            .replace('${bricks_metadata}', json.dumps(data.get('metadata', {})))
                             .replace('${brick_data}', json.dumps(brick))
                             .replace('${data_assets}', json.dumps(data_assets_payload))
                             .replace('${tabs_style}', tabs_style)

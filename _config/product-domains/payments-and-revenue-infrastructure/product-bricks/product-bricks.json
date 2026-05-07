@@ -30,7 +30,7 @@
         }
       ]
     },
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -52,7 +52,7 @@
         "color": "#c9daf8ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -68,7 +68,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -86,25 +218,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Hosted payment session experience optimized for fast launch and ongoing conversion improvements.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Session orchestration",
-                  "description": "Creates and manages buyer-facing hosted payment sessions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-hosted-buyer-payment-ui",
+                      "name": "Hosted buyer payment UI",
+                      "type": "web-component",
+                      "description": "Stripe-hosted checkout interface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-session-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Hosted buyer payment UI",
-                  "description": "Stripe-hosted checkout interface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-session-orchestration",
+                      "name": "Session orchestration",
+                      "type": "service",
+                      "description": "Creates and manages buyer-facing hosted payment sessions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "pmtd",
+                  "moduleId": "module-method-eligibility-engine",
+                  "sourceModuleId": "module-session-orchestration",
                   "type": "composition",
-                  "interface": "Payment method availability service",
                   "description": "Uses market-aware payment method selection."
                 }
               ],
@@ -113,35 +267,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-session-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-session-orchestration"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-session-orchestration"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-session-orchestration"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -151,25 +305,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Embeddable payment form components with centralized method logic and wallet support.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Payment form rendering",
-                  "description": "Delivers embeddable payment components across buyer surfaces.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-embedded-payment-ui",
+                      "name": "Embedded payment UI",
+                      "type": "web-component",
+                      "description": "Customizable payment element rendered in merchant surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-payment-form-rendering",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Embedded payment UI",
-                  "description": "Customizable payment element rendered in merchant surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-payment-form-rendering",
+                      "name": "Payment form rendering",
+                      "type": "service",
+                      "description": "Delivers embeddable payment components across buyer surfaces."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "pmtd",
+                  "moduleId": "module-method-eligibility-engine",
+                  "sourceModuleId": "module-payment-form-rendering",
                   "type": "composition",
-                  "interface": "Method orchestration API",
                   "description": "Uses payment method ranking and eligibility logic."
                 }
               ],
@@ -178,35 +354,35 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-payment-form-rendering"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-payment-form-rendering"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-payment-form-rendering"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-payment-form-rendering"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 }
               ]
             },
@@ -216,25 +392,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Low-code payment collection surfaces for one-off and lightweight commerce flows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Hosted link generation",
-                  "description": "Creates hosted payment and collection links for operators.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-payment-link-management-ui",
+                      "name": "Payment link management UI",
+                      "type": "web-component",
+                      "description": "Dashboard workflow for link creation and monitoring.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-hosted-link-generation",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Payment link management UI",
-                  "description": "Dashboard workflow for link creation and monitoring.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-hosted-link-generation",
+                      "name": "Hosted link generation",
+                      "type": "service",
+                      "description": "Creates hosted payment and collection links for operators."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "chck",
+                  "moduleId": "module-session-orchestration",
+                  "sourceModuleId": "module-hosted-link-generation",
                   "type": "composition",
-                  "interface": "Hosted session components",
                   "description": "Reuses hosted payment session capabilities."
                 }
               ],
@@ -243,35 +441,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-hosted-link-generation"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-hosted-link-generation"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-hosted-link-generation"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-links",
+                  "moduleIds": [
+                    "module-hosted-link-generation"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Payment Links.",
-                  "storeIds": [
-                    "payment-links-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Payment Links."
                 }
               ]
             },
@@ -281,18 +479,39 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Selection, ordering, and eligibility logic for cards, wallets, and local payment methods.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Method eligibility engine",
-                  "description": "Determines available methods by geography, device, and merchant configuration.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-method-configuration-ui",
+                      "name": "Method configuration UI",
+                      "type": "web-component",
+                      "description": "Operator controls for payment method availability and preferences.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-method-eligibility-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Method configuration UI",
-                  "description": "Operator controls for payment method availability and preferences.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-method-eligibility-engine",
+                      "name": "Method eligibility engine",
+                      "type": "service",
+                      "description": "Determines available methods by geography, device, and merchant configuration."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -301,35 +520,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-method-eligibility-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-method-eligibility-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-method-eligibility-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-method-orchestration",
+                  "moduleIds": [
+                    "module-method-eligibility-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Payment Method Orchestration.",
-                  "storeIds": [
-                    "payment-method-orchestration-stream"
-                  ]
+                  "description": "Acts as the primary owning brick for Payment Method Orchestration."
                 }
               ]
             }
@@ -346,25 +565,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Improves legitimate payment success through retries, tokens, and issuer-aware optimization.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Authorization decision optimizer",
-                  "description": "Tunes retries, network tokens, and confirmation paths.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-authorization-analytics-ui",
+                      "name": "Authorization analytics UI",
+                      "type": "web-component",
+                      "description": "Shows approval, decline, and recovery diagnostics.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-authorization-decision-optimizer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Authorization analytics UI",
-                  "description": "Shows approval, decline, and recovery diagnostics.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-authorization-decision-optimizer",
+                      "name": "Authorization decision optimizer",
+                      "type": "service",
+                      "description": "Tunes retries, network tokens, and confirmation paths."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rada",
+                  "moduleId": "module-risk-scoring-and-controls-engine",
+                  "sourceModuleId": "module-authorization-decision-optimizer",
                   "type": "context",
-                  "interface": "Risk scoring inputs",
                   "description": "Uses fraud and risk signals to preserve good approvals."
                 }
               ],
@@ -373,35 +614,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-authorization-decision-optimizer"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-authorization-decision-optimizer"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-authorization-decision-optimizer"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-authorization-decision-optimizer"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -411,25 +652,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Reader provisioning, card-present payment acceptance, and in-person operational control.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Reader fleet management",
-                  "description": "Manages reader lifecycle, connectivity, and configuration.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-reader-operations-ui",
+                      "name": "Reader operations UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for reader assignment and health.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-reader-fleet-management",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Reader operations UI",
-                  "description": "Operator workflow for reader assignment and health.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-reader-fleet-management",
+                      "name": "Reader fleet management",
+                      "type": "service",
+                      "description": "Manages reader lifecycle, connectivity, and configuration."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ledg",
+                  "moduleId": "module-financial-event-ledger",
+                  "sourceModuleId": "module-reader-fleet-management",
                   "type": "context",
-                  "interface": "Unified payment state model",
                   "description": "Uses shared money-state logic across online and in-person flows."
                 }
               ],
@@ -438,35 +701,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-reader-fleet-management"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-reader-fleet-management"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-reader-fleet-management"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "terminal-and-reader-operations",
+                  "moduleIds": [
+                    "module-reader-fleet-management"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Terminal And Reader Operations.",
-                  "storeIds": [
-                    "terminal-and-reader-operations-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Terminal And Reader Operations."
                 }
               ]
             }
@@ -490,18 +753,39 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Product, price, recurring lifecycle, and proration controls for recurring businesses.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Pricing and subscription state engine",
-                  "description": "Manages plans, prices, renewals, and lifecycle changes.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-billing-configuration-ui",
+                      "name": "Billing configuration UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for price and subscription management.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-pricing-and-subscription-state-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Billing configuration UI",
-                  "description": "Operator workflow for price and subscription management.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-pricing-and-subscription-state-engine",
+                      "name": "Pricing and subscription state engine",
+                      "type": "service",
+                      "description": "Manages plans, prices, renewals, and lifecycle changes."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -510,19 +794,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-pricing-and-subscription-state-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "authorization-optimization",
+                  "moduleIds": [
+                    "module-pricing-and-subscription-state-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Authorization Optimization to support domain workflows.",
-                  "storeIds": [
-                    "authorization-optimization-db"
-                  ]
+                  "description": "Reads Authorization Optimization to support domain workflows."
                 }
               ]
             },
@@ -532,25 +816,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Captures usage events, rating logic, and billable volume for hybrid pricing models.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Meter ingestion and rating",
-                  "description": "Ingests usage events and converts them into billable amounts.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-meter-definitions-ui",
+                      "name": "Meter definitions UI",
+                      "type": "web-component",
+                      "description": "Operator controls for meters and pricing rules.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-meter-ingestion-and-rating",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Meter definitions UI",
-                  "description": "Operator controls for meters and pricing rules.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-meter-ingestion-and-rating",
+                      "name": "Meter ingestion and rating",
+                      "type": "service",
+                      "description": "Ingests usage events and converts them into billable amounts."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "subs",
+                  "moduleId": "module-pricing-and-subscription-state-engine",
+                  "sourceModuleId": "module-meter-ingestion-and-rating",
                   "type": "composition",
-                  "interface": "Price and plan definitions",
                   "description": "Uses product and pricing metadata from the subscription model."
                 }
               ],
@@ -559,11 +865,11 @@
               "dataDependencies": [
                 {
                   "assetId": "usage-metering-and-rating",
+                  "moduleIds": [
+                    "module-meter-ingestion-and-rating"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Usage Metering And Rating.",
-                  "storeIds": [
-                    "usage-metering-and-rating-stream"
-                  ]
+                  "description": "Acts as the primary owning brick for Usage Metering And Rating."
                 }
               ]
             },
@@ -573,25 +879,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Invoice generation, collection workflows, reminders, and dunning behavior.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Invoice lifecycle orchestration",
-                  "description": "Creates invoices and manages payment collection states.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-invoice-operations-ui",
+                      "name": "Invoice operations UI",
+                      "type": "web-component",
+                      "description": "Dashboard for invoice review, reminders, and retries.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-invoice-lifecycle-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Invoice operations UI",
-                  "description": "Dashboard for invoice review, reminders, and retries.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-invoice-lifecycle-orchestration",
+                      "name": "Invoice lifecycle orchestration",
+                      "type": "service",
+                      "description": "Creates invoices and manages payment collection states."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "auth",
+                  "moduleId": "module-authorization-decision-optimizer",
+                  "sourceModuleId": "module-invoice-lifecycle-orchestration",
                   "type": "composition",
-                  "interface": "Payment collection optimization",
                   "description": "Uses payment success optimization during collection."
                 }
               ],
@@ -600,27 +928,27 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-invoice-lifecycle-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-invoice-lifecycle-orchestration"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-invoice-lifecycle-orchestration"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             }
@@ -637,25 +965,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Tax obligation monitoring, calculation, and registration support across geographies.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Tax rules and obligation engine",
-                  "description": "Evaluates tax applicability and registration thresholds.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-tax-dashboard",
+                      "name": "Tax dashboard",
+                      "type": "web-component",
+                      "description": "Operator workflow for registrations and tax monitoring.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-tax-rules-and-obligation-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Tax dashboard",
-                  "description": "Operator workflow for registrations and tax monitoring.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-tax-rules-and-obligation-engine",
+                      "name": "Tax rules and obligation engine",
+                      "type": "service",
+                      "description": "Evaluates tax applicability and registration thresholds."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "invo",
+                  "moduleId": "module-invoice-lifecycle-orchestration",
+                  "sourceModuleId": "module-tax-rules-and-obligation-engine",
                   "type": "context",
-                  "interface": "Invoice and transaction context",
                   "description": "Uses billing and transaction details for tax calculation."
                 }
               ],
@@ -664,35 +1014,35 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-tax-rules-and-obligation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-tax-rules-and-obligation-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-tax-rules-and-obligation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-tax-rules-and-obligation-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 }
               ]
             },
@@ -702,25 +1052,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Automates revenue schedules and accounting treatment from Stripe event data.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Recognition rules engine",
-                  "description": "Applies accounting logic to billing and payment events.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-revenue-reporting-ui",
+                      "name": "Revenue reporting UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for revenue schedules and accounting review.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-recognition-rules-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Revenue reporting UI",
-                  "description": "Operator workflow for revenue schedules and accounting review.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-recognition-rules-engine",
+                      "name": "Recognition rules engine",
+                      "type": "service",
+                      "description": "Applies accounting logic to billing and payment events."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ledg",
+                  "moduleId": "module-financial-event-ledger",
+                  "sourceModuleId": "module-recognition-rules-engine",
                   "type": "data",
-                  "interface": "Money-state ledger data",
                   "description": "Uses payment and settlement event history for accounting outputs."
                 }
               ],
@@ -729,35 +1101,35 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-recognition-rules-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-recognition-rules-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-recognition-rules-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 },
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-recognition-rules-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 }
               ]
             },
@@ -767,25 +1139,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Queryable reporting, exports, and operational analytics across Stripe workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Reporting and export engine",
-                  "description": "Builds dashboards, scheduled exports, and queryable data surfaces.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-reporting-ui",
+                      "name": "Reporting UI",
+                      "type": "web-component",
+                      "description": "Operator reporting and query workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-reporting-and-export-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Reporting UI",
-                  "description": "Operator reporting and query workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-reporting-and-export-engine",
+                      "name": "Reporting and export engine",
+                      "type": "service",
+                      "description": "Builds dashboards, scheduled exports, and queryable data surfaces."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ledg",
+                  "moduleId": "module-financial-event-ledger",
+                  "sourceModuleId": "module-reporting-and-export-engine",
                   "type": "data",
-                  "interface": "Unified event and ledger model",
                   "description": "Uses shared financial event data across products."
                 }
               ],
@@ -794,19 +1188,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-reporting-and-export-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "authorization-optimization",
+                  "moduleIds": [
+                    "module-reporting-and-export-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Authorization Optimization to support domain workflows.",
-                  "storeIds": [
-                    "authorization-optimization-db"
-                  ]
+                  "description": "Reads Authorization Optimization to support domain workflows."
                 }
               ]
             }
@@ -830,25 +1224,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Account types, capability state, lifecycle transitions, and platform controls for counterparties.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Account capability orchestration",
-                  "description": "Tracks connected-account state, requirements, and activation logic.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-connected-account-ui",
+                      "name": "Connected account UI",
+                      "type": "web-component",
+                      "description": "Operator workflows for account lifecycle and status management.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-account-capability-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Connected account UI",
-                  "description": "Operator workflows for account lifecycle and status management.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-account-capability-orchestration",
+                      "name": "Account capability orchestration",
+                      "type": "service",
+                      "description": "Tracks connected-account state, requirements, and activation logic."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "kycb",
+                  "moduleId": "module-verification-workflow-engine",
+                  "sourceModuleId": "module-account-capability-orchestration",
                   "type": "composition",
-                  "interface": "Verification requirements service",
                   "description": "Uses verification requirements to decide account status."
                 }
               ],
@@ -857,27 +1273,27 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-account-capability-orchestration"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-account-capability-orchestration"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-account-capability-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 }
               ]
             },
@@ -887,25 +1303,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Business and individual verification workflows required to activate and maintain accounts.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Verification workflow engine",
-                  "description": "Collects and validates required KYC and KYB data.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-onboarding-verification-ui",
+                      "name": "Onboarding verification UI",
+                      "type": "web-component",
+                      "description": "Hosted and operator-assisted verification workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-verification-workflow-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Onboarding verification UI",
-                  "description": "Hosted and operator-assisted verification workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-verification-workflow-engine",
+                      "name": "Verification workflow engine",
+                      "type": "service",
+                      "description": "Collects and validates required KYC and KYB data."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-identity-evidence-verification",
+                  "sourceModuleId": "module-verification-workflow-engine",
                   "type": "composition",
-                  "interface": "Identity verification service",
                   "description": "Uses identity document checks for stronger assurance where needed."
                 }
               ],
@@ -914,27 +1352,27 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-verification-workflow-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-verification-workflow-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-verification-workflow-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 }
               ]
             },
@@ -944,18 +1382,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Document and identity verification workflows used in higher-assurance onboarding and fraud-sensitive scenarios.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Identity evidence verification",
-                  "description": "Evaluates documents and identity signals for onboarding or compliance flows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-identity-capture-ui",
+                      "name": "Identity capture UI",
+                      "type": "web-component",
+                      "description": "Hosted identity verification flow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-identity-evidence-verification",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Identity capture UI",
-                  "description": "Hosted identity verification flow.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-identity-evidence-verification",
+                      "name": "Identity evidence verification",
+                      "type": "service",
+                      "description": "Evaluates documents and identity signals for onboarding or compliance flows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -964,35 +1423,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-identity-evidence-verification"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-identity-evidence-verification"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-identity-evidence-verification"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-identity-evidence-verification"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             }
@@ -1009,25 +1468,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Moves money between platform and counterparties while applying fees, reserves, and settlement rules.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Split settlement engine",
-                  "description": "Calculates fee shares, reserves, and transfers across parties.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-funds-flow-controls-ui",
+                      "name": "Funds flow controls UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for platform fee and settlement settings.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-split-settlement-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Funds flow controls UI",
-                  "description": "Operator workflow for platform fee and settlement settings.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-split-settlement-engine",
+                      "name": "Split settlement engine",
+                      "type": "service",
+                      "description": "Calculates fee shares, reserves, and transfers across parties."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ledg",
+                  "moduleId": "module-financial-event-ledger",
+                  "sourceModuleId": "module-split-settlement-engine",
                   "type": "data",
-                  "interface": "Balance and ledger service",
                   "description": "Uses shared money-state and balance bookkeeping."
                 }
               ],
@@ -1036,19 +1517,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-split-settlement-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "authorization-optimization",
+                  "moduleIds": [
+                    "module-split-settlement-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Authorization Optimization to support domain workflows.",
-                  "storeIds": [
-                    "authorization-optimization-db"
-                  ]
+                  "description": "Reads Authorization Optimization to support domain workflows."
                 }
               ]
             },
@@ -1058,25 +1539,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Outbound payouts, scheduling, rails management, and treasury-adjacent money movement workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Payout execution engine",
-                  "description": "Schedules and executes outbound money movement across payout rails.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-payout-operations-ui",
+                      "name": "Payout operations UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for payout timing, failures, and status.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-payout-execution-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Payout operations UI",
-                  "description": "Operator workflow for payout timing, failures, and status.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-payout-execution-engine",
+                      "name": "Payout execution engine",
+                      "type": "service",
+                      "description": "Schedules and executes outbound money movement across payout rails."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "split",
+                  "moduleId": "module-split-settlement-engine",
+                  "sourceModuleId": "module-payout-execution-engine",
                   "type": "composition",
-                  "interface": "Funds routing service",
                   "description": "Uses routed balances and settlement outcomes to trigger payouts."
                 }
               ],
@@ -1085,27 +1588,27 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-payout-execution-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-payout-execution-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-payout-execution-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -1115,25 +1618,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Card issuing, spend controls, and programmatic card use cases for platforms and businesses.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Card program controls",
-                  "description": "Manages card issuance and spend policy behavior.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-card-program-ui",
+                      "name": "Card program UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for issuing programs and controls.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-card-program-controls",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Card program UI",
-                  "description": "Operator workflow for issuing programs and controls.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-card-program-controls",
+                      "name": "Card program controls",
+                      "type": "service",
+                      "description": "Manages card issuance and spend policy behavior."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "acct",
+                  "moduleId": "module-account-capability-orchestration",
+                  "sourceModuleId": "module-card-program-controls",
                   "type": "context",
-                  "interface": "Account capability model",
                   "description": "Uses connected-account state and entitlements."
                 }
               ],
@@ -1142,19 +1667,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-card-program-controls"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "authorization-optimization",
+                  "moduleIds": [
+                    "module-card-program-controls"
+                  ],
                   "role": "read",
-                  "description": "Reads Authorization Optimization to support domain workflows.",
-                  "storeIds": [
-                    "authorization-optimization-db"
-                  ]
+                  "description": "Reads Authorization Optimization to support domain workflows."
                 }
               ]
             },
@@ -1164,25 +1689,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Financing and capital offer workflows tied to performance and money-movement history.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Offer and repayment engine",
-                  "description": "Generates financing offers and repayment logic based on platform or merchant activity.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-capital-offer-ui",
+                      "name": "Capital offer UI",
+                      "type": "web-component",
+                      "description": "Operator and recipient workflow for financing visibility and acceptance.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-offer-and-repayment-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Capital offer UI",
-                  "description": "Operator and recipient workflow for financing visibility and acceptance.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-offer-and-repayment-engine",
+                      "name": "Offer and repayment engine",
+                      "type": "service",
+                      "description": "Generates financing offers and repayment logic based on platform or merchant activity."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rpts",
+                  "moduleId": "module-reporting-and-export-engine",
+                  "sourceModuleId": "module-offer-and-repayment-engine",
                   "type": "data",
-                  "interface": "Performance and cash-flow reporting",
                   "description": "Uses historical transaction and payout data to assess eligibility."
                 }
               ],
@@ -1191,19 +1738,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-offer-and-repayment-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "authorization-optimization",
+                  "moduleIds": [
+                    "module-offer-and-repayment-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Authorization Optimization to support domain workflows.",
-                  "storeIds": [
-                    "authorization-optimization-db"
-                  ]
+                  "description": "Reads Authorization Optimization to support domain workflows."
                 }
               ]
             }
@@ -1227,18 +1774,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "AI-assisted fraud scoring, adaptive controls, and operator workflows across payment and platform activity.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Risk scoring and controls engine",
-                  "description": "Evaluates transaction and behavioral signals to apply adaptive controls.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-risk-review-ui",
+                      "name": "Risk review UI",
+                      "type": "web-component",
+                      "description": "Fraud operations workflow and rule configuration surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-risk-scoring-and-controls-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Risk review UI",
-                  "description": "Fraud operations workflow and rule configuration surface.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-risk-scoring-and-controls-engine",
+                      "name": "Risk scoring and controls engine",
+                      "type": "service",
+                      "description": "Evaluates transaction and behavioral signals to apply adaptive controls."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1247,35 +1815,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-risk-scoring-and-controls-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-risk-scoring-and-controls-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-risk-scoring-and-controls-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-elements",
+                  "moduleIds": [
+                    "module-risk-scoring-and-controls-engine"
+                  ],
                   "role": "query",
-                  "description": "Queries Payment Elements to support search, analytics, or decision flows.",
-                  "storeIds": [
-                    "payment-elements-stream"
-                  ]
+                  "description": "Queries Payment Elements to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -1285,25 +1853,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Chargeback handling, evidence workflows, and loss management across payment products.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Dispute case orchestration",
-                  "description": "Tracks dispute lifecycle, evidence, and outcomes.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-dispute-operations-ui",
+                      "name": "Dispute operations UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for dispute review and evidence management.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-dispute-case-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Dispute operations UI",
-                  "description": "Operator workflow for dispute review and evidence management.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-dispute-case-orchestration",
+                      "name": "Dispute case orchestration",
+                      "type": "service",
+                      "description": "Tracks dispute lifecycle, evidence, and outcomes."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rada",
+                  "moduleId": "module-risk-scoring-and-controls-engine",
+                  "sourceModuleId": "module-dispute-case-orchestration",
                   "type": "context",
-                  "interface": "Risk and fraud event history",
                   "description": "Uses risk context to support case handling and loss analysis."
                 }
               ],
@@ -1312,35 +1902,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-dispute-case-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-dispute-case-orchestration"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-dispute-case-orchestration"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-elements",
+                  "moduleIds": [
+                    "module-dispute-case-orchestration"
+                  ],
                   "role": "query",
-                  "description": "Queries Payment Elements to support search, analytics, or decision flows.",
-                  "storeIds": [
-                    "payment-elements-stream"
-                  ]
+                  "description": "Queries Payment Elements to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -1350,18 +1940,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Shared money-state ledger across charges, invoices, transfers, refunds, and payouts.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Financial event ledger",
-                  "description": "Records and reconciles money-state transitions across product lines.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-balance-state-ui",
+                      "name": "Balance state UI",
+                      "type": "web-component",
+                      "description": "Operator views into balances and money movement state.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-financial-event-ledger",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Balance state UI",
-                  "description": "Operator views into balances and money movement state.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-financial-event-ledger",
+                      "name": "Financial event ledger",
+                      "type": "service",
+                      "description": "Records and reconciles money-state transitions across product lines."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1370,27 +1981,27 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-financial-event-ledger"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-financial-event-ledger"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-financial-event-ledger"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -1400,25 +2011,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Exception handling, payout understanding, and finance-operations workflows built on Stripe's money-state model.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Reconciliation exception workflow",
-                  "description": "Explains and resolves mismatches between financial events and cash movement.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-reconciliation-ui",
+                      "name": "Reconciliation UI",
+                      "type": "web-component",
+                      "description": "Finance and operations workflow for investigating balance and payout issues.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-reconciliation-exception-workflow",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Reconciliation UI",
-                  "description": "Finance and operations workflow for investigating balance and payout issues.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-reconciliation-exception-workflow",
+                      "name": "Reconciliation exception workflow",
+                      "type": "service",
+                      "description": "Explains and resolves mismatches between financial events and cash movement."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ledg",
+                  "moduleId": "module-financial-event-ledger",
+                  "sourceModuleId": "module-reconciliation-exception-workflow",
                   "type": "composition",
-                  "interface": "Ledger event model",
                   "description": "Uses shared ledger events and balances as the basis for exception handling."
                 }
               ],
@@ -1427,35 +2060,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-reconciliation-exception-workflow"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-reconciliation-exception-workflow"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-reconciliation-exception-workflow"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "terminal-and-reader-operations",
+                  "moduleIds": [
+                    "module-reconciliation-exception-workflow"
+                  ],
                   "role": "read",
-                  "description": "Reads Terminal And Reader Operations to support domain workflows.",
-                  "storeIds": [
-                    "terminal-and-reader-operations-db"
-                  ]
+                  "description": "Reads Terminal And Reader Operations to support domain workflows."
                 }
               ]
             }
@@ -1472,25 +2105,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Outbound event delivery and integration hooks for payment, billing, and platform workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Event dispatch engine",
-                  "description": "Publishes reliable workflow events to customer systems.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-webhook-configuration-ui",
+                      "name": "Webhook configuration UI",
+                      "type": "web-component",
+                      "description": "Developer workflow for event subscriptions and endpoint management.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-event-dispatch-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Webhook configuration UI",
-                  "description": "Developer workflow for event subscriptions and endpoint management.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-event-dispatch-engine",
+                      "name": "Event dispatch engine",
+                      "type": "service",
+                      "description": "Publishes reliable workflow events to customer systems."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "devx",
+                  "moduleId": "module-developer-platform-control-plane",
+                  "sourceModuleId": "module-event-dispatch-engine",
                   "type": "context",
-                  "interface": "Developer identity and API controls",
                   "description": "Uses shared developer authentication and environment controls."
                 }
               ],
@@ -1499,35 +2154,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-event-dispatch-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-event-dispatch-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-event-dispatch-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-elements",
+                  "moduleIds": [
+                    "module-event-dispatch-engine"
+                  ],
                   "role": "query",
-                  "description": "Queries Payment Elements to support search, analytics, or decision flows.",
-                  "storeIds": [
-                    "payment-elements-stream"
-                  ]
+                  "description": "Queries Payment Elements to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -1537,18 +2192,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Shared API credentials, dashboard foundations, environment controls, and operator experience.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Developer platform control plane",
-                  "description": "Manages keys, environments, permissions, and common dashboard behaviors.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-dashboard-shell-and-developer-ui",
+                      "name": "Dashboard shell and developer UI",
+                      "type": "web-component",
+                      "description": "Shared developer and operator workspace foundation.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-developer-platform-control-plane",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Dashboard shell and developer UI",
-                  "description": "Shared developer and operator workspace foundation.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-developer-platform-control-plane",
+                      "name": "Developer platform control plane",
+                      "type": "service",
+                      "description": "Manages keys, environments, permissions, and common dashboard behaviors."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1557,35 +2233,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-developer-platform-control-plane"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-developer-platform-control-plane"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-developer-platform-control-plane"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-developer-platform-control-plane"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             }

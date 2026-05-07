@@ -30,7 +30,7 @@
         }
       ]
     },
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -52,7 +52,7 @@
         "color": "#c9daf8ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -68,7 +68,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -86,23 +218,50 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Captures receipt images and extracts merchant, amount, date, currency, and tax data into structured expense records.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Receipt ingestion service",
-                  "description": "Stores receipt images and manages upload flows.",
-                  "type": "service"
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-receipt-scan-ui",
+                      "name": "Receipt scan UI",
+                      "type": "web-component",
+                      "description": "Mobile and web capture flow for receipt submission.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-receipt-ingestion-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          },
+                          {
+                            "moduleId": "module-extraction-and-normalization-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
                 },
                 {
-                  "title": "Extraction and normalization engine",
-                  "description": "Extracts key fields and normalizes merchant and currency data.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
-                {
-                  "title": "Receipt scan UI",
-                  "description": "Mobile and web capture flow for receipt submission.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-receipt-ingestion-service",
+                      "name": "Receipt ingestion service",
+                      "type": "service",
+                      "description": "Stores receipt images and manages upload flows."
+                    },
+                    {
+                      "id": "module-extraction-and-normalization-engine",
+                      "name": "Extraction and normalization engine",
+                      "type": "service",
+                      "description": "Extracts key fields and normalizes merchant and currency data."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -111,35 +270,39 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-receipt-ingestion-service",
+                    "module-extraction-and-normalization-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-receipt-ingestion-service",
+                    "module-extraction-and-normalization-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-receipt-ingestion-service",
+                    "module-extraction-and-normalization-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "receipt-capture-and-ocr",
+                  "moduleIds": [
+                    "module-receipt-ingestion-service",
+                    "module-extraction-and-normalization-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Receipt Capture And Ocr.",
-                  "storeIds": [
-                    "receipt-capture-and-ocr-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Receipt Capture And Ocr."
                 }
               ]
             },
@@ -149,25 +312,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Mobile-first workflows for creating, editing, approving, and tracking expenses and trips.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Mobile submission flow",
-                  "description": "Coordinates mobile capture, draft saving, and claim submission.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-mobile-app-surfaces",
+                      "name": "Mobile app surfaces",
+                      "type": "mobile-component",
+                      "description": "Employee and manager mobile workflow surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-mobile-submission-flow",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Mobile app surfaces",
-                  "description": "Employee and manager mobile workflow surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-mobile-submission-flow",
+                      "name": "Mobile submission flow",
+                      "type": "service",
+                      "description": "Coordinates mobile capture, draft saving, and claim submission."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rcpt",
+                  "moduleId": "module-extraction-and-normalization-engine",
+                  "sourceModuleId": "module-mobile-submission-flow",
                   "type": "composition",
-                  "interface": "Receipt extraction service",
                   "description": "Uses extracted receipt fields inside mobile submission."
                 }
               ],
@@ -176,35 +361,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-mobile-submission-flow"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-mobile-submission-flow"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-mobile-submission-flow"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "approval-workflow-orchestration",
+                  "moduleIds": [
+                    "module-mobile-submission-flow"
+                  ],
                   "role": "read",
-                  "description": "Reads Approval Workflow Orchestration to support domain workflows.",
-                  "storeIds": [
-                    "approval-workflow-orchestration-db"
-                  ]
+                  "description": "Reads Approval Workflow Orchestration to support domain workflows."
                 }
               ]
             },
@@ -214,25 +399,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Builds compliant expense lines and reports with configurable fields, report structure, and validations.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Report composition service",
-                  "description": "Manages claim drafts, expense lines, and report assembly.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-expense-form-ui",
+                      "name": "Expense form UI",
+                      "type": "web-component",
+                      "description": "Web and mobile interface for editing claims and reports.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-report-composition-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Expense form UI",
-                  "description": "Web and mobile interface for editing claims and reports.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-report-composition-service",
+                      "name": "Report composition service",
+                      "type": "service",
+                      "description": "Manages claim drafts, expense lines, and report assembly."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cate",
+                  "moduleId": "module-coding-suggestion-api",
+                  "sourceModuleId": "module-report-composition-service",
                   "type": "context",
-                  "interface": "Category suggestion API",
                   "description": "Uses category and coding suggestions during report creation."
                 }
               ],
@@ -241,27 +448,27 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-report-composition-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-report-composition-service"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-report-composition-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -271,25 +478,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Calculates compliant mileage and per diem claims using country and policy-aware rules.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Rate rules engine",
-                  "description": "Computes mileage and allowance values by policy and geography.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-mileage-and-allowance-api",
+                      "name": "Mileage and allowance API",
+                      "type": "api",
+                      "description": "Returns computed trip allowances and reimbursable values.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-rate-rules-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Mileage and allowance API",
-                  "description": "Returns computed trip allowances and reimbursable values.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-rate-rules-engine",
+                      "name": "Rate rules engine",
+                      "type": "service",
+                      "description": "Computes mileage and allowance values by policy and geography."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "poli",
+                  "moduleId": "module-policy-configuration-model",
+                  "sourceModuleId": "module-rate-rules-engine",
                   "type": "context",
-                  "interface": "Policy rules",
                   "description": "Uses travel policy parameters and thresholds."
                 }
               ],
@@ -298,27 +527,27 @@
               "dataDependencies": [
                 {
                   "assetId": "mileage-and-per-diem",
+                  "moduleIds": [
+                    "module-rate-rules-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Mileage And Per Diem.",
-                  "storeIds": [
-                    "mileage-and-per-diem-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Mileage And Per Diem."
                 },
                 {
                   "assetId": "policy-rules",
+                  "moduleIds": [
+                    "module-rate-rules-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Policy Rules to support domain workflows.",
-                  "storeIds": [
-                    "policy-rules-db"
-                  ]
+                  "description": "Reads Policy Rules to support domain workflows."
                 },
                 {
                   "assetId": "trip-policy-guardrails",
+                  "moduleIds": [
+                    "module-rate-rules-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Trip Policy Guardrails to support domain workflows.",
-                  "storeIds": [
-                    "trip-policy-guardrails-db"
-                  ]
+                  "description": "Reads Trip Policy Guardrails to support domain workflows."
                 }
               ]
             },
@@ -328,18 +557,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Maps spend records into categories, tax treatment, and accounting dimensions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Classification model",
-                  "description": "Assigns spend category, tax hints, and accounting dimensions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-coding-suggestion-api",
+                      "name": "Coding suggestion API",
+                      "type": "api",
+                      "description": "Provides category and tax-coding recommendations to other flows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-classification-model",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Coding suggestion API",
-                  "description": "Provides category and tax-coding recommendations to other flows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-classification-model",
+                      "name": "Classification model",
+                      "type": "service",
+                      "description": "Assigns spend category, tax hints, and accounting dimensions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -348,35 +598,35 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-classification-model"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-classification-model"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-classification-model"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 },
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-classification-model"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 }
               ]
             }
@@ -400,23 +650,50 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Applies configurable spend and trip policy by entity, team, traveler, merchant, amount, and route.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Policy configuration model",
-                  "description": "Stores policy rules, thresholds, and exceptions.",
-                  "type": "service"
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-policy-admin-ui",
+                      "name": "Policy admin UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for configuring policy by entity and team.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-policy-configuration-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          },
+                          {
+                            "moduleId": "module-real-time-policy-evaluator",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
                 },
                 {
-                  "title": "Real-time policy evaluator",
-                  "description": "Computes policy outcomes during submission, booking, and review.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
-                {
-                  "title": "Policy admin UI",
-                  "description": "Operator workflow for configuring policy by entity and team.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-policy-configuration-model",
+                      "name": "Policy configuration model",
+                      "type": "service",
+                      "description": "Stores policy rules, thresholds, and exceptions."
+                    },
+                    {
+                      "id": "module-real-time-policy-evaluator",
+                      "name": "Real-time policy evaluator",
+                      "type": "service",
+                      "description": "Computes policy outcomes during submission, booking, and review."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -425,27 +702,30 @@
               "dataDependencies": [
                 {
                   "assetId": "policy-rules",
+                  "moduleIds": [
+                    "module-policy-configuration-model",
+                    "module-real-time-policy-evaluator"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Policy Rules.",
-                  "storeIds": [
-                    "policy-rules-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Policy Rules."
                 },
                 {
                   "assetId": "trip-policy-guardrails",
+                  "moduleIds": [
+                    "module-policy-configuration-model",
+                    "module-real-time-policy-evaluator"
+                  ],
                   "role": "read",
-                  "description": "Reads Trip Policy Guardrails to support domain workflows.",
-                  "storeIds": [
-                    "trip-policy-guardrails-db"
-                  ]
+                  "description": "Reads Trip Policy Guardrails to support domain workflows."
                 },
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-policy-configuration-model",
+                    "module-real-time-policy-evaluator"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 }
               ]
             },
@@ -455,31 +735,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Prioritizes finance and manager attention by scoring expense, trip, and card events for duplicate, policy, and fraud risk.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Audit scoring engine",
-                  "description": "Assigns risk and audit priority to submitted spend items.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-audit-review-workspace",
+                      "name": "Audit review workspace",
+                      "type": "web-component",
+                      "description": "Finance-facing workspace for reviewing flagged claims.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-audit-scoring-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Audit review workspace",
-                  "description": "Finance-facing workspace for reviewing flagged claims.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-audit-scoring-engine",
+                      "name": "Audit scoring engine",
+                      "type": "service",
+                      "description": "Assigns risk and audit priority to submitted spend items."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "poli",
+                  "moduleId": "module-real-time-policy-evaluator",
+                  "sourceModuleId": "module-audit-scoring-engine",
                   "type": "context",
-                  "interface": "Policy outcomes feed",
                   "description": "Uses policy outcomes as core risk signals."
                 },
                 {
                   "targetBrickId": "docv",
+                  "moduleId": "module-evidence-store",
+                  "sourceModuleId": "module-audit-scoring-engine",
                   "type": "context",
-                  "interface": "Evidence store",
                   "description": "Links risk decisions to stored receipt and approval evidence."
                 }
               ],
@@ -488,35 +791,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-audit-scoring-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-audit-scoring-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-audit-scoring-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "smart-audit-and-risk-scoring",
+                  "moduleIds": [
+                    "module-audit-scoring-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Smart Audit And Risk Scoring.",
-                  "storeIds": [
-                    "smart-audit-and-risk-scoring-stream"
-                  ]
+                  "description": "Acts as the primary owning brick for Smart Audit And Risk Scoring."
                 }
               ]
             },
@@ -526,25 +829,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Routes spend and trip approvals by manager, budget owner, entity, policy severity, and trip type.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Routing and escalation engine",
-                  "description": "Determines the right approver chain and escalations.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-approval-inbox",
+                      "name": "Approval inbox",
+                      "type": "mobile-component",
+                      "description": "Manager and approver interface for reviewing and deciding on claims.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-routing-and-escalation-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Approval inbox",
-                  "description": "Manager and approver interface for reviewing and deciding on claims.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-routing-and-escalation-engine",
+                      "name": "Routing and escalation engine",
+                      "type": "service",
+                      "description": "Determines the right approver chain and escalations."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "poli",
+                  "moduleId": "module-policy-configuration-model",
+                  "sourceModuleId": "module-routing-and-escalation-engine",
                   "type": "context",
-                  "interface": "Policy status feed",
                   "description": "Uses policy status to decide approval depth."
                 }
               ],
@@ -553,27 +878,27 @@
               "dataDependencies": [
                 {
                   "assetId": "approval-workflow-orchestration",
+                  "moduleIds": [
+                    "module-routing-and-escalation-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Approval Workflow Orchestration.",
-                  "storeIds": [
-                    "approval-workflow-orchestration-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Approval Workflow Orchestration."
                 },
                 {
                   "assetId": "trip-policy-guardrails",
+                  "moduleIds": [
+                    "module-routing-and-escalation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Trip Policy Guardrails to support domain workflows.",
-                  "storeIds": [
-                    "trip-policy-guardrails-db"
-                  ]
+                  "description": "Reads Trip Policy Guardrails to support domain workflows."
                 },
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-routing-and-escalation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 }
               ]
             },
@@ -583,18 +908,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Checks spend and trip activity against budgets, cost centers, projects, and approval thresholds.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Budget control service",
-                  "description": "Evaluates budget availability and owner context.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-budget-check-api",
+                      "name": "Budget check API",
+                      "type": "api",
+                      "description": "Returns budget and ownership validation outcomes.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-budget-control-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Budget check API",
-                  "description": "Returns budget and ownership validation outcomes.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-budget-control-service",
+                      "name": "Budget control service",
+                      "type": "service",
+                      "description": "Evaluates budget availability and owner context."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -603,26 +949,27 @@
                   "system": "ERP and project accounting systems",
                   "type": "back-office",
                   "interface": "Budget data sync",
-                  "description": "Consumes cost-center, project, and budget reference data."
+                  "description": "Consumes cost-center, project, and budget reference data.",
+                  "sourceModuleId": "module-budget-control-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-budget-control-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 },
                 {
                   "assetId": "approval-workflow-orchestration",
+                  "moduleIds": [
+                    "module-budget-control-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Approval Workflow Orchestration to support domain workflows.",
-                  "storeIds": [
-                    "approval-workflow-orchestration-db"
-                  ]
+                  "description": "Reads Approval Workflow Orchestration to support domain workflows."
                 }
               ]
             },
@@ -632,18 +979,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Controls user identity, approver rights, entity scope, and policy visibility across the platform.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Role and scope service",
-                  "description": "Manages user, manager, finance, and admin access scopes.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-access-control-api",
+                      "name": "Access control API",
+                      "type": "api",
+                      "description": "Returns permission and visibility decisions for user actions.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-role-and-scope-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Access control API",
-                  "description": "Returns permission and visibility decisions for user actions.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-role-and-scope-service",
+                      "name": "Role and scope service",
+                      "type": "service",
+                      "description": "Manages user, manager, finance, and admin access scopes."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -652,42 +1020,43 @@
                   "system": "Identity providers",
                   "type": "identity",
                   "interface": "SSO and SCIM",
-                  "description": "Consumes user identity and provisioning data."
+                  "description": "Consumes user identity and provisioning data.",
+                  "sourceModuleId": "module-role-and-scope-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-role-and-scope-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-role-and-scope-service"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-role-and-scope-service"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-role-and-scope-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             }
@@ -711,25 +1080,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Aggregates booking requests, itinerary data, and travel context into a unified trip workflow.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Trip orchestration service",
-                  "description": "Stores trip records and links itineraries to travelers and teams.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-trip-workspace",
+                      "name": "Trip workspace",
+                      "type": "web-component",
+                      "description": "Operator and employee interface for viewing trip context and connected spend.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-trip-orchestration-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Trip workspace",
-                  "description": "Operator and employee interface for viewing trip context and connected spend.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-trip-orchestration-service",
+                      "name": "Trip orchestration service",
+                      "type": "service",
+                      "description": "Stores trip records and links itineraries to travelers and teams."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "tatt",
+                  "moduleId": "module-travel-connector-framework",
+                  "sourceModuleId": "module-trip-orchestration-service",
                   "type": "composition",
-                  "interface": "Booking feed connectors",
                   "description": "Uses booking and itinerary feed ingestion."
                 }
               ],
@@ -738,27 +1129,27 @@
               "dataDependencies": [
                 {
                   "assetId": "travel-booking",
+                  "moduleIds": [
+                    "module-trip-orchestration-service"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Travel Booking.",
-                  "storeIds": [
-                    "travel-booking-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Travel Booking."
                 },
                 {
                   "assetId": "approval-workflow-orchestration",
+                  "moduleIds": [
+                    "module-trip-orchestration-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Approval Workflow Orchestration to support domain workflows.",
-                  "storeIds": [
-                    "approval-workflow-orchestration-db"
-                  ]
+                  "description": "Reads Approval Workflow Orchestration to support domain workflows."
                 },
                 {
                   "assetId": "trip-policy-guardrails",
+                  "moduleIds": [
+                    "module-trip-orchestration-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Trip Policy Guardrails to support domain workflows.",
-                  "storeIds": [
-                    "trip-policy-guardrails-db"
-                  ]
+                  "description": "Reads Trip Policy Guardrails to support domain workflows."
                 }
               ]
             },
@@ -768,31 +1159,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Evaluates trip booking choices and travel expense patterns against route, rate, class, and timing policy.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Trip policy evaluator",
-                  "description": "Applies travel-specific rules to planned and completed trips.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-trip-policy-review-ui",
+                      "name": "Trip policy review UI",
+                      "type": "web-component",
+                      "description": "Shows policy outcomes and override needs for travel workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-trip-policy-evaluator",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Trip policy review UI",
-                  "description": "Shows policy outcomes and override needs for travel workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-trip-policy-evaluator",
+                      "name": "Trip policy evaluator",
+                      "type": "service",
+                      "description": "Applies travel-specific rules to planned and completed trips."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "poli",
+                  "moduleId": "module-policy-configuration-model",
+                  "sourceModuleId": "module-trip-policy-evaluator",
                   "type": "composition",
-                  "interface": "Shared policy rules",
                   "description": "Builds travel-specific logic on top of shared policy foundations."
                 },
                 {
                   "targetBrickId": "trav",
+                  "moduleId": "module-trip-orchestration-service",
+                  "sourceModuleId": "module-trip-policy-evaluator",
                   "type": "context",
-                  "interface": "Trip data model",
                   "description": "Uses trip and itinerary context during rule evaluation."
                 }
               ],
@@ -801,35 +1215,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-trip-policy-evaluator"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-trip-policy-evaluator"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-trip-policy-evaluator"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "trip-policy-guardrails",
+                  "moduleIds": [
+                    "module-trip-policy-evaluator"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Trip Policy Guardrails.",
-                  "storeIds": [
-                    "trip-policy-guardrails-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Trip Policy Guardrails."
                 }
               ]
             },
@@ -839,18 +1253,39 @@
               "type": "integration",
               "status": "invest",
               "description": "Imports booking, itinerary, ticket, hotel, and trip-status data from travel management companies and booking providers.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Travel connector framework",
-                  "description": "Normalizes travel provider payloads into shared trip events.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-travel-provider-sync-apis",
+                      "name": "Travel provider sync APIs",
+                      "type": "api",
+                      "description": "Provider-specific integration surfaces for booking data ingestion.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-travel-connector-framework",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Travel provider sync APIs",
-                  "description": "Provider-specific integration surfaces for booking data ingestion.",
-                  "type": "api"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-travel-connector-framework",
+                      "name": "Travel connector framework",
+                      "type": "integration",
+                      "description": "Normalizes travel provider payloads into shared trip events."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -859,26 +1294,27 @@
                   "system": "TMC and booking platforms",
                   "type": "partner",
                   "interface": "Booking and itinerary APIs",
-                  "description": "Consumes trip and itinerary data from partner travel systems."
+                  "description": "Consumes trip and itinerary data from partner travel systems.",
+                  "sourceModuleId": "module-travel-connector-framework"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "travel-booking",
+                  "moduleIds": [
+                    "module-travel-provider-sync-apis"
+                  ],
                   "role": "read",
-                  "description": "Reads Travel Booking to support domain workflows.",
-                  "storeIds": [
-                    "travel-booking-db"
-                  ]
+                  "description": "Reads Travel Booking to support domain workflows."
                 },
                 {
                   "assetId": "trip-policy-guardrails",
+                  "moduleIds": [
+                    "module-travel-provider-sync-apis"
+                  ],
                   "role": "read",
-                  "description": "Reads Trip Policy Guardrails to support domain workflows.",
-                  "storeIds": [
-                    "trip-policy-guardrails-db"
-                  ]
+                  "description": "Reads Trip Policy Guardrails to support domain workflows."
                 }
               ]
             },
@@ -888,25 +1324,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Supports traveler visibility, disruption awareness, and trip-related support escalation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Trip status and alert service",
-                  "description": "Tracks trip status changes and support-relevant alerts.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-trip-support-console",
+                      "name": "Trip support console",
+                      "type": "web-component",
+                      "description": "Operations interface for travel exception and disruption handling.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-trip-status-and-alert-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Trip support console",
-                  "description": "Operations interface for travel exception and disruption handling.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-trip-status-and-alert-service",
+                      "name": "Trip status and alert service",
+                      "type": "service",
+                      "description": "Tracks trip status changes and support-relevant alerts."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "trav",
+                  "moduleId": "module-trip-orchestration-service",
+                  "sourceModuleId": "module-trip-status-and-alert-service",
                   "type": "context",
-                  "interface": "Trip record model",
                   "description": "Uses trip records and itinerary context."
                 }
               ],
@@ -915,42 +1373,43 @@
                   "system": "Travel alert providers",
                   "type": "partner",
                   "interface": "Alert feeds",
-                  "description": "Consumes schedule and disruption signals."
+                  "description": "Consumes schedule and disruption signals.",
+                  "sourceModuleId": "module-trip-status-and-alert-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-trip-status-and-alert-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-trip-status-and-alert-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "travel-booking",
+                  "moduleIds": [
+                    "module-trip-status-and-alert-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Travel Booking to support domain workflows.",
-                  "storeIds": [
-                    "travel-booking-db"
-                  ]
+                  "description": "Reads Travel Booking to support domain workflows."
                 },
                 {
                   "assetId": "trip-policy-guardrails",
+                  "moduleIds": [
+                    "module-trip-status-and-alert-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Trip Policy Guardrails to support domain workflows.",
-                  "storeIds": [
-                    "trip-policy-guardrails-db"
-                  ]
+                  "description": "Reads Trip Policy Guardrails to support domain workflows."
                 }
               ]
             }
@@ -967,25 +1426,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Supports company card issuance, cardholder controls, and spend instrumentation for employee purchases.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Card program service",
-                  "description": "Maintains cardholder status, controls, and card program metadata.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-card-admin-ui",
+                      "name": "Card admin UI",
+                      "type": "web-component",
+                      "description": "Operator workflow for issuing and managing spend cards.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-card-program-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Card admin UI",
-                  "description": "Operator workflow for issuing and managing spend cards.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-card-program-service",
+                      "name": "Card program service",
+                      "type": "service",
+                      "description": "Maintains cardholder status, controls, and card program metadata."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-access-control-api",
+                  "sourceModuleId": "module-card-program-service",
                   "type": "context",
-                  "interface": "Role and entity controls",
                   "description": "Uses identity and entity scope for cardholder management."
                 }
               ],
@@ -994,34 +1475,35 @@
                   "system": "Card issuing and banking partners",
                   "type": "financial-partner",
                   "interface": "Card program APIs",
-                  "description": "Relies on external financial partners for physical or virtual card rails."
+                  "description": "Relies on external financial partners for physical or virtual card rails.",
+                  "sourceModuleId": "module-card-program-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-card-program-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-card-program-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-card-program-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 }
               ]
             },
@@ -1031,31 +1513,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Matches card events to receipts, trip records, and expense lines while highlighting unresolved exceptions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Transaction matching engine",
-                  "description": "Correlates card transactions with expense and receipt evidence.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-card-exception-workspace",
+                      "name": "Card exception workspace",
+                      "type": "web-component",
+                      "description": "Finance interface for reviewing unmatched or disputed card transactions.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-transaction-matching-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Card exception workspace",
-                  "description": "Finance interface for reviewing unmatched or disputed card transactions.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-transaction-matching-engine",
+                      "name": "Transaction matching engine",
+                      "type": "service",
+                      "description": "Correlates card transactions with expense and receipt evidence."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rcpt",
+                  "moduleId": "module-receipt-ingestion-service",
+                  "sourceModuleId": "module-transaction-matching-engine",
                   "type": "context",
-                  "interface": "Receipt evidence service",
                   "description": "Uses captured receipt data in matching decisions."
                 },
                 {
                   "targetBrickId": "expf",
+                  "moduleId": "module-report-composition-service",
+                  "sourceModuleId": "module-transaction-matching-engine",
                   "type": "context",
-                  "interface": "Expense line model",
                   "description": "Matches card events to submitted or draft expense lines."
                 }
               ],
@@ -1064,42 +1569,43 @@
                   "system": "Card networks and card feed providers",
                   "type": "financial-partner",
                   "interface": "Transaction feeds",
-                  "description": "Consumes posted and pending transaction data."
+                  "description": "Consumes posted and pending transaction data.",
+                  "sourceModuleId": "module-transaction-matching-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-transaction-matching-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-transaction-matching-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-transaction-matching-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "receipt-capture-and-ocr",
+                  "moduleIds": [
+                    "module-transaction-matching-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Receipt Capture And Ocr to support domain workflows.",
-                  "storeIds": [
-                    "receipt-capture-and-ocr-db"
-                  ]
+                  "description": "Reads Receipt Capture And Ocr to support domain workflows."
                 }
               ]
             },
@@ -1109,25 +1615,47 @@
               "type": "service",
               "status": "invest",
               "description": "Manages spend limits, merchant restrictions, cardholder controls, and temporary overrides.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Control policy service",
-                  "description": "Stores and evaluates card-level control settings.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-card-control-api",
+                      "name": "Card control API",
+                      "type": "api",
+                      "description": "Exposes spend-control configurations to card program workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-control-policy-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Card control API",
-                  "description": "Exposes spend-control configurations to card program workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-control-policy-service",
+                      "name": "Control policy service",
+                      "type": "service",
+                      "description": "Stores and evaluates card-level control settings."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "budg",
+                  "moduleId": "module-budget-check-api",
+                  "sourceModuleId": "module-control-policy-service",
                   "type": "context",
-                  "interface": "Budget controls",
                   "description": "Uses budget ownership and limits when setting card rules."
                 }
               ],
@@ -1136,18 +1664,19 @@
                   "system": "Card issuing partners",
                   "type": "financial-partner",
                   "interface": "Authorization control APIs",
-                  "description": "Pushes card controls to issuing partners where supported."
+                  "description": "Pushes card controls to issuing partners where supported.",
+                  "sourceModuleId": "module-control-policy-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-control-policy-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 }
               ]
             }
@@ -1171,25 +1700,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Turns approved out-of-pocket claims into payable reimbursement instructions and status tracking.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Reimbursement state service",
-                  "description": "Tracks payable status, batches, and employee payout visibility.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-reimbursement-status-ui",
+                      "name": "Reimbursement status UI",
+                      "type": "web-component",
+                      "description": "Employee and finance status tracking for reimbursements.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-reimbursement-state-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Reimbursement status UI",
-                  "description": "Employee and finance status tracking for reimbursements.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-reimbursement-state-service",
+                      "name": "Reimbursement state service",
+                      "type": "service",
+                      "description": "Tracks payable status, batches, and employee payout visibility."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "aprv",
+                  "moduleId": "module-routing-and-escalation-engine",
+                  "sourceModuleId": "module-reimbursement-state-service",
                   "type": "context",
-                  "interface": "Approved claim state",
                   "description": "Uses approved claims as reimbursement inputs."
                 }
               ],
@@ -1198,18 +1749,19 @@
                   "system": "Payroll and payout systems",
                   "type": "back-office",
                   "interface": "Payout export",
-                  "description": "Exports reimbursement instructions to employee payment systems."
+                  "description": "Exports reimbursement instructions to employee payment systems.",
+                  "sourceModuleId": "module-reimbursement-state-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "approval-workflow-orchestration",
+                  "moduleIds": [
+                    "module-reimbursement-state-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Approval Workflow Orchestration to support domain workflows.",
-                  "storeIds": [
-                    "approval-workflow-orchestration-db"
-                  ]
+                  "description": "Reads Approval Workflow Orchestration to support domain workflows."
                 }
               ]
             },
@@ -1219,25 +1771,47 @@
               "type": "integration",
               "status": "invest",
               "description": "Exports approved, coded spend into ERP, accounting, and finance systems with entity-aware mappings.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Accounting mapping framework",
-                  "description": "Maps spend records to ledger dimensions and export formats.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-accounting-export-api",
+                      "name": "Accounting export API",
+                      "type": "api",
+                      "description": "Produces accounting-ready payloads and export files.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-accounting-mapping-framework",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Accounting export API",
-                  "description": "Produces accounting-ready payloads and export files.",
-                  "type": "api"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-accounting-mapping-framework",
+                      "name": "Accounting mapping framework",
+                      "type": "integration",
+                      "description": "Maps spend records to ledger dimensions and export formats."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cate",
+                  "moduleId": "module-coding-suggestion-api",
+                  "sourceModuleId": "module-accounting-export-api",
                   "type": "context",
-                  "interface": "Coding model",
                   "description": "Uses category and tax coding to create correct accounting outputs."
                 }
               ],
@@ -1246,42 +1820,43 @@
                   "system": "ERP and accounting platforms",
                   "type": "back-office",
                   "interface": "ERP connectors",
-                  "description": "Pushes approved spend into finance systems."
+                  "description": "Pushes approved spend into finance systems.",
+                  "sourceModuleId": "module-accounting-mapping-framework"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-accounting-export-api"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-accounting-export-api"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-accounting-export-api"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 },
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-accounting-export-api"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 }
               ]
             },
@@ -1291,25 +1866,47 @@
               "type": "service",
               "status": "invest",
               "description": "Supports tax extraction, tax code validation, and recovery-friendly outputs for finance teams.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Tax treatment service",
-                  "description": "Evaluates tax-relevant fields and recovery attributes for expenses.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-tax-export-api",
+                      "name": "Tax export API",
+                      "type": "api",
+                      "description": "Returns tax fields and recovery-related outputs.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-tax-treatment-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Tax export API",
-                  "description": "Returns tax fields and recovery-related outputs.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-tax-treatment-service",
+                      "name": "Tax treatment service",
+                      "type": "service",
+                      "description": "Evaluates tax-relevant fields and recovery attributes for expenses."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cate",
+                  "moduleId": "module-coding-suggestion-api",
+                  "sourceModuleId": "module-tax-treatment-service",
                   "type": "context",
-                  "interface": "Tax coding model",
                   "description": "Uses normalized tax coding and spend classification."
                 }
               ],
@@ -1318,42 +1915,43 @@
                   "system": "Tax engines and advisory systems",
                   "type": "tax-system",
                   "interface": "Tax reference data",
-                  "description": "Consumes tax reference rules and validation data where needed."
+                  "description": "Consumes tax reference rules and validation data where needed.",
+                  "sourceModuleId": "module-tax-treatment-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-tax-treatment-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Customer Contact Point to support domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Reads Customer Contact Point to support domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-tax-treatment-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-tax-treatment-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-tax-treatment-service"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 }
               ]
             },
@@ -1363,18 +1961,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Stores receipt evidence, approval history, policy outcomes, and export lineage for audit and investigation workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Evidence store",
-                  "description": "Persists policy, approval, and receipt evidence with retention controls.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-audit-record-api",
+                      "name": "Audit record API",
+                      "type": "api",
+                      "description": "Retrieves full spend evidence trails for audits and support cases.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-evidence-store",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Audit record API",
-                  "description": "Retrieves full spend evidence trails for audits and support cases.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-evidence-store",
+                      "name": "Evidence store",
+                      "type": "service",
+                      "description": "Persists policy, approval, and receipt evidence with retention controls."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1383,19 +2002,19 @@
               "dataDependencies": [
                 {
                   "assetId": "approval-workflow-orchestration",
+                  "moduleIds": [
+                    "module-evidence-store"
+                  ],
                   "role": "read",
-                  "description": "Reads Approval Workflow Orchestration to support domain workflows.",
-                  "storeIds": [
-                    "approval-workflow-orchestration-db"
-                  ]
+                  "description": "Reads Approval Workflow Orchestration to support domain workflows."
                 },
                 {
                   "assetId": "receipt-capture-and-ocr",
+                  "moduleIds": [
+                    "module-evidence-store"
+                  ],
                   "role": "read",
-                  "description": "Reads Receipt Capture And Ocr to support domain workflows.",
-                  "storeIds": [
-                    "receipt-capture-and-ocr-db"
-                  ]
+                  "description": "Reads Receipt Capture And Ocr to support domain workflows."
                 }
               ]
             }
@@ -1412,25 +2031,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Provides spend, policy, travel, supplier, and process analytics for finance and travel leaders.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Analytics model",
-                  "description": "Aggregates spend, workflow, and control metrics across the platform.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-analytics-dashboards",
+                      "name": "Analytics dashboards",
+                      "type": "web-component",
+                      "description": "Dashboards for spend, travel, and policy insight.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-analytics-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Analytics dashboards",
-                  "description": "Dashboards for spend, travel, and policy insight.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-analytics-model",
+                      "name": "Analytics model",
+                      "type": "service",
+                      "description": "Aggregates spend, workflow, and control metrics across the platform."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "inte",
+                  "moduleId": "module-connector-runtime",
+                  "sourceModuleId": "module-analytics-model",
                   "type": "context",
-                  "interface": "Unified domain data",
                   "description": "Uses normalized data from domain integrations and events."
                 }
               ],
@@ -1439,19 +2080,19 @@
               "dataDependencies": [
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-analytics-model"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 },
                 {
                   "assetId": "policy-rules",
+                  "moduleIds": [
+                    "module-analytics-model"
+                  ],
                   "role": "read",
-                  "description": "Reads Policy Rules to support domain workflows.",
-                  "storeIds": [
-                    "policy-rules-db"
-                  ]
+                  "description": "Reads Policy Rules to support domain workflows."
                 }
               ]
             },
@@ -1461,25 +2102,47 @@
               "type": "service",
               "status": "invest",
               "description": "Detects unusual spend patterns, policy leakage, and merchant or traveler outliers.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Leakage detection service",
-                  "description": "Scores unusual spend behavior and recurring leakage patterns.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "bus",
+                  "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-leakage-signal-feed",
+                      "name": "Leakage signal feed",
+                      "type": "message-consumer",
+                      "description": "Produces risk and opportunity signals for analytics and audit workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-leakage-detection-service",
+                            "type": "processes",
+                            "description": "Asynchronous module invokes the backing service logic for event processing."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Leakage signal feed",
-                  "description": "Produces risk and opportunity signals for analytics and audit workflows.",
-                  "type": "event"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-leakage-detection-service",
+                      "name": "Leakage detection service",
+                      "type": "service",
+                      "description": "Scores unusual spend behavior and recurring leakage patterns."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-analytics-model",
+                  "sourceModuleId": "module-leakage-detection-service",
                   "type": "context",
-                  "interface": "Analytics dataset",
                   "description": "Uses aggregated spend and workflow history."
                 }
               ],
@@ -1488,19 +2151,19 @@
               "dataDependencies": [
                 {
                   "assetId": "spend-categorization-and-tax-coding",
+                  "moduleIds": [
+                    "module-leakage-detection-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows.",
-                  "storeIds": [
-                    "spend-categorization-and-tax-coding-db"
-                  ]
+                  "description": "Reads Spend Categorization And Tax Coding to support domain workflows."
                 },
                 {
                   "assetId": "policy-rules",
+                  "moduleIds": [
+                    "module-leakage-detection-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Policy Rules to support domain workflows.",
-                  "storeIds": [
-                    "policy-rules-db"
-                  ]
+                  "description": "Reads Policy Rules to support domain workflows."
                 }
               ]
             },
@@ -1510,18 +2173,39 @@
               "type": "integration",
               "status": "sustaining",
               "description": "Normalizes data movement across HR, ERP, identity, travel, card, and accounting systems.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Connector runtime",
-                  "description": "Runs inbound and outbound integrations with validation and mapping.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-integration-admin-ui",
+                      "name": "Integration admin UI",
+                      "type": "web-component",
+                      "description": "Configuration workspace for external system connectivity.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-connector-runtime",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Integration admin UI",
-                  "description": "Configuration workspace for external system connectivity.",
-                  "type": "ui"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-connector-runtime",
+                      "name": "Connector runtime",
+                      "type": "integration",
+                      "description": "Runs inbound and outbound integrations with validation and mapping."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1530,42 +2214,43 @@
                   "system": "ERP, HRIS, SSO, travel, and accounting systems",
                   "type": "partner",
                   "interface": "Partner APIs and file feeds",
-                  "description": "Consumes and publishes data to connected enterprise systems."
+                  "description": "Consumes and publishes data to connected enterprise systems.",
+                  "sourceModuleId": "module-connector-runtime"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-connector-runtime"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-connector-runtime"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-connector-runtime"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-connector-runtime"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -1575,25 +2260,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Captures supplier invoices and routes them into adjacent AP workflows for finance teams extending beyond employee spend.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Invoice ingestion service",
-                  "description": "Stores and structures inbound supplier invoices.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-invoice-intake-ui",
+                      "name": "Invoice intake UI",
+                      "type": "web-component",
+                      "description": "Finance workflow for capturing and classifying supplier invoices.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-invoice-ingestion-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Invoice intake UI",
-                  "description": "Finance workflow for capturing and classifying supplier invoices.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-invoice-ingestion-service",
+                      "name": "Invoice ingestion service",
+                      "type": "service",
+                      "description": "Stores and structures inbound supplier invoices."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "acct",
+                  "moduleId": "module-accounting-export-api",
+                  "sourceModuleId": "module-invoice-ingestion-service",
                   "type": "context",
-                  "interface": "Accounting mappings",
                   "description": "Uses finance mappings for AP-ready exports."
                 }
               ],
@@ -1602,35 +2309,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-invoice-ingestion-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-invoice-ingestion-service"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-invoice-ingestion-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "receipt-capture-and-ocr",
+                  "moduleIds": [
+                    "module-invoice-ingestion-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Receipt Capture And Ocr to support domain workflows.",
-                  "storeIds": [
-                    "receipt-capture-and-ocr-db"
-                  ]
+                  "description": "Reads Receipt Capture And Ocr to support domain workflows."
                 }
               ]
             },
@@ -1640,25 +2347,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Routes supplier invoices through finance approvals and coding workflows as an adjacent AP capability.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "AP workflow engine",
-                  "description": "Controls invoice approval and exception handling.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-ap-approval-workspace",
+                      "name": "AP approval workspace",
+                      "type": "mobile-component",
+                      "description": "Finance interface for invoice review and approval.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-ap-workflow-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "AP approval workspace",
-                  "description": "Finance interface for invoice review and approval.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-ap-workflow-engine",
+                      "name": "AP workflow engine",
+                      "type": "service",
+                      "description": "Controls invoice approval and exception handling."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "apin",
+                  "moduleId": "module-invoice-ingestion-service",
+                  "sourceModuleId": "module-ap-workflow-engine",
                   "type": "composition",
-                  "interface": "Invoice intake records",
                   "description": "Uses captured invoice records as workflow inputs."
                 }
               ],
@@ -1667,35 +2396,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-ap-workflow-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-ap-workflow-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-ap-workflow-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "approval-workflow-orchestration",
+                  "moduleIds": [
+                    "module-ap-workflow-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Approval Workflow Orchestration to support domain workflows.",
-                  "storeIds": [
-                    "approval-workflow-orchestration-db"
-                  ]
+                  "description": "Reads Approval Workflow Orchestration to support domain workflows."
                 }
               ]
             }

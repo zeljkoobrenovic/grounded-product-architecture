@@ -2,7 +2,7 @@
   "metadata": {
     "title": "Product Bricks & Capabilities",
     "description": "Hierarchical product brick map for the industrial-water-intelligence domain.",
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -29,7 +29,7 @@
         "color": "#f3f3f3ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -45,7 +45,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -63,18 +195,39 @@
               "type": "service",
               "status": "invest",
               "description": "Collects online water-quality, flow, and equipment-state data from plant systems and edge devices.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Edge Data Collection Layer",
-                  "description": "Normalizes and buffers plant telemetry from controllers, probes, and gateways.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-telemetry-ingestion-api",
+                      "name": "Telemetry Ingestion API",
+                      "type": "api",
+                      "description": "Ingestion interface for plant and edge telemetry.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-edge-data-collection-layer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Telemetry Ingestion API",
-                  "description": "Ingestion interface for plant and edge telemetry.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-edge-data-collection-layer",
+                      "name": "Edge Data Collection Layer",
+                      "type": "service",
+                      "description": "Normalizes and buffers plant telemetry from controllers, probes, and gateways."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -83,11 +236,11 @@
               "dataDependencies": [
                 {
                   "assetId": "sensor-stream",
+                  "moduleIds": [
+                    "module-edge-data-collection-layer"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Sensor Stream.",
-                  "storeIds": [
-                    "sensor-stream-bus"
-                  ]
+                  "description": "Acts as the primary owning brick for Sensor Stream."
                 }
               ]
             },
@@ -97,25 +250,47 @@
               "type": "integration",
               "status": "sustaining",
               "description": "Manages secure gateway connectivity, remote access policy, and device lifecycle across customer sites.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Gateway and Certificate Control",
-                  "description": "Registers, authenticates, and governs field gateways and remote data paths.",
-                  "type": "security"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-device-provisioning-workflow",
+                      "name": "Device Provisioning Workflow",
+                      "type": "api",
+                      "description": "Workflow for onboarding gateways, sensors, and field devices.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-gateway-and-certificate-control",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Device Provisioning Workflow",
-                  "description": "Workflow for onboarding gateways, sensors, and field devices.",
-                  "type": "workflow"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-gateway-and-certificate-control",
+                      "name": "Gateway and Certificate Control",
+                      "type": "service",
+                      "description": "Registers, authenticates, and governs field gateways and remote data paths."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sens",
+                  "moduleId": "module-telemetry-ingestion-api",
+                  "sourceModuleId": "module-device-provisioning-workflow",
                   "type": "integration",
-                  "interface": "Telemetry Ingestion API",
                   "description": "Provides the secure path that lets site telemetry reach the digital platform."
                 }
               ],
@@ -124,11 +299,11 @@
               "dataDependencies": [
                 {
                   "assetId": "integration-mapping",
+                  "moduleIds": [
+                    "module-gateway-and-certificate-control"
+                  ],
                   "role": "own",
-                  "description": "Owns device and connectivity mappings by site.",
-                  "storeIds": [
-                    "integration-mapping-db"
-                  ]
+                  "description": "Owns device and connectivity mappings by site."
                 }
               ]
             },
@@ -138,25 +313,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Calculates water balances, abnormal flow patterns, and leak signals at enterprise, site, and asset levels.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Water Balance Engine",
-                  "description": "Builds site and asset-level flow models and loss estimates.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-leak-and-flow-dashboard",
+                      "name": "Leak and Flow Dashboard",
+                      "type": "web-component",
+                      "description": "Visualizes abnormal consumption and leak alerts.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-water-balance-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Leak and Flow Dashboard",
-                  "description": "Visualizes abnormal consumption and leak alerts.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-water-balance-engine",
+                      "name": "Water Balance Engine",
+                      "type": "service",
+                      "description": "Builds site and asset-level flow models and loss estimates."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sens",
+                  "moduleId": "module-telemetry-ingestion-api",
+                  "sourceModuleId": "module-water-balance-engine",
                   "type": "data",
-                  "interface": "Telemetry Ingestion API",
                   "description": "Uses live telemetry to calculate the site water balance."
                 }
               ],
@@ -165,11 +362,11 @@
               "dataDependencies": [
                 {
                   "assetId": "water-flow-record",
+                  "moduleIds": [
+                    "module-water-balance-engine"
+                  ],
                   "role": "own",
-                  "description": "Owns flow, balance, and leak-detection records.",
-                  "storeIds": [
-                    "water-flow-lake"
-                  ]
+                  "description": "Owns flow, balance, and leak-detection records."
                 }
               ]
             },
@@ -179,18 +376,39 @@
               "type": "service",
               "status": "invest",
               "description": "Stores the plant loop, equipment, site, and system topology used to interpret telemetry and work context correctly.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Site and Loop Model",
-                  "description": "Defines sites, loops, assets, and operating boundaries.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-asset-and-loop-api",
+                      "name": "Asset and Loop API",
+                      "type": "api",
+                      "description": "API for querying plant assets, loops, and system relationships.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-site-and-loop-model",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Asset and Loop API",
-                  "description": "API for querying plant assets, loops, and system relationships.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-site-and-loop-model",
+                      "name": "Site and Loop Model",
+                      "type": "service",
+                      "description": "Defines sites, loops, assets, and operating boundaries."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -199,11 +417,11 @@
               "dataDependencies": [
                 {
                   "assetId": "water-asset-register",
+                  "moduleIds": [
+                    "module-site-and-loop-model"
+                  ],
                   "role": "own",
-                  "description": "Owns the plant loop and equipment registry.",
-                  "storeIds": [
-                    "asset-registry-db"
-                  ]
+                  "description": "Owns the plant loop and equipment registry."
                 }
               ]
             }
@@ -220,25 +438,47 @@
               "type": "integration",
               "status": "sustaining",
               "description": "Combines lab results, handheld test data, and field observations with online telemetry for better operating decisions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Sample and Test Capture",
-                  "description": "Captures lab and handheld measurements by site and loop.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-lab-result-import-api",
+                      "name": "Lab Result Import API",
+                      "type": "api",
+                      "description": "Accepts lab and handheld measurements and ties them to the right asset context.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-sample-and-test-capture",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Lab Result Import API",
-                  "description": "Accepts lab and handheld measurements and ties them to the right asset context.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-sample-and-test-capture",
+                      "name": "Sample and Test Capture",
+                      "type": "service",
+                      "description": "Captures lab and handheld measurements by site and loop."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "asst",
+                  "moduleId": "module-asset-and-loop-api",
+                  "sourceModuleId": "module-lab-result-import-api",
                   "type": "data",
-                  "interface": "Asset and Loop API",
                   "description": "Uses the system twin to associate samples and test results with the correct equipment and loop."
                 }
               ],
@@ -247,11 +487,11 @@
               "dataDependencies": [
                 {
                   "assetId": "chemistry-reading",
+                  "moduleIds": [
+                    "module-sample-and-test-capture"
+                  ],
                   "role": "own",
-                  "description": "Owns lab and field chemistry readings.",
-                  "storeIds": [
-                    "chemistry-reading-db"
-                  ]
+                  "description": "Owns lab and field chemistry readings."
                 }
               ]
             },
@@ -261,25 +501,47 @@
               "type": "integration",
               "status": "sustaining",
               "description": "Reconciles historian, SCADA, and digital-platform data so plant operating views stay trusted despite timestamp drift, gaps, or source mismatch.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Historian Sync and Reconciliation Layer",
-                  "description": "Matches platform telemetry with historian and control-system records.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-data-quality-reconciliation-api",
+                      "name": "Data Quality Reconciliation API",
+                      "type": "api",
+                      "description": "API for checking signal quality, backfilling gaps, and reconciling timestamps.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-historian-sync-and-reconciliation-layer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Data Quality Reconciliation API",
-                  "description": "API for checking signal quality, backfilling gaps, and reconciling timestamps.",
-                  "type": "api"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-historian-sync-and-reconciliation-layer",
+                      "name": "Historian Sync and Reconciliation Layer",
+                      "type": "integration",
+                      "description": "Matches platform telemetry with historian and control-system records."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sens",
+                  "moduleId": "module-telemetry-ingestion-api",
+                  "sourceModuleId": "module-data-quality-reconciliation-api",
                   "type": "data",
-                  "interface": "Telemetry Ingestion API",
                   "description": "Uses live telemetry as the digital comparison baseline."
                 }
               ],
@@ -307,31 +569,54 @@
               "type": "service",
               "status": "sustaining",
               "description": "Generates operating recommendations and treatment-risk insights from telemetry, lab results, and program standards.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Recommendation Rules and Models",
-                  "description": "Produces chemistry, control, and operating recommendations by loop type.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-api",
+                      "name": "Recommendation API",
+                      "type": "api",
+                      "description": "API for retrieving site-specific operating recommendations and risk scores.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-recommendation-rules-and-models",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Recommendation API",
-                  "description": "API for retrieving site-specific operating recommendations and risk scores.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-rules-and-models",
+                      "name": "Recommendation Rules and Models",
+                      "type": "service",
+                      "description": "Produces chemistry, control, and operating recommendations by loop type."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sens",
+                  "moduleId": "module-telemetry-ingestion-api",
+                  "sourceModuleId": "module-recommendation-api",
                   "type": "data",
-                  "interface": "Telemetry Ingestion API",
                   "description": "Uses live operating data to create recommendations."
                 },
                 {
                   "targetBrickId": "labi",
+                  "moduleId": "module-lab-result-import-api",
+                  "sourceModuleId": "module-recommendation-api",
                   "type": "data",
-                  "interface": "Lab Result Import API",
                   "description": "Uses field and lab context to improve recommendation quality."
                 }
               ],
@@ -340,11 +625,11 @@
               "dataDependencies": [
                 {
                   "assetId": "treatment-program",
+                  "moduleIds": [
+                    "module-recommendation-rules-and-models"
+                  ],
                   "role": "own",
-                  "description": "Owns digital treatment program definitions and recommendation logic.",
-                  "storeIds": [
-                    "treatment-program-db"
-                  ]
+                  "description": "Owns digital treatment program definitions and recommendation logic."
                 }
               ]
             },
@@ -354,25 +639,47 @@
               "type": "integration",
               "status": "sustaining",
               "description": "Executes or assists chemistry feed and dosing adjustments through connected control workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Control Command Layer",
-                  "description": "Issues, confirms, and tracks dosing and control commands.",
-                  "type": "automation"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-control-action-workflow",
+                      "name": "Control Action Workflow",
+                      "type": "api",
+                      "description": "Workflow for automated or guided dosing and feed changes.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-control-command-layer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Control Action Workflow",
-                  "description": "Workflow for automated or guided dosing and feed changes.",
-                  "type": "workflow"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-control-command-layer",
+                      "name": "Control Command Layer",
+                      "type": "service",
+                      "description": "Issues, confirms, and tracks dosing and control commands."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "chem",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-control-action-workflow",
                   "type": "automation",
-                  "interface": "Recommendation API",
                   "description": "Uses treatment recommendations to generate actionable control changes."
                 }
               ],
@@ -381,11 +688,11 @@
               "dataDependencies": [
                 {
                   "assetId": "control-command",
+                  "moduleIds": [
+                    "module-control-command-layer"
+                  ],
                   "role": "own",
-                  "description": "Owns dosing and feed control actions.",
-                  "storeIds": [
-                    "control-command-log"
-                  ]
+                  "description": "Owns dosing and feed control actions."
                 }
               ]
             },
@@ -395,18 +702,39 @@
               "type": "service",
               "status": "sustaining",
               "description": "Defines reusable treatment-program templates, operating envelopes, and rollout defaults by loop type, industry, and risk profile.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Program Template Library",
-                  "description": "Stores reusable water-program templates and operating defaults.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-program-template-api",
+                      "name": "Program Template API",
+                      "type": "api",
+                      "description": "API for selecting and applying standard program templates.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-program-template-library",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Program Template API",
-                  "description": "API for selecting and applying standard program templates.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-program-template-library",
+                      "name": "Program Template Library",
+                      "type": "service",
+                      "description": "Stores reusable water-program templates and operating defaults."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -420,31 +748,54 @@
               "type": "service",
               "status": "sustaining",
               "description": "Models the leading indicators of corrosion, scale, fouling, and microbiological stress across industrial water systems.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Asset Risk Model",
-                  "description": "Scores the likelihood and severity of corrosion, fouling, and biological stress.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-asset-risk-api",
+                      "name": "Asset Risk API",
+                      "type": "api",
+                      "description": "API for retrieving current and projected water-system risk by asset and loop.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-asset-risk-model",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Asset Risk API",
-                  "description": "API for retrieving current and projected water-system risk by asset and loop.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-asset-risk-model",
+                      "name": "Asset Risk Model",
+                      "type": "service",
+                      "description": "Scores the likelihood and severity of corrosion, fouling, and biological stress."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sens",
+                  "moduleId": "module-telemetry-ingestion-api",
+                  "sourceModuleId": "module-asset-risk-api",
                   "type": "data",
-                  "interface": "Telemetry Ingestion API",
                   "description": "Uses live operating data to model asset risk."
                 },
                 {
                   "targetBrickId": "labi",
+                  "moduleId": "module-lab-result-import-api",
+                  "sourceModuleId": "module-asset-risk-api",
                   "type": "data",
-                  "interface": "Lab Result Import API",
                   "description": "Uses lab and sample context to sharpen risk scores."
                 }
               ],
@@ -458,31 +809,54 @@
               "type": "service",
               "status": "sustaining",
               "description": "Optimizes the tradeoff between water savings, heat-transfer performance, steam efficiency, and total operating cost.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Efficiency Tradeoff Engine",
-                  "description": "Calculates the operating point that balances water, energy, and chemistry use.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-efficiency-optimization-api",
+                      "name": "Efficiency Optimization API",
+                      "type": "api",
+                      "description": "API for retrieving water-energy optimization recommendations.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-efficiency-tradeoff-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Efficiency Optimization API",
-                  "description": "API for retrieving water-energy optimization recommendations.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-efficiency-tradeoff-engine",
+                      "name": "Efficiency Tradeoff Engine",
+                      "type": "service",
+                      "description": "Calculates the operating point that balances water, energy, and chemistry use."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "chem",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-efficiency-optimization-api",
                   "type": "analytics",
-                  "interface": "Recommendation API",
                   "description": "Uses treatment recommendations as one input to total efficiency optimization."
                 },
                 {
                   "targetBrickId": "flow",
+                  "moduleId": "module-leak-and-flow-dashboard",
+                  "sourceModuleId": "module-efficiency-tradeoff-engine",
                   "type": "data",
-                  "interface": "Leak and Flow Dashboard",
                   "description": "Uses water-balance data to understand efficiency impact."
                 }
               ],
@@ -496,25 +870,47 @@
               "type": "service",
               "status": "invest",
               "description": "Prioritizes plant water issues, routes alerts, and preserves incident lifecycle and response status.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Alert Policy Layer",
-                  "description": "Defines severity, escalation, and route-to-role rules.",
-                  "type": "policy"
-                }
-              ],
-              "interfaces": [
+                  "layer": "bus",
+                  "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-incident-event-stream",
+                      "name": "Incident Event Stream",
+                      "type": "message-consumer",
+                      "description": "Events for alarms, escalations, acknowledgements, and closures.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-alert-policy-layer",
+                            "type": "processes",
+                            "description": "Asynchronous module invokes the backing service logic for event processing."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Incident Event Stream",
-                  "description": "Events for alarms, escalations, acknowledgements, and closures.",
-                  "type": "event"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-alert-policy-layer",
+                      "name": "Alert Policy Layer",
+                      "type": "service",
+                      "description": "Defines severity, escalation, and route-to-role rules."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "chem",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-alert-policy-layer",
                   "type": "analytics",
-                  "interface": "Recommendation API",
                   "description": "Uses risk and recommendation context to prioritize alarms."
                 }
               ],
@@ -523,11 +919,11 @@
               "dataDependencies": [
                 {
                   "assetId": "alarm-event",
+                  "moduleIds": [
+                    "module-alert-policy-layer"
+                  ],
                   "role": "own",
-                  "description": "Owns alarm and incident-lifecycle records.",
-                  "storeIds": [
-                    "alarm-event-stream"
-                  ]
+                  "description": "Owns alarm and incident-lifecycle records."
                 }
               ]
             }
@@ -544,49 +940,75 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Applies connected monitoring, chemistry, and control logic to cooling towers, chillers, and heat-rejection loops.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Cooling Performance Model",
-                  "description": "Balances water, chemistry, and asset-protection targets for cooling systems.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-cooling-loop-dashboard",
+                      "name": "Cooling Loop Dashboard",
+                      "type": "web-component",
+                      "description": "Operating view for cooling performance and risk.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-cooling-performance-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Cooling Loop Dashboard",
-                  "description": "Operating view for cooling performance and risk.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-cooling-performance-model",
+                      "name": "Cooling Performance Model",
+                      "type": "service",
+                      "description": "Balances water, chemistry, and asset-protection targets for cooling systems."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "prog",
+                  "moduleId": "module-program-template-api",
+                  "sourceModuleId": "module-cooling-performance-model",
                   "type": "composition",
-                  "interface": "Program Template API",
                   "description": "Uses standard cooling-program templates and guardrails."
                 },
                 {
                   "targetBrickId": "chem",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-cooling-performance-model",
                   "type": "composition",
-                  "interface": "Recommendation API",
                   "description": "Uses the chemistry engine to drive cooling-specific recommendations."
                 },
                 {
                   "targetBrickId": "corr",
+                  "moduleId": "module-asset-risk-api",
+                  "sourceModuleId": "module-cooling-performance-model",
                   "type": "composition",
-                  "interface": "Asset Risk API",
                   "description": "Uses corrosion, fouling, and biofilm risk signals in cooling optimization."
                 },
                 {
                   "targetBrickId": "dose",
+                  "moduleId": "module-control-action-workflow",
+                  "sourceModuleId": "module-cooling-performance-model",
                   "type": "composition",
-                  "interface": "Control Action Workflow",
                   "description": "Uses dosing control to hold cooling targets."
                 },
                 {
                   "targetBrickId": "ener",
+                  "moduleId": "module-efficiency-optimization-api",
+                  "sourceModuleId": "module-cooling-performance-model",
                   "type": "composition",
-                  "interface": "Efficiency Optimization API",
                   "description": "Uses water-energy optimization to select better cooling operating points."
                 }
               ],
@@ -600,49 +1022,75 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Optimizes boiler-water chemistry, blowdown discipline, and steam-side reliability through connected operating control.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Boiler Reliability Model",
-                  "description": "Tracks boiler health, chemistry, and steam-efficiency tradeoffs.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-boiler-performance-dashboard",
+                      "name": "Boiler Performance Dashboard",
+                      "type": "web-component",
+                      "description": "Operating view for boiler-water stability and steam-support reliability.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-boiler-reliability-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Boiler Performance Dashboard",
-                  "description": "Operating view for boiler-water stability and steam-support reliability.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-boiler-reliability-model",
+                      "name": "Boiler Reliability Model",
+                      "type": "service",
+                      "description": "Tracks boiler health, chemistry, and steam-efficiency tradeoffs."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "prog",
+                  "moduleId": "module-program-template-api",
+                  "sourceModuleId": "module-boiler-reliability-model",
                   "type": "composition",
-                  "interface": "Program Template API",
                   "description": "Uses standard boiler-program templates and guardrails."
                 },
                 {
                   "targetBrickId": "chem",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-boiler-reliability-model",
                   "type": "composition",
-                  "interface": "Recommendation API",
                   "description": "Uses the chemistry engine to drive boiler-specific guidance."
                 },
                 {
                   "targetBrickId": "corr",
+                  "moduleId": "module-asset-risk-api",
+                  "sourceModuleId": "module-boiler-reliability-model",
                   "type": "composition",
-                  "interface": "Asset Risk API",
                   "description": "Uses scale and corrosion risk in boiler optimization."
                 },
                 {
                   "targetBrickId": "dose",
+                  "moduleId": "module-control-action-workflow",
+                  "sourceModuleId": "module-boiler-reliability-model",
                   "type": "composition",
-                  "interface": "Control Action Workflow",
                   "description": "Uses dosing control to hold boiler targets."
                 },
                 {
                   "targetBrickId": "ener",
+                  "moduleId": "module-efficiency-optimization-api",
+                  "sourceModuleId": "module-boiler-reliability-model",
                   "type": "composition",
-                  "interface": "Efficiency Optimization API",
                   "description": "Uses steam and blowdown efficiency insights in boiler operating choices."
                 }
               ],
@@ -656,37 +1104,61 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Manages connected performance and treatment control for pretreatment, filtration, and process-water quality loops.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Pretreatment Program Model",
-                  "description": "Defines operating and water-quality targets for pretreatment and process loops.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-pretreatment-operations-workspace",
+                      "name": "Pretreatment Operations Workspace",
+                      "type": "web-component",
+                      "description": "Workspace for process-water and pretreatment performance management.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-pretreatment-program-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Pretreatment Operations Workspace",
-                  "description": "Workspace for process-water and pretreatment performance management.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-pretreatment-program-model",
+                      "name": "Pretreatment Program Model",
+                      "type": "service",
+                      "description": "Defines operating and water-quality targets for pretreatment and process loops."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "prog",
+                  "moduleId": "module-program-template-api",
+                  "sourceModuleId": "module-pretreatment-program-model",
                   "type": "composition",
-                  "interface": "Program Template API",
                   "description": "Uses standard pretreatment and process-water program defaults."
                 },
                 {
                   "targetBrickId": "chem",
+                  "moduleId": "module-recommendation-api",
+                  "sourceModuleId": "module-pretreatment-program-model",
                   "type": "composition",
-                  "interface": "Recommendation API",
                   "description": "Uses the chemistry engine for pretreatment and process-water optimization."
                 },
                 {
                   "targetBrickId": "hist",
+                  "moduleId": "module-data-quality-reconciliation-api",
+                  "sourceModuleId": "module-pretreatment-program-model",
                   "type": "composition",
-                  "interface": "Data Quality Reconciliation API",
                   "description": "Uses historian reconciliation to stabilize process-water interpretations."
                 }
               ],
@@ -700,37 +1172,61 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Provides wastewater-treatment performance monitoring, process-risk detection, and issue guidance for discharge control.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Effluent Process Risk Model",
-                  "description": "Estimates treatment stress and compliance risk from live process signals.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-wastewater-control-dashboard",
+                      "name": "Wastewater Control Dashboard",
+                      "type": "web-component",
+                      "description": "Operational view of wastewater performance and discharge risk.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-effluent-process-risk-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Wastewater Control Dashboard",
-                  "description": "Operational view of wastewater performance and discharge risk.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-effluent-process-risk-model",
+                      "name": "Effluent Process Risk Model",
+                      "type": "service",
+                      "description": "Estimates treatment stress and compliance risk from live process signals."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "prog",
+                  "moduleId": "module-program-template-api",
+                  "sourceModuleId": "module-effluent-process-risk-model",
                   "type": "composition",
-                  "interface": "Program Template API",
                   "description": "Uses standard wastewater operating templates and thresholds."
                 },
                 {
                   "targetBrickId": "sens",
+                  "moduleId": "module-telemetry-ingestion-api",
+                  "sourceModuleId": "module-effluent-process-risk-model",
                   "type": "data",
-                  "interface": "Telemetry Ingestion API",
                   "description": "Uses live wastewater process signals."
                 },
                 {
                   "targetBrickId": "labi",
+                  "moduleId": "module-lab-result-import-api",
+                  "sourceModuleId": "module-effluent-process-risk-model",
                   "type": "data",
-                  "interface": "Lab Result Import API",
                   "description": "Uses sample and lab context to interpret wastewater risk."
                 }
               ],
@@ -739,11 +1235,11 @@
               "dataDependencies": [
                 {
                   "assetId": "compliance-record",
+                  "moduleIds": [
+                    "module-effluent-process-risk-model"
+                  ],
                   "role": "write",
-                  "description": "Writes wastewater operating evidence and compliance context.",
-                  "storeIds": [
-                    "compliance-record-db"
-                  ]
+                  "description": "Writes wastewater operating evidence and compliance context."
                 }
               ]
             },
@@ -753,37 +1249,61 @@
               "type": "service",
               "status": "invest",
               "description": "Tracks treated-water quality, reuse readiness, and circular-water operating rules for approved reuse flows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Reuse Readiness Model",
-                  "description": "Scores treated-water streams for candidate reuse paths.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-reuse-opportunity-dashboard",
+                      "name": "Reuse Opportunity Dashboard",
+                      "type": "web-component",
+                      "description": "View of reuse readiness, quality checks, and recovered-water value.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-reuse-readiness-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Reuse Opportunity Dashboard",
-                  "description": "View of reuse readiness, quality checks, and recovered-water value.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-reuse-readiness-model",
+                      "name": "Reuse Readiness Model",
+                      "type": "service",
+                      "description": "Scores treated-water streams for candidate reuse paths."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "effl",
+                  "moduleId": "module-wastewater-control-dashboard",
+                  "sourceModuleId": "module-reuse-opportunity-dashboard",
                   "type": "composition",
-                  "interface": "Wastewater Control Dashboard",
                   "description": "Builds on stable wastewater control and quality evidence."
                 },
                 {
                   "targetBrickId": "flow",
+                  "moduleId": "module-leak-and-flow-dashboard",
+                  "sourceModuleId": "module-reuse-opportunity-dashboard",
                   "type": "composition",
-                  "interface": "Leak and Flow Dashboard",
                   "description": "Uses freshwater demand and treated-water availability to find reuse opportunities."
                 },
                 {
                   "targetBrickId": "ener",
+                  "moduleId": "module-efficiency-optimization-api",
+                  "sourceModuleId": "module-reuse-readiness-model",
                   "type": "composition",
-                  "interface": "Efficiency Optimization API",
                   "description": "Uses water-energy tradeoff insights when prioritizing reuse paths."
                 }
               ],
@@ -811,37 +1331,61 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Provides enterprise, site, and asset-level benchmark views for water, uptime, chemistry, and response performance.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Benchmarking Model",
-                  "description": "Normalizes performance across sites, loops, and customer portfolios.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-enterprise-water-dashboard",
+                      "name": "Enterprise Water Dashboard",
+                      "type": "web-component",
+                      "description": "Dashboard for benchmarking sites and identifying outliers.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-benchmarking-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Enterprise Water Dashboard",
-                  "description": "Dashboard for benchmarking sites and identifying outliers.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-benchmarking-model",
+                      "name": "Benchmarking Model",
+                      "type": "service",
+                      "description": "Normalizes performance across sites, loops, and customer portfolios."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "flow",
+                  "moduleId": "module-leak-and-flow-dashboard",
+                  "sourceModuleId": "module-enterprise-water-dashboard",
                   "type": "data",
-                  "interface": "Leak and Flow Dashboard",
                   "description": "Uses water-balance outcomes in benchmarking."
                 },
                 {
                   "targetBrickId": "alrm",
+                  "moduleId": "module-incident-event-stream",
+                  "sourceModuleId": "module-benchmarking-model",
                   "type": "data",
-                  "interface": "Incident Event Stream",
                   "description": "Uses alarm and response data for operating comparisons."
                 },
                 {
                   "targetBrickId": "hist",
+                  "moduleId": "module-data-quality-reconciliation-api",
+                  "sourceModuleId": "module-benchmarking-model",
                   "type": "data",
-                  "interface": "Data Quality Reconciliation API",
                   "description": "Uses reconciled plant history to improve benchmark trust."
                 }
               ],
@@ -855,25 +1399,47 @@
               "type": "service",
               "status": "invest",
               "description": "Tracks value projects, baselines, assumptions, and verified customer outcomes for expansion and renewal decisions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Value Baseline and Proof Model",
-                  "description": "Stores and validates project baselines, assumptions, and verified outcomes.",
-                  "type": "analytics"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-value-review-workspace",
+                      "name": "Value Review Workspace",
+                      "type": "web-component",
+                      "description": "Workspace for project ROI, savings proof, and customer-value reviews.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-value-baseline-and-proof-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Value Review Workspace",
-                  "description": "Workspace for project ROI, savings proof, and customer-value reviews.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-value-baseline-and-proof-model",
+                      "name": "Value Baseline and Proof Model",
+                      "type": "service",
+                      "description": "Stores and validates project baselines, assumptions, and verified outcomes."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-enterprise-water-dashboard",
+                  "sourceModuleId": "module-value-review-workspace",
                   "type": "data",
-                  "interface": "Enterprise Water Dashboard",
                   "description": "Uses site and enterprise performance data to verify project value."
                 }
               ],
@@ -882,11 +1448,11 @@
               "dataDependencies": [
                 {
                   "assetId": "savings-project",
+                  "moduleIds": [
+                    "module-value-baseline-and-proof-model"
+                  ],
                   "role": "own",
-                  "description": "Owns value projects and verified savings records.",
-                  "storeIds": [
-                    "savings-project-db"
-                  ]
+                  "description": "Owns value projects and verified savings records."
                 }
               ]
             },
@@ -896,31 +1462,54 @@
               "type": "service",
               "status": "invest",
               "description": "Builds the audit-ready evidence pack for wastewater, treatment, alarms, and corrective action histories.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Compliance Record Builder",
-                  "description": "Packages operating evidence, samples, and action history for reporting and inspection.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-compliance-reporting-api",
+                      "name": "Compliance Reporting API",
+                      "type": "api",
+                      "description": "API and export surface for compliance reporting and evidence retrieval.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-compliance-record-builder",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Compliance Reporting API",
-                  "description": "API and export surface for compliance reporting and evidence retrieval.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-compliance-record-builder",
+                      "name": "Compliance Record Builder",
+                      "type": "service",
+                      "description": "Packages operating evidence, samples, and action history for reporting and inspection."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "effl",
+                  "moduleId": "module-wastewater-control-dashboard",
+                  "sourceModuleId": "module-compliance-record-builder",
                   "type": "data",
-                  "interface": "Wastewater Control Dashboard",
                   "description": "Uses wastewater performance and issue records."
                 },
                 {
                   "targetBrickId": "work",
+                  "moduleId": "module-work-order-workflow",
+                  "sourceModuleId": "module-compliance-record-builder",
                   "type": "data",
-                  "interface": "Work Order Workflow",
                   "description": "Uses corrective action and service closure data."
                 }
               ],
@@ -929,11 +1518,11 @@
               "dataDependencies": [
                 {
                   "assetId": "compliance-record",
+                  "moduleIds": [
+                    "module-compliance-record-builder"
+                  ],
                   "role": "own",
-                  "description": "Owns the compliance evidence record.",
-                  "storeIds": [
-                    "compliance-record-db"
-                  ]
+                  "description": "Owns the compliance evidence record."
                 }
               ]
             },
@@ -943,25 +1532,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Plans, tracks, and documents sampling schedules, collection events, and custody records for wastewater and treated-water workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Sampling Calendar and Custody Tracker",
-                  "description": "Manages sample schedules, collection events, and custody handoffs.",
-                  "type": "workflow"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-sampling-workflow",
+                      "name": "Sampling Workflow",
+                      "type": "api",
+                      "description": "Workflow for scheduling, collecting, and confirming samples.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-sampling-calendar-and-custody-tracker",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Sampling Workflow",
-                  "description": "Workflow for scheduling, collecting, and confirming samples.",
-                  "type": "workflow"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-sampling-calendar-and-custody-tracker",
+                      "name": "Sampling Calendar and Custody Tracker",
+                      "type": "service",
+                      "description": "Manages sample schedules, collection events, and custody handoffs."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "labi",
+                  "moduleId": "module-lab-result-import-api",
+                  "sourceModuleId": "module-sampling-workflow",
                   "type": "data",
-                  "interface": "Lab Result Import API",
                   "description": "Uses sample results and collection context."
                 }
               ],
@@ -975,25 +1586,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Tracks permit thresholds, recurring obligations, reporting deadlines, and site-specific compliance calendars.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Permit Obligation Registry",
-                  "description": "Stores permit clauses, reporting duties, and deadline logic by site.",
-                  "type": "policy"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-permit-obligation-api",
+                      "name": "Permit Obligation API",
+                      "type": "api",
+                      "description": "API for retrieving permit and reporting obligations by site.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-permit-obligation-registry",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Permit Obligation API",
-                  "description": "API for retrieving permit and reporting obligations by site.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-permit-obligation-registry",
+                      "name": "Permit Obligation Registry",
+                      "type": "service",
+                      "description": "Stores permit clauses, reporting duties, and deadline logic by site."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "comp",
+                  "moduleId": "module-compliance-reporting-api",
+                  "sourceModuleId": "module-permit-obligation-api",
                   "type": "composition",
-                  "interface": "Compliance Reporting API",
                   "description": "Uses compliance evidence to satisfy reporting and obligation workflows."
                 }
               ],
@@ -1014,31 +1647,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Coordinates remote expert cases, recommendations, action notes, and customer-facing issue workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Case Collaboration Layer",
-                  "description": "Supports expert issue review, recommendation authoring, and shared issue context.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-case-workspace",
+                      "name": "Case Workspace",
+                      "type": "web-component",
+                      "description": "Shared workspace for issue review, recommendation tracking, and collaboration.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-case-collaboration-layer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Case Workspace",
-                  "description": "Shared workspace for issue review, recommendation tracking, and collaboration.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-case-collaboration-layer",
+                      "name": "Case Collaboration Layer",
+                      "type": "service",
+                      "description": "Supports expert issue review, recommendation authoring, and shared issue context."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "alrm",
+                  "moduleId": "module-incident-event-stream",
+                  "sourceModuleId": "module-case-collaboration-layer",
                   "type": "event",
-                  "interface": "Incident Event Stream",
                   "description": "Turns important alarms into coordinated issue workflows."
                 },
                 {
                   "targetBrickId": "asst",
+                  "moduleId": "module-asset-and-loop-api",
+                  "sourceModuleId": "module-case-collaboration-layer",
                   "type": "data",
-                  "interface": "Asset and Loop API",
                   "description": "Uses site and asset context to keep the case grounded in the right operating system."
                 }
               ],
@@ -1047,11 +1703,11 @@
               "dataDependencies": [
                 {
                   "assetId": "service-case-record",
+                  "moduleIds": [
+                    "module-case-collaboration-layer"
+                  ],
                   "role": "own",
-                  "description": "Owns expert case and recommendation records.",
-                  "storeIds": [
-                    "service-case-db"
-                  ]
+                  "description": "Owns expert case and recommendation records."
                 }
               ]
             },
@@ -1061,25 +1717,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Plans, assigns, tracks, and closes field work and on-site intervention related to treatment, monitoring, and corrective action.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Visit and Work Order Scheduler",
-                  "description": "Creates and manages service work orders and field execution plans.",
-                  "type": "workflow"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-work-order-workflow",
+                      "name": "Work Order Workflow",
+                      "type": "api",
+                      "description": "Workflow for field work planning, execution, and closure.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-visit-and-work-order-scheduler",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Work Order Workflow",
-                  "description": "Workflow for field work planning, execution, and closure.",
-                  "type": "workflow"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-visit-and-work-order-scheduler",
+                      "name": "Visit and Work Order Scheduler",
+                      "type": "service",
+                      "description": "Creates and manages service work orders and field execution plans."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "case",
+                  "moduleId": "module-case-workspace",
+                  "sourceModuleId": "module-visit-and-work-order-scheduler",
                   "type": "workflow",
-                  "interface": "Case Workspace",
                   "description": "Turns case recommendations into accountable work."
                 }
               ],
@@ -1088,11 +1766,11 @@
               "dataDependencies": [
                 {
                   "assetId": "work-order",
+                  "moduleIds": [
+                    "module-visit-and-work-order-scheduler"
+                  ],
                   "role": "own",
-                  "description": "Owns work-order and field-visit records.",
-                  "storeIds": [
-                    "work-order-db"
-                  ]
+                  "description": "Owns work-order and field-visit records."
                 }
               ]
             },
@@ -1102,31 +1780,54 @@
               "type": "service",
               "status": "sustaining",
               "description": "Manages outbound notifications, escalation messages, and audience-specific communication around alerts, visits, and compliance events.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Notification Policy Layer",
-                  "description": "Determines who gets notified, when, and through which channel.",
-                  "type": "policy"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-notification-delivery-api",
+                      "name": "Notification Delivery API",
+                      "type": "api",
+                      "description": "API for sending alert, visit, and reporting notifications.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-notification-policy-layer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Notification Delivery API",
-                  "description": "API for sending alert, visit, and reporting notifications.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-notification-policy-layer",
+                      "name": "Notification Policy Layer",
+                      "type": "service",
+                      "description": "Determines who gets notified, when, and through which channel."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "alrm",
+                  "moduleId": "module-incident-event-stream",
+                  "sourceModuleId": "module-notification-policy-layer",
                   "type": "event",
-                  "interface": "Incident Event Stream",
                   "description": "Uses alarm and incident events to trigger communications."
                 },
                 {
                   "targetBrickId": "work",
+                  "moduleId": "module-work-order-workflow",
+                  "sourceModuleId": "module-notification-policy-layer",
                   "type": "workflow",
-                  "interface": "Work Order Workflow",
                   "description": "Uses work-order state to notify customers about visit status and closure."
                 }
               ],
@@ -1140,18 +1841,39 @@
               "type": "integration",
               "status": "invest",
               "description": "Connects the water platform to plant historians, CMMS, ERP, sustainability reporting, and customer enterprise systems.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Enterprise Connector Framework",
-                  "description": "Standard connector framework for inbound and outbound enterprise integrations.",
-                  "type": "integration"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-integration-connector-api",
+                      "name": "Integration Connector API",
+                      "type": "api",
+                      "description": "API for enterprise integration setup and data exchange.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-enterprise-connector-framework",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Integration Connector API",
-                  "description": "API for enterprise integration setup and data exchange.",
-                  "type": "api"
+                  "layer": "integration",
+                  "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+                  "modules": [
+                    {
+                      "id": "module-enterprise-connector-framework",
+                      "name": "Enterprise Connector Framework",
+                      "type": "integration",
+                      "description": "Standard connector framework for inbound and outbound enterprise integrations."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1160,11 +1882,11 @@
               "dataDependencies": [
                 {
                   "assetId": "integration-mapping",
+                  "moduleIds": [
+                    "module-integration-connector-api"
+                  ],
                   "role": "write",
-                  "description": "Maintains integration configuration and endpoint mappings.",
-                  "storeIds": [
-                    "integration-mapping-db"
-                  ]
+                  "description": "Maintains integration configuration and endpoint mappings."
                 }
               ]
             },
@@ -1174,37 +1896,46 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Provides the shared customer-facing operating surface for enterprise, plant, compliance, and value views.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Customer Experience Layer",
-                  "description": "Presents dashboards, reports, cases, and value reviews to customer users.",
-                  "type": "ui"
-                }
-              ],
-              "interfaces": [
-                {
-                  "title": "Portal UI",
-                  "description": "Browser experience for customer operations, value, and compliance workflows.",
-                  "type": "ui"
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-portal-ui",
+                      "name": "Portal UI",
+                      "type": "web-component",
+                      "description": "Browser experience for customer operations, value, and compliance workflows."
+                    },
+                    {
+                      "id": "module-customer-experience-layer",
+                      "name": "Customer Experience Layer",
+                      "type": "web-component",
+                      "description": "Presents dashboards, reports, cases, and value reviews to customer users."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-enterprise-water-dashboard",
+                  "sourceModuleId": "module-portal-ui",
                   "type": "composition",
-                  "interface": "Enterprise Water Dashboard",
                   "description": "Uses analytics and benchmarking to populate operating views."
                 },
                 {
                   "targetBrickId": "case",
+                  "moduleId": "module-case-workspace",
+                  "sourceModuleId": "module-portal-ui",
                   "type": "composition",
-                  "interface": "Case Workspace",
                   "description": "Uses case context to expose current issues and recommendations."
                 },
                 {
                   "targetBrickId": "eroi",
+                  "moduleId": "module-value-review-workspace",
+                  "sourceModuleId": "module-portal-ui",
                   "type": "composition",
-                  "interface": "Value Review Workspace",
                   "description": "Uses verified value records in executive and account reviews."
                 }
               ],
@@ -1213,11 +1944,12 @@
               "dataDependencies": [
                 {
                   "assetId": "site-profile",
+                  "moduleIds": [
+                    "module-portal-ui",
+                    "module-customer-experience-layer"
+                  ],
                   "role": "own",
-                  "description": "Owns the customer site profile surfaced in the portal.",
-                  "storeIds": [
-                    "site-profile-db"
-                  ]
+                  "description": "Owns the customer site profile surfaced in the portal."
                 }
               ]
             },
@@ -1227,31 +1959,39 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Provides the mobile surface for on-site operators and field specialists to review alarms, record actions, and confirm work completion.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Mobile Response Layer",
-                  "description": "Delivers on-site alarm review, work capture, and action confirmation workflows.",
-                  "type": "ui"
-                }
-              ],
-              "interfaces": [
-                {
-                  "title": "Mobile App",
-                  "description": "Mobile interface for operators and service specialists.",
-                  "type": "mobile"
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-mobile-app",
+                      "name": "Mobile App",
+                      "type": "mobile-component",
+                      "description": "Mobile interface for operators and service specialists."
+                    },
+                    {
+                      "id": "module-mobile-response-layer",
+                      "name": "Mobile Response Layer",
+                      "type": "mobile-component",
+                      "description": "Delivers on-site alarm review, work capture, and action confirmation workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "alrm",
+                  "moduleId": "module-incident-event-stream",
+                  "sourceModuleId": "module-mobile-app",
                   "type": "composition",
-                  "interface": "Incident Event Stream",
                   "description": "Uses alarms and issue status in the field workflow."
                 },
                 {
                   "targetBrickId": "work",
+                  "moduleId": "module-work-order-workflow",
+                  "sourceModuleId": "module-mobile-app",
                   "type": "composition",
-                  "interface": "Work Order Workflow",
                   "description": "Uses work-order context for field execution."
                 }
               ],
@@ -1265,25 +2005,47 @@
               "type": "development",
               "status": "sustaining",
               "description": "Stores operating playbooks, issue-response guidance, and reusable expert knowledge by loop type and risk pattern.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Playbook and Pattern Library",
-                  "description": "Stores reusable response playbooks and operating guidance.",
-                  "type": "documentation"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-playbook-search-and-retrieval-api",
+                      "name": "Playbook Search and Retrieval API",
+                      "type": "api",
+                      "description": "API for retrieving the right operating playbook in workflow context.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-playbook-and-pattern-library",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Playbook Search and Retrieval API",
-                  "description": "API for retrieving the right operating playbook in workflow context.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-playbook-and-pattern-library",
+                      "name": "Playbook and Pattern Library",
+                      "type": "service",
+                      "description": "Stores reusable response playbooks and operating guidance."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "case",
+                  "moduleId": "module-case-workspace",
+                  "sourceModuleId": "module-playbook-and-pattern-library",
                   "type": "workflow",
-                  "interface": "Case Workspace",
                   "description": "Uses resolved case history to improve playbooks over time."
                 }
               ],
@@ -1297,31 +2059,54 @@
               "type": "service",
               "status": "sustaining",
               "description": "Plans the next wave of sites, modules, and value opportunities across enterprise water accounts.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Rollout Wave Planner",
-                  "description": "Builds the prioritized expansion and rollout plan by account and site.",
-                  "type": "workflow"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-rollout-planning-workspace",
+                      "name": "Rollout Planning Workspace",
+                      "type": "web-component",
+                      "description": "Workspace for expansion planning, site readiness, and opportunity tracking.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-rollout-wave-planner",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Rollout Planning Workspace",
-                  "description": "Workspace for expansion planning, site readiness, and opportunity tracking.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-rollout-wave-planner",
+                      "name": "Rollout Wave Planner",
+                      "type": "service",
+                      "description": "Builds the prioritized expansion and rollout plan by account and site."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "eroi",
+                  "moduleId": "module-value-review-workspace",
+                  "sourceModuleId": "module-rollout-planning-workspace",
                   "type": "data",
-                  "interface": "Value Review Workspace",
                   "description": "Uses verified value records to prioritize the next wave."
                 },
                 {
                   "targetBrickId": "anal",
+                  "moduleId": "module-enterprise-water-dashboard",
+                  "sourceModuleId": "module-rollout-planning-workspace",
                   "type": "data",
-                  "interface": "Enterprise Water Dashboard",
                   "description": "Uses benchmark and outlier data to identify rollout opportunities."
                 }
               ],

@@ -30,7 +30,7 @@
         }
       ]
     },
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -52,7 +52,7 @@
         "color": "#c9daf8ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -68,7 +68,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -86,43 +218,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Workspace for freight demand planning, lane design, service policies, mode selection, constraints, and scenario comparison.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Lane planning model",
-                  "description": "Combines shipper demand, facilities, commodities, service levels, equipment, and historical cost into lane plans.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-shipper-planning-ui",
+                      "name": "Shipper planning UI",
+                      "type": "web-component",
+                      "description": "Scenario planning and lane policy workspace for transportation teams.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-lane-planning-model",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Shipper planning UI",
-                  "description": "Scenario planning and lane policy workspace for transportation teams.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-lane-planning-model",
+                      "name": "Lane planning model",
+                      "type": "service",
+                      "description": "Combines shipper demand, facilities, commodities, service levels, equipment, and historical cost into lane plans."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rate",
+                  "moduleId": "module-rate-intelligence-api",
+                  "sourceModuleId": "module-lane-planning-model",
                   "type": "data",
-                  "interface": "Rate benchmark API",
                   "description": "Uses historical and market rate intelligence in planning scenarios."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "ERP and order management systems",
-                  "description": "Reads order, replenishment, inventory, and facility demand signals."
+                  "description": "Reads order, replenishment, inventory, and facility demand signals.",
+                  "sourceModuleId": "module-lane-planning-model"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "shipper-network",
+                  "moduleIds": [
+                    "module-lane-planning-model"
+                  ],
                   "role": "read-write",
-                  "description": "Reads and updates lane, facility, mode, and service-policy data.",
-                  "storeIds": [
-                    "shipper-network-db"
-                  ]
+                  "description": "Reads and updates lane, facility, mode, and service-policy data."
                 }
               ]
             },
@@ -132,30 +287,62 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Mini-bids, annual RFPs, carrier award capture, rate sheets, routing guide commitments, and bid analytics.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Bid event manager",
-                  "description": "Controls bid rounds, invited carriers, lane packages, award rules, and commitment capture.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
-                {
-                  "title": "Procurement UI",
-                  "description": "Bid event setup, analysis, and award workflow.",
-                  "type": "ui"
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-procurement-ui",
+                      "name": "Procurement UI",
+                      "type": "web-component",
+                      "description": "Bid event setup, analysis, and award workflow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-bid-event-manager",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "module-carrier-bid-portal",
+                      "name": "Carrier bid portal",
+                      "type": "web-component",
+                      "description": "Carrier-facing bid response surface.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-bid-event-manager",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
                 },
                 {
-                  "title": "Carrier bid portal",
-                  "description": "Carrier-facing bid response surface.",
-                  "type": "web"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-bid-event-manager",
+                      "name": "Bid event manager",
+                      "type": "service",
+                      "description": "Controls bid rounds, invited carriers, lane packages, award rules, and commitment capture."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "caron",
+                  "moduleId": "module-carrier-compliance-verifier",
+                  "sourceModuleId": "module-bid-event-manager",
                   "type": "composition",
-                  "interface": "Carrier eligibility",
                   "description": "Requires carrier compliance and equipment eligibility before award."
                 }
               ],
@@ -164,11 +351,11 @@
               "dataDependencies": [
                 {
                   "assetId": "contract-rate",
+                  "moduleIds": [
+                    "module-bid-event-manager"
+                  ],
                   "role": "read-write",
-                  "description": "Creates and updates contract rates, award terms, and routing guide data.",
-                  "storeIds": [
-                    "contract-rate-db"
-                  ]
+                  "description": "Creates and updates contract rates, award terms, and routing guide data."
                 }
               ]
             },
@@ -178,36 +365,58 @@
               "type": "service",
               "status": "invest",
               "description": "Market, lane, historical, and customer-specific rate intelligence for procurement, spot quoting, pricing guidance, and margin controls.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Lane benchmark service",
-                  "description": "Produces shipper-facing and internal rate guidance with confidence ranges and mode context.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-rate-intelligence-api",
+                      "name": "Rate intelligence API",
+                      "type": "api",
+                      "description": "Provides rate guidance to planning, procurement, quoting, and tender fallback workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-lane-benchmark-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Rate intelligence API",
-                  "description": "Provides rate guidance to planning, procurement, quoting, and tender fallback workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-lane-benchmark-service",
+                      "name": "Lane benchmark service",
+                      "type": "service",
+                      "description": "Produces shipper-facing and internal rate guidance with confidence ranges and mode context."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Freight market data providers",
-                  "description": "Uses benchmark rates and market capacity indicators where licensed."
+                  "description": "Uses benchmark rates and market capacity indicators where licensed.",
+                  "sourceModuleId": "module-lane-benchmark-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "market-rate-signal",
+                  "moduleIds": [
+                    "module-lane-benchmark-service"
+                  ],
                   "role": "read",
-                  "description": "Reads internal and third-party lane rate signals.",
-                  "storeIds": [
-                    "market-rate-warehouse"
-                  ]
+                  "description": "Reads internal and third-party lane rate signals."
                 }
               ]
             },
@@ -217,25 +426,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Recommends truckload, LTL, intermodal, consolidation, cross-dock, dedicated, or expedited options based on cost, service, emissions, and risk.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Mode recommendation engine",
-                  "description": "Scores available modes using shipment constraints, lane history, appointment windows, and service policies.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-mode-recommendation-api",
+                      "name": "Mode recommendation API",
+                      "type": "api",
+                      "description": "Provides options to TMS, planning, and operations workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-mode-recommendation-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Mode recommendation API",
-                  "description": "Provides options to TMS, planning, and operations workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-mode-recommendation-engine",
+                      "name": "Mode recommendation engine",
+                      "type": "service",
+                      "description": "Scores available modes using shipment constraints, lane history, appointment windows, and service policies."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "plan",
+                  "moduleId": "module-lane-planning-model",
+                  "sourceModuleId": "module-mode-recommendation-engine",
                   "type": "composition",
-                  "interface": "Network policies",
                   "description": "Uses shipper mode policies, facilities, and service constraints."
                 }
               ],
@@ -244,11 +475,11 @@
               "dataDependencies": [
                 {
                   "assetId": "shipment-record",
+                  "moduleIds": [
+                    "module-mode-recommendation-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads shipment and outcome history.",
-                  "storeIds": [
-                    "shipment-record-db"
-                  ]
+                  "description": "Reads shipment and outcome history."
                 }
               ]
             }
@@ -265,44 +496,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Core shipment, order, load, routing guide, tender, appointment, execution, and settlement workflow for shippers and managed transportation teams.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Shipment lifecycle service",
-                  "description": "Maintains canonical shipment state from planned load through delivered and settled.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-shipper-tms-ui",
+                      "name": "Shipper TMS UI",
+                      "type": "web-component",
+                      "description": "Web workspace for shipment planning, tendering, tracking, and exception management.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-shipment-lifecycle-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Shipper TMS UI",
-                  "description": "Web workspace for shipment planning, tendering, tracking, and exception management.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-shipment-lifecycle-service",
+                      "name": "Shipment lifecycle service",
+                      "type": "service",
+                      "description": "Maintains canonical shipment state from planned load through delivered and settled."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "tend",
+                  "moduleId": "module-tender-sequencing-engine",
+                  "sourceModuleId": "module-shipment-lifecycle-service",
                   "type": "composition",
-                  "interface": "Tendering workflow",
                   "description": "Uses tender workflow to assign shipments to carriers."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "ERP, WMS, OMS, and EDI gateways",
-                  "description": "Imports orders, shipment requests, warehouse events, and customer references."
+                  "description": "Imports orders, shipment requests, warehouse events, and customer references.",
+                  "sourceModuleId": "module-shipment-lifecycle-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "shipment-record",
+                  "moduleIds": [
+                    "module-shipment-lifecycle-service"
+                  ],
                   "role": "read-write",
-                  "description": "Owns canonical shipment and load lifecycle state.",
-                  "storeIds": [
-                    "shipment-record-db",
-                    "shipment-event-stream"
-                  ]
+                  "description": "Owns canonical shipment and load lifecycle state."
                 }
               ]
             },
@@ -312,43 +565,66 @@
               "type": "service",
               "status": "invest",
               "description": "Automated primary, backup, waterfall, spot fallback, and managed-service tendering against shipper routing guides and carrier commitments.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Tender sequencing engine",
-                  "description": "Runs tender acceptance windows, routing guide order, fallback rules, and rejection handling.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-tender-api",
+                      "name": "Tender API",
+                      "type": "api",
+                      "description": "Creates tenders and receives accept, reject, timeout, or counter events.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-tender-sequencing-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Tender API",
-                  "description": "Creates tenders and receives accept, reject, timeout, or counter events.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-tender-sequencing-engine",
+                      "name": "Tender sequencing engine",
+                      "type": "service",
+                      "description": "Runs tender acceptance windows, routing guide order, fallback rules, and rejection handling."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "match",
+                  "moduleId": "module-matching-api",
+                  "sourceModuleId": "module-tender-sequencing-engine",
                   "type": "composition",
-                  "interface": "Carrier matching",
                   "description": "Uses match scores when contract routing guide coverage fails."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Carrier EDI and API endpoints",
-                  "description": "Sends and receives tender events."
+                  "description": "Sends and receives tender events.",
+                  "sourceModuleId": "module-tender-sequencing-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "tender-event",
+                  "moduleIds": [
+                    "module-tender-sequencing-engine"
+                  ],
                   "role": "read-write",
-                  "description": "Records tender offers, responses, timeouts, and fallback outcomes.",
-                  "storeIds": [
-                    "tender-event-stream"
-                  ]
+                  "description": "Records tender offers, responses, timeouts, and fallback outcomes."
                 }
               ]
             },
@@ -358,25 +634,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Shipper-facing portal for quote requests, shipment creation, booking, tracking, reporting, documents, invoices, and support.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Self-service shipment composer",
-                  "description": "Guides shipment creation, quote selection, required references, and service options.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-shipper-web-portal",
+                      "name": "Shipper web portal",
+                      "type": "web-component",
+                      "description": "Primary self-service web experience for shippers.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-self-service-shipment-composer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Shipper web portal",
-                  "description": "Primary self-service web experience for shippers.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-self-service-shipment-composer",
+                      "name": "Self-service shipment composer",
+                      "type": "service",
+                      "description": "Guides shipment creation, quote selection, required references, and service options."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "spot",
+                  "moduleId": "module-dynamic-price-service",
+                  "sourceModuleId": "module-self-service-shipment-composer",
                   "type": "composition",
-                  "interface": "Quote workflow",
                   "description": "Displays instant and managed quotes for transactional shippers."
                 }
               ],
@@ -385,11 +683,11 @@
               "dataDependencies": [
                 {
                   "assetId": "shipper-account",
+                  "moduleIds": [
+                    "module-self-service-shipment-composer"
+                  ],
                   "role": "read-write",
-                  "description": "Reads account, permissions, billing, and service preferences.",
-                  "storeIds": [
-                    "shipper-account-db"
-                  ]
+                  "description": "Reads account, permissions, billing, and service preferences."
                 }
               ]
             },
@@ -399,49 +697,73 @@
               "type": "integration",
               "status": "sustaining",
               "description": "EDI, API, webhook, file, and partner integrations for orders, tenders, milestones, documents, invoices, appointments, and master data.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Integration mapping engine",
-                  "description": "Maps customer-specific fields, events, references, and validation rules into canonical models.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-customer-api-and-edi-gateway",
+                      "name": "Customer API and EDI gateway",
+                      "type": "api",
+                      "description": "External interface for customer systems and integration partners.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-integration-mapping-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Customer API and EDI gateway",
-                  "description": "External interface for customer systems and integration partners.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-integration-mapping-engine",
+                      "name": "Integration mapping engine",
+                      "type": "service",
+                      "description": "Maps customer-specific fields, events, references, and validation rules into canonical models."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "tms",
+                  "moduleId": "module-shipment-lifecycle-service",
+                  "sourceModuleId": "module-integration-mapping-engine",
                   "type": "data",
-                  "interface": "Shipment lifecycle",
                   "description": "Feeds canonical shipment creation and update events."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Customer ERP, WMS, OMS, and finance systems",
-                  "description": "Bi-directional exchange of freight data."
+                  "description": "Bi-directional exchange of freight data.",
+                  "sourceModuleId": "module-integration-mapping-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "integration-event",
+                  "moduleIds": [
+                    "module-integration-mapping-engine"
+                  ],
                   "role": "read-write",
-                  "description": "Stores integration payloads, mappings, validation results, and replay state.",
-                  "storeIds": [
-                    "integration-event-log"
-                  ]
+                  "description": "Stores integration payloads, mappings, validation results, and replay state."
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     },
     {
       "name": "Capacity Marketplace",
@@ -458,43 +780,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Carrier identity, authority, insurance, safety, tax, bank, equipment, fraud risk, and eligibility onboarding.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Carrier compliance verifier",
-                  "description": "Checks authority, insurance, safety ratings, sanctions, tax, and banking requirements.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-carrier-onboarding-portal",
+                      "name": "Carrier onboarding portal",
+                      "type": "web-component",
+                      "description": "Carrier-facing onboarding and compliance update flow.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-carrier-compliance-verifier",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Carrier onboarding portal",
-                  "description": "Carrier-facing onboarding and compliance update flow.",
-                  "type": "web"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-carrier-compliance-verifier",
+                      "name": "Carrier compliance verifier",
+                      "type": "service",
+                      "description": "Checks authority, insurance, safety ratings, sanctions, tax, and banking requirements."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "risk",
+                  "moduleId": "module-risk-decision-api",
+                  "sourceModuleId": "module-carrier-compliance-verifier",
                   "type": "composition",
-                  "interface": "Fraud risk signals",
                   "description": "Uses fraud and compliance controls before work access."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Government authority and insurance data sources",
-                  "description": "Verifies motor carrier authority and compliance status."
+                  "description": "Verifies motor carrier authority and compliance status.",
+                  "sourceModuleId": "module-carrier-compliance-verifier"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "carrier-profile",
+                  "moduleIds": [
+                    "module-carrier-compliance-verifier"
+                  ],
                   "role": "read-write",
-                  "description": "Owns carrier account, authority, insurance, equipment, and compliance state.",
-                  "storeIds": [
-                    "carrier-profile-db"
-                  ]
+                  "description": "Owns carrier account, authority, insurance, equipment, and compliance state."
                 }
               ]
             },
@@ -504,25 +849,47 @@
               "type": "service",
               "status": "invest",
               "description": "Carrier performance, eligibility, service, claims, tracking, fraud, facility behavior, and improvement feedback.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Carrier quality scorer",
-                  "description": "Aggregates service, tracking, claims, payment, and compliance events into quality scores.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-carrier-scorecard-api",
+                      "name": "Carrier scorecard API",
+                      "type": "api",
+                      "description": "Provides carrier quality data to matching, procurement, and carrier-facing reporting.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-carrier-quality-scorer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Carrier scorecard API",
-                  "description": "Provides carrier quality data to matching, procurement, and carrier-facing reporting.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-carrier-quality-scorer",
+                      "name": "Carrier quality scorer",
+                      "type": "service",
+                      "description": "Aggregates service, tracking, claims, payment, and compliance events into quality scores."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "vis",
+                  "moduleId": "module-visibility-api",
+                  "sourceModuleId": "module-carrier-quality-scorer",
                   "type": "data",
-                  "interface": "Milestone quality",
                   "description": "Uses pickup, delivery, tracking, and exception history."
                 }
               ],
@@ -531,11 +898,11 @@
               "dataDependencies": [
                 {
                   "assetId": "carrier-performance",
+                  "moduleIds": [
+                    "module-carrier-quality-scorer"
+                  ],
                   "role": "read-write",
-                  "description": "Computes carrier quality and performance history.",
-                  "storeIds": [
-                    "carrier-performance-warehouse"
-                  ]
+                  "description": "Computes carrier quality and performance history."
                 }
               ]
             },
@@ -545,36 +912,58 @@
               "type": "service",
               "status": "sustaining",
               "description": "Carrier lane preferences, equipment availability, reload needs, preferred facilities, blackout windows, and operating constraints.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Preference profile service",
-                  "description": "Maintains carrier preferences and inferred availability by lane, equipment, and facility.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-preference-api",
+                      "name": "Preference API",
+                      "type": "api",
+                      "description": "Feeds matching, offer, and procurement workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-preference-profile-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Preference API",
-                  "description": "Feeds matching, offer, and procurement workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-preference-profile-service",
+                      "name": "Preference profile service",
+                      "type": "service",
+                      "description": "Maintains carrier preferences and inferred availability by lane, equipment, and facility."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "ELD and telematics partners",
-                  "description": "Optional location and availability signals for consenting carriers."
+                  "description": "Optional location and availability signals for consenting carriers.",
+                  "sourceModuleId": "module-preference-profile-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "carrier-preference",
+                  "moduleIds": [
+                    "module-preference-profile-service"
+                  ],
                   "role": "read-write",
-                  "description": "Stores explicit and inferred carrier availability and preferences.",
-                  "storeIds": [
-                    "carrier-preference-db"
-                  ]
+                  "description": "Stores explicit and inferred carrier availability and preferences."
                 }
               ]
             },
@@ -584,25 +973,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Facility addresses, geofences, instructions, appointment rules, dwell patterns, lumper rules, parking, contact, and risk signals.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Dwell intelligence service",
-                  "description": "Learns facility dwell, appointment, and access risk from live and historical loads.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-facility-profile-api",
+                      "name": "Facility profile API",
+                      "type": "api",
+                      "description": "Provides facility rules and dwell risk to carriers, shippers, operations, and pricing.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-dwell-intelligence-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Facility profile API",
-                  "description": "Provides facility rules and dwell risk to carriers, shippers, operations, and pricing.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-dwell-intelligence-service",
+                      "name": "Dwell intelligence service",
+                      "type": "service",
+                      "description": "Learns facility dwell, appointment, and access risk from live and historical loads."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "vis",
+                  "moduleId": "module-visibility-api",
+                  "sourceModuleId": "module-dwell-intelligence-service",
                   "type": "data",
-                  "interface": "Geofence events",
                   "description": "Uses arrival, dwell, and departure events."
                 }
               ],
@@ -611,11 +1022,11 @@
               "dataDependencies": [
                 {
                   "assetId": "facility-profile",
+                  "moduleIds": [
+                    "module-dwell-intelligence-service"
+                  ],
                   "role": "read-write",
-                  "description": "Stores facility master data, operating instructions, and learned dwell metrics.",
-                  "storeIds": [
-                    "facility-profile-db"
-                  ]
+                  "description": "Stores facility master data, operating instructions, and learned dwell metrics."
                 }
               ]
             }
@@ -632,25 +1043,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Carrier-facing load board, targeted offers, booking flow, offer details, acceptance, cancellation, and booking confirmation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Offer composer",
-                  "description": "Builds carrier-facing offer cards with rate, commodity, facility, appointment, equipment, and service requirements.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-carrier-web-and-mobile-offers",
+                      "name": "Carrier web and mobile offers",
+                      "type": "mobile-component",
+                      "description": "Carrier-facing offer discovery and booking surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-offer-composer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Carrier web and mobile offers",
-                  "description": "Carrier-facing offer discovery and booking surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-offer-composer",
+                      "name": "Offer composer",
+                      "type": "service",
+                      "description": "Builds carrier-facing offer cards with rate, commodity, facility, appointment, equipment, and service requirements."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "match",
+                  "moduleId": "module-matching-api",
+                  "sourceModuleId": "module-offer-composer",
                   "type": "composition",
-                  "interface": "Matched carriers",
                   "description": "Targets offers to eligible carriers based on fit and performance."
                 }
               ],
@@ -659,11 +1092,11 @@
               "dataDependencies": [
                 {
                   "assetId": "load-offer",
+                  "moduleIds": [
+                    "module-offer-composer"
+                  ],
                   "role": "read-write",
-                  "description": "Stores offer content, targeting, acceptance, rejection, and cancellation events.",
-                  "storeIds": [
-                    "load-offer-db"
-                  ]
+                  "description": "Stores offer content, targeting, acceptance, rejection, and cancellation events."
                 }
               ]
             },
@@ -673,31 +1106,54 @@
               "type": "service",
               "status": "invest",
               "description": "Ranks carriers for loads using lane fit, equipment, location, preferences, compliance, quality, price, reload potential, and facility history.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Carrier-load fit model",
-                  "description": "Scores candidate carriers and explains matching factors to brokerage and operations users.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-matching-api",
+                      "name": "Matching API",
+                      "type": "api",
+                      "description": "Returns candidate carriers, scores, and reason codes.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-carrier-load-fit-model",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Matching API",
-                  "description": "Returns candidate carriers, scores, and reason codes.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-carrier-load-fit-model",
+                      "name": "Carrier-load fit model",
+                      "type": "service",
+                      "description": "Scores candidate carriers and explains matching factors to brokerage and operations users."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cscore",
+                  "moduleId": "module-carrier-quality-scorer",
+                  "sourceModuleId": "module-carrier-load-fit-model",
                   "type": "data",
-                  "interface": "Carrier quality scores",
                   "description": "Uses carrier service and compliance performance."
                 },
                 {
                   "targetBrickId": "pref",
+                  "moduleId": "module-preference-profile-service",
+                  "sourceModuleId": "module-carrier-load-fit-model",
                   "type": "data",
-                  "interface": "Carrier preferences",
                   "description": "Uses explicit and inferred carrier preferences."
                 }
               ],
@@ -706,11 +1162,11 @@
               "dataDependencies": [
                 {
                   "assetId": "matching-feature",
+                  "moduleIds": [
+                    "module-carrier-load-fit-model"
+                  ],
                   "role": "read",
-                  "description": "Reads features for carrier-load matching.",
-                  "storeIds": [
-                    "matching-feature-store"
-                  ]
+                  "description": "Reads features for carrier-load matching."
                 }
               ]
             },
@@ -720,25 +1176,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Instant and assisted spot quotes, price confidence, buy/sell guidance, quote expiration, and margin guardrails.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Dynamic price service",
-                  "description": "Combines market rates, capacity signals, urgency, facility risk, and margin policy into quote recommendations.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-spot-quote-ui",
+                      "name": "Spot quote UI",
+                      "type": "web-component",
+                      "description": "Shipper and internal quoting workspace.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-dynamic-price-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Spot quote UI",
-                  "description": "Shipper and internal quoting workspace.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-dynamic-price-service",
+                      "name": "Dynamic price service",
+                      "type": "service",
+                      "description": "Combines market rates, capacity signals, urgency, facility risk, and margin policy into quote recommendations."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "rate",
+                  "moduleId": "module-rate-intelligence-api",
+                  "sourceModuleId": "module-dynamic-price-service",
                   "type": "data",
-                  "interface": "Rate benchmarks",
                   "description": "Uses market and historical rates for price guidance."
                 }
               ],
@@ -747,11 +1225,11 @@
               "dataDependencies": [
                 {
                   "assetId": "quote-record",
+                  "moduleIds": [
+                    "module-dynamic-price-service"
+                  ],
                   "role": "read-write",
-                  "description": "Stores quote requests, recommendations, accepted prices, and margin outcomes.",
-                  "storeIds": [
-                    "quote-record-db"
-                  ]
+                  "description": "Stores quote requests, recommendations, accepted prices, and margin outcomes."
                 }
               ]
             },
@@ -761,49 +1239,73 @@
               "type": "service",
               "status": "sustaining",
               "description": "Drop trailer pools, dedicated fleet commitments, trailer availability, yard state, and asset-light dedicated capacity programs.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Trailer pool planner",
-                  "description": "Tracks trailer pools, cycle time, facility needs, and carrier commitments.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-dedicated-capacity-api",
+                      "name": "Dedicated capacity API",
+                      "type": "api",
+                      "description": "Exposes drop trailer and dedicated program availability to planning and tender workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-trailer-pool-planner",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Dedicated capacity API",
-                  "description": "Exposes drop trailer and dedicated program availability to planning and tender workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-trailer-pool-planner",
+                      "name": "Trailer pool planner",
+                      "type": "service",
+                      "description": "Tracks trailer pools, cycle time, facility needs, and carrier commitments."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "fac",
+                  "moduleId": "module-facility-profile-api",
+                  "sourceModuleId": "module-trailer-pool-planner",
                   "type": "composition",
-                  "interface": "Facility rules",
                   "description": "Uses yard, dock, and dwell constraints."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Trailer telematics and yard systems",
-                  "description": "Tracks trailer location and yard state where integrated."
+                  "description": "Tracks trailer location and yard state where integrated.",
+                  "sourceModuleId": "module-trailer-pool-planner"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "capacity-commitment",
+                  "moduleIds": [
+                    "module-trailer-pool-planner"
+                  ],
                   "role": "read-write",
-                  "description": "Stores dedicated and drop trailer capacity commitments.",
-                  "storeIds": [
-                    "capacity-commitment-db"
-                  ]
+                  "description": "Stores dedicated and drop trailer capacity commitments."
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     },
     {
       "name": "Execution and Visibility",
@@ -820,43 +1322,66 @@
               "type": "service",
               "status": "invest",
               "description": "Shipment tracking, milestones, live location, ETA prediction, geofence events, stop status, and visibility data quality.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "ETA prediction service",
-                  "description": "Predicts arrival and delivery risk using route, location, facility, weather, and historical data.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-visibility-api",
+                      "name": "Visibility API",
+                      "type": "api",
+                      "description": "Provides shipment milestones, ETA, and tracking data to portals, operations, and customers.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-eta-prediction-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Visibility API",
-                  "description": "Provides shipment milestones, ETA, and tracking data to portals, operations, and customers.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-eta-prediction-service",
+                      "name": "ETA prediction service",
+                      "type": "service",
+                      "description": "Predicts arrival and delivery risk using route, location, facility, weather, and historical data."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "track",
+                  "moduleId": "module-tracking-consent-and-source-selector",
+                  "sourceModuleId": "module-eta-prediction-service",
                   "type": "data",
-                  "interface": "Carrier tracking events",
                   "description": "Consumes tracking, ELD, telematics, and check-call events."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Telematics, ELD, mobile, rail, ocean, and parcel visibility feeds",
-                  "description": "Receives multimodal location and milestone events."
+                  "description": "Receives multimodal location and milestone events.",
+                  "sourceModuleId": "module-eta-prediction-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "visibility-event",
+                  "moduleIds": [
+                    "module-eta-prediction-service"
+                  ],
                   "role": "read-write",
-                  "description": "Stores milestones, ETA predictions, geofences, and tracking quality data.",
-                  "storeIds": [
-                    "visibility-event-stream"
-                  ]
+                  "description": "Stores milestones, ETA predictions, geofences, and tracking quality data."
                 }
               ]
             },
@@ -866,43 +1391,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Carrier mobile tracking, ELD consent, telematics ingestion, check calls, milestone confirmation, and tracking compliance workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Tracking consent and source selector",
-                  "description": "Chooses the best tracking source and manages consent and fallback check-call workflows.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-carrier-tracking-ui",
+                      "name": "Carrier tracking UI",
+                      "type": "web-component",
+                      "description": "Carrier and operations surfaces for status updates and tracking issue resolution.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-tracking-consent-and-source-selector",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Carrier tracking UI",
-                  "description": "Carrier and operations surfaces for status updates and tracking issue resolution.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-tracking-consent-and-source-selector",
+                      "name": "Tracking consent and source selector",
+                      "type": "service",
+                      "description": "Chooses the best tracking source and manages consent and fallback check-call workflows."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "caron",
+                  "moduleId": "module-carrier-compliance-verifier",
+                  "sourceModuleId": "module-tracking-consent-and-source-selector",
                   "type": "composition",
-                  "interface": "Carrier identity",
                   "description": "Links tracking source and consent to carrier and driver records."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Mobile, ELD, and telematics providers",
-                  "description": "Captures live and event-based tracking data."
+                  "description": "Captures live and event-based tracking data.",
+                  "sourceModuleId": "module-tracking-consent-and-source-selector"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "tracking-event",
+                  "moduleIds": [
+                    "module-tracking-consent-and-source-selector"
+                  ],
                   "role": "read-write",
-                  "description": "Stores tracking signals, source quality, and check-call events.",
-                  "storeIds": [
-                    "tracking-event-stream"
-                  ]
+                  "description": "Stores tracking signals, source quality, and check-call events."
                 }
               ]
             },
@@ -912,43 +1460,66 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Pickup and delivery appointment booking, dock calendars, rescheduling, facility capacity, and warehouse readiness coordination.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Appointment scheduler",
-                  "description": "Matches shipment requirements to facility dock availability and appointment rules.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-appointment-ui-and-api",
+                      "name": "Appointment UI and API",
+                      "type": "mobile-component",
+                      "description": "Facility, shipper, carrier, and operations appointment workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-appointment-scheduler",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Appointment UI and API",
-                  "description": "Facility, shipper, carrier, and operations appointment workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-appointment-scheduler",
+                      "name": "Appointment scheduler",
+                      "type": "service",
+                      "description": "Matches shipment requirements to facility dock availability and appointment rules."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "fac",
+                  "moduleId": "module-facility-profile-api",
+                  "sourceModuleId": "module-appointment-scheduler",
                   "type": "data",
-                  "interface": "Facility rules",
                   "description": "Uses facility hours, dock rules, dwell, and special handling constraints."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Warehouse dock scheduling systems",
-                  "description": "Integrates with shipper and third-party appointment tools."
+                  "description": "Integrates with shipper and third-party appointment tools.",
+                  "sourceModuleId": "module-appointment-scheduler"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "appointment-record",
+                  "moduleIds": [
+                    "module-appointment-scheduler"
+                  ],
                   "role": "read-write",
-                  "description": "Stores dock appointments, reschedules, no-shows, and facility capacity.",
-                  "storeIds": [
-                    "appointment-record-db"
-                  ]
+                  "description": "Stores dock appointments, reschedules, no-shows, and facility capacity."
                 }
               ]
             },
@@ -958,43 +1529,66 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Proof of delivery, bills of lading, lumper receipts, scale tickets, customs documents, claims evidence, OCR, validation, and missing document workflows.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Document validation service",
-                  "description": "Extracts and validates shipment, amount, date, location, and reference fields from documents.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-document-upload-and-review-ui",
+                      "name": "Document upload and review UI",
+                      "type": "web-component",
+                      "description": "Carrier, operations, and shipper document workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-document-validation-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Document upload and review UI",
-                  "description": "Carrier, operations, and shipper document workflows.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-document-validation-service",
+                      "name": "Document validation service",
+                      "type": "service",
+                      "description": "Extracts and validates shipment, amount, date, location, and reference fields from documents."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "tms",
+                  "moduleId": "module-shipment-lifecycle-service",
+                  "sourceModuleId": "module-document-validation-service",
                   "type": "data",
-                  "interface": "Shipment references",
                   "description": "Validates documents against canonical shipment records."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "OCR and document AI providers",
-                  "description": "Supports document extraction and classification where used."
+                  "description": "Supports document extraction and classification where used.",
+                  "sourceModuleId": "module-document-validation-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "freight-document",
+                  "moduleIds": [
+                    "module-document-validation-service"
+                  ],
                   "role": "read-write",
-                  "description": "Stores document metadata, extracted fields, validation state, and retention policy.",
-                  "storeIds": [
-                    "freight-document-store"
-                  ]
+                  "description": "Stores document metadata, extracted fields, validation state, and retention policy."
                 }
               ]
             }
@@ -1011,25 +1605,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Unified operations workspace for load queues, customer commitments, carrier activity, exceptions, communications, documents, and escalations.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Work queue orchestrator",
-                  "description": "Composes operator queues by customer priority, shipment risk, SLA, margin, and automation state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-control-tower-ui",
+                      "name": "Control tower UI",
+                      "type": "web-component",
+                      "description": "Primary workspace for brokerage and managed transportation operations teams.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-work-queue-orchestrator",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Control tower UI",
-                  "description": "Primary workspace for brokerage and managed transportation operations teams.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-work-queue-orchestrator",
+                      "name": "Work queue orchestrator",
+                      "type": "service",
+                      "description": "Composes operator queues by customer priority, shipment risk, SLA, margin, and automation state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "exc",
+                  "moduleId": "module-exception-api",
+                  "sourceModuleId": "module-work-queue-orchestrator",
                   "type": "composition",
-                  "interface": "Exception risk queue",
                   "description": "Uses ranked exceptions and recommended recovery actions."
                 }
               ],
@@ -1038,11 +1654,11 @@
               "dataDependencies": [
                 {
                   "assetId": "operations-case",
+                  "moduleIds": [
+                    "module-work-queue-orchestrator"
+                  ],
                   "role": "read-write",
-                  "description": "Stores work queues, ownership, notes, case states, and escalation outcomes.",
-                  "storeIds": [
-                    "operations-case-db"
-                  ]
+                  "description": "Stores work queues, ownership, notes, case states, and escalation outcomes."
                 }
               ]
             },
@@ -1052,25 +1668,47 @@
               "type": "service",
               "status": "invest",
               "description": "Detects, prioritizes, explains, and guides recovery for tender, pickup, tracking, appointment, document, invoice, and service exceptions.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Exception risk scorer",
-                  "description": "Scores exception severity using service risk, customer importance, margin impact, and recovery window.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-exception-api",
+                      "name": "Exception API",
+                      "type": "api",
+                      "description": "Feeds control tower queues and customer-facing status surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-exception-risk-scorer",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Exception API",
-                  "description": "Feeds control tower queues and customer-facing status surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-exception-risk-scorer",
+                      "name": "Exception risk scorer",
+                      "type": "service",
+                      "description": "Scores exception severity using service risk, customer importance, margin impact, and recovery window."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "vis",
+                  "moduleId": "module-visibility-api",
+                  "sourceModuleId": "module-exception-risk-scorer",
                   "type": "data",
-                  "interface": "Tracking and milestone signals",
                   "description": "Uses tracking, ETA, and milestone anomalies."
                 }
               ],
@@ -1079,11 +1717,11 @@
               "dataDependencies": [
                 {
                   "assetId": "exception-event",
+                  "moduleIds": [
+                    "module-exception-risk-scorer"
+                  ],
                   "role": "read-write",
-                  "description": "Stores detected exceptions, severity, ownership, recovery actions, and closure reasons.",
-                  "storeIds": [
-                    "exception-event-db"
-                  ]
+                  "description": "Stores detected exceptions, severity, ownership, recovery actions, and closure reasons."
                 }
               ]
             },
@@ -1093,43 +1731,66 @@
               "type": "integration",
               "status": "invest",
               "description": "Threaded and auditable communication across email, SMS, portal messages, API events, EDI status, call notes, and customer updates.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Communication timeline service",
-                  "description": "Connects messages, shipment references, parties, and escalation decisions into one timeline.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-communications-inbox",
+                      "name": "Communications inbox",
+                      "type": "web-component",
+                      "description": "Operations workspace for outbound and inbound customer and carrier communication.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-communication-timeline-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Communications inbox",
-                  "description": "Operations workspace for outbound and inbound customer and carrier communication.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-communication-timeline-service",
+                      "name": "Communication timeline service",
+                      "type": "service",
+                      "description": "Connects messages, shipment references, parties, and escalation decisions into one timeline."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ops",
+                  "moduleId": "module-work-queue-orchestrator",
+                  "sourceModuleId": "module-communication-timeline-service",
                   "type": "composition",
-                  "interface": "Operations case",
                   "description": "Links messages to the correct shipment and case context."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Email, SMS, voice, EDI, and customer messaging systems",
-                  "description": "Sends and receives operational communications."
+                  "description": "Sends and receives operational communications.",
+                  "sourceModuleId": "module-communication-timeline-service"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "communication-thread",
+                  "moduleIds": [
+                    "module-communication-timeline-service"
+                  ],
                   "role": "read-write",
-                  "description": "Stores conversations, participants, channels, and audit history.",
-                  "storeIds": [
-                    "communication-thread-db"
-                  ]
+                  "description": "Stores conversations, participants, channels, and audit history."
                 }
               ]
             },
@@ -1139,25 +1800,47 @@
               "type": "service",
               "status": "invest",
               "description": "Rules, agents, and playbooks for tender follow-up, status requests, document collection, invoice checks, customer updates, and escalation routing.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Automation policy engine",
-                  "description": "Executes workflow actions with guardrails, approvals, audit logs, and fallback to humans.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-automation-management-ui",
+                      "name": "Automation management UI",
+                      "type": "web-component",
+                      "description": "Operations and product controls for playbooks, rules, approvals, and outcomes.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-automation-policy-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Automation management UI",
-                  "description": "Operations and product controls for playbooks, rules, approvals, and outcomes.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-automation-policy-engine",
+                      "name": "Automation policy engine",
+                      "type": "service",
+                      "description": "Executes workflow actions with guardrails, approvals, audit logs, and fallback to humans."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "ops",
+                  "moduleId": "module-work-queue-orchestrator",
+                  "sourceModuleId": "module-automation-policy-engine",
                   "type": "composition",
-                  "interface": "Work queue",
                   "description": "Consumes and updates operations cases."
                 }
               ],
@@ -1166,17 +1849,18 @@
               "dataDependencies": [
                 {
                   "assetId": "automation-run",
+                  "moduleIds": [
+                    "module-automation-policy-engine"
+                  ],
                   "role": "read-write",
-                  "description": "Stores automation decisions, approvals, actions, outcomes, and audit traces.",
-                  "storeIds": [
-                    "automation-run-log"
-                  ]
+                  "description": "Stores automation decisions, approvals, actions, outcomes, and audit traces."
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     },
     {
       "name": "Financial and Intelligence Foundations",
@@ -1193,43 +1877,66 @@
               "type": "service",
               "status": "sustaining",
               "description": "Freight bill audit, accessorial validation, fuel, detention, accruals, cost allocation, and invoice exception detection.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Invoice matching engine",
-                  "description": "Compares invoice lines against shipment, rate, document, accessorial, and contract data.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-freight-audit-api",
+                      "name": "Freight audit API",
+                      "type": "api",
+                      "description": "Exposes invoice validation and accrual outputs to finance and settlement workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-invoice-matching-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Freight audit API",
-                  "description": "Exposes invoice validation and accrual outputs to finance and settlement workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-invoice-matching-engine",
+                      "name": "Invoice matching engine",
+                      "type": "service",
+                      "description": "Compares invoice lines against shipment, rate, document, accessorial, and contract data."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "docs",
+                  "moduleId": "module-document-validation-service",
+                  "sourceModuleId": "module-invoice-matching-engine",
                   "type": "data",
-                  "interface": "Document validation",
                   "description": "Uses proof and supporting documents before invoice approval."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Customer ERP and finance systems",
-                  "description": "Receives invoice and cost allocation data."
+                  "description": "Receives invoice and cost allocation data.",
+                  "sourceModuleId": "module-invoice-matching-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "freight-invoice",
+                  "moduleIds": [
+                    "module-invoice-matching-engine"
+                  ],
                   "role": "read-write",
-                  "description": "Stores invoice lines, audit results, accruals, disputes, and allocation data.",
-                  "storeIds": [
-                    "freight-invoice-db"
-                  ]
+                  "description": "Stores invoice lines, audit results, accruals, disputes, and allocation data."
                 }
               ]
             },
@@ -1239,43 +1946,66 @@
               "type": "service",
               "status": "invest",
               "description": "Carrier payment, shipper billing, accessorial adjustments, claims, chargebacks, payment status, tax, and financial reconciliation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Settlement ledger",
-                  "description": "Tracks payable, receivable, adjustment, claim, and settlement lifecycle by shipment.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-settlement-api",
+                      "name": "Settlement API",
+                      "type": "api",
+                      "description": "Provides payment and claims state to shipper, carrier, and operations workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-settlement-ledger",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Settlement API",
-                  "description": "Provides payment and claims state to shipper, carrier, and operations workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-settlement-ledger",
+                      "name": "Settlement ledger",
+                      "type": "service",
+                      "description": "Tracks payable, receivable, adjustment, claim, and settlement lifecycle by shipment."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "audit",
+                  "moduleId": "module-freight-audit-api",
+                  "sourceModuleId": "module-settlement-ledger",
                   "type": "composition",
-                  "interface": "Invoice audit result",
                   "description": "Settles only validated or approved invoice lines."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Payment processors, banks, ERP, and tax systems",
-                  "description": "Executes payment, billing, and reconciliation transactions."
+                  "description": "Executes payment, billing, and reconciliation transactions.",
+                  "sourceModuleId": "module-settlement-ledger"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "settlement-record",
+                  "moduleIds": [
+                    "module-settlement-ledger"
+                  ],
                   "role": "read-write",
-                  "description": "Stores receivables, payables, claims, adjustments, payment status, and ledger references.",
-                  "storeIds": [
-                    "settlement-record-db"
-                  ]
+                  "description": "Stores receivables, payables, claims, adjustments, payment status, and ledger references."
                 }
               ]
             },
@@ -1285,36 +2015,58 @@
               "type": "service",
               "status": "sustaining",
               "description": "Shipper and carrier identity, account access, cargo theft risk, compliance screening, sanctions, fraud detection, and policy controls.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Freight fraud risk engine",
-                  "description": "Detects suspicious carrier, payment, document, identity, and load-tender patterns.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-risk-decision-api",
+                      "name": "Risk decision API",
+                      "type": "api",
+                      "description": "Returns risk decisions and required controls to onboarding, booking, payment, and operations workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-freight-fraud-risk-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Risk decision API",
-                  "description": "Returns risk decisions and required controls to onboarding, booking, payment, and operations workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-freight-fraud-risk-engine",
+                      "name": "Freight fraud risk engine",
+                      "type": "service",
+                      "description": "Detects suspicious carrier, payment, document, identity, and load-tender patterns."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Identity, sanctions, insurance, and carrier authority data providers",
-                  "description": "Supports eligibility, risk, and compliance decisions."
+                  "description": "Supports eligibility, risk, and compliance decisions.",
+                  "sourceModuleId": "module-freight-fraud-risk-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "risk-signal",
+                  "moduleIds": [
+                    "module-freight-fraud-risk-engine"
+                  ],
                   "role": "read-write",
-                  "description": "Stores risk signals, decisions, overrides, reviews, and audit trails.",
-                  "storeIds": [
-                    "risk-signal-store"
-                  ]
+                  "description": "Stores risk signals, decisions, overrides, reviews, and audit trails."
                 }
               ]
             },
@@ -1324,43 +2076,66 @@
               "type": "service",
               "status": "invest",
               "description": "Fuel surcharge, detention, layover, lumper, toll, accessorial, and customer-specific financial rule calculation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Accessorial rules engine",
-                  "description": "Computes eligible charges using contract terms, facility events, documents, and approvals.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-accessorial-api",
+                      "name": "Accessorial API",
+                      "type": "api",
+                      "description": "Provides charge eligibility and calculation outputs to audit, settlement, and quote workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-accessorial-rules-engine",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Accessorial API",
-                  "description": "Provides charge eligibility and calculation outputs to audit, settlement, and quote workflows.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-accessorial-rules-engine",
+                      "name": "Accessorial rules engine",
+                      "type": "service",
+                      "description": "Computes eligible charges using contract terms, facility events, documents, and approvals."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "fac",
+                  "moduleId": "module-facility-profile-api",
+                  "sourceModuleId": "module-accessorial-rules-engine",
                   "type": "data",
-                  "interface": "Facility dwell events",
                   "description": "Uses arrival, departure, and dwell data for detention eligibility."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Fuel index data providers",
-                  "description": "Uses published fuel index values for surcharge calculation."
+                  "description": "Uses published fuel index values for surcharge calculation.",
+                  "sourceModuleId": "module-accessorial-rules-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "financial-rule",
+                  "moduleIds": [
+                    "module-accessorial-rules-engine"
+                  ],
                   "role": "read-write",
-                  "description": "Stores contract financial rules, indices, accessorial terms, and calculation results.",
-                  "storeIds": [
-                    "financial-rule-db"
-                  ]
+                  "description": "Stores contract financial rules, indices, accessorial terms, and calculation results."
                 }
               ]
             }
@@ -1377,25 +2152,47 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Shipper, carrier, lane, facility, operations, service, cost, emissions, and financial performance analytics.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Freight KPI semantic layer",
-                  "description": "Standardizes metric definitions for service, cost, margin, productivity, quality, and emissions.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-analytics-ui",
+                      "name": "Analytics UI",
+                      "type": "web-component",
+                      "description": "Scorecards and dashboards for shippers, carriers, operations, and leadership.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-freight-kpi-semantic-layer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Analytics UI",
-                  "description": "Scorecards and dashboards for shippers, carriers, operations, and leadership.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-freight-kpi-semantic-layer",
+                      "name": "Freight KPI semantic layer",
+                      "type": "service",
+                      "description": "Standardizes metric definitions for service, cost, margin, productivity, quality, and emissions."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "data",
+                  "moduleId": "module-data-products-and-feature-apis",
+                  "sourceModuleId": "module-freight-kpi-semantic-layer",
                   "type": "data",
-                  "interface": "Analytics data platform",
                   "description": "Uses governed operational and financial datasets."
                 }
               ],
@@ -1404,11 +2201,11 @@
               "dataDependencies": [
                 {
                   "assetId": "performance-metric",
+                  "moduleIds": [
+                    "module-freight-kpi-semantic-layer"
+                  ],
                   "role": "read-write",
-                  "description": "Stores governed KPI definitions, metric values, and scorecard outputs.",
-                  "storeIds": [
-                    "performance-metric-store"
-                  ]
+                  "description": "Stores governed KPI definitions, metric values, and scorecard outputs."
                 }
               ]
             },
@@ -1418,37 +2215,58 @@
               "type": "service",
               "status": "sustaining",
               "description": "Canonical freight data model, event streams, data quality, warehouse, feature store, metric layer, lineage, and governance.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Freight event backbone",
-                  "description": "Normalizes shipment, tender, visibility, document, invoice, risk, and communication events.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-data-products-and-feature-apis",
+                      "name": "Data products and feature APIs",
+                      "type": "api",
+                      "description": "Governed access to operational analytics, ML features, and metric datasets.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-freight-event-backbone",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Data products and feature APIs",
-                  "description": "Governed access to operational analytics, ML features, and metric datasets.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-freight-event-backbone",
+                      "name": "Freight event backbone",
+                      "type": "service",
+                      "description": "Normalizes shipment, tender, visibility, document, invoice, risk, and communication events."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Operational databases and data warehouse",
-                  "description": "Ingests and serves freight operational and analytical data."
+                  "description": "Ingests and serves freight operational and analytical data.",
+                  "sourceModuleId": "module-freight-event-backbone"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "freight-event",
+                  "moduleIds": [
+                    "module-freight-event-backbone"
+                  ],
                   "role": "read-write",
-                  "description": "Stores normalized event streams and canonical entities for the domain.",
-                  "storeIds": [
-                    "freight-event-lake",
-                    "freight-feature-store"
-                  ]
+                  "description": "Stores normalized event streams and canonical entities for the domain."
                 }
               ]
             },
@@ -1458,25 +2276,47 @@
               "type": "service",
               "status": "sustaining",
               "description": "Controlled rollout, A/B tests, policy decisions, pricing experiments, routing guide tests, and model governance.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Decision policy registry",
-                  "description": "Tracks experiments, rule versions, model versions, approvals, guardrails, and outcomes.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-experimentation-api",
+                      "name": "Experimentation API",
+                      "type": "api",
+                      "description": "Assigns variants and records exposure/outcome events.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-decision-policy-registry",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Experimentation API",
-                  "description": "Assigns variants and records exposure/outcome events.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-decision-policy-registry",
+                      "name": "Decision policy registry",
+                      "type": "service",
+                      "description": "Tracks experiments, rule versions, model versions, approvals, guardrails, and outcomes."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "data",
+                  "moduleId": "module-data-products-and-feature-apis",
+                  "sourceModuleId": "module-decision-policy-registry",
                   "type": "data",
-                  "interface": "Experiment event data",
                   "description": "Writes exposure and outcome events to governed data platform."
                 }
               ],
@@ -1485,11 +2325,11 @@
               "dataDependencies": [
                 {
                   "assetId": "decision-experiment",
+                  "moduleIds": [
+                    "module-decision-policy-registry"
+                  ],
                   "role": "read-write",
-                  "description": "Stores experiments, variants, decisions, exposure events, outcomes, and approvals.",
-                  "storeIds": [
-                    "decision-experiment-db"
-                  ]
+                  "description": "Stores experiments, variants, decisions, exposure events, outcomes, and approvals."
                 }
               ]
             },
@@ -1499,49 +2339,73 @@
               "type": "service",
               "status": "sustaining",
               "description": "Shipment emissions estimates, mode-shift scenarios, carrier sustainability attributes, shipper reporting, and carbon-aware optimization signals.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Emissions calculator",
-                  "description": "Estimates shipment and lane emissions by mode, distance, equipment, carrier, and load factor.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-sustainability-reporting-api",
+                      "name": "Sustainability reporting API",
+                      "type": "api",
+                      "description": "Provides emissions metrics to planning, analytics, and shipper reporting surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-emissions-calculator",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Sustainability reporting API",
-                  "description": "Provides emissions metrics to planning, analytics, and shipper reporting surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-emissions-calculator",
+                      "name": "Emissions calculator",
+                      "type": "service",
+                      "description": "Estimates shipment and lane emissions by mode, distance, equipment, carrier, and load factor."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "mode",
+                  "moduleId": "module-mode-recommendation-api",
+                  "sourceModuleId": "module-emissions-calculator",
                   "type": "composition",
-                  "interface": "Mode options",
                   "description": "Uses mode alternatives for emissions and cost tradeoffs."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Emissions factor datasets",
-                  "description": "Uses accepted emissions factors and carrier sustainability data."
+                  "description": "Uses accepted emissions factors and carrier sustainability data.",
+                  "sourceModuleId": "module-emissions-calculator"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "emissions-record",
+                  "moduleIds": [
+                    "module-emissions-calculator"
+                  ],
                   "role": "read-write",
-                  "description": "Stores shipment, lane, carrier, and mode emissions calculations and assumptions.",
-                  "storeIds": [
-                    "emissions-record-db"
-                  ]
+                  "description": "Stores shipment, lane, carrier, and mode emissions calculations and assumptions."
                 }
               ]
             }
           ]
         }
-      ]
+      ],
+      "bricks": []
     }
   ]
 }

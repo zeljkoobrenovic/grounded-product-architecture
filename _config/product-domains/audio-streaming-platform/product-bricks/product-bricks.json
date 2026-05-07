@@ -24,7 +24,7 @@
         }
       ]
     },
-    "types": [
+    "brickTypes": [
       {
         "id": "full-stack",
         "name": "full-stack capability",
@@ -46,7 +46,7 @@
         "color": "#c9daf8ff"
       }
     ],
-    "statuses": [
+    "brickStatuses": [
       {
         "id": "invest",
         "name": "invest",
@@ -62,7 +62,139 @@
         "name": "sunset",
         "color": "crimson"
       }
-    ]
+    ],
+    "modulesConfig": {
+      "layerTypes": [
+        {
+          "id": "ui",
+          "name": "ui",
+          "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+          "hostsModules": [
+            "web-component",
+            "mobile-component"
+          ]
+        },
+        {
+          "id": "interfaces",
+          "name": "interfaces",
+          "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+          "hostsModules": [
+            "bff",
+            "api",
+            "backoffice-interface"
+          ]
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "description": "Message queues, event consumers, daemons, and asynchronous processing modules.",
+          "hostsModules": [
+            "message-queue",
+            "message-consumer",
+            "daemon"
+          ]
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "Stateless orchestration services that aggregate other services without owning durable state.",
+          "hostsModules": [
+            "stateless-service"
+          ]
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+          "hostsModules": [
+            "stateful-service",
+            "service"
+          ]
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.",
+          "hostsModules": [
+            "integration"
+          ]
+        }
+      ],
+      "moduleTypes": [
+        {
+          "id": "web-component",
+          "name": "web component",
+          "description": "A browser-based user interface module.",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "mobile-component",
+          "name": "mobile component",
+          "description": "A mobile application user interface module.",
+          "color": "#ede9fe"
+        },
+        {
+          "id": "bff",
+          "name": "bff",
+          "description": "A backend-for-frontend module that shapes APIs for a specific client experience.",
+          "color": "#fef3c7"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "description": "A programmatic API module exposed to product clients, partners, or other systems.",
+          "color": "#e0f2fe"
+        },
+        {
+          "id": "backoffice-interface",
+          "name": "backoffice interface",
+          "description": "An internal operations or administration interface module.",
+          "color": "#fce7f3"
+        },
+        {
+          "id": "message-queue",
+          "name": "message queue",
+          "description": "A queue module used for asynchronous communication between modules or systems.",
+          "color": "#ffedd5"
+        },
+        {
+          "id": "message-consumer",
+          "name": "message consumer",
+          "description": "A consumer module that processes messages or events from a bus.",
+          "color": "#fef9c3"
+        },
+        {
+          "id": "daemon",
+          "name": "daemon",
+          "description": "A background worker or daemon module.",
+          "color": "#e5e7eb"
+        },
+        {
+          "id": "stateless-service",
+          "name": "stateless service",
+          "description": "A service module that orchestrates work without owning durable state.",
+          "color": "#ccfbf1"
+        },
+        {
+          "id": "stateful-service",
+          "name": "stateful service",
+          "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.",
+          "color": "#dcfce7"
+        },
+        {
+          "id": "service",
+          "name": "service",
+          "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.",
+          "color": "#d1fae5"
+        },
+        {
+          "id": "integration",
+          "name": "integration",
+          "description": "A connector or adapter module for an external system, partner, device, or platform.",
+          "color": "#fae8ff"
+        }
+      ]
+    }
   },
   "rootGroups": [
     {
@@ -80,31 +212,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "The personalized home feed that assembles recommendations, recirculation modules, and context-aware entry points.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Home ranking orchestration",
-                  "description": "Builds personalized modules and order for each session.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-home-feed-ui",
+                      "name": "Home feed UI",
+                      "type": "web-component",
+                      "description": "Listener-facing home surface across app, desktop, and web.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-home-ranking-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Home feed UI",
-                  "description": "Listener-facing home surface across app, desktop, and web.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-home-ranking-orchestration",
+                      "name": "Home ranking orchestration",
+                      "type": "service",
+                      "description": "Builds personalized modules and order for each session."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "reco",
+                  "moduleId": "module-recommendation-apis",
+                  "sourceModuleId": "module-home-ranking-orchestration",
                   "type": "composition",
-                  "interface": "Recommendation bundle API",
                   "description": "Uses recommendation candidates and confidence scores."
                 },
                 {
                   "targetBrickId": "edit",
+                  "moduleId": "module-editorial-campaign-composer",
+                  "sourceModuleId": "module-home-ranking-orchestration",
                   "type": "composition",
-                  "interface": "Editorial rails feed",
                   "description": "Mixes editorial programming into personalized home."
                 }
               ],
@@ -113,19 +268,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-home-ranking-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-home-ranking-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             },
@@ -135,31 +290,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Search and retrieval across tracks, artists, shows, episodes, audiobooks, playlists, and saved library items.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Unified search index",
-                  "description": "Indexes multi-format content and account library state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-search-ui",
+                      "name": "Search UI",
+                      "type": "web-component",
+                      "description": "Query, autocomplete, filters, and result ranking surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-unified-search-index",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Search UI",
-                  "description": "Query, autocomplete, filters, and result ranking surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-unified-search-index",
+                      "name": "Unified search index",
+                      "type": "service",
+                      "description": "Indexes multi-format content and account library state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cata",
+                  "moduleId": "module-catalog-apis",
+                  "sourceModuleId": "module-unified-search-index",
                   "type": "data",
-                  "interface": "Catalog graph",
                   "description": "Depends on normalized metadata and entity relationships."
                 },
                 {
                   "targetBrickId": "libr",
+                  "moduleId": "module-personal-library-service",
+                  "sourceModuleId": "module-unified-search-index",
                   "type": "data",
-                  "interface": "User library state",
                   "description": "Uses saved-item and history state to improve retrieval."
                 }
               ],
@@ -168,27 +346,27 @@
               "dataDependencies": [
                 {
                   "assetId": "search-library-retrieval",
+                  "moduleIds": [
+                    "module-unified-search-index"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Search Library Retrieval.",
-                  "storeIds": [
-                    "search-library-retrieval-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Search Library Retrieval."
                 },
                 {
                   "assetId": "library-likes-collections",
+                  "moduleIds": [
+                    "module-unified-search-index"
+                  ],
                   "role": "read",
-                  "description": "Reads Library Likes Collections to support domain workflows.",
-                  "storeIds": [
-                    "library-likes-collections-store"
-                  ]
+                  "description": "Reads Library Likes Collections to support domain workflows."
                 },
                 {
                   "assetId": "artist-profile-presence",
+                  "moduleIds": [
+                    "module-unified-search-index"
+                  ],
                   "role": "read",
-                  "description": "Reads Artist Profile Presence to support domain workflows.",
-                  "storeIds": [
-                    "artist-profile-presence-store"
-                  ]
+                  "description": "Reads Artist Profile Presence to support domain workflows."
                 }
               ]
             },
@@ -198,31 +376,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Personalized recommendations, mixes, radios, and taste-shaping suggestions across formats.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Recommendation model serving",
-                  "description": "Produces personalized candidates and next-best listening options.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-apis",
+                      "name": "Recommendation APIs",
+                      "type": "api",
+                      "description": "Serves recommendations to home, search, and playlist surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-recommendation-model-serving",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Recommendation APIs",
-                  "description": "Serves recommendations to home, search, and playlist surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-recommendation-model-serving",
+                      "name": "Recommendation model serving",
+                      "type": "service",
+                      "description": "Produces personalized candidates and next-best listening options."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "intel",
+                  "moduleId": "module-experiment-and-insight-platform",
+                  "sourceModuleId": "module-recommendation-model-serving",
                   "type": "insight",
-                  "interface": "Experiment and model features",
                   "description": "Uses experimentation and ranking intelligence."
                 },
                 {
                   "targetBrickId": "play",
+                  "moduleId": "module-cross-device-playback-engine",
+                  "sourceModuleId": "module-recommendation-model-serving",
                   "type": "feedback",
-                  "interface": "Playback event stream",
                   "description": "Learns from playback and skip behavior."
                 }
               ],
@@ -231,19 +432,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-recommendation-model-serving"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-recommendation-model-serving"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             },
@@ -253,25 +454,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Human-curated playlists, cultural programming, launch moments, and seasonal merchandising.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Editorial campaign composer",
-                  "description": "Creates and schedules editorial modules and playlist placements.",
-                  "type": "full-stack"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-editorial-tooling",
+                      "name": "Editorial tooling",
+                      "type": "web-component",
+                      "description": "Internal and semi-automated tools for editors and programming teams.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-editorial-campaign-composer",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Editorial tooling",
-                  "description": "Internal and semi-automated tools for editors and programming teams.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-editorial-campaign-composer",
+                      "name": "Editorial campaign composer",
+                      "type": "service",
+                      "description": "Creates and schedules editorial modules and playlist placements."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "prof",
+                  "moduleId": "module-artist-profile-manager",
+                  "sourceModuleId": "module-editorial-campaign-composer",
                   "type": "context",
-                  "interface": "Artist and creator metadata",
                   "description": "Uses creator profile state and campaign context."
                 }
               ],
@@ -280,19 +503,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-editorial-campaign-composer"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-editorial-campaign-composer"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             }
@@ -309,31 +532,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Streaming playback, queue management, device handoff, session continuity, and consumption telemetry.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Cross-device playback engine",
-                  "description": "Coordinates playback state and stream continuation across device contexts.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-now-playing-ui",
+                      "name": "Now playing UI",
+                      "type": "web-component",
+                      "description": "Playback controls, queue, connect, and device-switching surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-cross-device-playback-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Now playing UI",
-                  "description": "Playback controls, queue, connect, and device-switching surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-cross-device-playback-engine",
+                      "name": "Cross-device playback engine",
+                      "type": "service",
+                      "description": "Coordinates playback state and stream continuation across device contexts."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-account-identity-service",
+                  "sourceModuleId": "module-cross-device-playback-engine",
                   "type": "identity",
-                  "interface": "Account and session service",
                   "description": "Uses authenticated identity and entitlement state."
                 },
                 {
                   "targetBrickId": "cata",
+                  "moduleId": "module-catalog-apis",
+                  "sourceModuleId": "module-cross-device-playback-engine",
                   "type": "content",
-                  "interface": "Playable asset metadata",
                   "description": "Requires playable asset, availability, and format metadata."
                 }
               ],
@@ -342,35 +588,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-cross-device-playback-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-cross-device-playback-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-cross-device-playback-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-cross-device-playback-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -380,25 +626,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Saved content, playlists, follows, likes, recents, and other durable listener state.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Personal library service",
-                  "description": "Stores collections, likes, follows, and playlist state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-your-library-ui",
+                      "name": "Your Library UI",
+                      "type": "web-component",
+                      "description": "Library browsing, playlist editing, and saved content management.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-personal-library-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Your Library UI",
-                  "description": "Library browsing, playlist editing, and saved content management.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-personal-library-service",
+                      "name": "Personal library service",
+                      "type": "service",
+                      "description": "Stores collections, likes, follows, and playlist state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cata",
+                  "moduleId": "module-catalog-apis",
+                  "sourceModuleId": "module-personal-library-service",
                   "type": "reference",
-                  "interface": "Content entity resolution",
                   "description": "Uses content metadata to render collections cleanly."
                 }
               ],
@@ -407,19 +675,19 @@
               "dataDependencies": [
                 {
                   "assetId": "library-likes-collections",
+                  "moduleIds": [
+                    "module-personal-library-service"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Library Likes Collections.",
-                  "storeIds": [
-                    "library-likes-collections-store"
-                  ]
+                  "description": "Acts as the primary owning brick for Library Likes Collections."
                 },
                 {
                   "assetId": "search-library-retrieval",
+                  "moduleIds": [
+                    "module-personal-library-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Search Library Retrieval to support domain workflows.",
-                  "storeIds": [
-                    "search-library-retrieval-db"
-                  ]
+                  "description": "Reads Search Library Retrieval to support domain workflows."
                 }
               ]
             },
@@ -429,31 +697,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Playlist sharing, collaborative playlists, follow loops, and socially driven recirculation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Sharing and follow graph service",
-                  "description": "Handles follows, collaborative permissions, and share intent.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-share-and-social-surfaces",
+                      "name": "Share and social surfaces",
+                      "type": "web-component",
+                      "description": "Listener-facing sharing, collaboration, and follow prompts.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-sharing-and-follow-graph-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Share and social surfaces",
-                  "description": "Listener-facing sharing, collaboration, and follow prompts.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-sharing-and-follow-graph-service",
+                      "name": "Sharing and follow graph service",
+                      "type": "service",
+                      "description": "Handles follows, collaborative permissions, and share intent."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "libr",
+                  "moduleId": "module-personal-library-service",
+                  "sourceModuleId": "module-sharing-and-follow-graph-service",
                   "type": "data",
-                  "interface": "Collection state",
                   "description": "Shares playlists and saved content state."
                 },
                 {
                   "targetBrickId": "prof",
+                  "moduleId": "module-artist-profile-manager",
+                  "sourceModuleId": "module-sharing-and-follow-graph-service",
                   "type": "context",
-                  "interface": "Creator profile links",
                   "description": "Connects listeners to creator follow surfaces."
                 }
               ],
@@ -462,19 +753,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-sharing-and-follow-graph-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-sharing-and-follow-graph-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             },
@@ -484,31 +775,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Plan selection, upsell, household management, trials, entitlements, and plan lifecycle changes.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Entitlements and plan orchestration",
-                  "description": "Controls plan state, trials, eligibility, and upsell logic.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-premium-plan-ui",
+                      "name": "Premium plan UI",
+                      "type": "web-component",
+                      "description": "Plan comparison, purchase, and account-management experiences.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-entitlements-and-plan-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Premium plan UI",
-                  "description": "Plan comparison, purchase, and account-management experiences.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-entitlements-and-plan-orchestration",
+                      "name": "Entitlements and plan orchestration",
+                      "type": "service",
+                      "description": "Controls plan state, trials, eligibility, and upsell logic."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "bill",
+                  "moduleId": "module-revenue-ledger-and-settlement-engine",
+                  "sourceModuleId": "module-entitlements-and-plan-orchestration",
                   "type": "financial",
-                  "interface": "Subscription billing service",
                   "description": "Depends on billing, invoicing, and payment state."
                 },
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-account-identity-service",
+                  "sourceModuleId": "module-entitlements-and-plan-orchestration",
                   "type": "identity",
-                  "interface": "Account ownership model",
                   "description": "Uses account and household state."
                 }
               ],
@@ -517,19 +831,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-entitlements-and-plan-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-entitlements-and-plan-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             }
@@ -553,25 +867,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Profile configuration, artist identity, merch and link surfaces, and owned creator presence on Spotify.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Artist profile manager",
-                  "description": "Controls profile metadata, images, links, and featured modules.",
-                  "type": "full-stack"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-spotify-for-artists-profile-editor",
+                      "name": "Spotify for Artists profile editor",
+                      "type": "web-component",
+                      "description": "Artist-facing profile management UI.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-artist-profile-manager",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Spotify for Artists profile editor",
-                  "description": "Artist-facing profile management UI.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-artist-profile-manager",
+                      "name": "Artist profile manager",
+                      "type": "service",
+                      "description": "Controls profile metadata, images, links, and featured modules."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cata",
+                  "moduleId": "module-catalog-apis",
+                  "sourceModuleId": "module-artist-profile-manager",
                   "type": "reference",
-                  "interface": "Artist entity graph",
                   "description": "Uses canonical artist and release metadata."
                 }
               ],
@@ -580,35 +916,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-artist-profile-manager"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-artist-profile-manager"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-artist-profile-manager"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-artist-profile-manager"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -618,31 +954,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Release readiness, metadata checks, pitching, launch-state orchestration, and release calendars.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Release readiness workflow",
-                  "description": "Coordinates metadata, schedule, and eligibility checks before launch.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-release-planning-ui",
+                      "name": "Release planning UI",
+                      "type": "web-component",
+                      "description": "Artist-facing launch and pre-release preparation tools.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-release-readiness-workflow",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Release planning UI",
-                  "description": "Artist-facing launch and pre-release preparation tools.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-release-readiness-workflow",
+                      "name": "Release readiness workflow",
+                      "type": "service",
+                      "description": "Coordinates metadata, schedule, and eligibility checks before launch."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "righ",
+                  "moduleId": "module-rights-policy-engine",
+                  "sourceModuleId": "module-release-readiness-workflow",
                   "type": "governance",
-                  "interface": "Rights and availability rules",
                   "description": "Uses rights and territory state to validate launches."
                 },
                 {
                   "targetBrickId": "cata",
+                  "moduleId": "module-catalog-apis",
+                  "sourceModuleId": "module-release-readiness-workflow",
                   "type": "metadata",
-                  "interface": "Release metadata graph",
                   "description": "Depends on normalized catalog metadata."
                 }
               ],
@@ -651,19 +1010,19 @@
               "dataDependencies": [
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-release-readiness-workflow"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Release Operations.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Release Operations."
                 },
                 {
                   "assetId": "billing-revenue-operations",
+                  "moduleIds": [
+                    "module-release-readiness-workflow"
+                  ],
                   "role": "read",
-                  "description": "Reads Billing Revenue Operations to support domain workflows.",
-                  "storeIds": [
-                    "billing-revenue-operations-db"
-                  ]
+                  "description": "Reads Billing Revenue Operations to support domain workflows."
                 }
               ]
             },
@@ -673,31 +1032,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Release campaigns such as Marquee-style promotions, showcase placements, and high-intent fan activation.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Campaign eligibility and targeting service",
-                  "description": "Finds the right listeners for artist release campaigns.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-campaign-manager-ui",
+                      "name": "Campaign manager UI",
+                      "type": "web-component",
+                      "description": "Artist and team interface for launching fan campaigns.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-campaign-eligibility-and-targeting-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Campaign manager UI",
-                  "description": "Artist and team interface for launching fan campaigns.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-campaign-eligibility-and-targeting-service",
+                      "name": "Campaign eligibility and targeting service",
+                      "type": "service",
+                      "description": "Finds the right listeners for artist release campaigns."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "adsg",
+                  "moduleId": "module-audience-segment-builder",
+                  "sourceModuleId": "module-campaign-eligibility-and-targeting-service",
                   "type": "audience",
-                  "interface": "Audience segment API",
                   "description": "Uses audience eligibility and fan propensity segments."
                 },
                 {
                   "targetBrickId": "musa",
+                  "moduleId": "module-music-insights-warehouse-views",
+                  "sourceModuleId": "module-campaign-eligibility-and-targeting-service",
                   "type": "feedback",
-                  "interface": "Music analytics",
                   "description": "Uses performance insight to tune campaigns."
                 }
               ],
@@ -706,19 +1088,19 @@
               "dataDependencies": [
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-campaign-eligibility-and-targeting-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 },
                 {
                   "assetId": "campaign-booking-delivery",
+                  "moduleIds": [
+                    "module-campaign-eligibility-and-targeting-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Campaign Booking Delivery to support domain workflows.",
-                  "storeIds": [
-                    "campaign-booking-delivery-store"
-                  ]
+                  "description": "Reads Campaign Booking Delivery to support domain workflows."
                 }
               ]
             },
@@ -728,31 +1110,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Artist and team analytics for audience growth, release performance, geography, sources, and fan cohorts.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Music insights warehouse views",
-                  "description": "Aggregates audience, release, and source-of-stream metrics.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-artist-analytics-ui",
+                      "name": "Artist analytics UI",
+                      "type": "web-component",
+                      "description": "Spotify for Artists reporting and insights surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-music-insights-warehouse-views",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Artist analytics UI",
-                  "description": "Spotify for Artists reporting and insights surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-music-insights-warehouse-views",
+                      "name": "Music insights warehouse views",
+                      "type": "service",
+                      "description": "Aggregates audience, release, and source-of-stream metrics."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "intel",
+                  "moduleId": "module-experiment-and-insight-platform",
+                  "sourceModuleId": "module-music-insights-warehouse-views",
                   "type": "data",
-                  "interface": "Analytics model layer",
                   "description": "Uses shared experimentation and analytics foundations."
                 },
                 {
                   "targetBrickId": "play",
+                  "moduleId": "module-cross-device-playback-engine",
+                  "sourceModuleId": "module-music-insights-warehouse-views",
                   "type": "events",
-                  "interface": "Consumption telemetry",
                   "description": "Depends on reliable playback event streams."
                 }
               ],
@@ -761,27 +1166,27 @@
               "dataDependencies": [
                 {
                   "assetId": "audience-analytics-for-music",
+                  "moduleIds": [
+                    "module-music-insights-warehouse-views"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Audience Analytics For Music.",
-                  "storeIds": [
-                    "audience-analytics-for-music-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Audience Analytics For Music."
                 },
                 {
                   "assetId": "artist-profile-presence",
+                  "moduleIds": [
+                    "module-music-insights-warehouse-views"
+                  ],
                   "role": "read",
-                  "description": "Reads Artist Profile Presence to support domain workflows.",
-                  "storeIds": [
-                    "artist-profile-presence-store"
-                  ]
+                  "description": "Reads Artist Profile Presence to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-music-insights-warehouse-views"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             }
@@ -798,31 +1203,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Show, episode, and video publishing workflows with episode state, distribution, and quality controls.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Creator publishing pipeline",
-                  "description": "Handles ingestion, validation, scheduling, and publish state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-publishing-studio-ui",
+                      "name": "Publishing studio UI",
+                      "type": "web-component",
+                      "description": "Creator-facing publish and manage experience for audio and video episodes.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-creator-publishing-pipeline",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Publishing studio UI",
-                  "description": "Creator-facing publish and manage experience for audio and video episodes.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-creator-publishing-pipeline",
+                      "name": "Creator publishing pipeline",
+                      "type": "service",
+                      "description": "Handles ingestion, validation, scheduling, and publish state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "cata",
+                  "moduleId": "module-catalog-apis",
+                  "sourceModuleId": "module-creator-publishing-pipeline",
                   "type": "metadata",
-                  "interface": "Content graph write APIs",
                   "description": "Creates and updates canonical show and episode metadata."
                 },
                 {
                   "targetBrickId": "trst",
+                  "moduleId": "module-policy-and-moderation-controls",
+                  "sourceModuleId": "module-creator-publishing-pipeline",
                   "type": "policy",
-                  "interface": "Policy checks",
                   "description": "Uses trust and policy screening on published content."
                 }
               ],
@@ -831,19 +1259,19 @@
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-creator-publishing-pipeline"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-creator-publishing-pipeline"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             },
@@ -853,31 +1281,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Comments, clips, follows, prompts, and recirculation tools that help creators grow their audience inside Spotify.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Creator engagement services",
-                  "description": "Supports comments, clips, CTAs, and follow loops.",
-                  "type": "full-stack"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-fan-interaction-ui",
+                      "name": "Fan interaction UI",
+                      "type": "web-component",
+                      "description": "Creator-side controls and listener-side interaction points.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-creator-engagement-services",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Fan interaction UI",
-                  "description": "Creator-side controls and listener-side interaction points.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-creator-engagement-services",
+                      "name": "Creator engagement services",
+                      "type": "service",
+                      "description": "Supports comments, clips, CTAs, and follow loops."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "sosh",
+                  "moduleId": "module-sharing-and-follow-graph-service",
+                  "sourceModuleId": "module-creator-engagement-services",
                   "type": "social",
-                  "interface": "Follow and sharing graph",
                   "description": "Uses shared follow and sharing state."
                 },
                 {
                   "targetBrickId": "crea",
+                  "moduleId": "module-creator-funnel-analytics-service",
+                  "sourceModuleId": "module-creator-engagement-services",
                   "type": "feedback",
-                  "interface": "Show analytics",
                   "description": "Uses engagement insight to tune growth actions."
                 }
               ],
@@ -886,11 +1337,11 @@
               "dataDependencies": [
                 {
                   "assetId": "audience-analytics-for-music",
+                  "moduleIds": [
+                    "module-creator-engagement-services"
+                  ],
                   "role": "read",
-                  "description": "Reads Audience Analytics For Music to support domain workflows.",
-                  "storeIds": [
-                    "audience-analytics-for-music-db"
-                  ]
+                  "description": "Reads Audience Analytics For Music to support domain workflows."
                 }
               ]
             },
@@ -900,31 +1351,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Creator-side monetization across subscriptions, ad participation, Premium video revenue, and payout eligibility.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Creator earnings orchestration",
-                  "description": "Calculates monetization eligibility, earnings state, and payout configuration.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-monetization-manager-ui",
+                      "name": "Monetization manager UI",
+                      "type": "web-component",
+                      "description": "Creator-facing monetization setup and earnings views.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-creator-earnings-orchestration",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Monetization manager UI",
-                  "description": "Creator-facing monetization setup and earnings views.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-creator-earnings-orchestration",
+                      "name": "Creator earnings orchestration",
+                      "type": "service",
+                      "description": "Calculates monetization eligibility, earnings state, and payout configuration."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "bill",
+                  "moduleId": "module-revenue-ledger-and-settlement-engine",
+                  "sourceModuleId": "module-creator-earnings-orchestration",
                   "type": "financial",
-                  "interface": "Revenue settlement",
                   "description": "Uses financial ledger and payout workflows."
                 },
                 {
                   "targetBrickId": "camp",
+                  "moduleId": "module-ad-delivery-engine",
+                  "sourceModuleId": "module-creator-earnings-orchestration",
                   "type": "inventory",
-                  "interface": "Ad delivery participation",
                   "description": "Depends on ad demand and monetizable inventory state."
                 }
               ],
@@ -933,35 +1407,35 @@
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-creator-earnings-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-creator-earnings-orchestration"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-creator-earnings-orchestration"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "billing-revenue-operations",
+                  "moduleIds": [
+                    "module-creator-earnings-orchestration"
+                  ],
                   "role": "read",
-                  "description": "Reads Billing Revenue Operations to support domain workflows.",
-                  "storeIds": [
-                    "billing-revenue-operations-db"
-                  ]
+                  "description": "Reads Billing Revenue Operations to support domain workflows."
                 }
               ]
             },
@@ -971,31 +1445,54 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Audience funnel, conversion, plays, and monetization analytics for podcasters, video creators, and publishers.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Creator funnel analytics service",
-                  "description": "Aggregates discovery, consumption, and conversion views for creators.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-creator-analytics-ui",
+                      "name": "Creator analytics UI",
+                      "type": "web-component",
+                      "description": "Dashboards for audience growth, retention, and monetization performance.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-creator-funnel-analytics-service",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Creator analytics UI",
-                  "description": "Dashboards for audience growth, retention, and monetization performance.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-creator-funnel-analytics-service",
+                      "name": "Creator funnel analytics service",
+                      "type": "service",
+                      "description": "Aggregates discovery, consumption, and conversion views for creators."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "intel",
+                  "moduleId": "module-experiment-and-insight-platform",
+                  "sourceModuleId": "module-creator-funnel-analytics-service",
                   "type": "data",
-                  "interface": "Shared analytics layer",
                   "description": "Depends on shared event processing and experiment data."
                 },
                 {
                   "targetBrickId": "play",
+                  "moduleId": "module-cross-device-playback-engine",
+                  "sourceModuleId": "module-creator-funnel-analytics-service",
                   "type": "events",
-                  "interface": "Consumption telemetry",
                   "description": "Uses listen and watch activity streams."
                 }
               ],
@@ -1004,11 +1501,11 @@
               "dataDependencies": [
                 {
                   "assetId": "audience-analytics-for-music",
+                  "moduleIds": [
+                    "module-creator-funnel-analytics-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Audience Analytics For Music to support domain workflows.",
-                  "storeIds": [
-                    "audience-analytics-for-music-db"
-                  ]
+                  "description": "Reads Audience Analytics For Music to support domain workflows."
                 }
               ]
             }
@@ -1032,31 +1529,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Audience and context segmentation for advertisers and creator campaign use cases.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Audience segment builder",
-                  "description": "Builds listener and contextual segments from logged-in behavior and metadata.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-audience-planner-ui",
+                      "name": "Audience planner UI",
+                      "type": "web-component",
+                      "description": "Audience definition surfaces inside Ads Manager and campaign tools.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-audience-segment-builder",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Audience planner UI",
-                  "description": "Audience definition surfaces inside Ads Manager and campaign tools.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-audience-segment-builder",
+                      "name": "Audience segment builder",
+                      "type": "service",
+                      "description": "Builds listener and contextual segments from logged-in behavior and metadata."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "intel",
+                  "moduleId": "module-experiment-and-insight-platform",
+                  "sourceModuleId": "module-audience-segment-builder",
                   "type": "data",
-                  "interface": "Audience features",
                   "description": "Uses shared data products and feature stores."
                 },
                 {
                   "targetBrickId": "trst",
+                  "moduleId": "module-policy-and-moderation-controls",
+                  "sourceModuleId": "module-audience-segment-builder",
                   "type": "policy",
-                  "interface": "Privacy and policy guardrails",
                   "description": "Applies consent and policy controls to targeting."
                 }
               ],
@@ -1065,19 +1585,19 @@
               "dataDependencies": [
                 {
                   "assetId": "audience-analytics-for-music",
+                  "moduleIds": [
+                    "module-audience-segment-builder"
+                  ],
                   "role": "read",
-                  "description": "Reads Audience Analytics For Music to support domain workflows.",
-                  "storeIds": [
-                    "audience-analytics-for-music-db"
-                  ]
+                  "description": "Reads Audience Analytics For Music to support domain workflows."
                 },
                 {
                   "assetId": "campaign-booking-delivery",
+                  "moduleIds": [
+                    "module-audience-segment-builder"
+                  ],
                   "role": "read",
-                  "description": "Reads Campaign Booking Delivery to support domain workflows.",
-                  "storeIds": [
-                    "campaign-booking-delivery-store"
-                  ]
+                  "description": "Reads Campaign Booking Delivery to support domain workflows."
                 }
               ]
             },
@@ -1087,31 +1607,54 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Campaign trafficking, inventory allocation, pacing, delivery, and creative serving across Spotify ad surfaces.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Ad delivery engine",
-                  "description": "Handles pacing, inventory decisions, and creative serving.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-campaign-management-ui",
+                      "name": "Campaign management UI",
+                      "type": "web-component",
+                      "description": "Advertiser and operator interface for campaign launch and control.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-ad-delivery-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Campaign management UI",
-                  "description": "Advertiser and operator interface for campaign launch and control.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-ad-delivery-engine",
+                      "name": "Ad delivery engine",
+                      "type": "service",
+                      "description": "Handles pacing, inventory decisions, and creative serving."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "adsg",
+                  "moduleId": "module-audience-segment-builder",
+                  "sourceModuleId": "module-ad-delivery-engine",
                   "type": "targeting",
-                  "interface": "Audience segments",
                   "description": "Uses audience selection and eligibility outputs."
                 },
                 {
                   "targetBrickId": "play",
+                  "moduleId": "module-cross-device-playback-engine",
+                  "sourceModuleId": "module-ad-delivery-engine",
                   "type": "inventory",
-                  "interface": "Playable session inventory",
                   "description": "Uses eligible listener sessions and inventory opportunities."
                 }
               ],
@@ -1120,11 +1663,11 @@
               "dataDependencies": [
                 {
                   "assetId": "campaign-booking-delivery",
+                  "moduleIds": [
+                    "module-ad-delivery-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Campaign Booking Delivery.",
-                  "storeIds": [
-                    "campaign-booking-delivery-store"
-                  ]
+                  "description": "Acts as the primary owning brick for Campaign Booking Delivery."
                 }
               ]
             },
@@ -1134,57 +1677,81 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Reach, frequency, lift, conversion, and partner measurement for advertiser outcomes.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Campaign measurement pipeline",
-                  "description": "Computes delivery, attention, and business outcome views.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-measurement-reporting-ui",
+                      "name": "Measurement reporting UI",
+                      "type": "web-component",
+                      "description": "Advertiser and agency reporting, exports, and partner connections.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-campaign-measurement-pipeline",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Measurement reporting UI",
-                  "description": "Advertiser and agency reporting, exports, and partner connections.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-campaign-measurement-pipeline",
+                      "name": "Campaign measurement pipeline",
+                      "type": "service",
+                      "description": "Computes delivery, attention, and business outcome views."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "camp",
+                  "moduleId": "module-ad-delivery-engine",
+                  "sourceModuleId": "module-campaign-measurement-pipeline",
                   "type": "events",
-                  "interface": "Campaign delivery events",
                   "description": "Uses delivery and impression telemetry."
                 },
                 {
                   "targetBrickId": "intel",
+                  "moduleId": "module-experiment-and-insight-platform",
+                  "sourceModuleId": "module-campaign-measurement-pipeline",
                   "type": "analytics",
-                  "interface": "Analytics models",
                   "description": "Uses shared analytics infrastructure and lift methods."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Third-party measurement partners",
-                  "description": "External attribution and brand-lift partners."
+                  "description": "External attribution and brand-lift partners.",
+                  "sourceModuleId": "module-campaign-measurement-pipeline"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-campaign-measurement-pipeline"
+                  ],
                   "role": "read",
-                  "description": "Reads Transaction to support domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Reads Transaction to support domain workflows."
                 },
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-campaign-measurement-pipeline"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 }
               ]
             },
@@ -1194,73 +1761,97 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Subscription billing, advertiser invoicing, creator settlements, credits, and core revenue ledger operations.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Revenue ledger and settlement engine",
-                  "description": "Maintains billable events, invoices, settlements, and adjustment state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-billing-operations-ui",
+                      "name": "Billing operations UI",
+                      "type": "web-component",
+                      "description": "Internal and customer-facing billing views for subscriptions and campaigns.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-revenue-ledger-and-settlement-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Billing operations UI",
-                  "description": "Internal and customer-facing billing views for subscriptions and campaigns.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-revenue-ledger-and-settlement-engine",
+                      "name": "Revenue ledger and settlement engine",
+                      "type": "service",
+                      "description": "Maintains billable events, invoices, settlements, and adjustment state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-account-and-access-apis",
+                  "sourceModuleId": "module-revenue-ledger-and-settlement-engine",
                   "type": "identity",
-                  "interface": "Account billing ownership",
                   "description": "Uses account and organization ownership models."
                 },
                 {
                   "targetBrickId": "righ",
+                  "moduleId": "module-rights-policy-engine",
+                  "sourceModuleId": "module-revenue-ledger-and-settlement-engine",
                   "type": "rights",
-                  "interface": "Royalty and entitlement rules",
                   "description": "Uses rights and royalty rules for settlements."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Payment processors",
-                  "description": "External payment and settlement providers."
+                  "description": "External payment and settlement providers.",
+                  "sourceModuleId": "module-revenue-ledger-and-settlement-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-revenue-ledger-and-settlement-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Payment Instrument Reference to support domain workflows.",
-                  "storeIds": [
-                    "payment-instrument-reference-db"
-                  ]
+                  "description": "Reads Payment Instrument Reference to support domain workflows."
                 },
                 {
                   "assetId": "transaction",
+                  "moduleIds": [
+                    "module-revenue-ledger-and-settlement-engine"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Transaction during domain workflows.",
-                  "storeIds": [
-                    "transaction-db"
-                  ]
+                  "description": "Writes or updates Transaction during domain workflows."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-revenue-ledger-and-settlement-engine"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 },
                 {
                   "assetId": "billing-revenue-operations",
+                  "moduleIds": [
+                    "module-revenue-ledger-and-settlement-engine"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Billing Revenue Operations.",
-                  "storeIds": [
-                    "billing-revenue-operations-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Billing Revenue Operations."
                 }
               ]
             }
@@ -1277,18 +1868,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Account creation, authentication, profile identity, family and team structures, and entitlement ownership.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Account identity service",
-                  "description": "Manages accounts, organizations, and entitlement identity.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-account-and-access-apis",
+                      "name": "Account and access APIs",
+                      "type": "api",
+                      "description": "Shared authentication and account-state interfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-account-identity-service",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Account and access APIs",
-                  "description": "Shared authentication and account-state interfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-account-identity-service",
+                      "name": "Account identity service",
+                      "type": "service",
+                      "description": "Manages accounts, organizations, and entitlement identity."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1297,35 +1909,35 @@
               "dataDependencies": [
                 {
                   "assetId": "identity-credential",
+                  "moduleIds": [
+                    "module-account-identity-service"
+                  ],
                   "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows.",
-                  "storeIds": [
-                    "identity-credential-db"
-                  ]
+                  "description": "Reads Identity Credential to support domain workflows."
                 },
                 {
                   "assetId": "session-token",
+                  "moduleIds": [
+                    "module-account-identity-service"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token.",
-                  "storeIds": [
-                    "session-token-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Session Token."
                 },
                 {
                   "assetId": "access-policy",
+                  "moduleIds": [
+                    "module-account-identity-service"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy.",
-                  "storeIds": [
-                    "access-policy-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Access Policy."
                 },
                 {
                   "assetId": "audit-log",
+                  "moduleIds": [
+                    "module-account-identity-service"
+                  ],
                   "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log.",
-                  "storeIds": [
-                    "audit-log-stream"
-                  ]
+                  "description": "Publishes events or audit records related to Audit Log."
                 }
               ]
             },
@@ -1335,43 +1947,66 @@
               "type": "full-stack",
               "status": "invest",
               "description": "Canonical graph for tracks, artists, albums, episodes, shows, audiobooks, rights entities, and content relationships.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Canonical metadata graph",
-                  "description": "Stores and resolves content entities, relationships, and availability state.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-catalog-apis",
+                      "name": "Catalog APIs",
+                      "type": "api",
+                      "description": "Shared metadata and relationship APIs for product surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-canonical-metadata-graph",
+                            "type": "delegates",
+                            "description": "Interface module delegates request handling to the backing service layer."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Catalog APIs",
-                  "description": "Shared metadata and relationship APIs for product surfaces.",
-                  "type": "api"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-canonical-metadata-graph",
+                      "name": "Canonical metadata graph",
+                      "type": "service",
+                      "description": "Stores and resolves content entities, relationships, and availability state."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "righ",
+                  "moduleId": "module-rights-policy-engine",
+                  "sourceModuleId": "module-canonical-metadata-graph",
                   "type": "governance",
-                  "interface": "Availability and rights rules",
                   "description": "Uses territory and rights constraints."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Label and publisher feeds",
-                  "description": "External metadata and delivery feeds from content partners."
+                  "description": "External metadata and delivery feeds from content partners.",
+                  "sourceModuleId": "module-canonical-metadata-graph"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "artist-profile-presence",
+                  "moduleIds": [
+                    "module-canonical-metadata-graph"
+                  ],
                   "role": "read",
-                  "description": "Reads Artist Profile Presence to support domain workflows.",
-                  "storeIds": [
-                    "artist-profile-presence-store"
-                  ]
+                  "description": "Reads Artist Profile Presence to support domain workflows."
                 }
               ]
             },
@@ -1381,51 +2016,74 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Rights ingestion, territory availability, royalty logic, and licensing operations across music, podcasts, and audiobooks.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Rights policy engine",
-                  "description": "Evaluates territory, format, and payout rules for content usage.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-rights-operations-ui",
+                      "name": "Rights operations UI",
+                      "type": "web-component",
+                      "description": "Internal operations tooling for rights and licensing state.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-rights-policy-engine",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Rights operations UI",
-                  "description": "Internal operations tooling for rights and licensing state.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-rights-policy-engine",
+                      "name": "Rights policy engine",
+                      "type": "service",
+                      "description": "Evaluates territory, format, and payout rules for content usage."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "bill",
+                  "moduleId": "module-revenue-ledger-and-settlement-engine",
+                  "sourceModuleId": "module-rights-policy-engine",
                   "type": "financial",
-                  "interface": "Settlement ledger",
                   "description": "Connects usage rights to settlement outcomes."
                 }
               ],
               "externalSystemsThisBrickDependsOn": [
                 {
                   "name": "Rights-holder systems",
-                  "description": "External licensing, royalty, and availability sources."
+                  "description": "External licensing, royalty, and availability sources.",
+                  "sourceModuleId": "module-rights-policy-engine"
                 }
               ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
                   "assetId": "release-operations",
+                  "moduleIds": [
+                    "module-rights-policy-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Release Operations to support domain workflows.",
-                  "storeIds": [
-                    "release-operations-db"
-                  ]
+                  "description": "Reads Release Operations to support domain workflows."
                 },
                 {
                   "assetId": "audience-analytics-for-music",
+                  "moduleIds": [
+                    "module-rights-policy-engine"
+                  ],
                   "role": "read",
-                  "description": "Reads Audience Analytics For Music to support domain workflows.",
-                  "storeIds": [
-                    "audience-analytics-for-music-db"
-                  ]
+                  "description": "Reads Audience Analytics For Music to support domain workflows."
                 }
               ]
             },
@@ -1435,25 +2093,47 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Content policy enforcement, account safety, advertiser brand safety, and creator moderation controls.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Policy and moderation controls",
-                  "description": "Applies trust, abuse, privacy, and policy decisions across user and creator surfaces.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-policy-operations-ui",
+                      "name": "Policy operations UI",
+                      "type": "web-component",
+                      "description": "Internal trust, moderation, and policy-control surfaces.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-policy-and-moderation-controls",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Policy operations UI",
-                  "description": "Internal trust, moderation, and policy-control surfaces.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-policy-and-moderation-controls",
+                      "name": "Policy and moderation controls",
+                      "type": "service",
+                      "description": "Applies trust, abuse, privacy, and policy decisions across user and creator surfaces."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [
                 {
                   "targetBrickId": "iden",
+                  "moduleId": "module-account-and-access-apis",
+                  "sourceModuleId": "module-policy-and-moderation-controls",
                   "type": "identity",
-                  "interface": "Account risk signals",
                   "description": "Uses account identity and abuse signals."
                 }
               ],
@@ -1462,27 +2142,27 @@
               "dataDependencies": [
                 {
                   "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-policy-and-moderation-controls"
+                  ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile.",
-                  "storeIds": [
-                    "customer-profile-db"
-                  ]
+                  "description": "Acts as the primary owning brick for Customer Profile."
                 },
                 {
                   "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-policy-and-moderation-controls"
+                  ],
                   "role": "write",
-                  "description": "Writes or updates Customer Contact Point during domain workflows.",
-                  "storeIds": [
-                    "customer-contact-point-db"
-                  ]
+                  "description": "Writes or updates Customer Contact Point during domain workflows."
                 },
                 {
                   "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-policy-and-moderation-controls"
+                  ],
                   "role": "read",
-                  "description": "Reads Consent Record to support domain workflows.",
-                  "storeIds": [
-                    "consent-record-db"
-                  ]
+                  "description": "Reads Consent Record to support domain workflows."
                 }
               ]
             },
@@ -1492,18 +2172,39 @@
               "type": "full-stack",
               "status": "sustaining",
               "description": "Experimentation, event processing, feature stores, analytics products, and decision intelligence used across the platform.",
-              "internalModules": [
+              "layers": [
                 {
-                  "title": "Experiment and insight platform",
-                  "description": "Provides experiment assignment, event pipelines, and reusable metrics.",
-                  "type": "service"
-                }
-              ],
-              "interfaces": [
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-experimentation-and-insight-tooling",
+                      "name": "Experimentation and insight tooling",
+                      "type": "web-component",
+                      "description": "Internal tooling for experimentation, analytics, and model operations.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-experiment-and-insight-platform",
+                            "type": "uses",
+                            "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
                 {
-                  "title": "Experimentation and insight tooling",
-                  "description": "Internal tooling for experimentation, analytics, and model operations.",
-                  "type": "ui"
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-experiment-and-insight-platform",
+                      "name": "Experiment and insight platform",
+                      "type": "service",
+                      "description": "Provides experiment assignment, event pipelines, and reusable metrics."
+                    }
+                  ]
                 }
               ],
               "brickDependencies": [],
@@ -1512,11 +2213,11 @@
               "dataDependencies": [
                 {
                   "assetId": "audience-analytics-for-music",
+                  "moduleIds": [
+                    "module-experiment-and-insight-platform"
+                  ],
                   "role": "read",
-                  "description": "Reads Audience Analytics For Music to support domain workflows.",
-                  "storeIds": [
-                    "audience-analytics-for-music-db"
-                  ]
+                  "description": "Reads Audience Analytics For Music to support domain workflows."
                 }
               ]
             }

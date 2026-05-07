@@ -23,7 +23,7 @@ Apply the architecture cluster when the user asks to model the implementation-aw
 1. Confirm the domain boundary and root product areas.
 2. Translate customer jobs and business flows into product capabilities.
 3. Decompose capabilities into a three-level product-brick structure.
-4. Add interfaces, dependencies, external systems, data dependencies, and operational concerns.
+4. Add layered modules, interfaces, dependencies, external systems, data dependencies, and operational concerns.
 5. Trace customer outcome -> capability -> product brick -> owning team where practical.
 6. Validate references and run the relevant product-brick generators when requested.
 
@@ -32,6 +32,10 @@ Apply the architecture cluster when the user asks to model the implementation-aw
 - Product bricks are buildable and ownable.
 - Capabilities express outcomes rather than implementation components.
 - APIs, events, integrations, and data assets are plausible and tied to product value.
+- Product-brick modules use the `layers` array with `ui`, `interfaces`, `bus`, `stateless-service`, `service`, and `integration` layers, and module IDs start with `module-`.
+- Product-brick modules use only the supported module types from the product-brick architecture skill.
+- Brick-to-brick dependencies use `sourceModuleId` and target `moduleId`, not a free-text `interface` field.
+- Product-brick data dependencies use `moduleIds`, not `storeIds`.
 - Architecture remains high enough for product modeling and avoids speculative low-level design.
 
 ## Repository Fit

@@ -5,6 +5,7 @@ from product_bricks_support import (
     flatten_product_bricks,
     group_data_assets,
     load_product_bricks_payload,
+    normalize_product_brick_root_groups,
 )
 
 
@@ -448,15 +449,12 @@ def store_id_lookup(assets):
     return lookup
 
 
-def build_data_dependency_entry(asset, role, store_lookup):
+def build_data_dependency_entry(asset, role):
     entry = {
         'assetId': asset.get('id', ''),
         'role': role,
         'description': ''
     }
-    store_ids = list(store_lookup.get(asset.get('id', ''), []))
-    if store_ids:
-        entry['storeIds'] = store_ids
     asset_name = asset.get('name', asset.get('id', 'asset'))
     if role == 'own':
         entry['description'] = f'Acts as the primary owning brick for {asset_name}.'
@@ -472,7 +470,6 @@ def build_data_dependency_entry(asset, role, store_lookup):
 
 
 def enrich_payload_with_data_dependencies(payload, assets):
-    store_lookup = store_id_lookup(assets)
     asset_lookup = {asset.get('id', ''): asset for asset in assets}
 
     def walk_group(group):
@@ -491,7 +488,7 @@ def enrich_payload_with_data_dependencies(payload, assets):
                 if key in seen:
                     continue
                 seen.add(key)
-                candidates.append(build_data_dependency_entry(asset_lookup[asset_id], role, store_lookup))
+                candidates.append(build_data_dependency_entry(asset_lookup[asset_id], role))
 
             if not candidates:
                 fallback_assets = [
@@ -510,13 +507,16 @@ def enrich_payload_with_data_dependencies(payload, assets):
                 ))
                 for asset in fallback_assets[:2]:
                     role = 'query' if asset.get('kind') in ('derived-metric', 'event') else 'read'
-                    candidates.append(build_data_dependency_entry(asset, role, store_lookup))
+                    candidates.append(build_data_dependency_entry(asset, role))
 
             if candidates:
                 brick['dataDependencies'] = candidates[:4]
 
     for root_group in payload.get('rootGroups', []):
         walk_group(root_group)
+
+    if isinstance(payload, dict) and 'rootGroups' in payload:
+        payload['rootGroups'] = normalize_product_brick_root_groups(payload.get('rootGroups', []))
 
     return payload
 

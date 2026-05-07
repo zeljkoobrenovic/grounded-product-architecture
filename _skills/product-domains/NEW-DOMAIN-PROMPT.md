@@ -88,6 +88,11 @@ Do not paste all skill content into the working context at once. Use the overvie
 - Create a three-level product-brick structure: domain/root group, group/subgroup, and brick.
 - Use 20+ product bricks for a mature domain unless the scope is intentionally smaller and justified.
 - Product bricks must be realistic, buildable, ownable, and connected to customer or business value.
+- Give every brick an `id`. Model each brick's modules under a root-level `layers` array using `ui`, `interfaces`, `bus`, `stateless-service`, `service`, and `integration`; every module needs a short lowercase `id` starting with `module-`.
+- Use only these module types: `web-component`, `mobile-component`, `bff`, `api`, `backoffice-interface`, `message-queue`, `message-consumer`, `daemon`, `stateless-service`, `stateful-service`, `service`, and `integration`.
+- Model `brickDependencies` through `sourceModuleId` and target `moduleId`; do not use the legacy dependency `interface` field.
+- Model product-brick `dataDependencies` with `moduleIds` listing the modules that use or own the data asset; do not use `storeIds` there.
+- In product-brick metadata, use `brickTypes`, `brickStatuses`, and `modulesConfig`; include a `color` on each `modulesConfig.moduleTypes` item and do not use legacy `types` or `statuses`.
 - Define product capabilities as strategic outcomes, not implementation components, and map them to product bricks and external systems where relevant.
 - Model delivery through channels, interfaces, APIs, events, operational workflows, MVP scope, releases, and capability mappings.
 - Add objectives, initiatives, releases, roadmap, targets, documents, discoveries, and data assets where the current domain pattern supports them.
