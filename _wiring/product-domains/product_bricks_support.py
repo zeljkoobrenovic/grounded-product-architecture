@@ -6,7 +6,7 @@ import re
 PRODUCT_BRICK_LAYER_ORDER = [
     'ui',
     'interfaces',
-    'bus',
+    'worker',
     'stateless-service',
     'service',
     'integration'
@@ -16,7 +16,7 @@ PRODUCT_BRICK_LAYER_ORDER = [
 PRODUCT_BRICK_LAYER_LABELS = {
     'ui': 'UI',
     'interfaces': 'Interfaces',
-    'bus': 'Bus',
+    'worker': 'Worker',
     'stateless-service': 'Stateless Service',
     'service': 'Service',
     'integration': 'Integration'
@@ -26,7 +26,7 @@ PRODUCT_BRICK_LAYER_LABELS = {
 PRODUCT_BRICK_LAYER_DESCRIPTIONS = {
     'ui': 'User-facing web, mobile, backoffice, and operator experience modules.',
     'interfaces': 'APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.',
-    'bus': 'Message queues, event consumers, daemons, and asynchronous processing modules.',
+    'worker': 'Background workers, event consumers, daemons, and asynchronous processing modules.',
     'stateless-service': 'Stateless orchestration services that aggregate other services without owning durable state.',
     'service': 'Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.',
     'integration': 'Connectors, adapters, and integration modules for external systems, devices, or partner platforms.'
@@ -36,7 +36,7 @@ PRODUCT_BRICK_LAYER_DESCRIPTIONS = {
 PRODUCT_BRICK_LAYER_HOSTS_MODULES = {
     'ui': ['web-component', 'mobile-component'],
     'interfaces': ['bff', 'api', 'backoffice-interface'],
-    'bus': ['message-queue', 'message-consumer', 'daemon'],
+    'worker': ['message-queue', 'message-consumer', 'daemon'],
     'stateless-service': ['stateless-service'],
     'service': ['stateful-service', 'service'],
     'integration': ['integration']
@@ -50,7 +50,7 @@ PRODUCT_BRICK_MODULE_TYPE_DESCRIPTIONS = {
     'api': 'A programmatic API module exposed to product clients, partners, or other systems.',
     'backoffice-interface': 'An internal operations or administration interface module.',
     'message-queue': 'A queue module used for asynchronous communication between modules or systems.',
-    'message-consumer': 'A consumer module that processes messages or events from a bus.',
+    'message-consumer': 'A consumer module that processes messages or events in the worker layer.',
     'daemon': 'A background worker or daemon module.',
     'stateless-service': 'A service module that orchestrates work without owning durable state.',
     'stateful-service': 'A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.',
@@ -127,7 +127,7 @@ INTERFACE_MODULE_TYPES = {
 }
 
 
-BUS_MODULE_TYPES = {
+WORKER_MODULE_TYPES = {
     'message-queue',
     'message-consumer',
     'daemon',
@@ -263,8 +263,8 @@ def product_brick_module_layer_id(module, source_field=''):
         return 'ui'
     if module_type in INTERFACE_MODULE_TYPES:
         return 'interfaces'
-    if module_type in BUS_MODULE_TYPES:
-        return 'bus'
+    if module_type in WORKER_MODULE_TYPES:
+        return 'worker'
     if module_type in STATELESS_SERVICE_MODULE_TYPES:
         return 'stateless-service'
     if module_type in SERVICE_MODULE_TYPES:
@@ -296,7 +296,7 @@ def canonical_product_brick_module_type(module, layer_id):
         if 'bff' in module_text:
             return 'bff'
         return 'api'
-    if layer_id == 'bus':
+    if layer_id == 'worker':
         if 'queue' in module_text or 'broker' in module_text:
             return 'message-queue'
         if 'daemon' in module_text or 'worker' in module_text or 'job' in module_text:
@@ -310,10 +310,14 @@ def canonical_product_brick_module_type(module, layer_id):
 
 
 def product_brick_layer_label(layer_id):
+    if layer_id == 'bus':
+        layer_id = 'worker'
     return PRODUCT_BRICK_LAYER_LABELS.get(layer_id, str(layer_id or '').replace('-', ' ').title())
 
 
 def product_brick_layer_description(layer_id):
+    if layer_id == 'bus':
+        layer_id = 'worker'
     return PRODUCT_BRICK_LAYER_DESCRIPTIONS.get(layer_id, '')
 
 
@@ -351,6 +355,8 @@ def _add_module_to_layers(layers, module, source_field='', fallback_name='', sou
 
     nested_modules = module_info.pop('internalModules', []) or []
     layer_id = source_layer_id or product_brick_module_layer_id(module_info, source_field)
+    if layer_id == 'bus':
+        layer_id = 'worker'
     module_name = _module_name(module_info, fallback_name)
     module_info['type'] = canonical_product_brick_module_type(module_info, layer_id)
     if module_info.get('title') == module_name and not module_info.get('name'):
@@ -565,12 +571,12 @@ def product_brick_module_entries(brick):
 def data_dependency_module_priority(dependency):
     role = str((dependency or {}).get('role', '')).strip().lower()
     if role == 'publish':
-        return ['bus', 'service', 'stateless-service', 'interfaces', 'integration', 'ui']
+        return ['worker', 'service', 'stateless-service', 'interfaces', 'integration', 'ui']
     if role in {'own', 'write', 'replicate', 'delete'}:
-        return ['service', 'stateless-service', 'bus', 'interfaces', 'integration', 'ui']
+        return ['service', 'stateless-service', 'worker', 'interfaces', 'integration', 'ui']
     if role in {'query', 'read'}:
-        return ['service', 'stateless-service', 'interfaces', 'bus', 'integration', 'ui']
-    return ['service', 'stateless-service', 'interfaces', 'bus', 'integration', 'ui']
+        return ['service', 'stateless-service', 'interfaces', 'worker', 'integration', 'ui']
+    return ['service', 'stateless-service', 'interfaces', 'worker', 'integration', 'ui']
 
 
 def select_data_dependency_module_ids(brick, dependency):
@@ -676,9 +682,9 @@ def _dependency_has_terms(text, terms):
 def dependency_layer_priority(dependency, source=False):
     text = _dependency_text(dependency)
     default_priority = (
-        ['service', 'stateless-service', 'interfaces', 'bus', 'integration', 'ui']
+        ['service', 'stateless-service', 'interfaces', 'worker', 'integration', 'ui']
         if source
-        else ['interfaces', 'service', 'stateless-service', 'bus', 'integration', 'ui']
+        else ['interfaces', 'service', 'stateless-service', 'worker', 'integration', 'ui']
     )
     priority = []
 
@@ -687,7 +693,7 @@ def dependency_layer_priority(dependency, source=False):
     if _dependency_has_terms(text, ['api', 'apis', 'bff', 'endpoint', 'gateway', 'rest', 'graphql', 'webhook', 'webhooks', 'import', 'export']):
         priority.append('interfaces')
     if _dependency_has_terms(text, ['event', 'events', 'queue', 'stream', 'feed', 'message', 'messages', 'notification', 'notifications']):
-        priority.append('bus')
+        priority.append('worker')
     if _dependency_has_terms(text, ['connector', 'connectors', 'adapter', 'integration', 'erp', 'saml', 'oidc', 'scim']):
         priority.append('integration')
     if _dependency_has_terms(text, ['orchestration', 'workflow', 'service', 'state', 'ledger', 'policy']):

@@ -514,6 +514,7 @@
             min-width: 1080px;
             border-collapse: collapse;
             background: #fff;
+            font-size: 90%;
         }
 
         .flow-matrix th,
@@ -531,6 +532,23 @@
         .flow-dependency-col {
             min-width: 250px;
             width: 250px;
+        }
+
+        .flow-dependency-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .flow-dependency-icon {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex: 0 0 auto;
+            border: 1px solid #dbe2ea;
+            border-radius: 8px;
+            background: white;
+            padding: 4px;
         }
 
         .flow-step-col {
@@ -564,7 +582,6 @@
         .flow-insight-list {
             margin: 0;
             padding-left: 16px;
-            color: #4b5563;
             line-height: 1.45;
         }
 
@@ -601,12 +618,21 @@
         }
 
         .flow-cell-brick {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             padding: 3px 8px;
             border-radius: 999px;
             background: #dbeafe;
             color: #1d4ed8;
             font-size: 11px;
+        }
+
+        .flow-cell-brick-icon {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            flex: 0 0 auto;
         }
     </style>
 
@@ -769,6 +795,16 @@
         return '<div class="flow-step-meta-item"><div class="flow-step-meta-label">' + escapeHtml(label) + '</div><div class="flow-step-copy">' + escapeHtml(value) + '</div></div>';
     }
 
+    function flowDependencyIconFile(dependency) {
+        const dependencyId = dependency.id || '';
+        const linkedBrick = related_bricks.find(brick => brick.id === dependencyId) || all_bricks.find(brick => brick.id === dependencyId) || {};
+        return dependency.icon || linkedBrick.icon || (dependencyId ? dependencyId + '.png' : 'brick.png');
+    }
+
+    function renderFlowDependencyIcon(dependency, className) {
+        return '<img class="' + escapeHtml(className) + '" src="../icons/' + escapeHtml(flowDependencyIconFile(dependency)) + '" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+    }
+
     function renderStepDependencyPills(step) {
         const dependencies = step.dependencies || [];
         if (!dependencies.length) {
@@ -778,7 +814,7 @@
         return '<div class="flow-step-dependencies">' + dependencies.map(dep => {
             const label = dep.name || dep.id || 'Dependency';
             const kind = 'Brick';
-            return '<span class="flow-cell-brick">' + escapeHtml(kind + ': ' + label) + '</span>';
+            return '<span class="flow-cell-brick">' + renderFlowDependencyIcon(dep, 'flow-cell-brick-icon') + '<span>' + escapeHtml(kind + ': ' + label) + '</span></span>';
         }).join('') + '</div>';
     }
 
@@ -797,7 +833,7 @@
 <div class="page">
     <div class="tab" id="primary_tabs">
         <button class="tablinks active" id="tab_home" onclick="openTab('home')">Home</button>
-        <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows</button>
+        <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
     <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
@@ -848,24 +884,7 @@
         const primaryActors = getPrimaryActors();
         let html = '';
 
-        html += '<div class="activity-summary">';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + flows.length + '</div><div class="activity-stat-label">Flows</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + totalSteps + '</div><div class="activity-stat-label">Flow Steps</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + (currentCapability.outcomes || []).length + '</div><div class="activity-stat-label">Outcomes</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + related_bricks.length + '</div><div class="activity-stat-label">Supporting Bricks</div></div>';
-        html += '</div>';
-
-        html += '<div class="group"><div class="section-title">Why This Capability Matters</div>';
-        html += '<div class="card">';
-        html += '<div class="card-title">' + escapeHtml(currentCapability.name || currentCapability.id) + '</div>';
-        html += '<div class="card-copy">' + escapeHtml(currentCapability.description || '') + '</div>';
-        if (primaryActors.length) {
-            html += '<div class="card-meta">Primary actors</div>';
-            html += '<div class="pill-row">' + primaryActors.map(actor => '<span class="pill">' + escapeHtml(actor) + '</span>').join('') + '</div>';
-        }
-        html += '</div></div>';
-
-        html += '<div class="group"><div class="section-title">Flow Narrative</div>';
+        html += '<div class="group"><div class="section-title">Flow Narratives (' + flows.length + ')</div>';
         if (!flows.length) {
             html += '<div class="muted">No flows listed for this capability.</div>';
         } else {
@@ -984,12 +1003,7 @@
         const totalSteps = flows.reduce((count, flow) => count + ((flow.steps || []).length), 0);
         let html = '';
 
-        html += '<div class="activity-summary">';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + flows.length + '</div><div class="activity-stat-label">Flows</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + totalSteps + '</div><div class="activity-stat-label">Flow Steps</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + allCapabilities.length + '</div><div class="activity-stat-label">Capabilities Compared</div></div>';
-        html += '<div class="activity-stat"><div class="activity-stat-value">' + related_bricks.length + '</div><div class="activity-stat-label">Supporting Bricks</div></div>';
-        html += '</div>';
+        document.getElementById('tab_flows').innerHTML = 'Flow Narratives (' + flows.length + ')';
 
         flows.forEach(flow => {
             const dependenciesInFlow = getFlowDependencies(flow);
@@ -1016,15 +1030,15 @@
             html += '<div class="flow-matrix-wrap">';
             html += '<table class="flow-matrix">';
             html += '<thead>';
-            html += '<tr><th class="flow-dependency-col">Dependency</th>';
+            html += '<tr><th class="flow-dependency-col"></th>';
             (flow.steps || []).forEach((step, index) => {
                 html += '<th class="flow-step-col"><div class="flow-step-label">Step ' + (index + 1) + '</div><div class="card-title">' + escapeHtml(step.title || step.id) + '</div></th>';
             });
             html += '</tr>';
 
-            html += '<tr class="flow-insight-row"><th>Key Facts</th>';
+            html += '<tr class="flow-insight-row"><th style="text-align: right">Key Facts</th>';
             (flow.steps || []).forEach(step => {
-                html += '<td>';
+                html += '<td style="color: darkblue">';
                 if ((step.keyFacts || []).length) {
                     html += '<ul class="flow-insight-list">' + step.keyFacts.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
                 } else {
@@ -1034,9 +1048,9 @@
             });
             html += '</tr>';
 
-            html += '<tr class="flow-insight-row"><th>Pain Points</th>';
+            html += '<tr class="flow-insight-row"><th style="text-align: right; color: darkred">Pain Points</th>';
             (flow.steps || []).forEach(step => {
-                html += '<td>';
+                html += '<td style="color: darkred">';
                 if ((step.painPoints || []).length) {
                     html += '<ul class="flow-insight-list">' + step.painPoints.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
                 } else {
@@ -1051,16 +1065,20 @@
                 const dependencyTypeLabel = 'Product Brick';
                 html += '<tr>';
                 html += '<td>';
+                html += '<div class="flow-dependency-header">';
+                html += renderFlowDependencyIcon(dependency, 'flow-dependency-icon');
+                html += '<div>';
                 html += '<a class="flow-dependency-name" href="../landing_pages/' + escapeHtml(dependency.id) + '.html">' + escapeHtml(dependency.name || dependency.id) + '</a>';
-                html += '<div class="muted">' + escapeHtml(dependencyTypeLabel) + '</div>';
                 if (dependency.interface) {
                     html += '<div class="muted">' + escapeHtml(dependency.interface) + '</div>';
                 }
+                html += '</div>';
+                html += '</div>';
                 html += '</td>';
                 (flow.steps || []).forEach(step => {
                     const stepDependency = getStepDependency(step, dependency);
                     if (!stepDependency) {
-                        html += '<td class="flow-cell-empty">Not used</td>';
+                        html += '<td class="flow-cell-empty">-</td>';
                         return;
                     }
                     html += '<td class="flow-cell-active">';

@@ -404,16 +404,14 @@ for item in initiatives_enriched.get('items', []):
 if initiatives_enriched.get('items'):
     initiatives_docs_folder = domain_id + '/initiatives/'
     initiatives_template_root = '../../_templates/initiatives/'
-    initiative_items = render_list(
+    render_landing_pages_only(
         initiatives_template_root,
-        'initiatives.html',
         initiatives_docs_folder,
+        'initiative',
+        'landing_page.html',
         domain,
-        'initiatives',
-        initiatives_enriched,
-        'initiatives_breadcrumbs.json'
+        initiatives_enriched.get('items', [])
     )
-    render_landing_pages(initiatives_template_root, initiatives_docs_folder, 'initiative', 'landing_page.html', domain, initiative_items)
 
 if discoveries_enriched.get('items'):
     discoveries_docs_folder = domain_id + '/discoveries/'

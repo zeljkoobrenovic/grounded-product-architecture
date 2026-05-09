@@ -73,44 +73,283 @@ def build_team_lookup(teams_payload):
     return lookup
 
 
-def find_related_items(items, team_id, section_folder):
+def activity_lookup_keys(item):
+    keys = []
+    for field in ['initiativeId', 'id']:
+        if item.get(field):
+            keys.append(str(item.get(field)))
+
+    date = item.get('date', item.get('startDate', item.get('lastUpdated', '')))
+    for field in ['description', 'summary', 'title', 'name']:
+        if item.get(field):
+            keys.append(str(date) + '|' + str(item.get(field)))
+            keys.append(str(item.get(field)))
+    return keys
+
+
+def build_activity_area_lookup(domain_root, filename, periods):
+    lookup = {}
+    for period in periods:
+        payload = load_json_if_exists(os.path.join(domain_root, 'objectives', period, filename), {'items': []})
+        for item in payload.get('items') or []:
+            for key in activity_lookup_keys(item):
+                lookup[key] = period
+    return lookup
+
+
+def resolve_activity_area(item, area_lookup, fallback=''):
+    for key in activity_lookup_keys(item):
+        if key in area_lookup:
+            return area_lookup[key]
+    return fallback
+
+
+def find_related_items(items, team_id, section_folder, area_lookup=None):
+    area_lookup = area_lookup or {}
     related = []
     for item in items.get('items', []):
         teams = item.get('teams', {})
         primary = teams.get('primaryTeamIds', [])
         supporting = teams.get('supportingTeamIds', [])
         if team_id in primary or team_id in supporting:
+            landing_page_key = str(item.get('landingPageIndex', 0))
             related.append({
                 'date': item.get('date', ''),
+                'title': item.get('title', item.get('name', item.get('description', ''))),
                 'description': item.get('description', ''),
-                'landingPageKey': str(item.get('landingPageIndex', 0)),
+                'landingPageKey': landing_page_key,
                 'sectionFolder': section_folder,
+                'href': '../../' + section_folder + '/landing_pages/' + landing_page_key + '.html',
+                'priority': item.get('priority', ''),
+                'planningArea': resolve_activity_area(item, area_lookup),
+                'activityType': 'initiative',
                 'teamRole': 'primary' if team_id in primary else 'supporting',
                 'teamRoleLabel': 'Primary team' if team_id in primary else 'Supporting team'
             })
     return related
 
 
-def find_related_discoveries(discoveries, team_id):
+def find_related_discoveries(discoveries, team_id, area_lookup=None):
+    area_lookup = area_lookup or {}
     related = []
     for item in discoveries.get('items', []):
-        assignments = ((item.get('teams') or {}).get('assignments') or [])
-        for assignment in assignments:
-            if assignment.get('teamId') == team_id:
-                related.append({
-                    'date': (item.get('startDate', '') + ' -> ' + item.get('endDate', '')).strip(),
-                    'description': item.get('name', ''),
-                    'landingPageKey': str(item.get('landingPageIndex', 0)),
-                    'sectionFolder': 'discoveries',
-                    'teamRole': assignment.get('role', ''),
-                    'teamRoleLabel': assignment.get('roleLabel', assignment.get('role', '')),
-                    'how': assignment.get('how', '')
-                })
-                break
+        teams = item.get('teams') or {}
+        assignments = teams.get('assignments') or []
+        lead_team_id = teams.get('leadTeamId', '')
+        supporting_team_ids = teams.get('supportingTeamIds', []) or []
+        matching_assignment = next((assignment for assignment in assignments if assignment.get('teamId') == team_id), None)
+        is_lead = team_id == lead_team_id
+        is_supporting = team_id in supporting_team_ids
+
+        if not matching_assignment and not is_lead and not is_supporting:
+            continue
+
+        landing_page_key = str(item.get('landingPageIndex', 0))
+        if matching_assignment:
+            team_role = matching_assignment.get('role', '')
+            team_role_label = matching_assignment.get('roleLabel', matching_assignment.get('role', ''))
+            how = matching_assignment.get('how', '')
+        elif is_lead:
+            team_role = 'lead'
+            team_role_label = 'Lead discovery team'
+            how = ''
+        else:
+            team_role = 'supporting'
+            team_role_label = 'Supporting discovery team'
+            how = ''
+
+        related.append({
+            'date': (item.get('startDate', '') + ' -> ' + item.get('endDate', '')).strip(),
+            'title': item.get('title', item.get('name', '')),
+            'description': item.get('summary', item.get('description', item.get('name', ''))),
+            'landingPageKey': landing_page_key,
+            'sectionFolder': 'discoveries',
+            'href': '../../discoveries/landing_pages/' + landing_page_key + '.html',
+            'planningArea': resolve_activity_area(item, area_lookup),
+            'activityType': 'discovery',
+            'teamRole': team_role,
+            'teamRoleLabel': team_role_label,
+            'how': how
+        })
     return related
 
 
-def enrich_team(team, team_lookup, customers_lookup, bricks_lookup, initiatives, releases, group):
+def build_ktlo_key_result_team_lookup(ktlo_objectives):
+    lookup = {}
+    for objective in ktlo_objectives.get('objectives', ktlo_objectives.get('goals', [])):
+        objective_id = objective.get('id', '')
+        for key_result in objective.get('keyResults', []):
+            key_result_id = key_result.get('id', '')
+            if not objective_id or not key_result_id:
+                continue
+
+            primary = [
+                team.get('teamId', '')
+                for team in key_result.get('executingTeams', [])
+                if team.get('teamId')
+            ]
+            supporting = [
+                team.get('teamId', '')
+                for team in key_result.get('supportingTeams', [])
+                if team.get('teamId')
+            ]
+            lookup[objective_id + '/' + key_result_id] = {
+                'objectiveId': objective_id,
+                'primaryTeamIds': primary,
+                'supportingTeamIds': supporting
+            }
+    return lookup
+
+
+def build_ktlo_objective_team_lookup(ktlo_objectives):
+    lookup = {}
+    for objective in ktlo_objectives.get('objectives', ktlo_objectives.get('goals', [])):
+        objective_id = objective.get('id', '')
+        if not objective_id:
+            continue
+
+        primary = []
+        supporting = []
+        for key_result in objective.get('keyResults', []):
+            primary.extend([
+                team.get('teamId', '')
+                for team in key_result.get('executingTeams', [])
+                if team.get('teamId')
+            ])
+            supporting.extend([
+                team.get('teamId', '')
+                for team in key_result.get('supportingTeams', [])
+                if team.get('teamId')
+            ])
+        lookup[objective_id] = {
+            'primaryTeamIds': sorted(set(primary)),
+            'supportingTeamIds': sorted(set(supporting))
+        }
+    return lookup
+
+
+def resolve_ktlo_item_teams(item, key_result_team_lookup):
+    teams = item.get('teams') or {}
+    primary = list(teams.get('primaryTeamIds', []) or [])
+    supporting = list(teams.get('supportingTeamIds', []) or [])
+    objective_id = ''
+
+    key_result_id = item.get('keyResultId', '')
+    key_result_teams = key_result_team_lookup.get(key_result_id, {})
+    if not primary and not supporting and key_result_teams:
+        primary = key_result_teams.get('primaryTeamIds', [])
+        supporting = key_result_teams.get('supportingTeamIds', [])
+        objective_id = key_result_teams.get('objectiveId', '')
+    elif '/' in key_result_id:
+        objective_id = key_result_id.split('/')[0]
+
+    return primary, supporting, objective_id
+
+
+def build_ktlo_initiative_team_lookup(ktlo_initiatives, key_result_team_lookup):
+    lookup = {}
+    for item in ktlo_initiatives.get('items') or []:
+        initiative_id = item.get('initiativeId', '')
+        if not initiative_id:
+            continue
+        primary, supporting, objective_id = resolve_ktlo_item_teams(item, key_result_team_lookup)
+        lookup[initiative_id] = {
+            'objectiveId': objective_id,
+            'primaryTeamIds': primary,
+            'supportingTeamIds': supporting
+        }
+    return lookup
+
+
+def find_related_ktlo_items(items, key_result_team_lookup, team_id):
+    related = []
+    for item in items.get('items') or []:
+        primary, supporting, objective_id = resolve_ktlo_item_teams(item, key_result_team_lookup)
+
+        if team_id not in primary and team_id not in supporting:
+            continue
+
+        related.append({
+            'date': item.get('date', ''),
+            'title': item.get('title', item.get('description', 'KTLO item')),
+            'description': item.get('description', ''),
+            'sectionFolder': 'objectives/ktlo',
+            'href': '../../objectives/ktlo/landing_pages/' + objective_id + '.html' if objective_id else '../../objectives/ktlo/index.html',
+            'priority': item.get('priority', ''),
+            'planningArea': 'ktlo',
+            'activityType': 'initiative',
+            'teamRole': 'primary' if team_id in primary else 'supporting',
+            'teamRoleLabel': 'Executing team' if team_id in primary else 'Supporting team',
+            'keyResultId': item.get('keyResultId', '')
+        })
+    return related
+
+
+def find_related_ktlo_discoveries(discoveries, objective_team_lookup, initiative_team_lookup, team_id):
+    related = []
+    for item in discoveries.get('items') or []:
+        teams = item.get('teams') or {}
+        primary = []
+        supporting = []
+        objective_ids = list(item.get('objectiveIds', []) or [])
+
+        if teams.get('leadTeamId'):
+            primary.append(teams.get('leadTeamId'))
+        supporting.extend(teams.get('supportingTeamIds', []) or [])
+        for assignment in teams.get('assignments', []) or []:
+            if assignment.get('role') == 'lead':
+                primary.append(assignment.get('teamId', ''))
+            else:
+                supporting.append(assignment.get('teamId', ''))
+
+        for linked in item.get('linkedInitiatives', []) or []:
+            linked_teams = initiative_team_lookup.get(linked.get('initiativeId', ''), {})
+            primary.extend(linked_teams.get('primaryTeamIds', []))
+            supporting.extend(linked_teams.get('supportingTeamIds', []))
+            if linked_teams.get('objectiveId'):
+                objective_ids.append(linked_teams.get('objectiveId'))
+
+        for objective_id in objective_ids:
+            objective_teams = objective_team_lookup.get(objective_id, {})
+            primary.extend(objective_teams.get('primaryTeamIds', []))
+            supporting.extend(objective_teams.get('supportingTeamIds', []))
+
+        primary = sorted(set(value for value in primary if value))
+        supporting = sorted(set(value for value in supporting if value))
+
+        if team_id not in primary and team_id not in supporting:
+            continue
+
+        objective_id = next((value for value in objective_ids if value), '')
+        related.append({
+            'date': (item.get('startDate', '') + ' -> ' + item.get('endDate', '')).strip() or item.get('lastUpdated', ''),
+            'title': item.get('title', item.get('name', 'KTLO discovery')),
+            'description': item.get('summary', item.get('description', '')),
+            'sectionFolder': 'objectives/ktlo',
+            'href': '../../objectives/ktlo/landing_pages/' + objective_id + '.html' if objective_id else '../../objectives/ktlo/index.html',
+            'planningArea': 'ktlo',
+            'activityType': 'discovery',
+            'teamRole': 'primary' if team_id in primary else 'supporting',
+            'teamRoleLabel': 'Lead discovery team' if team_id in primary else 'Supporting discovery team'
+        })
+    return related
+
+
+def enrich_team(
+        team,
+        team_lookup,
+        customers_lookup,
+        bricks_lookup,
+        initiatives,
+        releases,
+        ktlo_initiatives,
+        ktlo_discoveries,
+        ktlo_key_result_team_lookup,
+        ktlo_objective_team_lookup,
+        ktlo_initiative_team_lookup,
+        initiative_area_lookup,
+        discovery_area_lookup,
+        group):
     enriched = dict(team)
     enriched['groupId'] = group.get('id', '')
     enriched['groupName'] = group.get('name', '')
@@ -152,7 +391,14 @@ def enrich_team(team, team_lookup, customers_lookup, bricks_lookup, initiatives,
     enriched['supportingProductBricks'] = enrich_bricks(team.get('supportingProductBricks', []))
     enriched['dependsOnTeams'] = [team_lookup[team_id] for team_id in team.get('dependsOnTeamIds', []) if team_id in team_lookup]
     enriched['defaultSupportingTeams'] = [team_lookup[team_id] for team_id in team.get('defaultSupportingTeamIds', []) if team_id in team_lookup]
-    enriched['relatedInitiatives'] = find_related_items(initiatives, team['id'], 'initiatives')
+    enriched['relatedInitiatives'] = find_related_items(initiatives, team['id'], 'initiatives', initiative_area_lookup)
+    enriched['relatedKtlo'] = find_related_ktlo_items(ktlo_initiatives, ktlo_key_result_team_lookup, team['id'])
+    enriched['relatedKtloDiscoveries'] = find_related_ktlo_discoveries(
+        ktlo_discoveries,
+        ktlo_objective_team_lookup,
+        ktlo_initiative_team_lookup,
+        team['id']
+    )
     enriched['relatedReleases'] = find_related_items(releases, team['id'], 'releases')
     return enriched
 
@@ -335,9 +581,18 @@ bricks = load_product_bricks_payload(domains_root + domain_id + '/product-bricks
 customers_lookup, kpi_lookup = build_customers_lookup(customers)
 bricks_lookup = build_bricks_lookup(bricks)
 activity_data = load_domain_activity(domains_root, domain_id)
+domain_root = domains_root + domain_id
 initiatives_enriched = activity_data.get('initiatives', {'items': []})
 releases_enriched = activity_data.get('releases', {'items': []})
 discoveries_enriched = activity_data.get('discoveries', {'items': []})
+ktlo_initiatives = load_json_if_exists(domains_root + domain_id + '/objectives/ktlo/initiatives.json', {'items': []})
+ktlo_discoveries = load_json_if_exists(domains_root + domain_id + '/objectives/ktlo/discoveries.json', {'items': []})
+ktlo_objectives = load_json_if_exists(domains_root + domain_id + '/objectives/ktlo/objectives.json', {'objectives': []})
+ktlo_key_result_team_lookup = build_ktlo_key_result_team_lookup(ktlo_objectives)
+ktlo_objective_team_lookup = build_ktlo_objective_team_lookup(ktlo_objectives)
+ktlo_initiative_team_lookup = build_ktlo_initiative_team_lookup(ktlo_initiatives, ktlo_key_result_team_lookup)
+initiative_area_lookup = build_activity_area_lookup(domain_root, 'initiatives.json', ['current', 'next', 'archived'])
+discovery_area_lookup = build_activity_area_lookup(domain_root, 'discoveries.json', ['current', 'next', 'archived'])
 
 teams_payload = json.load(open(teams_path))
 team_lookup = build_team_lookup(teams_payload)
@@ -357,8 +612,23 @@ for group in teams_payload.get('groups', []):
         'groupLeadership': group.get('groupLeadership', {}),
         'teams': [
             dict(
-                enrich_team(team, team_lookup, customers_lookup, bricks_lookup, initiatives_enriched, releases_enriched, group),
-                relatedDiscoveries=find_related_discoveries(discoveries_enriched, team['id'])
+                enrich_team(
+                    team,
+                    team_lookup,
+                    customers_lookup,
+                    bricks_lookup,
+                    initiatives_enriched,
+                    releases_enriched,
+                    ktlo_initiatives,
+                    ktlo_discoveries,
+                    ktlo_key_result_team_lookup,
+                    ktlo_objective_team_lookup,
+                    ktlo_initiative_team_lookup,
+                    initiative_area_lookup,
+                    discovery_area_lookup,
+                    group
+                ),
+                relatedDiscoveries=find_related_discoveries(discoveries_enriched, team['id'], discovery_area_lookup)
             )
             for team in group.get('teams', [])
         ]

@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 LOWER_ID_RE = re.compile(r'^[a-z0-9][a-z0-9._:-]*$')
-PRODUCT_BRICK_LAYER_IDS = {'ui', 'interfaces', 'bus', 'stateless-service', 'service', 'integration'}
+PRODUCT_BRICK_LAYER_IDS = {'ui', 'interfaces', 'worker', 'stateless-service', 'service', 'integration'}
 PRODUCT_BRICK_MODULE_TYPES = {
     'web-component',
     'mobile-component',
