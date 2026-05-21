@@ -9,6 +9,6 @@ Structural references used:
 - `_config/product-domains/cloud-data-and-ai-platform`
 - `_config/product-domains/enterprise-crm-and-revenue-operations`
 - `_config/product-domains/payments-and-revenue-infrastructure`
-- `_config/product-domains/platform-engineering`
+- `_config/product-domains/internal-developer-platform`
 
 The current canonical structure is the newer `_domain`, `business`, `customers`, `data`, `delivery`, `objectives`, `product-bricks`, `product-deployments`, `start`, and `teams` layout. Generated `docs` output was not modified.

@@ -46,7 +46,7 @@ RESEARCH_NOTES = {
     "maas": "account-based ticketing, multimodal settlement, and partner interoperability across urban mobility systems",
     "mambu": "data-driven banking operations, embedded-finance readiness, and lower servicing complexity",
     "nutrition": "traceability, formulation governance, quality-by-design, and sustainability evidence",
-    "platform-engineering": "paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility",
+    "internal-developer-platform": "paved-road adoption, default guardrails, AI-era runtime readiness, and cost visibility",
     "premium-long-haul-airline": "digital retailing, disruption recovery, premium ancillary conversion, and cargo resilience",
     "real-estate-marketplace": "affordability pressure, lead quality, and faster response loops for supply-constrained markets",
 }
@@ -115,7 +115,7 @@ DOMAIN_PROFILES = {
         ],
         "decision": "Decide whether to scale shared specification and evidence workflows broadly or keep the next wave focused on the highest-risk product lines.",
     },
-    "platform-engineering": {
+    "internal-developer-platform": {
         "pressure": "making the paved road faster and safer while keeping support and infrastructure cost flat",
         "discovery_activities": [
             "Compare adoption, time-to-value, and support demand across teams on and off the paved road.",
@@ -169,7 +169,7 @@ DOMAIN_TUNING = {
             "description": "Tighten intake, triage, and guided resolution so support organizations protect retention while lowering resolution drag and avoidable rework.",
         },
     },
-    "platform-engineering": {
+    "internal-developer-platform": {
         "penm": {
             "title": "Team Onboarding Paved Road",
             "capability": "portal onboarding, service catalog, and golden-path templates",
