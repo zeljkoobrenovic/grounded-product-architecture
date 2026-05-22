@@ -1,13 +1,13 @@
 ---
-name: grounded-product-architecture-modeling
-description: "Use when aligning customer needs, strategy, goals, delivery, product capabilities, product bricks, teams, and planning artifacts into one implementation-aware Grounded Product Architecture model."
+name: spec-driven-product-architecture-modeling
+description: "Use when aligning customer needs, strategy, goals, delivery, product capabilities, product bricks, teams, and planning artifacts into one implementation-aware Spec-Driven Product Architecture model."
 ---
 
-# Grounded Product Architecture Modeling
+# Spec-Driven Product Architecture Modeling
 
 ## Purpose
 
-Maintain coherence across the full Grounded Product Architecture model. This meta-skill is for creating, reviewing, or repairing a domain so customer value, strategy, delivery, implementation bricks, teams, and planning artifacts remain connected.
+Maintain coherence across the full Spec-Driven Product Architecture model. This meta-skill is for creating, reviewing, or repairing a domain so customer value, strategy, delivery, implementation bricks, teams, and planning artifacts remain connected.
 
 ## Required Skill Stack
 

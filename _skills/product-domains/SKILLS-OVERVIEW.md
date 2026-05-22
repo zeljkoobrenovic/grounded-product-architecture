@@ -1,6 +1,6 @@
 # Skills For Defining Product Domains
 
-This directory contains the repo-local skill set used to create and refine Grounded Product Architecture domain models. The skills are stored outside `_config/product-domains/` because they guide work across source data, generators, templates, and generated documentation.
+This directory contains the repo-local skill set used to create and refine Spec-Driven Product Architecture domain models. The skills are stored outside `_config/product-domains/` because they guide work across source data, generators, templates, and generated documentation.
 
 The skills are organized into three groups:
 
@@ -85,7 +85,7 @@ Use the bundled scripts for deterministic checks while maintaining this skill li
 ## Meta-Skills
 
 - [New Product Domain Definition](meta-skills/new-product-domain-definition/SKILL.md) - end-to-end creation of a complete domain under `_config/product-domains/<domain-id>/`.
-- [Grounded Product Architecture Modeling](meta-skills/grounded-product-architecture-modeling/SKILL.md) - cross-artifact modeling that keeps customer needs, strategy, delivery, capabilities, bricks, teams, and planning coherent.
+- [Spec-Driven Product Architecture Modeling](meta-skills/spec-driven-product-architecture-modeling/SKILL.md) - cross-artifact modeling that keeps customer needs, strategy, delivery, capabilities, bricks, teams, and planning coherent.
 
 ## Prompt Alignment
 

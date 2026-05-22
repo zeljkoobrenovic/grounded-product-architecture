@@ -21,7 +21,7 @@ For deeper product-domain modeling guidance, use the repo-local skill library un
 - Start with `_skills/product-domains/SKILLS-OVERVIEW.md` to choose the relevant skill or skill cluster.
 - Load only the relevant `SKILL.md` files for the task, such as market research, competition analysis, customer segmentation, JTBD, KPI architecture, product-brick architecture, delivery design, team topology, roadmap design, or structured JSON authoring.
 - Use `_skills/product-domains/meta-skills/new-product-domain-definition/SKILL.md` when creating a complete new domain end to end.
-- Use `_skills/product-domains/meta-skills/grounded-product-architecture-modeling/SKILL.md` when checking or repairing coherence across customers, strategy, delivery, product bricks, teams, and planning artifacts.
+- Use `_skills/product-domains/meta-skills/spec-driven-product-architecture-modeling/SKILL.md` when checking or repairing coherence across customers, strategy, delivery, product bricks, teams, and planning artifacts.
 
 The `_skills/product-domains` directory is repository-local guidance. It is not an automatically discovered Codex skill location unless separately installed or linked into `${CODEX_HOME:-~/.codex}/skills`. Keep the detailed modeling guidance in `_skills/product-domains`; keep this file focused on operational rules that should apply to every product-domain edit.
 

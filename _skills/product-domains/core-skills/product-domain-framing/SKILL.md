@@ -1,6 +1,6 @@
 ---
 name: product-domain-framing
-description: "Use when selecting, naming, scoping, or refining a product domain for Grounded Product Architecture under _config/product-domains."
+description: "Use when selecting, naming, scoping, or refining a product domain for Spec-Driven Product Architecture under _config/product-domains."
 ---
 
 # Product Domain Framing
