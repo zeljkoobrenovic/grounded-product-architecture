@@ -104,7 +104,6 @@ Recommended flow:
    - `teams/teams.json`
    - `start/config.json`
    - `data/data-assets.json`
-   - `business/scorecard.json`
 8. Register the new domain in `_wiring/product-domains/run.sh` by adding a new `domain_id|Domain Name|Domain description` entry to the `domains=(...)` list.
 9. Regenerate the documentation from `_wiring/product-domains/`.
 
