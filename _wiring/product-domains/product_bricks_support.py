@@ -873,7 +873,7 @@ def product_brick_root_groups(payload):
     return payload.get('rootGroups', payload.get('bricks', []))
 
 
-def load_product_capabilities_payload(path, default_title='Product Experiences', default_description=''):
+def load_product_streams_payload(path, default_title='Product Streams', default_description=''):
     if not os.path.exists(path):
         return {
             'metadata': {'title': default_title, 'description': default_description},
@@ -882,14 +882,8 @@ def load_product_capabilities_payload(path, default_title='Product Experiences',
 
     payload = json.load(open(path))
 
-    if isinstance(payload, list):
-        return {
-            'metadata': {
-                'title': default_title,
-                'description': default_description
-            },
-            'rootGroups': legacy_capabilities_to_root_groups(payload)
-        }
+    if not isinstance(payload, dict):
+        raise ValueError(f'Product streams payload must be an object: {path}')
 
     metadata = dict(payload.get('metadata', {}))
     if 'title' not in metadata:
@@ -899,10 +893,7 @@ def load_product_capabilities_payload(path, default_title='Product Experiences',
 
     return {
         'metadata': metadata,
-        'rootGroups': payload.get(
-            'rootGroups',
-            legacy_capabilities_to_root_groups(payload.get('experiences', payload.get('capabilities', [])))
-        )
+        'rootGroups': payload.get('rootGroups', [])
     }
 
 
@@ -929,7 +920,7 @@ DATA_ASSET_ROOT_GROUP_DEFINITIONS = {
     },
     'architecture-portfolio-planning': {
         'name': 'Architecture, Portfolio, and Planning Data',
-        'description': 'Architecture models, portfolio records, capabilities, roadmaps, standards, and planning evidence.'
+        'description': 'Architecture models, portfolio records, streams, roadmaps, standards, and planning evidence.'
     },
     'analytics-metrics-insights': {
         'name': 'Analytics, Metrics, and Insight Data',
@@ -1077,7 +1068,7 @@ def data_asset_root_group_key(asset):
     ]
 
     if _text_has_any(text, [
-        'architecture', 'relationship', 'application inventory', 'capability',
+        'architecture', 'relationship', 'application inventory', 'stream',
         'technology standard', 'portfolio', 'roadmap', 'initiative', 'metamodel',
         'standard', 'process model', 'transformation'
     ]):
@@ -1230,11 +1221,11 @@ def load_data_assets_payload(path, default_title='Data Assets', default_descript
     }
 
 
-def product_capability_root_groups(payload):
-    return payload.get('rootGroups', legacy_capabilities_to_root_groups(payload.get('experiences', payload.get('capabilities', []))))
+def product_stream_root_groups(payload):
+    return payload.get('rootGroups', [])
 
 
-def sanitize_capability_flows(flows):
+def sanitize_stream_flows(flows):
     sanitized_flows = []
     for flow in flows or []:
         sanitized_flow = dict(flow)
@@ -1285,8 +1276,8 @@ def flatten_product_bricks(payload):
     return flat_bricks
 
 
-def flatten_product_capabilities(payload):
-    flat_capabilities = []
+def flatten_product_streams(payload):
+    flat_streams = []
 
     def walk_group(group, ancestors):
         next_ancestors = ancestors + [group]
@@ -1296,27 +1287,29 @@ def flatten_product_capabilities(payload):
         root_group_name = next_ancestors[0].get('name', '') if next_ancestors else ''
         group_name = next_ancestors[-1].get('name', '') if next_ancestors else ''
 
-        for capability in group.get('capabilities', []):
-            flat_capabilities.append({
-                'id': capability.get('id', ''),
-                'name': capability.get('name', ''),
-                'icon': capability.get('icon', str(capability.get('id', '')) + '.png'),
-                'type': capability.get('type', 'outcome-based-experience'),
-                'description': capability.get('description', ''),
-                'group': capability.get('group', group_name),
-                'rootGroup': capability.get('rootGroup', root_group_name),
-                'flows': sanitize_capability_flows(capability.get('flows', [])),
-                'outcomes': capability.get('outcomes', []),
-                'brickDependencies': capability.get('brickDependencies', capability.get('productBrickDependencies', []))
+        for stream in group.get('streams', []):
+            flat_streams.append({
+                'id': stream.get('id', ''),
+                'name': stream.get('name', ''),
+                'icon': stream.get('icon', str(stream.get('id', '')) + '.png'),
+                'type': stream.get('type', 'outcome-based-stream'),
+                'description': stream.get('description', ''),
+                'group': stream.get('group', group_name),
+                'rootGroup': stream.get('rootGroup', root_group_name),
+                'flows': sanitize_stream_flows(stream.get('flows', [])),
+                'outcomes': stream.get('outcomes', []),
+                'brickDependencies': stream.get('brickDependencies', stream.get('productBrickDependencies', [])),
+                'externalSystemsThisStreamDependsOn': stream.get('externalSystemsThisStreamDependsOn', []),
+                'externalSystemsDependingOnThisStream': stream.get('externalSystemsDependingOnThisStream', [])
             })
 
-    for group in product_capability_root_groups(payload):
+    for group in product_stream_root_groups(payload):
         walk_group(group, [])
 
-    return flat_capabilities
+    return flat_streams
 
 
-def sanitize_product_capability_root_groups(groups, ancestors=None):
+def sanitize_product_stream_root_groups(groups, ancestors=None):
     sanitized_groups = []
     ancestors = ancestors or []
 
@@ -1328,48 +1321,27 @@ def sanitize_product_capability_root_groups(groups, ancestors=None):
         sanitized_groups.append({
             'name': group.get('name', ''),
             'description': group.get('description', ''),
-            'subGroups': sanitize_product_capability_root_groups(group.get('subGroups', []), next_ancestors),
-            'capabilities': [
+            'subGroups': sanitize_product_stream_root_groups(group.get('subGroups', []), next_ancestors),
+            'streams': [
                 {
-                    'id': capability.get('id', ''),
-                    'name': capability.get('name', ''),
-                    'icon': capability.get('icon', str(capability.get('id', '')) + '.png'),
-                    'type': capability.get('type', 'outcome-based-experience'),
-                    'description': capability.get('description', ''),
-                    'group': capability.get('group', group_name),
-                    'rootGroup': capability.get('rootGroup', root_group_name),
-                    'flows': sanitize_capability_flows(capability.get('flows', [])),
-                    'outcomes': capability.get('outcomes', []),
-                    'brickDependencies': capability.get('brickDependencies', capability.get('productBrickDependencies', []))
+                    'id': stream.get('id', ''),
+                    'name': stream.get('name', ''),
+                    'icon': stream.get('icon', str(stream.get('id', '')) + '.png'),
+                    'type': stream.get('type', 'outcome-based-stream'),
+                    'description': stream.get('description', ''),
+                    'group': stream.get('group', group_name),
+                    'rootGroup': stream.get('rootGroup', root_group_name),
+                    'flows': sanitize_stream_flows(stream.get('flows', [])),
+                    'outcomes': stream.get('outcomes', []),
+                    'brickDependencies': stream.get('brickDependencies', stream.get('productBrickDependencies', [])),
+                    'externalSystemsThisStreamDependsOn': stream.get('externalSystemsThisStreamDependsOn', []),
+                    'externalSystemsDependingOnThisStream': stream.get('externalSystemsDependingOnThisStream', [])
                 }
-                for capability in group.get('capabilities', [])
+                for stream in group.get('streams', [])
             ]
         })
 
     return sanitized_groups
-
-
-def legacy_capabilities_to_root_groups(items):
-    groups = []
-    group_index = {}
-
-    for item in items:
-        group_name = item.get('group', 'Ungrouped') or 'Ungrouped'
-        if group_name not in group_index:
-            group_index[group_name] = {
-                'name': group_name,
-                'description': '',
-                'subGroups': [],
-                'capabilities': []
-            }
-            groups.append(group_index[group_name])
-
-        capability = dict(item)
-        capability.pop('group', None)
-        capability.pop('children', None)
-        group_index[group_name]['capabilities'].append(capability)
-
-    return groups
 
 
 def build_bricks_lookup(product_bricks_payload):

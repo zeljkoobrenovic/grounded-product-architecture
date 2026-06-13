@@ -68,6 +68,7 @@ Use the bundled scripts for deterministic checks while maintaining this skill li
 ### Organization And Source Authoring
 
 - [Organizational Design](core-skills/organizational-design/SKILL.md) - define team ownership, responsibilities, leadership, coordination, and accountability.
+- [Teams Org Design](core-skills/teams-org-design/SKILL.md) - create, change, staff, validate, and regenerate product-domain teams in this repository.
 - [Team Topology Design](core-skills/team-topology-design/SKILL.md) - structure stream-aligned, platform, enabling, and complicated-subsystem teams.
 - [Schema And Repository Pattern Recognition](core-skills/schema-and-repository-pattern-recognition/SKILL.md) - infer current canonical JSON structure, naming, references, and generator expectations.
 - [Structured JSON Authoring](core-skills/structured-json-authoring/SKILL.md) - produce valid, internally consistent JSON with lowercase IDs and stable references.

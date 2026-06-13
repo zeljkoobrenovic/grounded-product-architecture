@@ -380,7 +380,7 @@
             color: white;
         }
 
-        .capabilities-panel {
+        .streams-panel {
             padding: 18px;
             background-color: white;
         }
@@ -501,11 +501,11 @@
             margin-bottom: 6px;
         }
 
-        .capabilities-toolbar {
+        .streams-toolbar {
             margin-bottom: 18px;
         }
 
-        .capabilities-toggle {
+        .streams-toggle {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -513,18 +513,18 @@
             color: #4b5563;
         }
 
-        .capabilities-toggle input {
+        .streams-toggle input {
             margin: 0;
         }
 
-        .capabilities-summary {
+        .streams-summary {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 18px;
         }
 
-        .capability-area {
+        .stream-area {
             display: inline-block;
             margin-bottom: 24px;
             vertical-align: top;
@@ -533,7 +533,7 @@
             padding: 12px;
         }
 
-        .capability-area-title {
+        .stream-area-title {
             font-size: 24px;
             color: blue;
             text-transform: uppercase;
@@ -541,37 +541,37 @@
             margin: 8px;
         }
 
-        .capability-group-title {
+        .stream-group-title {
             font-size: 18px;
             color: blue;
             margin: 8px;
             font-weight: 700;
         }
 
-        .capability-group-copy {
+        .stream-group-copy {
             font-size: 12px;
             color: #6b7280;
             margin: 0 8px 8px 8px;
         }
 
-        .capability-depth-1 {
+        .stream-depth-1 {
             display: block;
             margin: 10px;
             border-color: #d1d5db;
         }
 
-        .capability-depth-2 {
+        .stream-depth-2 {
             display: block;
             margin: 10px;
             border-color: #e5e7eb;
         }
 
-        .capability-grid {
+        .stream-grid {
             display: inline-block;
             margin: 6px;
         }
 
-        .capability-card {
+        .stream-card {
             display: inline-block;
             border: 1px solid grey;
             border-radius: 12px;
@@ -582,14 +582,14 @@
             vertical-align: top;
         }
 
-        .capability-card-header {
+        .stream-card-header {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 8px;
         }
 
-        .capability-card-icon {
+        .stream-card-icon {
             width: 50px;
             height: 50px;
             object-fit: contain;
@@ -599,20 +599,20 @@
             flex: 0 0 auto;
         }
 
-        .capability-card-title {
+        .stream-card-title {
             font-size: 20px;
             color: black;
             margin-bottom: 0;
         }
 
-        .capability-card-copy {
+        .stream-card-copy {
             color: #4b5563;
             line-height: 1.5;
             margin-bottom: 12px;
             font-size: 80%;
         }
 
-        .capability-card-subtitle {
+        .stream-card-subtitle {
             font-size: 11px;
             color: #6b7280;
             text-transform: uppercase;
@@ -621,23 +621,23 @@
             margin-bottom: 8px;
         }
 
-        .capability-list {
+        .stream-list {
             margin: 0;
             padding-left: 18px;
             color: #374151;
         }
 
-        .capability-list li {
+        .stream-list li {
             margin-bottom: 6px;
         }
 
-        .capability-pills {
+        .stream-pills {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
 
-        .capability-pill {
+        .stream-pill {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -649,13 +649,13 @@
             color: #202124;
         }
 
-        .capability-pill.external {
+        .stream-pill.external {
             border-color: #bbf7d0;
             background-color: #f0fdf4;
             color: #166534;
         }
 
-        .capability-pill img {
+        .stream-pill img {
             width: 28px;
             height: 28px;
         }
@@ -980,23 +980,29 @@
     <script>
         function initTab() {
             if (window.location.hash) {
-                tabName = window.location.hash.substring(1);
+                const tabName = window.location.hash.substring(1);
                 if (document.getElementById('tab_' + tabName)) {
-                    openTab(tabName);
+                    openTab(tabName, {replaceHash: true, scrollToTop: true});
                 }
             }
         }
 
         function updateTabLabels() {
             const brickCount = getBrickCatalog().length;
-            const capabilityCount = getCapabilityCatalogItems().length;
+            const streamCount = getStreamCatalogItems().length;
             const dataAssetCount = (dataAssetsPayload.assets || []).length;
             document.getElementById('tab_BigPicture').textContent = 'Bricks (' + brickCount + ')';
-            document.getElementById('tab_Capabilities').textContent = 'Capabilities (' + capabilityCount + ')';
+            document.getElementById('tab_Streams').textContent = 'Streams (' + streamCount + ')';
             document.getElementById('tab_Data').textContent = 'Data (' + dataAssetCount + ')';
         }
 
-        function openTab(tabName) {
+        function scrollPageToTop() {
+            window.scrollTo(0, 0);
+            requestAnimationFrame(() => window.scrollTo(0, 0));
+            setTimeout(() => window.scrollTo(0, 0), 0);
+        }
+
+        function openTab(tabName, options = {}) {
             const tabcontent = document.getElementsByClassName('tabcontent');
             for (let i = 0; i < tabcontent.length; i++) {
                 tabcontent[i].style.display = 'none';
@@ -1005,28 +1011,35 @@
             for (let i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(' active', '');
             }
-            history.pushState({}, '', '#' + tabName);
+            if (options.replaceHash) {
+                history.replaceState({}, '', '#' + tabName);
+            } else {
+                history.pushState({}, '', '#' + tabName);
+            }
             document.getElementById(tabName).style.display = 'block';
             document.getElementById('tab_' + tabName).className += ' active';
             if (tabName === 'Dependencies') {
                 renderDependenciesView();
             }
-            if (tabName === 'Capabilities') {
-                renderCapabilitiesView();
+            if (tabName === 'Streams') {
+                renderStreamsView();
             }
             if (tabName === 'Data') {
                 renderDataView();
             }
+            if (options.scrollToTop) {
+                scrollPageToTop();
+            }
         }
 
         const bricksPayload = ${bricks};
-        const capabilitiesPayload = ${product_capabilities};
+        const streamsPayload = ${product_streams};
         const dataAssetsPayload = ${data_assets};
         const bricksMetadata = bricksPayload.metadata || {};
-        const capabilitiesMetadata = capabilitiesPayload.metadata || {};
+        const streamsMetadata = streamsPayload.metadata || {};
         const rootGroups = bricksPayload.rootGroups || bricksPayload.bricks || [];
-        const capabilityRootGroups = capabilitiesPayload.rootGroups || [];
-        const explicitCapabilities = capabilitiesPayload.capabilities || capabilitiesPayload.capabilities || [];
+        const streamRootGroups = streamsPayload.rootGroups || [];
+        const explicitStreams = streamsPayload.streams || [];
         const brickRendering = bricksMetadata.rendering || bricksMetadata.render || {};
         const brickTypes = bricksMetadata.brickTypes || [];
         const brickStatuses = bricksMetadata.brickStatuses || [];
@@ -1038,7 +1051,7 @@
         let activeDependencySubtab = 'declared';
         const dependencySelectionState = {
             declared: {
-                capabilityIds: null,
+                streamIds: null,
                 typeIds: null
             },
             data: {
@@ -1046,9 +1059,9 @@
                 assetIds: null,
                 aggregate: false
             },
-            capabilities: {
+            streams: {
                 brickIds: null,
-                capabilityIds: null,
+                streamIds: null,
                 aggregate: false
             }
         };
@@ -1495,20 +1508,20 @@
             return flattenBricks(rootGroups);
         }
 
-        function getCapabilityCatalogItems() {
-            const fallbackCapabilities = getBrickCatalog().map(item => ({
+        function getStreamCatalogItems() {
+            const fallbackStreams = getBrickCatalog().map(item => ({
                 ...item,
                 sourceType: 'brick-fallback'
             }));
 
-            return explicitCapabilities.length ? explicitCapabilities : fallbackCapabilities;
+            return explicitStreams.length ? explicitStreams : fallbackStreams;
         }
 
-        function normalizeCapabilityGroups(groups) {
+        function normalizeStreamGroups(groups) {
             return (groups || []).map(group => ({
                 ...group,
-                subGroups: normalizeCapabilityGroups(group.subGroups || []),
-                capabilities: (group.capabilities || []).map(item => ({
+                subGroups: normalizeStreamGroups(group.subGroups || []),
+                streams: (group.streams || []).map(item => ({
                     ...item,
                     group: item.group || group.name,
                     rootGroup: item.rootGroup || ''
@@ -1524,12 +1537,12 @@
             return lookup;
         }
 
-        function capabilityAreaOf(capability, brickLookup) {
-            if (capability.group) {
-                return capability.group;
+        function streamAreaOf(stream, brickLookup) {
+            if (stream.group) {
+                return stream.group;
             }
             const groups = {};
-            (capability.brickDependencies || []).forEach(dep => {
+            (stream.brickDependencies || []).forEach(dep => {
                 const brick = brickLookup[dep.targetBrickId] || {};
                 const area = brick.group || brick.domain || 'General';
                 groups[area] = (groups[area] || 0) + 1;
@@ -1543,15 +1556,15 @@
             return ranked.length ? ranked[0][0] : 'General';
         }
 
-        function renderCapabilityPills(capability, brickLookup) {
-            const brickPills = (capability.brickDependencies || []).map(dep => {
+        function renderStreamPills(stream, brickLookup) {
+            const brickPills = (stream.brickDependencies || []).map(dep => {
                 if (!dep.targetBrickId) {
                     return '';
                 }
                 const brick = brickLookup[dep.targetBrickId] || {};
                 const pillColor = colorOf(brick.type);
                 return `
-                    <a class="capability-pill" style="background-color: ${pillColor}; border-color: rgba(17,17,17,0.12);" target="_blank" href="landing_pages/${dep.targetBrickId}.html" title="${dep.description || ''}">
+                    <a class="stream-pill" style="background-color: ${pillColor}; border-color: rgba(17,17,17,0.12);" target="_blank" href="landing_pages/${dep.targetBrickId}.html" title="${dep.description || ''}">
                         <img src="icons/${dep.targetBrickId}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
                         <span>${brick.name || dep.targetBrickId}</span>
                     </a>
@@ -1559,120 +1572,120 @@
             }).filter(Boolean).join('');
 
             return `
-                <div class="capability-pills">${brickPills || ''}</div>
+                <div class="stream-pills">${brickPills || ''}</div>
             `;
         }
 
-        function renderCapabilitiesView() {
-            const container = document.getElementById('CapabilitiesContent');
+        function renderStreamsView() {
+            const container = document.getElementById('StreamsContent');
             if (!container) {
                 return;
             }
-            const descriptionToggle = document.getElementById('capabilityDescriptionToggle');
+            const descriptionToggle = document.getElementById('streamDescriptionToggle');
             const showDescriptions = Boolean(descriptionToggle && descriptionToggle.checked);
 
-            const capabilities = getCapabilityCatalogItems();
+            const streams = getStreamCatalogItems();
             const brickLookup = buildBrickLookup();
             const grouped = {};
-            capabilities.forEach(capability => {
-                const area = capabilityAreaOf(capability, brickLookup);
+            streams.forEach(stream => {
+                const area = streamAreaOf(stream, brickLookup);
                 if (!grouped[area]) {
                     grouped[area] = [];
                 }
-                grouped[area].push(capability);
+                grouped[area].push(stream);
             });
 
-            function summarizeCapabilityStory(capability) {
-                const firstFlow = (capability.flows || [])[0] || {};
+            function summarizeStreamStory(stream) {
+                const firstFlow = (stream.flows || [])[0] || {};
                 const firstStep = (firstFlow.steps || [])[0] || {};
                 const actor = firstFlow.primaryActor || firstStep.actor || '';
                 const trigger = firstFlow.trigger || firstStep.trigger || '';
                 return {actor, trigger};
             }
 
-            function renderCapabilityCard(capability) {
-                const story = summarizeCapabilityStory(capability);
+            function renderStreamCard(stream) {
+                const story = summarizeStreamStory(stream);
                 return `
-                    <div class="capability-card" id="capability-${capability.id}">
-                        <div class="capability-card-header">
-                            <img class="capability-card-icon" src="icons/${capability.icon || 'capability.png'}" alt="" onerror="this.onerror=null;this.src='icons/capability.png'">
-                            <div class="capability-card-title"><a target="_blank" href="capability_pages/${capability.id}.html">${capability.name || capability.id}</a></div>
+                    <div class="stream-card" id="stream-${stream.id}">
+                        <div class="stream-card-header">
+                            <img class="stream-card-icon" src="icons/${stream.icon || 'stream.png'}" alt="" onerror="this.onerror=null;this.src='icons/stream.png'">
+                            <div class="stream-card-title"><a target="_blank" href="stream_pages/${stream.id}.html">${stream.name || stream.id}</a></div>
                         </div>
-                        ${showDescriptions && capability.description ? `<div class="capability-card-copy">${capability.description}</div>` : ''}
-                        ${story.actor ? `<div class="capability-card-copy"><strong>Actor:</strong> ${story.actor}</div>` : ''}
-                        ${story.trigger ? `<div class="capability-card-copy"><strong>Trigger:</strong> ${story.trigger}</div>` : ''}
-                        ${renderCapabilityPills(capability, brickLookup)}
+                        ${showDescriptions && stream.description ? `<div class="stream-card-copy">${stream.description}</div>` : ''}
+                        ${story.actor ? `<div class="stream-card-copy"><strong>Actor:</strong> ${story.actor}</div>` : ''}
+                        ${story.trigger ? `<div class="stream-card-copy"><strong>Trigger:</strong> ${story.trigger}</div>` : ''}
+                        ${renderStreamPills(stream, brickLookup)}
                     </div>
                 `;
             }
 
-            function renderCapabilityGroup(group, depth = 0) {
-                const childGroups = (group.subGroups || []).map(item => renderCapabilityGroup(item, depth + 1)).join('');
-                const cards = (group.capabilities || []).map(renderCapabilityCard).join('');
-                const titleClass = depth === 0 ? 'capability-area-title' : 'capability-group-title';
+            function renderStreamGroup(group, depth = 0) {
+                const childGroups = (group.subGroups || []).map(item => renderStreamGroup(item, depth + 1)).join('');
+                const cards = (group.streams || []).map(renderStreamCard).join('');
+                const titleClass = depth === 0 ? 'stream-area-title' : 'stream-group-title';
                 return `
-                    <div class="capability-area capability-depth-${depth}">
+                    <div class="stream-area stream-depth-${depth}">
                         <div class="${titleClass}">${group.name}</div>
-                        ${showDescriptions && group.description ? `<div class="capability-group-copy">${group.description}</div>` : ''}
+                        ${showDescriptions && group.description ? `<div class="stream-group-copy">${group.description}</div>` : ''}
                         ${childGroups}
-                        ${cards ? `<div class="capability-grid">${cards}</div>` : ''}
+                        ${cards ? `<div class="stream-grid">${cards}</div>` : ''}
                     </div>
                 `;
             }
 
             function buildBrickUsage() {
                 const usage = {};
-                capabilities.forEach(capability => {
-                    (capability.brickDependencies || []).forEach(dep => {
+                streams.forEach(stream => {
+                    (stream.brickDependencies || []).forEach(dep => {
                         if (!dep.targetBrickId) {
                             return;
                         }
                         if (!usage[dep.targetBrickId]) {
                             usage[dep.targetBrickId] = [];
                         }
-                        usage[dep.targetBrickId].push(capability);
+                        usage[dep.targetBrickId].push(stream);
                     });
                 });
                 return usage;
             }
 
-            function renderBrickAuditItem(brick, linkedCapabilities) {
+            function renderBrickAuditItem(brick, linkedStreams) {
                 const pillColor = colorOf(brick.type);
-                const meta = linkedCapabilities.length
-                    ? linkedCapabilities.map(item => item.name || item.id).join(', ')
-                    : 'Not linked to any capability.';
+                const meta = linkedStreams.length
+                    ? linkedStreams.map(item => item.name || item.id).join(', ')
+                    : 'Not linked to any stream.';
                 return `
-                    <a class="capability-pill" style="background-color: ${pillColor}; border-color: rgba(17,17,17,0.12);" target="_blank" href="landing_pages/${brick.id}.html" title="${meta}">
+                    <a class="stream-pill" style="background-color: ${pillColor}; border-color: rgba(17,17,17,0.12);" target="_blank" href="landing_pages/${brick.id}.html" title="${meta}">
                         <img src="icons/${brick.id}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
                         <span>${brick.name || brick.id}</span>
                     </a>
                 `;
             }
 
-            const hierarchicalGroups = normalizeCapabilityGroups(capabilityRootGroups);
+            const hierarchicalGroups = normalizeStreamGroups(streamRootGroups);
             const brickUsage = buildBrickUsage();
             const unusedBricks = getBrickCatalog().filter(brick => !brickUsage[brick.id]);
             const reusedBricks = getBrickCatalog().filter(brick => (brickUsage[brick.id] || []).length >= 2);
             container.innerHTML = `
                 ${hierarchicalGroups.length
-                ? hierarchicalGroups.map(group => renderCapabilityGroup(group)).join('')
+                ? hierarchicalGroups.map(group => renderStreamGroup(group)).join('')
                 : Object.keys(grouped).sort((left, right) => left.localeCompare(right)).map(area => `
-                        <div class="capability-area">
-                            <div class="capability-area-title">${area}</div>
-                            <div class="capability-grid">
-                                ${grouped[area].map(renderCapabilityCard).join('')}
+                        <div class="stream-area">
+                            <div class="stream-area-title">${area}</div>
+                            <div class="stream-grid">
+                                ${grouped[area].map(renderStreamCard).join('')}
                             </div>
                         </div>
                     `).join('')}
-                <div class="capability-area">
-                    <div class="capability-area-title">Bricks Not Part Of Any Capability</div>
-                    ${showDescriptions ? '<div class="capability-group-copy">Implementation bricks currently not linked from any capability.</div>' : ''}
-                    <div class="capability-pills">${unusedBricks.length ? unusedBricks.map(brick => renderBrickAuditItem(brick, [])).join('') : '<span class="activity-muted">Every brick is linked to at least one capability.</span>'}</div>
+                <div class="stream-area">
+                    <div class="stream-area-title">Bricks Not Part Of Any Stream</div>
+                    ${showDescriptions ? '<div class="stream-group-copy">Implementation bricks currently not linked from any stream.</div>' : ''}
+                    <div class="stream-pills">${unusedBricks.length ? unusedBricks.map(brick => renderBrickAuditItem(brick, [])).join('') : '<span class="activity-muted">Every brick is linked to at least one stream.</span>'}</div>
                 </div>
-                <div class="capability-area">
-                    <div class="capability-area-title">Bricks In Two Or More Capabilities</div>
-                    ${showDescriptions ? '<div class="capability-group-copy">Implementation bricks reused across multiple capabilities.</div>' : ''}
-                    <div class="capability-pills">${reusedBricks.length ? reusedBricks.map(brick => renderBrickAuditItem(brick, brickUsage[brick.id] || [])).join('') : '<span class="activity-muted">No bricks are shared across two or more capabilities.</span>'}</div>
+                <div class="stream-area">
+                    <div class="stream-area-title">Bricks In Two Or More Streams</div>
+                    ${showDescriptions ? '<div class="stream-group-copy">Implementation bricks reused across multiple streams.</div>' : ''}
+                    <div class="stream-pills">${reusedBricks.length ? reusedBricks.map(brick => renderBrickAuditItem(brick, brickUsage[brick.id] || [])).join('') : '<span class="activity-muted">No bricks are shared across two or more streams.</span>'}</div>
                 </div>
             `;
         }
@@ -1714,12 +1727,12 @@
             }
 
             return `
-                <div class="capability-pills">
+                <div class="stream-pills">
                     ${items.map(item => {
                         const linkedBrick = getBrickCatalog().find(candidate => candidate.id === item.id) || {};
                         const pillColor = colorOf(linkedBrick.type);
                         return `
-                        <a class="capability-pill" style="background-color: ${pillColor}; border: 3px solid ${borderColor};" target="_blank" href="landing_pages/${item.id}.html" title="${escapeHtml(item.description || item.role || '')}">
+                        <a class="stream-pill" style="background-color: ${pillColor}; border: 3px solid ${borderColor};" target="_blank" href="landing_pages/${item.id}.html" title="${escapeHtml(item.description || item.role || '')}">
                             <img src="icons/${actionIcon}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
                             <img src="icons/${item.id}.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
                             <span>${item.name}</span>
@@ -1863,7 +1876,7 @@
         }
 
         function getDeclaredDependencyCatalog() {
-            const capabilities = getCapabilityCatalogItems().slice().sort(sortByDisplayName);
+            const streams = getStreamCatalogItems().slice().sort(sortByDisplayName);
             const bricks = getBrickCatalog().slice().sort(sortByDisplayName);
             const dependencyTypes = new Set();
             bricks.forEach(brick => {
@@ -1874,7 +1887,7 @@
                 });
             });
             return {
-                capabilities,
+                streams,
                 bricks,
                 dependencyTypes: Array.from(dependencyTypes).sort((left, right) => left.localeCompare(right))
             };
@@ -1910,11 +1923,11 @@
             return {bricks, assets};
         }
 
-        function getCapabilityDependencyCatalog() {
-            const capabilities = getCapabilityCatalogItems().slice().sort(sortByDisplayName);
+        function getStreamDependencyCatalog() {
+            const streams = getStreamCatalogItems().slice().sort(sortByDisplayName);
             const referencedBrickIds = new Set();
-            capabilities.forEach(capability => {
-                (capability.brickDependencies || []).forEach(dep => {
+            streams.forEach(stream => {
+                (stream.brickDependencies || []).forEach(dep => {
                     if (dep.targetBrickId) {
                         referencedBrickIds.add(dep.targetBrickId);
                     }
@@ -1923,7 +1936,7 @@
             const bricks = getBrickCatalog()
                 .filter(brick => referencedBrickIds.has(brick.id))
                 .sort(sortByDisplayName);
-            return {capabilities, bricks};
+            return {streams, bricks};
         }
 
         function renderDependencySubtabs() {
@@ -1934,7 +1947,7 @@
             const tabs = [
                 {id: 'declared', label: 'Declared brick dependencies'},
                 {id: 'data', label: 'Brick dependencies via data assets'},
-                {id: 'capabilities', label: 'Brick dependencies via capabilities'}
+                {id: 'streams', label: 'Brick dependencies via streams'}
             ];
             container.innerHTML = tabs.map(tab => `
                 <button class="dependency-subtab${activeDependencySubtab === tab.id ? ' active' : ''}" type="button" onclick="setDependencySubtab('${tab.id}')">
@@ -1973,13 +1986,13 @@
             `;
         }
 
-        function renderCapabilityControlLabel(capability) {
-            const meta = [capability.domain, capability.group && capability.group !== capability.domain ? capability.group : '']
+        function renderStreamControlLabel(stream) {
+            const meta = [stream.domain, stream.group && stream.group !== stream.domain ? stream.group : '']
                 .filter(Boolean)
                 .join(' / ');
             return `
                 <span>
-                    <span>${escapeHtml(capability.name || capability.id)}</span>
+                    <span>${escapeHtml(stream.name || stream.id)}</span>
                     ${meta ? `<span class="dependency-check-meta">${escapeHtml(meta)}</span>` : ''}
                 </span>
             `;
@@ -2032,7 +2045,7 @@
             const state = dependencyStateFor('declared');
             return `
                 <div class="dependency-controls">
-                    ${renderDependencyControlGroup('Product Capabilities', 'dependency-declared-capability-checkbox', catalog.capabilities, state.capabilityIds, renderCapabilityControlLabel)}
+                    ${renderDependencyControlGroup('Product Streams', 'dependency-declared-stream-checkbox', catalog.streams, state.streamIds, renderStreamControlLabel)}
                     ${renderDependencyControlGroup('Dependency Types', 'dependency-declared-type-checkbox', catalog.dependencyTypes, state.typeIds, renderTypeControlLabel)}
                     ${renderDependencyNodeLegend([
                         {fill: '#dbeafe', stroke: '#2563eb', label: 'Product brick'}
@@ -2062,21 +2075,21 @@
             `;
         }
 
-        function renderCapabilityDependencyControls() {
-            const catalog = getCapabilityDependencyCatalog();
-            const state = dependencyStateFor('capabilities');
+        function renderStreamDependencyControls() {
+            const catalog = getStreamDependencyCatalog();
+            const state = dependencyStateFor('streams');
             return `
                 <div class="dependency-controls">
                     <div class="dependency-top-options">
-                        <label class="dependency-option" for="dependencyCapabilityAggregateToggle">
-                            <input type="checkbox" id="dependencyCapabilityAggregateToggle" ${state.aggregate ? 'checked' : ''} onchange="renderActiveDependencyGraph()">
+                        <label class="dependency-option" for="dependencyStreamAggregateToggle">
+                            <input type="checkbox" id="dependencyStreamAggregateToggle" ${state.aggregate ? 'checked' : ''} onchange="renderActiveDependencyGraph()">
                             <span>Aggregate brick links</span>
                         </label>
                     </div>
-                    ${renderDependencyControlGroup('Product Capabilities', 'dependency-capability-capability-checkbox', catalog.capabilities, state.capabilityIds, renderCapabilityControlLabel)}
-                    ${renderDependencyControlGroup('Product Bricks', 'dependency-capability-brick-checkbox', catalog.bricks, state.brickIds, renderBrickControlLabel)}
+                    ${renderDependencyControlGroup('Product Streams', 'dependency-stream-stream-checkbox', catalog.streams, state.streamIds, renderStreamControlLabel)}
+                    ${renderDependencyControlGroup('Product Bricks', 'dependency-stream-brick-checkbox', catalog.bricks, state.brickIds, renderBrickControlLabel)}
                     ${renderDependencyNodeLegend([
-                        {fill: '#fde68a', stroke: '#d97706', label: 'Product capability'},
+                        {fill: '#fde68a', stroke: '#d97706', label: 'Product stream'},
                         {fill: '#dbeafe', stroke: '#2563eb', label: 'Product brick'}
                     ])}
                 </div>
@@ -2092,8 +2105,8 @@
                 container.innerHTML = renderDataDependencyControls();
                 return;
             }
-            if (activeDependencySubtab === 'capabilities') {
-                container.innerHTML = renderCapabilityDependencyControls();
+            if (activeDependencySubtab === 'streams') {
+                container.innerHTML = renderStreamDependencyControls();
                 return;
             }
             container.innerHTML = renderDeclaredDependencyControls();
@@ -2111,7 +2124,7 @@
                 return;
             }
             if (activeDependencySubtab === 'declared') {
-                dependencySelectionState.declared.capabilityIds = Array.from(selectedValues('.dependency-declared-capability-checkbox'));
+                dependencySelectionState.declared.streamIds = Array.from(selectedValues('.dependency-declared-stream-checkbox'));
                 dependencySelectionState.declared.typeIds = Array.from(selectedValues('.dependency-declared-type-checkbox'));
                 return;
             }
@@ -2122,11 +2135,11 @@
                 dependencySelectionState.data.aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
                 return;
             }
-            if (activeDependencySubtab === 'capabilities') {
-                const aggregateToggle = document.getElementById('dependencyCapabilityAggregateToggle');
-                dependencySelectionState.capabilities.capabilityIds = Array.from(selectedValues('.dependency-capability-capability-checkbox'));
-                dependencySelectionState.capabilities.brickIds = Array.from(selectedValues('.dependency-capability-brick-checkbox'));
-                dependencySelectionState.capabilities.aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
+            if (activeDependencySubtab === 'streams') {
+                const aggregateToggle = document.getElementById('dependencyStreamAggregateToggle');
+                dependencySelectionState.streams.streamIds = Array.from(selectedValues('.dependency-stream-stream-checkbox'));
+                dependencySelectionState.streams.brickIds = Array.from(selectedValues('.dependency-stream-brick-checkbox'));
+                dependencySelectionState.streams.aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
             }
         }
 
@@ -2165,11 +2178,11 @@
             };
         }
 
-        function graphCapabilityNode(capability) {
+        function graphStreamNode(stream) {
             return {
-                id: 'capability:' + capability.id,
-                label: capability.name || capability.id,
-                nodeClass: 'capabilityNode'
+                id: 'stream:' + stream.id,
+                label: stream.name || stream.id,
+                nodeClass: 'streamNode'
             };
         }
 
@@ -2185,21 +2198,21 @@
             return String(value || '').replace(/[^a-zA-Z0-9_]/g, '_');
         }
 
-        function selectedCapabilityBrickIds(capabilities, selectedCapabilityIds, brickLookup) {
+        function selectedStreamBrickIds(streams, selectedStreamIds, brickLookup) {
             const brickIds = new Set();
-            const allCapabilitiesSelected = !capabilities.length || capabilities.every(capability => selectedCapabilityIds.has(capability.id));
-            if (allCapabilitiesSelected) {
+            const allStreamsSelected = !streams.length || streams.every(stream => selectedStreamIds.has(stream.id));
+            if (allStreamsSelected) {
                 Object.keys(brickLookup).forEach(brickId => brickIds.add(brickId));
                 return brickIds;
             }
-            capabilities.forEach(capability => {
-                if (!selectedCapabilityIds.has(capability.id)) {
+            streams.forEach(stream => {
+                if (!selectedStreamIds.has(stream.id)) {
                     return;
                 }
-                if (brickLookup[capability.id]) {
-                    brickIds.add(capability.id);
+                if (brickLookup[stream.id]) {
+                    brickIds.add(stream.id);
                 }
-                (capability.brickDependencies || []).forEach(dep => {
+                (stream.brickDependencies || []).forEach(dep => {
                     if (dep.targetBrickId) {
                         brickIds.add(dep.targetBrickId);
                     }
@@ -2208,9 +2221,9 @@
             return brickIds;
         }
 
-        function buildDeclaredDependencyGraph(catalog, selectedCapabilityIds, selectedDependencyTypes) {
+        function buildDeclaredDependencyGraph(catalog, selectedStreamIds, selectedDependencyTypes) {
             const brickLookup = buildBrickLookup();
-            const scopedBrickIds = selectedCapabilityBrickIds(catalog.capabilities, selectedCapabilityIds, brickLookup);
+            const scopedBrickIds = selectedStreamBrickIds(catalog.streams, selectedStreamIds, brickLookup);
             const nodesById = {};
             const edges = [];
 
@@ -2345,9 +2358,9 @@
             };
         }
 
-        function buildCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds, aggregate) {
+        function buildStreamDependencyGraph(catalog, selectedStreamIds, selectedBrickIds, aggregate) {
             if (aggregate) {
-                return buildAggregatedCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds);
+                return buildAggregatedStreamDependencyGraph(catalog, selectedStreamIds, selectedBrickIds);
             }
 
             const brickLookup = {};
@@ -2357,11 +2370,11 @@
             const nodesById = {};
             const edges = [];
 
-            catalog.capabilities.forEach(capability => {
-                if (!selectedCapabilityIds.has(capability.id)) {
+            catalog.streams.forEach(stream => {
+                if (!selectedStreamIds.has(stream.id)) {
                     return;
                 }
-                (capability.brickDependencies || []).forEach(dep => {
+                (stream.brickDependencies || []).forEach(dep => {
                     if (!dep.targetBrickId || !selectedBrickIds.has(dep.targetBrickId)) {
                         return;
                     }
@@ -2369,10 +2382,10 @@
                         id: dep.targetBrickId,
                         name: dep.targetBrickId
                     };
-                    addGraphNode(nodesById, graphCapabilityNode(capability));
+                    addGraphNode(nodesById, graphStreamNode(stream));
                     addGraphNode(nodesById, graphBrickNode(brick));
                     edges.push({
-                        source: 'capability:' + capability.id,
+                        source: 'stream:' + stream.id,
                         target: 'brick:' + dep.targetBrickId,
                         label: dep.type || 'uses'
                     });
@@ -2385,17 +2398,17 @@
             };
         }
 
-        function buildAggregatedCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds) {
+        function buildAggregatedStreamDependencyGraph(catalog, selectedStreamIds, selectedBrickIds) {
             const brickLookup = {};
             catalog.bricks.forEach(brick => {
                 brickLookup[brick.id] = brick;
             });
             const pairLookup = {};
-            catalog.capabilities.forEach(capability => {
-                if (!selectedCapabilityIds.has(capability.id)) {
+            catalog.streams.forEach(stream => {
+                if (!selectedStreamIds.has(stream.id)) {
                     return;
                 }
-                const brickIds = Array.from(new Set((capability.brickDependencies || [])
+                const brickIds = Array.from(new Set((stream.brickDependencies || [])
                     .map(dep => dep.targetBrickId)
                     .filter(brickId => brickId && selectedBrickIds.has(brickId))))
                     .sort((left, right) => left.localeCompare(right));
@@ -2405,18 +2418,18 @@
                         if (!pairLookup[key]) {
                             pairLookup[key] = new Set();
                         }
-                        pairLookup[key].add(capability.id);
+                        pairLookup[key].add(stream.id);
                     }
                 }
             });
 
             const nodesById = {};
             const edges = [];
-            Object.entries(pairLookup).forEach(([key, capabilityIds]) => {
+            Object.entries(pairLookup).forEach(([key, streamIds]) => {
                 const [sourceId, targetId] = key.split('::');
                 addGraphNode(nodesById, graphBrickNode(brickLookup[sourceId] || {id: sourceId, name: sourceId}));
                 addGraphNode(nodesById, graphBrickNode(brickLookup[targetId] || {id: targetId, name: targetId}));
-                const count = capabilityIds.size;
+                const count = streamIds.size;
                 edges.push({
                     source: 'brick:' + sourceId,
                     target: 'brick:' + targetId,
@@ -2458,12 +2471,12 @@
                 const operator = edge.direction === 'undirected' && !label ? '---' : '-->';
                 chart += mermaidNodeId(edge.source) + ' ' + operator + label + ' ' + mermaidNodeId(edge.target) + '\n';
             });
-            chart += '\nclassDef capabilityNode fill:#fde68a,stroke:#d97706,color:#7c2d12,stroke-width:2px;\n';
+            chart += '\nclassDef streamNode fill:#fde68a,stroke:#d97706,color:#7c2d12,stroke-width:2px;\n';
             chart += 'classDef brickNode fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;\n';
             chart += 'classDef dataAssetNode fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;\n';
 
             const classGroups = {
-                capabilityNode: [],
+                streamNode: [],
                 brickNode: [],
                 dataAssetNode: []
             };
@@ -2496,14 +2509,14 @@
 
         function renderDeclaredDependencyGraph() {
             const catalog = getDeclaredDependencyCatalog();
-            const selectedCapabilityIds = selectedValues('.dependency-declared-capability-checkbox');
+            const selectedStreamIds = selectedValues('.dependency-declared-stream-checkbox');
             const selectedDependencyTypes = selectedValues('.dependency-declared-type-checkbox');
-            const graph = buildDeclaredDependencyGraph(catalog, selectedCapabilityIds, selectedDependencyTypes);
+            const graph = buildDeclaredDependencyGraph(catalog, selectedStreamIds, selectedDependencyTypes);
             renderDependencySummary([
                 {value: graph.scopedBrickCount, label: 'Scoped Bricks'},
                 {value: graph.edges.length, label: 'Declared Links'}
             ]);
-            renderDependencyMermaid(graph, 'Select capabilities and dependency types to render declared brick dependencies.');
+            renderDependencyMermaid(graph, 'Select streams and dependency types to render declared brick dependencies.');
         }
 
         function renderDataDependencyGraph() {
@@ -2523,21 +2536,21 @@
                 : 'Select bricks and data assets to render data-asset dependency links.');
         }
 
-        function renderCapabilityDependencyGraph() {
-            const catalog = getCapabilityDependencyCatalog();
-            const selectedCapabilityIds = selectedValues('.dependency-capability-capability-checkbox');
-            const selectedBrickIds = selectedValues('.dependency-capability-brick-checkbox');
-            const aggregateToggle = document.getElementById('dependencyCapabilityAggregateToggle');
+        function renderStreamDependencyGraph() {
+            const catalog = getStreamDependencyCatalog();
+            const selectedStreamIds = selectedValues('.dependency-stream-stream-checkbox');
+            const selectedBrickIds = selectedValues('.dependency-stream-brick-checkbox');
+            const aggregateToggle = document.getElementById('dependencyStreamAggregateToggle');
             const aggregate = Boolean(aggregateToggle && aggregateToggle.checked);
-            const graph = buildCapabilityDependencyGraph(catalog, selectedCapabilityIds, selectedBrickIds, aggregate);
+            const graph = buildStreamDependencyGraph(catalog, selectedStreamIds, selectedBrickIds, aggregate);
             renderDependencySummary([
-                {value: selectedCapabilityIds.size, label: 'Capabilities'},
+                {value: selectedStreamIds.size, label: 'Streams'},
                 {value: selectedBrickIds.size, label: 'Bricks'},
-                {value: graph.edges.length, label: aggregate ? 'Shared Capability Links' : 'Capability Links'}
+                {value: graph.edges.length, label: aggregate ? 'Shared Stream Links' : 'Stream Links'}
             ]);
             renderDependencyMermaid(graph, aggregate
-                ? 'Select at least two bricks sharing selected capabilities to render aggregated brick links.'
-                : 'Select bricks and capabilities to render capability dependency links.');
+                ? 'Select at least two bricks sharing selected streams to render aggregated brick links.'
+                : 'Select bricks and streams to render stream dependency links.');
         }
 
         function renderActiveDependencyGraph() {
@@ -2545,8 +2558,8 @@
                 renderDataDependencyGraph();
                 return;
             }
-            if (activeDependencySubtab === 'capabilities') {
-                renderCapabilityDependencyGraph();
+            if (activeDependencySubtab === 'streams') {
+                renderStreamDependencyGraph();
                 return;
             }
             renderDeclaredDependencyGraph();
@@ -2581,16 +2594,16 @@
         }
 
         function getMatrixCatalog() {
-            const capabilities = getCapabilityCatalogItems();
+            const streams = getStreamCatalogItems();
             const brickCatalog = getBrickCatalog();
             const referencedBrickIds = new Set();
             const dependencyTypes = new Set();
-            capabilities.forEach(capability => {
-                (capability.brickDependencies || []).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
-                (capability.brickDependencies || []).forEach(dep => referencedBrickIds.add(dep.targetBrickId || ''));
+            streams.forEach(stream => {
+                (stream.brickDependencies || []).forEach(dep => dependencyTypes.add(dep.type || 'unspecified'));
+                (stream.brickDependencies || []).forEach(dep => referencedBrickIds.add(dep.targetBrickId || ''));
             });
             return {
-                capabilities: capabilities,
+                streams: streams,
                 bricks: brickCatalog.filter(item => referencedBrickIds.has(item.id)),
                 dependencyTypes: Array.from(dependencyTypes).sort((left, right) => left.localeCompare(right))
             };
@@ -2619,7 +2632,7 @@
         }
 
         function buildMatrixData(catalog, selectedDependencyTypes) {
-            const capabilities = catalog.capabilities;
+            const streams = catalog.streams;
             const rows = [];
             const lookup = {};
             const rowIndex = {};
@@ -2643,16 +2656,16 @@
                 lookup[sourceId][targetId].push(payload);
             }
 
-            capabilities.forEach(capability => {
-                ensureRow(capability.id, {
-                    id: capability.id,
-                    kind: 'capability',
-                    name: capability.name || capability.id,
-                    icon: 'capability_404.png',
+            streams.forEach(stream => {
+                ensureRow(stream.id, {
+                    id: stream.id,
+                    kind: 'stream',
+                    name: stream.name || stream.id,
+                    icon: 'stream.png',
                     href: ''
                 });
 
-                (capability.brickDependencies || []).forEach(dep => {
+                (stream.brickDependencies || []).forEach(dep => {
                     if (!selectedDependencyTypes.has(dep.type || 'unspecified')) {
                         return;
                     }
@@ -2667,13 +2680,13 @@
                         icon: dep.targetBrickId + '.png',
                         href: dep.targetBrickId ? 'landing_pages/' + dep.targetBrickId + '.html' : ''
                     });
-                    addMatrixDependency(capability.id, dep.targetBrickId, {
+                    addMatrixDependency(stream.id, dep.targetBrickId, {
                         type: dep.type || 'unspecified',
-                        direction: 'capability_to_brick'
+                        direction: 'stream_to_brick'
                     });
-                    addMatrixDependency(dep.targetBrickId, capability.id, {
+                    addMatrixDependency(dep.targetBrickId, stream.id, {
                         type: dep.type || 'unspecified',
-                        direction: 'brick_supports_capability'
+                        direction: 'brick_supports_stream'
                     });
                 });
 
@@ -2681,7 +2694,7 @@
 
             rows.sort((left, right) => {
                 if (left.kind !== right.kind) {
-                    const order = {'capability': 0, 'brick': 1};
+                    const order = {'stream': 0, 'brick': 1};
                     return (order[left.kind] || 99) - (order[right.kind] || 99);
                 }
                 return (left.name || '').localeCompare(right.name || '');
@@ -2710,7 +2723,7 @@
                     <table class="matrix-table">
                         <thead>
                             <tr>
-                                <th class="matrix-corner">Capability</th>
+                                <th class="matrix-corner">Stream</th>
                                 ${columns.map(column => `
                                     <th title="${column.name || column.id}">
                                         ${column.href ? `
@@ -2757,24 +2770,24 @@
                 }
                 if (source.kind === 'external' || target.kind === 'external') {
                     const title = deps.map(dep => {
-                        if (dep.direction === 'capability_depends_on_external') {
-                            return 'Capability depends on external system: ' + dep.type;
+                        if (dep.direction === 'stream_depends_on_external') {
+                            return 'Stream depends on external system: ' + dep.type;
                         }
-                        if (dep.direction === 'external_supports_capability') {
-                            return 'External system supports capability dependency: ' + dep.type;
+                        if (dep.direction === 'external_supports_stream') {
+                            return 'External system supports stream dependency: ' + dep.type;
                         }
-                        if (dep.direction === 'external_depends_on_capability') {
-                            return 'External system depends on capability: ' + dep.type;
+                        if (dep.direction === 'external_depends_on_stream') {
+                            return 'External system depends on stream: ' + dep.type;
                         }
-                        if (dep.direction === 'capability_used_by_external') {
-                            return 'Capability is used by external system: ' + dep.type;
+                        if (dep.direction === 'stream_used_by_external') {
+                            return 'Stream is used by external system: ' + dep.type;
                         }
                         return dep.type;
                     }).join(', ');
                     return `<td class="matrix-hit-external" title="${title}">${deps.length}</td>`;
                 }
                 return `<td class="matrix-hit" title="${deps.map(dep => {
-                    if (dep.direction === 'brick_supports_capability') {
+                    if (dep.direction === 'brick_supports_stream') {
                         return dep.type + ' (reverse link)';
                     }
                     return dep.type;
@@ -2859,7 +2872,7 @@
 <div>
     <div class="tab">
         <button class="tablinks active" id="tab_BigPicture" onclick="openTab('BigPicture')">Bricks</button>
-        <button class="tablinks" id="tab_Capabilities" onclick="openTab('Capabilities')">Capabilities</button>
+        <button class="tablinks" id="tab_Streams" onclick="openTab('Streams')">Streams</button>
         <button class="tablinks" id="tab_Data" onclick="openTab('Data')">Data</button>
         <button class="tablinks" id="tab_Dependencies" onclick="openTab('Dependencies')">Dependencies</button>
     </div>
@@ -2880,15 +2893,15 @@
             <div class="legend" id="Legend"></div>
         </div>
     </div>
-    <div id="Capabilities" class="tabcontent">
-        <div class="capabilities-panel">
-            <div class="capabilities-toolbar">
-                <label class="capabilities-toggle" for="capabilityDescriptionToggle">
-                    <input type="checkbox" checked id="capabilityDescriptionToggle" onchange="renderCapabilitiesView()">
+    <div id="Streams" class="tabcontent">
+        <div class="streams-panel">
+            <div class="streams-toolbar">
+                <label class="streams-toggle" for="streamDescriptionToggle">
+                    <input type="checkbox" checked id="streamDescriptionToggle" onchange="renderStreamsView()">
                     <span>Show descriptions</span>
                 </label>
             </div>
-            <div id="CapabilitiesContent"></div>
+            <div id="StreamsContent"></div>
         </div>
     </div>
     <div id="Data" class="tabcontent">
@@ -2904,8 +2917,8 @@
 </div>
 
 <script>
-    document.getElementById('doc-title').innerText = bricksMetadata.title || 'Product Bricks &amp; Capabilities';
-    document.getElementById('doc-description').innerText = 'Product bricks connect customer and business needs to concrete implementation building blocks. This page shows an overview of the brick landscape, dependencies, capabilities, and delivery structure behind the domain.';
+    document.getElementById('doc-title').innerText = bricksMetadata.title || 'Product Bricks &amp; Streams';
+    document.getElementById('doc-description').innerText = 'Product bricks connect customer and business needs to concrete implementation building blocks. This page shows an overview of the brick landscape, dependencies, streams, and delivery structure behind the domain.';
 </script>
 
 

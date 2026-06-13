@@ -7,11 +7,11 @@ from domain_cli import load_domain_args
 from initiatives_support import load_domain_activity, filter_for_brick
 from product_bricks_support import (
     flatten_product_bricks,
-    flatten_product_capabilities,
+    flatten_product_streams,
     load_data_assets_payload,
     load_product_bricks_payload,
-    load_product_capabilities_payload,
-    sanitize_product_capability_root_groups,
+    load_product_streams_payload,
+    sanitize_product_stream_root_groups,
 )
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -110,12 +110,12 @@ def build_brick_context(brick, products, customers):
     brick_id = str(brick.get('id', '')).strip().lower()
     brick_name = str(brick.get('name', '')).strip().lower()
 
-    def capability_matches(capability):
-        capability_code = str(capability.get('id', capability.get('capabilityCode', ''))).strip().lower()
-        capability_name = str(capability.get('name', capability.get('capabilityName', ''))).strip().lower()
-        return capability_code == brick_id or capability_name == brick_name
+    def stream_matches(stream):
+        stream_code = str(stream.get('id', stream.get('streamCode', ''))).strip().lower()
+        stream_name = str(stream.get('name', stream.get('streamName', ''))).strip().lower()
+        return stream_code == brick_id or stream_name == brick_name
 
-    def append_supported_job(customer, primary_customer, product, job, step, capability, matched_capability):
+    def append_supported_job(customer, primary_customer, product, job, step, stream, matched_stream):
         item_key = (
             customer.get('id', primary_customer.get('id', '')),
             product.get('id', ''),
@@ -134,7 +134,7 @@ def build_brick_context(brick, products, customers):
                 'jobName': job.get('name', ''),
                 'jobWhatItIs': job.get('what_it_is', ''),
                 'jobOutcome': job.get('outcome', ''),
-                'supportRationale': capability.get('how_it_supports', '') or matched_capability.get('whyNeeded', ''),
+                'supportRationale': stream.get('how_it_supports', '') or matched_stream.get('whyNeeded', ''),
                 'usedInSteps': []
             }
             supported_jobs.append(supported_jobs_index[item_key])
@@ -143,20 +143,20 @@ def build_brick_context(brick, products, customers):
         used_step = {
             'step': step.get('step', ''),
             'description': step.get('description', ''),
-            'howItSupports': capability.get('how_it_supports', '') or matched_capability.get('whyNeeded', ''),
+            'howItSupports': stream.get('how_it_supports', '') or matched_stream.get('whyNeeded', ''),
             'media': step.get('media', [])
         }
         if used_step not in supported_job['usedInSteps']:
             supported_job['usedInSteps'].append(used_step)
 
     for product in products.get('portfolio', {}).get('products', []):
-        matched_capability = None
-        for capability in product.get('neededCapabilities', []):
-            if capability_matches(capability):
-                matched_capability = capability
+        matched_stream = None
+        for stream in product.get('neededStreams', []):
+            if stream_matches(stream):
+                matched_stream = stream
                 break
 
-        if not matched_capability:
+        if not matched_stream:
             continue
 
         linked_products.append({
@@ -164,16 +164,16 @@ def build_brick_context(brick, products, customers):
             'name': product.get('name', ''),
             'icon': product.get('icon', 'product.png'),
             'type': product.get('type', ''),
-            'whyUsed': matched_capability.get('whyNeeded', '')
+            'whyUsed': matched_stream.get('whyNeeded', '')
         })
 
         for primary_customer in product.get('primaryCustomers', []):
             customer = customer_lookup.get(primary_customer.get('id', ''), {})
             for job in customer.get('jobsToBeDone', []):
                 for step in job.get('steps', []):
-                    for capability in step.get('capabilitiesNeeded', []):
-                        if capability_matches(capability):
-                            append_supported_job(customer, primary_customer, product, job, step, capability, matched_capability)
+                    for stream in step.get('streamsNeeded', []):
+                        if stream_matches(stream):
+                            append_supported_job(customer, primary_customer, product, job, step, stream, matched_stream)
 
     return linked_products, supported_jobs
 
@@ -344,16 +344,6 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
     landing_page_template = open(root_templates + 'brick_landing_page.html').read();
     breadcrumbs = open(root_templates + 'brick_landing_page_breadcrumbs.json').read();
 
-    capabilities_map = {}
-    for brick in bricks:
-        capabilities_map[brick['name']] = brick
-
-    capabilities_name_index = {}
-
-    for brick in bricks:
-        name = brick['name']
-        capabilities_name_index[name.lower().strip()] = brick
-
     for brick in bricks:
         name = brick['name']
         linked_products, supported_jobs = build_brick_context(brick, products, customers)
@@ -366,7 +356,7 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${date}', date_string)
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
-                            .replace('${all_capabilities}', json.dumps(flat_capabilities))
+                            .replace('${all_streams}', json.dumps(flat_streams))
                             .replace('${bricks_metadata}', json.dumps(data.get('metadata', {})))
                             .replace('${brick_data}', json.dumps(brick))
                             .replace('${data_assets}', json.dumps(data_assets_payload))
@@ -388,21 +378,21 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${releases}', json.dumps(filter_for_brick(activity_data['releases'], brick['id']))))
 
 
-def create_capability_landing_pages(capabilities, bricks, activity_data, products, customers, evidence_items, teams_payload):
-    landing_page_template = open(root_templates + 'capability_landing_page.html').read();
+def create_stream_landing_pages(streams, bricks, activity_data, products, customers, evidence_items, teams_payload):
+    landing_page_template = open(root_templates + 'stream_landing_page.html').read();
     brick_lookup = {brick['id']: brick for brick in bricks}
-    breadcrumbs = open(root_templates + 'capability_landing_page_breadcrumbs.json').read();
+    breadcrumbs = open(root_templates + 'stream_landing_page_breadcrumbs.json').read();
 
-    for capability in capabilities:
+    for stream in streams:
         related_bricks = []
-        linked_products = list(capability.get('supportedProducts', []))
-        supported_jobs = list(capability.get('supportedCustomerJobs', []))
-        related_teams = list(capability.get('owningTeams', []))
-        initiatives = list(capability.get('relatedInitiatives', []))
-        releases = list(capability.get('relatedReleases', []))
+        linked_products = list(stream.get('supportedProducts', []))
+        supported_jobs = list(stream.get('supportedCustomerJobs', []))
+        related_teams = list(stream.get('owningTeams', []))
+        initiatives = list(stream.get('relatedInitiatives', []))
+        releases = list(stream.get('relatedReleases', []))
 
-        for dep in capability.get('brickDependencies', []):
-            brick_id = dep.get('targetobjectId', '')
+        for dep in stream.get('brickDependencies', []):
+            brick_id = dep.get('targetBrickId', dep.get('targetobjectId', ''))
             if not brick_id or brick_id not in brick_lookup:
                 continue
             brick = brick_lookup[brick_id]
@@ -421,14 +411,14 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
         initiatives = dedupe_by(initiatives, lambda item: json.dumps(item, sort_keys=True))
         releases = dedupe_by(releases, lambda item: json.dumps(item, sort_keys=True))
 
-        evidence = build_evidence(capability['id'], evidence_items)
-        html_file = docs_folder + 'capability_pages/' + str(capability['id']) + '.html'
+        evidence = build_evidence(stream['id'], evidence_items)
+        html_file = docs_folder + 'stream_pages/' + str(stream['id']) + '.html'
         with open(html_file, 'w') as html_file:
             html_file.write(landing_page_template
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
-                            .replace('${all_capabilities}', json.dumps(capabilities))
-                            .replace('${capability_data}', json.dumps(capability))
+                            .replace('${all_streams}', json.dumps(streams))
+                            .replace('${stream_data}', json.dumps(stream))
                             .replace('${related_bricks}', json.dumps(related_bricks))
                             .replace('${tabs_style}', tabs_style)
                             .replace('${tabs_script}', tabs_script)
@@ -441,7 +431,7 @@ def create_capability_landing_pages(capabilities, bricks, activity_data, product
                             .replace('${evidence_script}', evidence_script)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
-                            .replace('${capability_name}', capability.get('name', capability.get('id', '')).replace('&', '&amp;'))
+                            .replace('${stream_name}', stream.get('name', stream.get('id', '')).replace('&', '&amp;'))
                             .replace('${evidence}', json.dumps(evidence))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${related_teams}', json.dumps(related_teams))
@@ -454,7 +444,7 @@ domain_id = domain['id']
 docs_folder = domain_id + '/product-bricks/'
 root_domain = domains_root + docs_folder
 product_bricks_config_path = root_domain + 'product-bricks.json'
-product_capabilities_config_path = root_domain + 'product-capability.json'
+product_streams_config_path = root_domain + 'product-stream.json'
 data_assets_config_path = domains_root + domain_id + '/data/data-assets.json'
 
 if not os.path.exists(product_bricks_config_path):
@@ -465,12 +455,12 @@ print(root_domain)
 if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
 os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
-os.makedirs(os.path.join(docs_folder, 'capability_pages'), exist_ok=True)
+os.makedirs(os.path.join(docs_folder, 'stream_pages'), exist_ok=True)
 
 data = load_product_bricks_payload(product_bricks_config_path)
 flat_bricks = flatten_product_bricks(data)
-capabilities_payload = load_product_capabilities_payload(product_capabilities_config_path)
-flat_capabilities = flatten_product_capabilities(capabilities_payload)
+streams_payload = load_product_streams_payload(product_streams_config_path)
+flat_streams = flatten_product_streams(streams_payload)
 data_assets_payload = load_data_assets_payload(data_assets_config_path)
 activity_data = load_domain_activity(domains_root, domain_id)
 products = load_json_if_exists(domains_root + domain_id + '/product-deployments/products.json', {'portfolio': {'products': []}})
@@ -480,9 +470,9 @@ bricks_evidence_items = load_json_from_paths([
     root_domain + 'brick-evidence.json',
     root_domain + 'bricks-evidence.json',
 ], [])
-capabilities_evidence_items = load_json_from_paths([
-    root_domain + 'capability-evidence.json',
-    root_domain + 'capabilities-evidence.json',
+streams_evidence_items = load_json_from_paths([
+    root_domain + 'stream-evidence.json',
+    root_domain + 'streams-evidence.json',
 ], [])
 
 copy_icons(root_templates + 'icons', docs_folder)
@@ -502,13 +492,13 @@ with open(docs_folder + 'index.html', 'w') as html_file:
         .replace('${breadcrumbs}', breadcrumbs) \
         .replace('${domain_name}', domain['name'])
 
-    content = content.replace('${product_capabilities}', json.dumps({
-        'metadata': capabilities_payload.get('metadata', {}),
-        'rootGroups': sanitize_product_capability_root_groups(capabilities_payload.get('rootGroups', [])),
-        'experiences': flat_capabilities,
-        'capabilities': flat_capabilities
+    content = content.replace('${product_streams}', json.dumps({
+        'metadata': streams_payload.get('metadata', {}),
+        'rootGroups': sanitize_product_stream_root_groups(streams_payload.get('rootGroups', [])),
+        'experiences': flat_streams,
+        'streams': flat_streams
     }))
     html_file.write(content)
 
 create_landing_pages(flat_bricks, activity_data, products, customers, bricks_evidence_items, teams_payload)
-create_capability_landing_pages(flat_capabilities, flat_bricks, activity_data, products, customers, capabilities_evidence_items, teams_payload)
+create_stream_landing_pages(flat_streams, flat_bricks, activity_data, products, customers, streams_evidence_items, teams_payload)

@@ -217,7 +217,7 @@ def enrich_items(data, customers_lookup, kpi_lookup, bricks_lookup, channels_loo
                 'name': brick_id,
                 'domain': '',
                 'group': '',
-                'icon': 'capability_404.png'
+                'icon': 'logo.png'
             })
             enriched_bricks.append({
                 'brickId': brick_id,

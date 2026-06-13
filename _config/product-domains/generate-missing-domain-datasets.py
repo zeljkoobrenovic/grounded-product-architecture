@@ -38,7 +38,7 @@ def derive_brick_id(name, used_ids=None):
     used_ids = used_ids or set()
     words = [part for part in slugify(name).split('-') if part]
     if not words:
-        words = ['capability']
+        words = ['stream']
 
     def claim(candidate):
         candidate = (candidate or 'capa')[:4].ljust(4, 'x')
@@ -128,21 +128,21 @@ def pick_two(values, start_index):
     return [first, second]
 
 
-def capability_refs_from_customers(customers_data):
+def stream_refs_from_customers(customers_data):
     refs = {}
     for group in customers_data:
         for customer in group.get('customers', []):
             for job in customer.get('jobsToBeDone', []):
                 for step in job.get('steps', []):
-                    for capability in step.get('capabilitiesNeeded', []):
-                        key = capability.get('id') or capability.get('name')
+                    for stream in step.get('streamsNeeded', []):
+                        key = stream.get('id') or stream.get('name')
                         if not key:
                             continue
                         if key not in refs:
                             refs[key] = {
-                                'id': capability.get('id', slugify(capability.get('name', 'capability'))),
-                                'name': capability.get('name', capability.get('id', 'Capability')),
-                                'description': capability.get('how_it_supports', ''),
+                                'id': stream.get('id', slugify(stream.get('name', 'stream'))),
+                                'name': stream.get('name', stream.get('id', 'Stream')),
+                                'description': stream.get('how_it_supports', ''),
                                 'domain': group.get('group', 'Customer Workflows'),
                                 'group': slugify(job.get('name', 'workflow')) or 'workflow'
                             }
@@ -153,7 +153,7 @@ def normalize_bricks(domain_name, product_bricks_data, customers_data):
     if product_bricks_data:
         return product_bricks_data
 
-    refs = capability_refs_from_customers(customers_data)
+    refs = stream_refs_from_customers(customers_data)
     generated = []
     used_ids = set()
     for ref in refs:
@@ -253,12 +253,12 @@ def normalize_products(domain, customers_by_id, bricks):
                         'id': persona_id,
                         'name': customer.get('name', persona_id) if customer else persona_id
                     })
-                capability_ids = product.get('coreCapabilityIds', []) + product.get('adjacentCapabilityIds', [])
-                for capability_id in capability_ids:
-                    brick = bricks.get(str(capability_id))
+                stream_ids = product.get('coreStreamIds', []) + product.get('adjacentStreamIds', [])
+                for stream_id in stream_ids:
+                    brick = bricks.get(str(stream_id))
                     normalized['neededBricks'].append({
-                        'brickId': brick.get('id', str(capability_id)) if brick else str(capability_id),
-                        'brickName': brick.get('name', str(capability_id)) if brick else str(capability_id),
+                        'brickId': brick.get('id', str(stream_id)) if brick else str(stream_id),
+                        'brickName': brick.get('name', str(stream_id)) if brick else str(stream_id),
                         'whyNeeded': f'Needed by {normalized["name"]} to support its core workflows.',
                         'mappingType': 'generated_from_delivery',
                         'deploymentChannels': []
@@ -296,7 +296,7 @@ def normalize_products(domain, customers_by_id, bricks):
     products = []
     for idx, (product_id, name, product_type) in enumerate(product_defs):
         customer = customer_list[idx % len(customer_list)] if customer_list else None
-        capability_slice = brick_list[idx * 4:(idx + 1) * 4] or brick_list[:4]
+        stream_slice = brick_list[idx * 4:(idx + 1) * 4] or brick_list[:4]
         interfaces = [
             {'type': 'web', 'name': f'{name} Web Workspace', 'description': f'Primary browser workspace for {name}.', 'users': ['Users'], 'availabilityHorizon': 'live'},
             {'type': 'dashboard', 'name': f'{name} Dashboard', 'description': f'Operational analytics view for {name}.', 'users': ['Managers'], 'availabilityHorizon': '1_year'},
@@ -312,13 +312,13 @@ def normalize_products(domain, customers_by_id, bricks):
             'interfaces': interfaces,
             'neededBricks': [
                 {
-                    'brickId': capability.get('id', 'brick'),
-                    'brickName': capability.get('name', capability.get('id', 'Brick')),
+                    'brickId': stream.get('id', 'brick'),
+                    'brickName': stream.get('name', stream.get('id', 'Brick')),
                     'whyNeeded': f'Needed by {name} to support a key workflow.',
                     'mappingType': 'generated_from_customers',
                     'deploymentChannels': []
                 }
-                for capability in capability_slice
+                for stream in stream_slice
             ]
         })
 
@@ -470,7 +470,7 @@ def generate_time_series(domain, products_data, product_bricks_data, customers_f
             if not product_bricks:
                 product_bricks = brick_list[running_index % max(1, len(brick_list)):] + brick_list[:running_index % max(1, len(brick_list))]
             if not product_bricks:
-                product_bricks = [{'id': 'cap-core', 'name': f'{domain["name"]} Core Capability'}]
+                product_bricks = [{'id': 'core-stream', 'name': f'{domain["name"]} Core Stream'}]
 
             interfaces = product.get('interfaces', []) or [{'type': 'web', 'name': f'{product["name"]} Web'}]
             day = 6 + position * 9

@@ -377,7 +377,7 @@ def enrich_team(
                 'name': brick.get('brickName', brick_id),
                 'domain': '',
                 'group': '',
-                'icon': 'capability_404.png'
+                'icon': 'logo.png'
             })
             result.append({
                 'brickId': brick_id,

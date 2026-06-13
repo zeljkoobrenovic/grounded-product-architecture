@@ -12,6 +12,7 @@ Apply the organizational design cluster when the user asks for operating model, 
 ## Core Skills To Combine
 
 - `core-skills/organizational-design`
+- `core-skills/teams-org-design`
 - `core-skills/team-topology-design`
 - `core-skills/capability-mapping`
 - `core-skills/product-brick-architecture`

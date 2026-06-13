@@ -204,6 +204,9 @@
         }
 
         .team-card {
+            display: block;
+            color: inherit;
+            text-decoration: none;
             border: 1px solid #d1d5db;
             border-radius: 12px;
             padding: 16px;
@@ -261,6 +264,7 @@
 
         .customer-pill,
         .brick-pill,
+        .agent-pill,
         .team-pill {
             display: inline-flex;
             align-items: center;
@@ -301,6 +305,10 @@
             font-size: 13px;
         }
 
+        .team-card-section {
+            margin-top: 12px;
+        }
+
         .principles {
             margin-top: 18px;
             padding: 16px;
@@ -330,7 +338,7 @@
             border-radius: 12px;
             background-color: #fbfbfc;
             padding: 16px;
-            display: inline-block;
+            display: block;
         }
 
         .overview-group-name {
@@ -345,7 +353,8 @@
             margin: 4px;
             border: 2px solid #eceff3;
             background-color: white;
-            max-width: 250px;
+            min-width: 260px;
+            max-width: 320px;
             vertical-align: top;
             overflow: hidden;
         }
@@ -388,6 +397,52 @@
             letter-spacing: 0.06em;
         }
 
+        .overview-agent-row {
+            margin-top: 6px;
+        }
+
+        .overview-agent-section {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .overview-filter-section {
+            margin-bottom: 12px;
+        }
+
+        .section-toggle-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0 0 18px 0;
+        }
+
+        .section-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 11px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background-color: #f8fafc;
+            color: #4b5563;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-toggle input {
+            margin: 0;
+        }
+
+        .section-toggle:has(input:checked) {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+            color: #202124;
+            box-shadow: inset 0 0 0 1px #4b5563;
+        }
+
         .overview-role-row {
             display: flex;
             flex-wrap: wrap;
@@ -419,7 +474,7 @@
         .role-label {
             font-size: 12px;
             color: #4b5563;
-            white-space: nowrap;
+            line-height: 1.25;
             display: block;
             margin-bottom: 4px;
         }
@@ -695,21 +750,15 @@
 
 <div class="tab">
     <button class="tablinks" id="tab_home" onclick="openTab('home')">Overview</button>
-    <button class="tablinks" id="tab_cards" onclick="openTab('cards')">Team Cards</button>
     <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
 </div>
 
 <div id="tab_content_home" class="tabcontent">
-    <div class="tab-intro">A compact team topology view showing group and team names with one colored circle per staffing role block.</div>
+    <div class="tab-intro">Team cards grouped by value stream, with filters for roles and AI agents and switches for the sections shown on each team.</div>
     <div id="OverviewSummary" class="summary-strip"></div>
     <div id="OverviewRoleFilter"></div>
+    <div id="OverviewSectionToggles"></div>
     <div id="Overview"></div>
-</div>
-
-<div id="tab_content_cards" class="tabcontent">
-    <div class="tab-intro">Detailed team cards with staffing mix, linked customers, owned bricks, and delivery activity.</div>
-    <div id="Summary" class="summary-strip"></div>
-    <div id="Groups"></div>
     <div id="Principles" class="principles"></div>
 </div>
 
@@ -799,6 +848,9 @@
     const distinctRoles = [];
     const distinctRoleMap = {};
     const roleInstanceCounts = {};
+    const distinctAgents = [];
+    const distinctAgentMap = {};
+    const agentInstanceCounts = {};
 
     function registerRole(role) {
         const key = slugifyRole(role.role);
@@ -812,9 +864,32 @@
         roleInstanceCounts[key] = (roleInstanceCounts[key] || 0) + Math.max(Number(role.count) || 0, 0);
     }
 
+    function agentName(agent) {
+        return agent.name || agent.id || 'AI agent';
+    }
+
+    function agentKey(agent) {
+        return slugifyRole(agentName(agent));
+    }
+
+    function registerAgent(agent) {
+        const key = agentKey(agent);
+        if (!key) {
+            return;
+        }
+        if (!distinctAgentMap[key]) {
+            distinctAgentMap[key] = agentName(agent);
+            distinctAgents.push(agentName(agent));
+        }
+        agentInstanceCounts[key] = (agentInstanceCounts[key] || 0) + 1;
+    }
+
     flatTeams.forEach(team => {
         ((team.staffing || {}).roles || []).forEach(role => {
             registerRole(role);
+        });
+        (team.aiAgents || []).forEach(agent => {
+            registerAgent(agent);
         });
     });
     (teamsData.groups || []).forEach(group => {
@@ -829,99 +904,161 @@
         .forEach((role, index) => {
             roleColorMap[slugifyRole(role)] = rolePalette[index % rolePalette.length];
         });
+    const agentColorMap = {};
+    distinctAgents
+        .sort((left, right) => left.localeCompare(right))
+        .forEach((agent, index) => {
+            agentColorMap[slugifyRole(agent)] = rolePalette[(index + distinctRoles.length) % rolePalette.length];
+        });
 
     const streamAlignedCount = flatTeams.filter(team => team.teamType === 'stream-aligned').length;
     const platformCount = flatTeams.filter(team => team.teamType === 'platform').length;
     const totalHeadcount = flatTeams.reduce((sum, team) => sum + ((team.staffing || {}).suggestedHeadcount || 0), 0);
     const totalRoles = flatTeams.reduce((sum, team) => sum + (((team.staffing || {}).roles || []).length), 0);
+    const totalAiAgents = flatTeams.reduce((sum, team) => sum + ((team.aiAgents || []).length), 0);
     const totalGroupLeadershipHeadcount = (teamsData.groups || []).reduce((sum, group) => sum + (((group.groupLeadership || {}).suggestedHeadcount) || 0), 0);
     const totalGroupLeadershipRoles = (teamsData.groups || []).reduce((sum, group) => sum + ((((group.groupLeadership || {}).roles) || []).length), 0);
 
     document.getElementById('HeroNote').innerHTML = escapeHtml(teamsData.orgDesign.operatingModel || '');
 
-    document.getElementById('Summary').innerHTML =
+    document.getElementById('OverviewSummary').innerHTML =
         '<div class="stat"><div class="stat-value">' + formatNumber(flatTeams.length) + '</div><div class="stat-label">Teams</div></div>' +
         '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Headcount</div></div>' +
         '<div class="stat"><div class="stat-value">' + formatNumber(streamAlignedCount) + '</div><div class="stat-label">Stream-aligned Teams</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(platformCount) + '</div><div class="stat-label">Platform Teams</div></div>';
-
-    document.getElementById('OverviewSummary').innerHTML =
-        '<div class="stat"><div class="stat-value">' + formatNumber(flatTeams.length) + '</div><div class="stat-label">Teams</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(platformCount) + '</div><div class="stat-label">Platform Teams</div></div>' +
         '<div class="stat"><div class="stat-value">' + formatNumber(distinctRoles.length) + '</div><div class="stat-label">Distinct Roles</div></div>' +
-        '<div class="stat"><div class="stat-value">' + formatNumber(totalHeadcount) + '</div><div class="stat-label">Headcount</div></div>';
+        '<div class="stat"><div class="stat-value">' + formatNumber(distinctAgents.length) + '</div><div class="stat-label">Distinct AI Agents</div></div>' +
+        '<div class="stat"><div class="stat-value">' + formatNumber(totalAiAgents) + '</div><div class="stat-label">AI Agents</div></div>';
 
-    let groupsHtml = '';
-    (teamsData.groups || []).forEach(group => {
-        groupsHtml += '<div class="group">';
-        groupsHtml += '<div class="group-name">' + escapeHtml(group.name) + '</div>';
-        groupsHtml += '<div class="group-mission">' + escapeHtml(group.mission || '') + '</div>';
-        if (group.parentGroupName) {
-            groupsHtml += '<div class="group-mission"><strong>Parent group:</strong> ' + escapeHtml(group.parentGroupName) + '</div>';
-        }
-        if (group.groupLeadership && (group.groupLeadership.roles || []).length) {
-            groupsHtml += '<div class="group-leadership-card">';
-            groupsHtml += '<div class="section-title">Group Leadership</div>';
-            if (group.groupLeadership.purpose) {
-                groupsHtml += '<div class="group-mission">' + escapeHtml(group.groupLeadership.purpose) + '</div>';
-            }
-            groupsHtml += '<div class="meta-row">';
-            groupsHtml += '<div class="meta-pill">Leadership headcount: ' + escapeHtml(String(group.groupLeadership.suggestedHeadcount || 0)) + '</div>';
-            groupsHtml += '<div class="meta-pill">Role blocks: ' + escapeHtml(String((group.groupLeadership.roles || []).length)) + '</div>';
-            groupsHtml += '</div>';
-            groupsHtml += '<div class="role-summary">' + summarizeRoles(group.groupLeadership.roles || []) + '</div>';
-            if (group.groupLeadership.leadershipModel) {
-                groupsHtml += '<div class="group-mission">' + escapeHtml(group.groupLeadership.leadershipModel) + '</div>';
-            }
-            groupsHtml += '</div>';
-        }
-        groupsHtml += '<div class="team-grid">';
-
-        (group.teams || []).forEach(team => {
-            const staffing = team.staffing || {};
-            groupsHtml += '<a class="team-card" target="_blank" href="landing_pages/' + escapeHtml(team.id) + '.html">';
-            groupsHtml += '<div class="team-type">' + escapeHtml(team.teamType || 'team') + '</div>';
-            groupsHtml += '<div class="team-name">' + escapeHtml(team.name) + '</div>';
-            groupsHtml += '<div class="team-mission">' + escapeHtml(team.mission || '') + '</div>';
-
-            groupsHtml += '<div class="meta-row">';
-            groupsHtml += '<div class="meta-pill">Headcount: ' + escapeHtml(String(staffing.suggestedHeadcount || 0)) + '</div>';
-            groupsHtml += '<div class="meta-pill">Roles: ' + escapeHtml(String((staffing.roles || []).length)) + '</div>';
-            groupsHtml += '<div class="meta-pill">Customers: ' + escapeHtml(String((team.primaryCustomers || []).length)) + '</div>';
-            groupsHtml += '</div>';
-
-            if ((team.primaryCustomers || []).length) {
-                groupsHtml += '<div class="section-title">Primary Customers</div>';
-                (team.primaryCustomers || []).slice(0, 4).forEach(customer => {
-                    groupsHtml += '<div class="customer-pill"><img class="linked-icon" src="../customers/icons/' + escapeHtml(customer.icon || 'customer.png') + '" onerror="this.onerror=null;this.src=\'../customers/icons/customer.png\'">' + escapeHtml(customer.customerName || customer.customerId) + '</div>';
-                });
-            }
-
-            if ((team.ownedProductBricks || []).length) {
-                groupsHtml += '<div class="section-title">Owned Product Bricks</div>';
-                (team.ownedProductBricks || []).slice(0, 4).forEach(brick => {
-                    groupsHtml += '<div class="brick-pill"><img class="brick-icon" src="../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../product-bricks/icons/logo.png\'">' + escapeHtml(brick.brickName || brick.brickId) + '</div>';
-                });
-            }
-
-            groupsHtml += '<div class="section-title">Role Mix</div>';
-            groupsHtml += '<div class="role-summary">' + summarizeRoles(staffing.roles || []) + '</div>';
-
-            groupsHtml += '<div class="activity-row">Discoveries: ' + escapeHtml(String((team.relatedDiscoveries || []).length)) + ' | Initiatives: ' + escapeHtml(String((team.relatedInitiatives || []).length)) + ' | Releases: ' + escapeHtml(String((team.relatedReleases || []).length)) + '</div>';
-            groupsHtml += '</a>';
-        });
-
-        groupsHtml += '</div></div>';
+    const overviewSectionOptions = [
+        {id: 'mission', label: 'Mission', defaultVisible: true},
+        {id: 'stats', label: 'Stats', defaultVisible: true},
+        {id: 'customers', label: 'Customers', defaultVisible: true},
+        {id: 'bricks', label: 'Bricks', defaultVisible: true},
+        {id: 'roles', label: 'Roles', defaultVisible: true},
+        {id: 'agents', label: 'AI Agents', defaultVisible: true},
+        {id: 'activity', label: 'Activity', defaultVisible: true}
+    ];
+    const overviewSectionVisibility = {};
+    overviewSectionOptions.forEach(option => {
+        overviewSectionVisibility[option.id] = option.defaultVisible;
     });
-    document.getElementById('Groups').innerHTML = groupsHtml;
 
-    let selectedOverviewRoleKey = '';
+    function sectionVisible(sectionId) {
+        return overviewSectionVisibility[sectionId] !== false;
+    }
+
+    function renderOverviewSectionToggles() {
+        let html = '<div class="overview-filter-section"><div class="section-title">Team Card Sections</div><div class="section-toggle-row">';
+        overviewSectionOptions.forEach(option => {
+            html += '<label class="section-toggle"><input type="checkbox" data-section-id="' + escapeHtml(option.id) + '"' + (sectionVisible(option.id) ? ' checked' : '') + '> <span>' + escapeHtml(option.label) + '</span></label>';
+        });
+        html += '</div></div>';
+        document.getElementById('OverviewSectionToggles').innerHTML = html;
+        document.querySelectorAll('#OverviewSectionToggles input[type="checkbox"]').forEach(input => {
+            input.addEventListener('change', () => setOverviewSectionVisibility(input.getAttribute('data-section-id') || '', input.checked));
+        });
+    }
+
+    function setOverviewSectionVisibility(sectionId, isVisible) {
+        if (!sectionId) {
+            return;
+        }
+        overviewSectionVisibility[sectionId] = isVisible;
+        renderOverview();
+    }
+
+    function renderCustomerSection(team) {
+        if (!sectionVisible('customers') || !(team.primaryCustomers || []).length) {
+            return '';
+        }
+        let html = '<div class="team-card-section"><div class="section-title">Primary Customers</div>';
+        (team.primaryCustomers || []).forEach(customer => {
+            html += '<div class="customer-pill"><img class="linked-icon" src="../customers/icons/' + escapeHtml(customer.icon || 'customer.png') + '" onerror="this.onerror=null;this.src=\'../customers/icons/customer.png\'">' + escapeHtml(customer.customerName || customer.customerId) + '</div>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderProductBrickSection(team) {
+        if (!sectionVisible('bricks') || (!((team.ownedProductBricks || []).length) && !((team.supportingProductBricks || []).length))) {
+            return '';
+        }
+        let html = '<div class="team-card-section"><div class="section-title">Product Bricks</div>';
+        if ((team.ownedProductBricks || []).length) {
+            html += '<div class="overview-team-meta">Owned</div>';
+            (team.ownedProductBricks || []).forEach(brick => {
+                html += '<div class="brick-pill"><img class="brick-icon" src="../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'logo.png') + '" onerror="this.onerror=null;this.src=\'../product-bricks/icons/logo.png\'">' + escapeHtml(brick.brickName || brick.brickId) + '</div>';
+            });
+        }
+        if ((team.supportingProductBricks || []).length) {
+            html += '<div class="overview-team-meta">Supporting</div>';
+            (team.supportingProductBricks || []).forEach(brick => {
+                html += '<div class="brick-pill"><img class="brick-icon" src="../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'logo.png') + '" onerror="this.onerror=null;this.src=\'../product-bricks/icons/logo.png\'">' + escapeHtml(brick.brickName || brick.brickId) + '</div>';
+            });
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function renderActivitySection(team) {
+        if (!sectionVisible('activity')) {
+            return '';
+        }
+        return '<div class="team-card-section activity-row">Discoveries: ' + escapeHtml(String((team.relatedDiscoveries || []).length)) + ' | Initiatives: ' + escapeHtml(String((team.relatedInitiatives || []).length)) + ' | Releases: ' + escapeHtml(String((team.relatedReleases || []).length)) + '</div>';
+    }
+
+    function renderTeamCard(team) {
+        const staffing = team.staffing || {};
+        let html = '<a class="team-card" target="_blank" href="landing_pages/' + escapeHtml(team.id) + '.html">';
+        html += '<div class="team-type">' + escapeHtml(team.teamType || 'team') + '</div>';
+        html += '<div class="team-name">' + escapeHtml(team.name) + '</div>';
+        if (sectionVisible('mission')) {
+            html += '<div class="team-mission">' + escapeHtml(team.mission || '') + '</div>';
+        }
+        if (sectionVisible('stats')) {
+            html += '<div class="meta-row">';
+            html += '<div class="meta-pill">Headcount: ' + escapeHtml(String(staffing.suggestedHeadcount || 0)) + '</div>';
+            html += '<div class="meta-pill">Roles: ' + escapeHtml(String((staffing.roles || []).length)) + '</div>';
+            html += '<div class="meta-pill">Customers: ' + escapeHtml(String((team.primaryCustomers || []).length)) + '</div>';
+            html += '<div class="meta-pill">Bricks: ' + escapeHtml(String((team.ownedProductBricks || []).length + (team.supportingProductBricks || []).length)) + '</div>';
+            html += '<div class="meta-pill">AI Agents: ' + escapeHtml(String((team.aiAgents || []).length)) + '</div>';
+            html += '</div>';
+        }
+        html += renderCustomerSection(team);
+        html += renderProductBrickSection(team);
+        if (sectionVisible('roles') && (((team.staffing || {}).roles || []).length)) {
+            html += '<div class="team-card-section"><div class="section-title">Role Mix</div>' + renderOverviewRoleDots(((team.staffing || {}).roles) || []) + '</div>';
+        }
+        html += renderActivitySection(team);
+        if (sectionVisible('agents')) {
+            html += renderOverviewAgentDots(team.aiAgents || []);
+        }
+        html += '</a>';
+        return html;
+    }
+
+    let selectedOverviewFilterKind = '';
+    let selectedOverviewFilterKey = '';
 
     function roleMatchesFilter(role) {
-        return !selectedOverviewRoleKey || slugifyRole(role.role) === selectedOverviewRoleKey;
+        return selectedOverviewFilterKind !== 'role' || slugifyRole(role.role) === selectedOverviewFilterKey;
+    }
+
+    function agentMatchesFilter(agent) {
+        return selectedOverviewFilterKind !== 'agent' || agentKey(agent) === selectedOverviewFilterKey;
     }
 
     function hasMatchingRole(roles) {
-        return !selectedOverviewRoleKey || (roles || []).some(roleMatchesFilter);
+        return selectedOverviewFilterKind !== 'role' || (roles || []).some(roleMatchesFilter);
+    }
+
+    function hasMatchingAgent(agents) {
+        return selectedOverviewFilterKind !== 'agent' || (agents || []).some(agentMatchesFilter);
+    }
+
+    function teamMatchesOverviewFilter(team) {
+        return hasMatchingRole(((team.staffing || {}).roles) || []) && hasMatchingAgent(team.aiAgents || []);
     }
 
     function renderOverviewRoleDots(roles) {
@@ -942,23 +1079,58 @@
         return html;
     }
 
+    function renderOverviewAgentDots(agents) {
+        const visibleAgents = (agents || []).filter(agentMatchesFilter);
+        if (!visibleAgents.length) {
+            return '';
+        }
+        let html = '<div class="overview-agent-section"><div class="section-title">AI Agents</div><div class="overview-role-row overview-agent-row">';
+        visibleAgents.forEach(agent => {
+            const color = agentColorMap[agentKey(agent)] || '#94a3b8';
+            html += '<div class="role-dot-group">';
+            html += '<div class="role-label">' + escapeHtml(agentName(agent)) + '</div>';
+            html += '<div class="role-dots"><div class="role-dot" style="background-color: ' + color + '"></div></div>';
+            html += '</div>';
+        });
+        html += '</div></div>';
+        return html;
+    }
+
+    function overviewFilterIsActive(kind, key) {
+        return selectedOverviewFilterKind === kind && selectedOverviewFilterKey === key;
+    }
+
     function renderOverviewRoleFilter() {
-        let html = '<div class="legend-row">';
-        html += '<button type="button" class="legend-pill' + (selectedOverviewRoleKey ? '' : ' active') + '" data-role-key="">Show all roles</button>';
+        let html = '<div class="overview-filter-section"><div class="section-title">Roles</div><div class="legend-row">';
+        html += '<button type="button" class="legend-pill' + (selectedOverviewFilterKind ? '' : ' active') + '" data-filter-kind="" data-filter-key="">Show all</button>';
         distinctRoles
             .sort((left, right) => left.localeCompare(right))
             .forEach(role => {
                 const roleKey = slugifyRole(role);
-                html += '<button type="button" class="legend-pill' + (selectedOverviewRoleKey === roleKey ? ' active' : '') + '" data-role-key="' + escapeHtml(roleKey) + '">';
+                html += '<button type="button" class="legend-pill' + (overviewFilterIsActive('role', roleKey) ? ' active' : '') + '" data-filter-kind="role" data-filter-key="' + escapeHtml(roleKey) + '">';
                 html += '<span class="legend-swatch" style="background-color: ' + roleColorMap[roleKey] + '"></span>';
                 html += '<span>' + escapeHtml(role) + '</span>';
                 html += '<span class="legend-count">' + escapeHtml(String(roleInstanceCounts[roleKey] || 0)) + '</span>';
                 html += '</button>';
             });
-        html += '</div>';
+        html += '</div></div>';
+        if (distinctAgents.length) {
+            html += '<div class="overview-filter-section"><div class="section-title">AI Agents</div><div class="legend-row">';
+            distinctAgents
+                .sort((left, right) => left.localeCompare(right))
+                .forEach(agent => {
+                    const key = slugifyRole(agent);
+                    html += '<button type="button" class="legend-pill' + (overviewFilterIsActive('agent', key) ? ' active' : '') + '" data-filter-kind="agent" data-filter-key="' + escapeHtml(key) + '">';
+                    html += '<span class="legend-swatch" style="background-color: ' + agentColorMap[key] + '"></span>';
+                    html += '<span>' + escapeHtml(agent) + '</span>';
+                    html += '<span class="legend-count">' + escapeHtml(String(agentInstanceCounts[key] || 0)) + '</span>';
+                    html += '</button>';
+                });
+            html += '</div></div>';
+        }
         document.getElementById('OverviewRoleFilter').innerHTML = html;
         document.querySelectorAll('#OverviewRoleFilter .legend-pill').forEach(button => {
-            button.addEventListener('click', () => setOverviewRoleFilter(button.getAttribute('data-role-key') || ''));
+            button.addEventListener('click', () => setOverviewFilter(button.getAttribute('data-filter-kind') || '', button.getAttribute('data-filter-key') || ''));
         });
     }
 
@@ -966,38 +1138,53 @@
         let overviewHtml = '<div class="overview-list">';
         (teamsData.groups || []).forEach(group => {
             const groupLeadershipRoles = ((group.groupLeadership || {}).roles) || [];
-            const visibleTeams = (group.teams || []).filter(team => hasMatchingRole(((team.staffing || {}).roles) || []));
-            const showGroupLeadership = group.groupLeadership && groupLeadershipRoles.length && hasMatchingRole(groupLeadershipRoles);
-            if (selectedOverviewRoleKey && !showGroupLeadership && !visibleTeams.length) {
+            const visibleTeams = (group.teams || []).filter(teamMatchesOverviewFilter);
+            const showGroupLeadership = sectionVisible('roles') && selectedOverviewFilterKind !== 'agent' && group.groupLeadership && groupLeadershipRoles.length && hasMatchingRole(groupLeadershipRoles);
+            if (selectedOverviewFilterKind && !showGroupLeadership && !visibleTeams.length) {
                 return;
             }
             overviewHtml += '<div class="overview-group">';
             overviewHtml += '<div class="overview-group-name">' + escapeHtml(group.name) + '</div>';
+            if (group.mission) {
+                overviewHtml += '<div class="group-mission">' + escapeHtml(group.mission) + '</div>';
+            }
             if (showGroupLeadership) {
-                overviewHtml += '<div class="overview-team-group-level">';
-                overviewHtml += '<div><div class="overview-team-name">Group Leadership</div><div class="overview-team-meta">Group-level coverage</div></div>';
+                overviewHtml += '<div class="group-leadership-card">';
+                overviewHtml += '<div class="section-title">Group Leadership</div>';
+                if (group.groupLeadership.purpose) {
+                    overviewHtml += '<div class="group-mission">' + escapeHtml(group.groupLeadership.purpose) + '</div>';
+                }
+                overviewHtml += '<div class="meta-row">';
+                overviewHtml += '<div class="meta-pill">Leadership headcount: ' + escapeHtml(String(group.groupLeadership.suggestedHeadcount || 0)) + '</div>';
+                overviewHtml += '<div class="meta-pill">Role blocks: ' + escapeHtml(String(groupLeadershipRoles.length)) + '</div>';
+                overviewHtml += '</div>';
                 overviewHtml += renderOverviewRoleDots(groupLeadershipRoles);
                 overviewHtml += '</div>';
             }
+            overviewHtml += '<div class="team-grid">';
             visibleTeams.forEach(team => {
-                overviewHtml += '<div class="overview-team">';
-                overviewHtml += '<div><a class="overview-team-link" target="_blank" href="landing_pages/' + escapeHtml(team.id) + '.html"><div class="overview-team-name">' + escapeHtml(team.name) + '</div><div class="overview-team-meta">' + escapeHtml(team.teamType || 'team') + '</div></a></div>';
-                overviewHtml += renderOverviewRoleDots(((team.staffing || {}).roles) || []);
-                overviewHtml += '</div>';
+                overviewHtml += renderTeamCard(team);
             });
-            overviewHtml += '</div>';
+            overviewHtml += '</div></div>';
         });
         overviewHtml += '</div>';
         document.getElementById('Overview').innerHTML = overviewHtml;
     }
 
-    function setOverviewRoleFilter(roleKey) {
-        selectedOverviewRoleKey = selectedOverviewRoleKey === roleKey ? '' : roleKey;
+    function setOverviewFilter(kind, key) {
+        if (!kind || !key || overviewFilterIsActive(kind, key)) {
+            selectedOverviewFilterKind = '';
+            selectedOverviewFilterKey = '';
+        } else {
+            selectedOverviewFilterKind = kind;
+            selectedOverviewFilterKey = key;
+        }
         renderOverviewRoleFilter();
         renderOverview();
     }
 
     renderOverviewRoleFilter();
+    renderOverviewSectionToggles();
     renderOverview();
 
     let principlesHtml = '<div class="section-title">Design Principles</div>';

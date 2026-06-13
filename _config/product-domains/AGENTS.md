@@ -86,7 +86,7 @@ Create the minimum source package under `_config/product-domains/<domain-id>/`:
 - `products/products.json`
 - `product/delivery.json`
 - `product-bricks/product-bricks.json`
-- `product-bricks/product-capability.json`
+- `product-bricks/product-stream.json`
 - `product-bricks/targets.json`
 - `product-bricks/documents.json`
 - `product-bricks/roadmap/roadmap.json`
@@ -150,7 +150,7 @@ Use products to express the market-facing offer and delivery to express:
 - APIs and events
 - operating flows
 - MVP scope
-- capability mappings
+- stream mappings
 - ownership assumptions where supported
 
 The delivery model should make it obvious how the strategy turns into operating software and operations.
@@ -168,13 +168,13 @@ Product bricks should bridge:
 
 Do not define bricks as vague aspirations. They should be buildable and ownable.
 
-`product-bricks/product-capability.json` should contain the outcome-based product capabilities that those bricks enable.
+`product-bricks/product-stream.json` should contain the outcome-based product streams that those bricks enable.
 
-Product capabilities should:
+Product streams should:
 
 - express the strategic "what" rather than the implementation "how"
 - connect a valuable outcome to one or more product bricks
-- optionally include required external systems when the capability depends on them
+- optionally include required external systems when the stream depends on them
 - remain durable and higher-level than the underlying brick catalog
 
 ### 7. Add planning overlays
@@ -185,7 +185,7 @@ Complete:
 - `product-bricks/documents.json`
 - `product-bricks/roadmap/roadmap.json`
 
-These should connect the static capability model to:
+These should connect the static stream model to:
 
 - target states
 - planning priorities
@@ -225,7 +225,7 @@ Each initiative or release should have:
 
 - a clear problem or outcome statement
 - links to customer impact
-- links to product bricks or delivery capabilities
+- links to product bricks or delivery streams
 - timing and sequencing context where the schema supports it
 
 ### 10. Add discoveries
@@ -304,7 +304,7 @@ Before generating docs, check these invariants:
 - team ids referenced elsewhere exist
 - initiative-to-discovery links point to real discovery items
 - goals link to real initiatives or releases when those connections are modeled
-- product-brick references such as `brickId`, `coreCapabilityIds`, `adjacentCapabilityIds`, and target capability links point to real capabilities
+- product-brick references such as `brickId`, `coreStreamIds`, `adjacentStreamIds`, and target stream links point to real streams
 - delivery and discovery team references point to real teams
 - customer objects include explicit product strategy horizons, not only KPIs and JTBD
 - KPI leaves are measurable and specific
@@ -322,7 +322,7 @@ Use short, human-meaningful ids consistently across the source model.
 - Example: `Search Engine` can become `sren`.
 - Reuse the same four-letter id everywhere that item is referenced across customers, products, delivery, product bricks, targets, and teams.
 
-This convention is intended for local domain objects such as capabilities, products, customers, teams, targets, and similar modeled entities.
+This convention is intended for local domain objects such as streams, products, customers, teams, targets, and similar modeled entities.
 
 Do not force this convention onto ids that already rely on a longer structured format for traceability, such as:
 

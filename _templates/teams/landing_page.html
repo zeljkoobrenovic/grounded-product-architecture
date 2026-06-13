@@ -459,6 +459,11 @@ ${tabs_script}
         return html;
     }
 
+    function renderAgentList(label, values) {
+        if (!values || !values.length) return '';
+        return '<div class="metric-meta"><strong>' + escapeHtml(label) + ':</strong> ' + values.map(value => escapeHtml(value)).join(', ') + '</div>';
+    }
+
     function activityHref(item, fallbackFolder) {
         if (item.href) return item.href;
         if (item.landingPageKey === undefined || item.landingPageKey === null || item.landingPageKey === '') return '';
@@ -774,6 +779,7 @@ ${tabs_script}
 
     const staffing = team.staffing || {};
     const groupLeadership = team.groupLeadership || {};
+    const aiAgents = team.aiAgents || [];
     const dependencyData = team.dependencyData || {};
     const dependencyCount = (dependencyData.explicitRelationships || []).length + (dependencyData.sharedProductBricks || []).length;
     document.getElementById('tab_staffing-tab').innerHTML = 'Staffing (' + escapeHtml(String(staffing.suggestedHeadcount || 0)) + ')';
@@ -787,6 +793,7 @@ ${tabs_script}
     staffingHtml += '<div class="section"><div class="section-title">Staffing Summary</div><div class="stats">';
     staffingHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String(staffing.suggestedHeadcount || 0)) + '</div><div class="stat-label">Suggested Headcount</div></div>';
     staffingHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((staffing.roles || []).length)) + '</div><div class="stat-label">Role Blocks</div></div>';
+    staffingHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String(aiAgents.length)) + '</div><div class="stat-label">AI Agents</div></div>';
     staffingHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String(groupLeadership.suggestedHeadcount || 0)) + '</div><div class="stat-label">Group Leadership Headcount</div></div>';
     staffingHtml += '<div class="stat"><div class="stat-value">' + escapeHtml(String((groupLeadership.roles || []).length)) + '</div><div class="stat-label">Group Role Blocks</div></div>';
     staffingHtml += '</div></div>';
@@ -801,6 +808,23 @@ ${tabs_script}
             staffingHtml += '<tr><td>' + escapeHtml(role.role) + '</td><td>' + escapeHtml(String(role.count || 0)) + '</td><td>' + escapeHtml(role.responsibility || '') + '</td></tr>';
         });
         staffingHtml += '</tbody></table></div>';
+    }
+
+    if (aiAgents.length) {
+        staffingHtml += '<div class="section"><div class="section-title">AI Agents</div><div class="grid">';
+        aiAgents.forEach(agent => {
+            staffingHtml += '<div class="card">';
+            staffingHtml += '<div class="metric-name">' + escapeHtml(agent.name || agent.id || 'AI agent') + '</div>';
+            if (agent.purpose) {
+                staffingHtml += '<div class="metric-meta">' + escapeHtml(agent.purpose) + '</div>';
+            }
+            staffingHtml += renderAgentList('Primary users', agent.primaryUsers || []);
+            staffingHtml += renderAgentList('Product bricks', agent.productBricks || []);
+            staffingHtml += renderAgentList('Guardrails', agent.guardrails || []);
+            staffingHtml += renderAgentList('Success signals', agent.successSignals || []);
+            staffingHtml += '</div>';
+        });
+        staffingHtml += '</div></div>';
     }
 
     if (team.groupLeadership && ((team.groupLeadership.roles || []).length || team.groupLeadership.leadershipModel)) {
@@ -836,13 +860,13 @@ ${tabs_script}
         if ((team.ownedProductBricks || []).length) {
             homeHtml += '<div style="margin-bottom:8px; color:#6b7280">Owned product bricks</div>';
             (team.ownedProductBricks || []).forEach(brick => {
-                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
+                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'logo.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
             });
         }
         if ((team.supportingProductBricks || []).length) {
             homeHtml += '<div style="margin:14px 0 8px 0; color:#6b7280">Supporting product bricks</div>';
             (team.supportingProductBricks || []).forEach(brick => {
-                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'capability_404.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
+                homeHtml += '<div class="pill"><img class="pill-icon" src="../../product-bricks/icons/' + escapeHtml((brick.brick || {}).icon || 'logo.png') + '" onerror="this.onerror=null;this.src=\'../../product-bricks/icons/logo.png\'">' + linkOf('../../product-bricks/landing_pages/' + brick.brickId + '.html', brick.brickName || brick.brickId, '') + '</div>';
             });
         }
         homeHtml += '</div>';
