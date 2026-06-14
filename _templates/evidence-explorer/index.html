@@ -135,6 +135,24 @@
             border-radius: 0 0 8px 8px;
         }
 
+        /* ---- No-tabs mode: stacked sections, no tab-attached border ---- */
+        body.no-tabs .tabcontent {
+            padding: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        .type-section { margin-top: 22px; }
+        .type-section:first-child { margin-top: 0; }
+
+        .type-section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
         /* ---- Evidence groups & cards (from _imports/evidence/style.html) ---- */
         .evidence-group {
             margin-top: 18px;
@@ -331,6 +349,18 @@
     const isEmbed = params.has("embed") || params.has("ids");
     if (isEmbed) document.body.classList.add("embed");
 
+    // In embed mode, ?useTabs=false renders all types as stacked sections
+    // (no tabs); otherwise (default, or outside embed mode) tabs are used.
+    function parseBool(value, fallback) {
+        if (value == null) return fallback;
+        const v = value.trim().toLowerCase();
+        if (v === "false" || v === "0" || v === "no") return false;
+        if (v === "true" || v === "1" || v === "yes") return true;
+        return fallback;
+    }
+    const useTabs = !isEmbed ? true : parseBool(params.get("useTabs"), true);
+    if (!useTabs) document.body.classList.add("no-tabs");
+
     function globToRegExp(pattern) {
         // Support * and ? wildcards on ids; everything else escaped. Case-insensitive.
         const escaped = pattern.trim()
@@ -474,16 +504,21 @@
     }
 
     // ---- Build the tab buttons once; counts/visibility update on search. ----
+    // Skipped when tabs are disabled (embed ?useTabs=false).
     const tabButtons = new Map();
-    for (const type of TYPES) {
-        const btn = document.createElement("button");
-        btn.className = "tablinks";
-        btn.type = "button";
-        btn.dataset.type = type;
-        btn.innerHTML = escapeEvidenceHtml(type) + ' <span class="tab-count"></span>';
-        btn.addEventListener("click", () => { activeType = type; render(); });
-        tabbarEl.appendChild(btn);
-        tabButtons.set(type, btn);
+    if (useTabs) {
+        for (const type of TYPES) {
+            const btn = document.createElement("button");
+            btn.className = "tablinks";
+            btn.type = "button";
+            btn.dataset.type = type;
+            btn.innerHTML = escapeEvidenceHtml(type) + ' <span class="tab-count"></span>';
+            btn.addEventListener("click", () => { activeType = type; render(); });
+            tabbarEl.appendChild(btn);
+            tabButtons.set(type, btn);
+        }
+    } else {
+        tabbarEl.style.display = "none";
     }
 
     function renderCards(frags) {
@@ -507,16 +542,12 @@
         return html;
     }
 
-    function render() {
-        const q = searchInput.value.trim().toLowerCase();
-
+    function renderTabs(q) {
         // Per-type counts for the current query; hide zero-result tabs while searching.
-        const counts = new Map();
         let total = 0;
         const visibleTypes = [];
         for (const type of TYPES) {
             const n = matchesForType(type, q).length;
-            counts.set(type, n);
             total += n;
             const btn = tabButtons.get(type);
             btn.querySelector(".tab-count").textContent = "(" + n + ")";
@@ -545,6 +576,38 @@
         listEl.style.display = "block";
         emptyEl.style.display = "none";
         listEl.innerHTML = renderCards(matchesForType(activeType, q));
+    }
+
+    function renderSections(q) {
+        // No tabs: render every type with matches as a stacked section.
+        let total = 0;
+        let html = "";
+        for (const type of TYPES) {
+            const frags = matchesForType(type, q);
+            total += frags.length;
+            if (!frags.length) continue;
+            html += '<section class="type-section">';
+            html += '<div class="type-section-title">' + escapeEvidenceHtml(type) + ' (' + frags.length + ')</div>';
+            html += renderCards(frags);
+            html += '</section>';
+        }
+
+        countEl.textContent = total + " of " + POOL.length + " fragments";
+
+        if (!total) {
+            listEl.style.display = "none";
+            emptyEl.style.display = "block";
+            return;
+        }
+        listEl.style.display = "block";
+        emptyEl.style.display = "none";
+        listEl.innerHTML = html;
+    }
+
+    function render() {
+        const q = searchInput.value.trim().toLowerCase();
+        if (useTabs) renderTabs(q);
+        else renderSections(q);
     }
 
     searchInput.addEventListener("input", render);
