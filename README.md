@@ -37,7 +37,7 @@ There is no frontend framework, build system, or external JavaScript runtime dep
   Generated static website output only.
 - `_wiring/`
   Python generation scripts that wire `_config/` and `_templates/` into `docs/`.
-- `_prompts/`
+- `_config/_prompts/`
   Prompt assets used to create or extend strategic and customer models.
 
 ## Main Modeling Areas
@@ -48,20 +48,30 @@ There is no frontend framework, build system, or external JavaScript runtime dep
 
 Each domain typically contains:
 
+- `_domain/DOMAIN.md`
+  Narrative domain brief.
 - `customers/customers.json`
-  Customer groups, personas, JTBDs, KPI pyramids, and strategy horizons.
-- `product/delivery.json`
-  Delivery model, channels, APIs, events, MVP scope, and capability mappings.
+  Customer groups, personas, JTBDs, KPI pyramids, and strategy horizons (with `insights.json` alongside).
+- `product-deployments/products.json` and `product-deployments/deployment.json`
+  Products and the delivery/deployment model.
+- `delivery/releases.json`
+  Release targets and planning overlays.
 - `product-bricks/product-bricks.json`
   The catalog of reusable implementation-facing building blocks.
-- `product-bricks/product-capability.json`
-  Outcome-based capabilities composed from product bricks and external systems.
-- `product-bricks/targets.json`
-  Release targets and planning overlays.
-- `product-bricks/documents.json`
-  Notes, discussions, and evidence references.
-- `product-bricks/roadmap/roadmap.json`
-  Roadmap timing and effort data.
+- `product-bricks/product-stream.json`
+  Product streams composed from product bricks and external systems.
+- `product-bricks/bricks-evidence.json` and `product-bricks/streams-evidence.json`
+  Evidence references for bricks and streams.
+- `objectives/{current,next,ktlo,archived}/{objectives,initiatives,discoveries}.json`
+  Objectives model, sliced by time/state.
+- `teams/teams.json`
+  Team structure.
+- `business/competition.json`
+  Competitive landscape (with `business/logos/`).
+- `data/data-assets.json`
+  Domain data assets.
+- `start/config.json`
+  Start-page configuration (with `start/icons/`).
 
 ## Creating A New Product Domain
 
@@ -97,11 +107,12 @@ Recommended flow:
    - `product-deployments/deployment.json`
    - `delivery/releases.json`
    - `product-bricks/product-bricks.json`
-   - `product-bricks/product-capability.json`
+   - `product-bricks/product-stream.json`
    - `product-bricks/bricks-evidence.json`
-   - `product-bricks/capabilities-evidence.json`
+   - `product-bricks/streams-evidence.json`
    - `objectives/current|next|ktlo|archived/{objectives,initiatives,discoveries}.json`
    - `teams/teams.json`
+   - `business/competition.json`
    - `start/config.json`
    - `data/data-assets.json`
 8. Register the new domain in `_wiring/product-domains/run.sh` by adding a new `domain_id|Domain Name|Domain description` entry to the `domains=(...)` list.
@@ -142,13 +153,14 @@ Generation scripts live under `_wiring/`.
 
 Product-domain generators:
 
+- `generate-start-docs.py`
 - `generate-customers-docs.py`
 - `generate-products-docs.py`
 - `generate-product-bricks-docs.py`
 - `generate-delivery-docs.py`
 - `generate-objectives-docs.py`
-- `generate-start-docs.py`
 - `generate-teams-docs.py`
+- `generate-competition-docs.py`
 
 Run them from the generator folder, either domain-by-domain or via the wrapper script:
 
@@ -158,13 +170,14 @@ cd _wiring/product-domains
 ```
 
 ```bash
+python3 generate-start-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-customers-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-products-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-product-bricks-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-delivery-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-objectives-docs.py <domain_id> <domain_name> <domain_description>
-python3 generate-start-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-teams-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-competition-docs.py <domain_id> <domain_name> <domain_description>
 ```
 
 Other generator groups live under:

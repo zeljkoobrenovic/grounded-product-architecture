@@ -9,3 +9,6 @@ bash scripts/workday/generate-workday-evidence.sh
 bash scripts/domain-objectives/generate-domain-objectives-evidence.sh
 
 python3 database/aggregate-evidence.py
+
+# Regenerate the static Evidence Explorer page from the aggregated database.
+python3 ../../_wiring/evidence-explorer/generate-evidence-explorer-docs.py

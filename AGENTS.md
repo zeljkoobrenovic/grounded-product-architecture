@@ -40,7 +40,7 @@ All generated HTML files are intended to be self-contained and easy to publish a
   - Repo-local Codex skill guidance for cross-cutting modeling workflows that span source data, generators, templates, and generated documentation.
 - `docs/`
   - Generated static website output.
-- `_prompts/`
+- `_config/_prompts/`
   - Prompt assets used to create or extend strategic/customer JSON models.
 
 ## Key Modeling Areas
@@ -51,20 +51,30 @@ All generated HTML files are intended to be self-contained and easy to publish a
 
 Each domain typically contains:
 
-- `product/customers.json`
-  - Customer groups, personas, JTBD, KPI pyramids, and product strategy horizons.
-- `product/delivery.json`
-  - Product delivery definition, channels, APIs, events, MVP scope, and capability mappings.
+- `_domain/DOMAIN.md`
+  - Narrative domain brief.
+- `customers/customers.json`
+  - Customer groups, personas, JTBD, KPI pyramids, and product strategy horizons (with `insights.json` alongside).
+- `product-deployments/products.json` and `product-deployments/deployment.json`
+  - Products and the delivery/deployment model.
+- `delivery/releases.json`
+  - Release targets and planning overlays.
 - `product-bricks/product-bricks.json`
   - The catalog of product bricks, the reusable implementation-facing building blocks.
-- `product-bricks/product-capability.json`
-  - The catalog of outcome-based product capabilities composed from one or more product bricks and/or external systems.
-- `product-bricks/targets.json`
-  - Release targets and planning overlays.
-- `product-bricks/documents.json`
-  - Discussions, notes, and evidence references.
-- `product-bricks/roadmap/roadmap.json`
-  - Roadmap effort and timing data.
+- `product-bricks/product-stream.json`
+  - Product streams composed from one or more product bricks and/or external systems.
+- `product-bricks/bricks-evidence.json` and `product-bricks/streams-evidence.json`
+  - Evidence references for bricks and streams.
+- `objectives/{current,next,ktlo,archived}/{objectives,initiatives,discoveries}.json`
+  - Objectives model, sliced by time/state.
+- `teams/teams.json`
+  - Team structure.
+- `business/competition.json`
+  - Competitive landscape (with `business/logos/`).
+- `data/data-assets.json`
+  - Domain data assets.
+- `start/config.json`
+  - Start-page configuration (with `start/icons/`).
 
 ### 2. Product bricks
 
@@ -77,15 +87,16 @@ Product bricks are the implementation-facing units that connect strategy to exec
 
 ### 3. Static site generation
 
-Generation scripts live under `_wiring/`:
+Generation scripts live under `_wiring/product-domains/` and run in this order (see `run.sh`):
 
+- `generate-start-docs.py`
 - `generate-customers-docs.py`
 - `generate-products-docs.py`
+- `generate-product-bricks-docs.py`
 - `generate-delivery-docs.py`
 - `generate-objectives-docs.py`
-- `generate-start-docs.py`
 - `generate-teams-docs.py`
-- `generate-product-bricks-docs.py`
+- `generate-competition-docs.py`
 
 These scripts read from `_config/...` and `_templates/...` and write generated pages into `docs/...`.
 
@@ -105,8 +116,8 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 - If the user asks to change strategic content, start in `_config/product-domains/**`.
 - If the user asks to change presentation or navigation, start in `_templates/**`.
 - If the user asks to regenerate the website, run the relevant Python generators from `_wiring/**`.
-- Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first.
-- Some product modeling files appear to be evolving from `products.json` to `delivery.json`. Before regenerating product pages, verify the current generator expects the same source file names present in the domain folder.
+- Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first. Generators `shutil.rmtree` their target docs folder before rebuilding, so never hand-edit files under `docs/product-domains/`.
+- Before regenerating, verify the current generator expects the same source file names present in the domain folder; the per-domain layout has evolved (e.g. `product-deployments/`, `delivery/releases.json`, `product-bricks/product-stream.json`) and older domains may lag.
 
 ## Practical Mental Model
 

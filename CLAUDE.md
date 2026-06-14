@@ -1,0 +1,76 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this repo is
+
+Spec-Driven Product Architecture models product strategy as structured JSON and generates a self-contained static documentation site (published via GitHub Pages). There is **no frontend framework, build system, npm, or external JS runtime** — generators are plain Python 3, output is standalone HTML with embedded data. Preserve this no-framework approach; do not introduce React, bundlers, or client-side package dependencies.
+
+The pipeline is one-directional:
+
+```
+_config/**  (JSON source of truth)  +  _templates/**  (HTML)  --Python in _wiring/**-->  docs/**  (generated)
+```
+
+## Generating the site
+
+All product-domain generators run from `_wiring/product-domains/` and take three positional args (`domain_id`, `domain_name`, `domain_description`). The wrapper script defines the full domain list and the generator order:
+
+```bash
+cd _wiring/product-domains
+./run.sh                      # regenerate all domains with all generators
+```
+
+Run a single generator for one domain:
+
+```bash
+cd _wiring/product-domains
+python3 generate-customers-docs.py ride-sharing-marketplace "Ride Sharing Marketplace" "Description..."
+```
+
+Generator order matters and is fixed in `run.sh`: `generate-start-docs` → `customers` → `products` → `product-bricks` → `delivery` → `objectives` → `teams` → `competition`. Each generator `chdir`s into `docs/product-domains/` and resolves config/template paths relative to the repo root via `domain_cli.load_domain_args()`.
+
+There is no test suite, linter config, or package manifest. Validation is: run the generator and inspect the produced HTML under `docs/`.
+
+## Adding or registering a domain
+
+1. Create `_config/product-domains/<lowercase-slug>/` following an existing domain (use `ride-sharing-marketplace` as the structural reference).
+2. Add a `domain_id|Domain Name|Domain description` line to the `domains=(...)` array in `_wiring/product-domains/run.sh`.
+3. Regenerate from `_wiring/product-domains/`.
+
+The prompt scaffold for a new domain lives at `_config/_prompts/customers/NEW-DOMAIN-PROMPT.md`.
+
+## Domain config layout
+
+Inside `_config/product-domains/<domain>/`:
+
+- `_domain/DOMAIN.md` — narrative domain brief
+- `customers/customers.json` — customer groups, personas, JTBDs, KPI pyramids, strategy horizons (+ `insights.json`, `icons/`, `media/`)
+- `product-deployments/products.json`, `product-deployments/deployment.json` — products and delivery/deployment model
+- `delivery/releases.json` — release targets and planning overlays
+- `product-bricks/product-bricks.json` — catalog of implementation-facing building blocks
+- `product-bricks/product-stream.json` — product streams composed from bricks
+- `product-bricks/bricks-evidence.json`, `streams-evidence.json` — evidence references
+- `objectives/{current,next,ktlo,archived}/{objectives,initiatives,discoveries}.json` — the objectives model is sliced by time/state, one trio of files per slice
+- `teams/teams.json`
+- `business/competition.json` (+ `business/logos/`)
+- `data/data-assets.json`
+- `start/config.json` (+ `start/icons/`)
+
+## Generator architecture
+
+Shared Python modules in `_wiring/product-domains/` (import these rather than re-implementing):
+
+- `domain_cli.py` — arg parsing; every generator calls `load_domain_args()`
+- `product_bricks_support.py` — product-brick layer model (`PRODUCT_BRICK_LAYER_ORDER`: ui → interfaces → worker → stateless-service → service → integration) and labels/descriptions
+- `initiatives_support.py` — loads and filters domain objectives/initiatives/discoveries activity
+
+Templates live in `_templates/<area>/` with shared partials under `_templates/_imports/` (e.g. `tabs/`, `breadcrumbs/`, `common/`). Generators read template HTML and substitute `${key}` placeholders. Output for each area is fully rebuilt: generators `shutil.rmtree` the target docs folder before regenerating, so do not hand-edit files under `docs/product-domains/`.
+
+## Conventions
+
+- All ID values in `_config/**` (`id`, `*Id`, `*Ids`) are **lowercase**.
+- Reuse existing JSON schemas and template `${...}` patterns instead of inventing parallel structures.
+- Keep terminology aligned with the domain language: customers, objectives, delivery, product bricks, streams, releases, teams, evidence.
+- Edit strategy/content in `_config/**`; edit presentation in `_templates/**`; treat `_wiring/**` as generator logic; treat `docs/**` as generated output (patch directly only when explicitly asked).
+- Before regenerating, inspect the worktree if it is dirty — generators wipe and rebuild docs folders.
