@@ -30,9 +30,6 @@
             margin: 0;
             padding: 8px 28px 40px;
             color: var(--ink);
-            background:
-                radial-gradient(1200px 480px at 100% -10%, #eef3fc 0%, rgba(238, 243, 252, 0) 60%),
-                var(--bg);
             -webkit-font-smoothing: antialiased;
         }
 
@@ -535,6 +532,24 @@
             .replaceAll("'", "&#39;");
     }
 
+    // Format a fact/aggregate value for display:
+    //  - numbers round to an integer with US English thousand separators
+    //  - a non-zero magnitude below 1 shows "<1" (or ">-1" when negative)
+    //  - non-numeric values (months, roles, etc.) pass through unchanged
+    const numberFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+    function formatFactValue(value) {
+        if (typeof value !== "number") {
+            const asNumber = Number(value);
+            if (value === "" || value == null || !Number.isFinite(asNumber)) {
+                return value == null ? "" : String(value);
+            }
+            value = asNumber;
+        }
+        if (!Number.isFinite(value)) return String(value);
+        if (value !== 0 && Math.abs(value) < 1) return value > 0 ? "<1" : ">-1";
+        return numberFormatter.format(Math.round(value));
+    }
+
     function renderEvidenceLinks(links) {
         if (!links || !links.length) return "";
         let html = '<div class="evidence-links">';
@@ -574,7 +589,7 @@
         let html = '<div class="evidence-summary">';
         totals.forEach(item => {
             html += '<div class="evidence-summary-chip">';
-            html += '<span class="evidence-summary-value">' + escapeEvidenceHtml(item.value + "") + '</span>';
+            html += '<span class="evidence-summary-value">' + escapeEvidenceHtml(formatFactValue(item.value)) + '</span>';
             html += '<span>' + escapeEvidenceHtml(item.label) + '</span>';
             html += '</div>';
         });
@@ -601,7 +616,7 @@
         if (fragment.facts && fragment.facts.length) {
             html += '<div class="facts">';
             fragment.facts.forEach(fact => {
-                html += '<div class="fact"><span class="fact-value">' + escapeEvidenceHtml(fact.value + "") +
+                html += '<div class="fact"><span class="fact-value">' + escapeEvidenceHtml(formatFactValue(fact.value)) +
                     '</span><span>' + escapeEvidenceHtml(fact.label) + '</span></div>';
             });
             html += '</div>';
