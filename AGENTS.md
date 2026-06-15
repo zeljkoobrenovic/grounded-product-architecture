@@ -36,6 +36,8 @@ All generated HTML files are intended to be self-contained and easy to publish a
   - HTML templates used to generate the static site.
 - `_wiring/`
   - Python generator scripts that wire `_config/...` and `_templates/...` into `docs/...`.
+- `_data/evidence-db/`
+  - Separate evidence pipeline: per-source scripts produce fragment files, `aggregate-evidence.py` merges them into `database/all-evidence.json`, and `run.sh` runs the chain (see Evidence database below).
 - `_skills/`
   - Repo-local Codex skill guidance for cross-cutting modeling workflows that span source data, generators, templates, and generated documentation.
 - `docs/`
@@ -99,6 +101,16 @@ Generation scripts live under `_wiring/product-domains/` and run in this order (
 - `generate-competition-docs.py`
 
 These scripts read from `_config/...` and `_templates/...` and write generated pages into `docs/...`.
+
+### 4. Evidence database and explorer
+
+`_data/evidence-db/` is a self-contained pipeline, separate from the product-domain generators:
+
+- Per-source scripts under `_data/evidence-db/scripts/` (aws, gcp, workday, source-code, domain-objectives) write `_data/evidence-db/database/evidence-files/<source>.json`.
+- `database/aggregate-evidence.py` merges those into `database/all-evidence.json` — a list of `{group, fragments}` objects; each fragment has `id`, `type`, `icon`, `title`, `description`, `facts`, `links`, `tags`.
+- `_data/evidence-db/run.sh` runs the per-source scripts, then aggregation, then the explorer generator.
+
+`_wiring/evidence-explorer/generate-evidence-explorer-docs.py` renders `_templates/evidence-explorer/index.html` into `docs/evidence-explorer/index.html`, inlining `all-evidence.json` directly into the page and copying evidence-db plus template icons. The explorer shows one tab per evidence `type`; in iframe-embed mode (`?embed=1` / `?ids=<glob patterns>`), `?useTabs=false` renders stacked sections instead of tabs. To change which facts appear, edit the source fragment files (e.g. `database/evidence-files/aws-accounts.json`) and re-run `run.sh`.
 
 ## Working Rules For Agents
 

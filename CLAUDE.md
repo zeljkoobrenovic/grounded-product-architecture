@@ -67,6 +67,12 @@ Shared Python modules in `_wiring/product-domains/` (import these rather than re
 
 Templates live in `_templates/<area>/` with shared partials under `_templates/_imports/` (e.g. `tabs/`, `breadcrumbs/`, `common/`). Generators read template HTML and substitute `${key}` placeholders. Output for each area is fully rebuilt: generators `shutil.rmtree` the target docs folder before regenerating, so do not hand-edit files under `docs/product-domains/`.
 
+## Evidence database & explorer
+
+`_data/evidence-db/` is a separate pipeline from the product domains. Per-source scripts under `_data/evidence-db/scripts/` (aws, gcp, workday, source-code, domain-objectives) write fragment files into `_data/evidence-db/database/evidence-files/<source>.json`, then `database/aggregate-evidence.py` concatenates them into `database/all-evidence.json` (a list of `{group, fragments}` objects; each fragment has `id`, `type`, `icon`, `title`, `description`, `facts`, `links`, `tags`). `_data/evidence-db/run.sh` runs the whole chain.
+
+`_wiring/evidence-explorer/generate-evidence-explorer-docs.py` builds a standalone search UI at `docs/evidence-explorer/index.html` from `_templates/evidence-explorer/index.html`: it inlines `all-evidence.json` into the page (so the page needs no runtime fetch) and copies both the evidence-db icons and the template's own `icons/` into the output. It is wired as the last step of `_data/evidence-db/run.sh`, so editing fragments and re-running `run.sh` refreshes the explorer too. The explorer shows one tab per evidence `type`; in iframe-embed mode (`?embed=1` / `?ids=<glob patterns>`) `?useTabs=false` switches to stacked sections instead of tabs.
+
 ## Conventions
 
 - All ID values in `_config/**` (`id`, `*Id`, `*Ids`) are **lowercase**.
