@@ -748,43 +748,38 @@ ${tabs_script}
         (deployment.channels || []).forEach(group => {
             (group.channels || []).forEach(channel => {
                 const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                (channel.environments || []).forEach(environment => {
-                    (environment.deployedBricks || []).forEach(deployed => {
-                        const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
-                        if (!use) {
-                            return;
-                        }
-                        if (!channelMeta[ref]) {
-                            channelMeta[ref] = {
-                                ref: ref,
-                                groupId: group.groupId || '',
-                                groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
-                                groupDescription: group.description || '',
-                                name: channel.subChannelName || channel.subChannelId || ref,
-                                channelId: channel.subChannelId || '',
-                                channelType: channel.channelType || '',
-                                description: channel.description || '',
-                                environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
-                                supportedInterfaces: channel.supportedInterfaces || [],
-                                bricks: []
-                            };
-                        }
-                        if (!bricks[deployed.brickId]) {
-                            bricks[deployed.brickId] = {
-                                brickId: deployed.brickId,
-                                brickName: deployed.brickName || deployed.brickId,
-                                description: use.description || '',
-                                channelRefs: new Set()
-                            };
-                        }
-                        bricks[deployed.brickId].channelRefs.add(ref);
-                        channelMeta[ref].bricks.push({
+                (channel.deployedBricks || []).forEach(deployed => {
+                    const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
+                    if (!use) {
+                        return;
+                    }
+                    if (!channelMeta[ref]) {
+                        channelMeta[ref] = {
+                            ref: ref,
+                            groupId: group.groupId || '',
+                            groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
+                            groupDescription: group.description || '',
+                            name: channel.subChannelName || channel.subChannelId || ref,
+                            channelId: channel.subChannelId || '',
+                            channelType: channel.channelType || '',
+                            description: channel.description || '',
+                            bricks: []
+                        };
+                    }
+                    if (!bricks[deployed.brickId]) {
+                        bricks[deployed.brickId] = {
                             brickId: deployed.brickId,
                             brickName: deployed.brickName || deployed.brickId,
-                            deploymentRole: deployed.deploymentRole || '',
-                            environmentName: environment.environmentName || '',
-                            description: use.description || ''
-                        });
+                            description: use.description || '',
+                            channelRefs: new Set()
+                        };
+                    }
+                    bricks[deployed.brickId].channelRefs.add(ref);
+                    channelMeta[ref].bricks.push({
+                        brickId: deployed.brickId,
+                        brickName: deployed.brickName || deployed.brickId,
+                        deploymentRole: deployed.deploymentRole || '',
+                        description: use.description || ''
                     });
                 });
             });
@@ -890,7 +885,7 @@ ${tabs_script}
         const deploymentChannelGroups = getDeploymentChannelGroups();
         html += '<div class="home-stage">';
         html += '<div class="home-stage-title">Deployment Channels</div>';
-        html += '<div class="home-stage-subtitle">Actual channels used to ship brick parts into runtime surfaces, with rollout shape and supported interfaces</div>';
+        html += '<div class="home-stage-subtitle">Actual channels used to ship brick parts into runtime surfaces, with rollout shape and deployed bricks</div>';
         if (!deploymentChannelGroups.length) {
             html += '<div class="activity-muted">No deployment channels defined for this product.</div>';
         } else {
@@ -1029,7 +1024,6 @@ ${tabs_script}
                 pipeline: '',
                 environmentName: channel.environmentName,
                 environmentRef: '',
-                interfaces: (channel.supportedInterfaces || []).slice().sort(),
                 bricks: channel.bricks.slice().sort((a, b) => (a.brickName || a.brickId).localeCompare(b.brickName || b.brickId))
             });
         });
@@ -1050,11 +1044,6 @@ ${tabs_script}
             .join(' ');
     }
 
-    function renderInterfaceChip(interfaceType) {
-        const safeType = escapeHtml(interfaceType || 'interface');
-        return '<span class="channel-interface-chip"><img src="../icons/' + safeType + '.png" alt="' + safeType + '" onerror="this.onerror=null;this.src=\'../icons/product.png\'"><span>' + safeType + '</span></span>';
-    }
-
     function renderChannelDetailCard(channel) {
         const color = channelColor(channel.ref);
         let html = '';
@@ -1072,20 +1061,8 @@ ${tabs_script}
         }
 
         html += '<div class="channel-meta-grid">';
-        html += '<div class="channel-meta-card"><div class="channel-meta-label">Environment</div><div class="channel-meta-value">' + escapeHtml(channel.environmentName || channel.environmentRef || 'Not specified') + '</div></div>';
-        html += '<div class="channel-meta-card"><div class="channel-meta-label">Deployment Part</div><div class="channel-meta-value">' + escapeHtml(formatChannelPart(channel.deploymentPart)) + '</div></div>';
+        html += '<div class="channel-meta-card"><div class="channel-meta-label">Channel Type</div><div class="channel-meta-value">' + escapeHtml(formatChannelPart(channel.deploymentPart)) + '</div></div>';
         html += '</div>';
-
-        if ((channel.interfaces || []).length) {
-            html += '<div class="channel-section">';
-            html += '<div class="channel-section-title">Supported Interfaces</div>';
-            html += '<div class="channel-chip-row">';
-            (channel.interfaces || []).forEach(interfaceType => {
-                html += renderInterfaceChip(interfaceType);
-            });
-            html += '</div>';
-            html += '</div>';
-        }
 
         if (channel.pipeline) {
             html += '<div class="channel-section">';
