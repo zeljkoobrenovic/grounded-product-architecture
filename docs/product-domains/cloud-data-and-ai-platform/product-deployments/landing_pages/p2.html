@@ -899,7 +899,6 @@
     const deployment = {"metadata": {"title": "Cloud Data and AI Platform Deployment and Operating Surfaces", "description": "Primary runtime, console, integration, and operations surfaces used to deliver cloud data and AI platform products.", "modelVersion": "3.0"}, "channels": [{"groupId": "control-plane", "groupName": "Cloud Control Plane", "groupType": "runtime", "description": "Regional and global services that provision workspaces, identity, policy, usage, and marketplace entitlements.", "channels": [{"subChannelId": "global-control-plane", "subChannelName": "Global Control Plane", "channelType": "public-cloud", "description": "Multi-region control plane for account, billing, identity, policy, and marketplace workflows.", "environments": [{"environmentId": "control-prod", "environmentName": "Control Plane Production", "description": "Live production control plane.", "links": []}], "supportedInterfaces": ["console", "api", "cli"], "deployedBricks": [{"brickId": "acct", "brickName": "Account and Workspace Provisioning", "deploymentRole": "Control-plane service"}, {"brickId": "iden", "brickName": "Identity and Access Federation", "deploymentRole": "Control-plane service"}, {"brickId": "govr", "brickName": "Policy and Data Governance", "deploymentRole": "Control-plane service"}, {"brickId": "mktp", "brickName": "Cloud Marketplace and Private Offers", "deploymentRole": "Control-plane service"}, {"brickId": "docs", "brickName": "Developer Documentation and SDKs", "deploymentRole": "Control-plane service"}, {"brickId": "cost", "brickName": "FinOps and Unit Cost Management", "deploymentRole": "Control-plane service"}]}]}, {"groupId": "data-ai-runtime", "groupName": "Data and AI Runtime", "groupType": "runtime", "description": "Customer-selected regional runtimes for warehouse, lakehouse, training, serving, and agent workloads.", "channels": [{"subChannelId": "regional-runtime", "subChannelName": "Regional Data and AI Runtime", "channelType": "public-cloud", "description": "Elastic regional runtimes for data and AI workloads.", "environments": [{"environmentId": "runtime-prod", "environmentName": "Runtime Production", "description": "Live production runtime in customer-selected regions.", "links": []}], "supportedInterfaces": ["sql", "api", "notebook", "event"], "deployedBricks": [{"brickId": "ingf", "brickName": "Data Ingestion Fabric", "deploymentRole": "Runtime workload service"}, {"brickId": "strm", "brickName": "Streaming Event Pipelines", "deploymentRole": "Runtime workload service"}, {"brickId": "lake", "brickName": "Lakehouse Storage and Table Format", "deploymentRole": "Runtime workload service"}, {"brickId": "whse", "brickName": "Cloud Data Warehouse", "deploymentRole": "Runtime workload service"}, {"brickId": "xfrm", "brickName": "Data Transformation and Orchestration", "deploymentRole": "Runtime workload service"}, {"brickId": "nben", "brickName": "Notebook and Experiment Workbench", "deploymentRole": "Runtime workload service"}, {"brickId": "trai", "brickName": "Training and Tuning Jobs", "deploymentRole": "Runtime workload service"}, {"brickId": "serv", "brickName": "Model Serving and Inference Gateway", "deploymentRole": "Runtime workload service"}, {"brickId": "agnc", "brickName": "Agent Orchestration Runtime", "deploymentRole": "Runtime workload service"}, {"brickId": "cmpt", "brickName": "Elastic Compute and Accelerator Pools", "deploymentRole": "Runtime workload service"}, {"brickId": "obsv", "brickName": "Observability and Incident Operations", "deploymentRole": "Runtime workload service"}]}]}, {"groupId": "customer-and-partner-surfaces", "groupName": "Customer and Partner Surfaces", "groupType": "experience", "description": "Consoles, docs, marketplace pages, support channels, and partner integrations.", "channels": [{"subChannelId": "customer-console", "subChannelName": "Customer Console and APIs", "channelType": "web-and-api", "description": "Primary self-service experience for users and operators.", "environments": [{"environmentId": "console-prod", "environmentName": "Console Production", "description": "Live customer console and API surface.", "links": []}], "supportedInterfaces": ["web", "api", "sdk", "cli"], "deployedBricks": [{"brickId": "catl", "brickName": "Unified Data Catalog", "deploymentRole": "Customer-facing product surface"}, {"brickId": "prom", "brickName": "Prompt and Evaluation Studio", "deploymentRole": "Customer-facing product surface"}, {"brickId": "foma", "brickName": "Foundation Model Marketplace", "deploymentRole": "Customer-facing product surface"}, {"brickId": "migr", "brickName": "Migration Assessment and Factory", "deploymentRole": "Customer-facing product surface"}, {"brickId": "adop", "brickName": "Customer Success Playbooks", "deploymentRole": "Customer-facing product surface"}, {"brickId": "supp", "brickName": "Enterprise Support and Advisory", "deploymentRole": "Customer-facing product surface"}, {"brickId": "prtn", "brickName": "Partner Solution Integrations", "deploymentRole": "Customer-facing product surface"}]}]}]};
     const dependencyState = {
         initialized: false,
-        interfaces: {},
         channels: {},
         bricks: {}
     };
@@ -913,40 +912,43 @@
         (deployment.channels || []).forEach(group => {
             (group.channels || []).forEach(channel => {
                 const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                (channel.deployedBricks || []).forEach(deployed => {
-                    const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
-                    if (!use) {
-                        return;
-                    }
-                    if (!channelMeta[ref]) {
-                        channelMeta[ref] = {
-                            ref: ref,
-                            groupId: group.groupId || '',
-                            groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
-                            groupDescription: group.description || '',
-                            name: channel.subChannelName || channel.subChannelId || ref,
-                            channelId: channel.subChannelId || '',
-                            channelType: channel.channelType || '',
-                            description: channel.description || '',
-                            environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
-                            supportedInterfaces: channel.supportedInterfaces || [],
-                            bricks: []
-                        };
-                    }
-                    if (!bricks[deployed.brickId]) {
-                        bricks[deployed.brickId] = {
+                (channel.environments || []).forEach(environment => {
+                    (environment.deployedBricks || []).forEach(deployed => {
+                        const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
+                        if (!use) {
+                            return;
+                        }
+                        if (!channelMeta[ref]) {
+                            channelMeta[ref] = {
+                                ref: ref,
+                                groupId: group.groupId || '',
+                                groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
+                                groupDescription: group.description || '',
+                                name: channel.subChannelName || channel.subChannelId || ref,
+                                channelId: channel.subChannelId || '',
+                                channelType: channel.channelType || '',
+                                description: channel.description || '',
+                                environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
+                                supportedInterfaces: channel.supportedInterfaces || [],
+                                bricks: []
+                            };
+                        }
+                        if (!bricks[deployed.brickId]) {
+                            bricks[deployed.brickId] = {
+                                brickId: deployed.brickId,
+                                brickName: deployed.brickName || deployed.brickId,
+                                description: use.description || '',
+                                channelRefs: new Set()
+                            };
+                        }
+                        bricks[deployed.brickId].channelRefs.add(ref);
+                        channelMeta[ref].bricks.push({
                             brickId: deployed.brickId,
                             brickName: deployed.brickName || deployed.brickId,
-                            description: use.description || '',
-                            channelRefs: new Set()
-                        };
-                    }
-                    bricks[deployed.brickId].channelRefs.add(ref);
-                    channelMeta[ref].bricks.push({
-                        brickId: deployed.brickId,
-                        brickName: deployed.brickName || deployed.brickId,
-                        deploymentRole: deployed.deploymentRole || '',
-                        description: use.description || ''
+                            deploymentRole: deployed.deploymentRole || '',
+                            environmentName: environment.environmentName || '',
+                            description: use.description || ''
+                        });
                     });
                 });
             });
@@ -1607,15 +1609,14 @@
         let html = '';
         html += '<div class="home-stage">';
         html += '<div class="home-stage-title">Dependencies</div>';
-        html += '<div class="home-stage-subtitle">Interface-to-channel dependencies come from supported interfaces; channel-to-brick dependencies come from deployment mappings on each product brick</div>';
+        html += '<div class="home-stage-subtitle">Channel-to-brick dependencies come from the deployed bricks used in this product</div>';
         html += renderDependencySummary(model);
         html += renderDependencyControls(model);
 
         if (!chart) {
-            html += '<div class="dependency-empty">Select at least one interface, channel, or brick to render the dependency diagram.</div>';
+            html += '<div class="dependency-empty">Select at least one channel or brick to render the dependency diagram.</div>';
         } else {
             html += '<div class="dependency-legend"><div class="dependency-control-title">Legend</div><div class="dependency-legend-items">';
-            html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#ede9fe; border-color:#7c3aed;"></span>Interface</span>';
             html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#dbeafe; border-color:#2563eb;"></span>Channel</span>';
             html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#d1fae5; border-color:#059669;"></span>Brick</span>';
             html += '</div></div>';

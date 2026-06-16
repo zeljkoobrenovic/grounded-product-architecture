@@ -899,7 +899,6 @@
     const deployment = {"metadata": {"title": "Technical Design Collaboration Portfolio Deployment and Operating Surfaces", "description": "Primary deployment, distribution, integration, analytics, and admin channels used to deliver and operate the Technical Design Collaboration Platform domain.", "modelVersion": "3.0"}, "channels": [{"groupId": "runtime-cloud", "groupName": "Cloud Runtime Environments", "groupType": "runtime", "description": "Primary live runtimes for backend services.", "channels": [{"subChannelId": "core-services", "subChannelName": "Core Services", "channelType": "platform-runtime", "description": "Primary runtime for authoring, publishing, and shared backend services.", "environments": [{"environmentId": "core-services-production", "environmentName": "Core Services Production", "description": "Primary live backend runtime.", "links": []}], "supportedInterfaces": ["api", "web", "workflow"], "deployedBricks": [{"brickId": "aidi", "brickName": "AI Diagram Generation", "deploymentRole": "AI drafting services"}, {"brickId": "mdoc", "brickName": "Markdown Document Editor", "deploymentRole": "Document services"}]}]}, {"groupId": "web-edge-delivery", "groupName": "Web and Edge Delivery", "groupType": "delivery", "description": "Edge-delivered web surfaces.", "channels": [{"subChannelId": "app-web", "subChannelName": "Application Web", "channelType": "web", "description": "Primary web application surface.", "environments": [{"environmentId": "edge-production", "environmentName": "CDN and Edge Production", "description": "Primary edge delivery environment.", "links": []}], "supportedInterfaces": ["web"], "deployedBricks": [{"brickId": "cavs", "brickName": "Canvas Editing and Figure Layout", "deploymentRole": "Diagram editor frontend"}, {"brickId": "admi", "brickName": "Admin Controls and Usage Reporting", "deploymentRole": "Admin console frontend"}]}]}, {"groupId": "external-integrations", "groupName": "External Integration Surfaces", "groupType": "integration", "description": "External tool surfaces and connector runtimes.", "channels": [{"subChannelId": "source-control", "subChannelName": "Source Control Services", "channelType": "integration", "description": "Connector runtime for git hosting integrations.", "environments": [{"environmentId": "source-control-production", "environmentName": "Source Control Services", "description": "Live source control integration runtime.", "links": []}], "supportedInterfaces": ["api", "workflow"], "deployedBricks": [{"brickId": "gcon", "brickName": "Git Repository Connection", "deploymentRole": "SCM install and auth services"}, {"brickId": "inte", "brickName": "Confluence Notion and IDE Integrations", "deploymentRole": "Third-party adapter services"}]}]}, {"groupId": "analytics-and-admin", "groupName": "Analytics and Metering", "groupType": "analytics", "description": "Usage analytics, metering, and commercial reporting surfaces.", "channels": [{"subChannelId": "metering", "subChannelName": "Metering and Reporting", "channelType": "analytics", "description": "Runtime for metering, usage analytics, and packaging reporting.", "environments": [{"environmentId": "metering-production", "environmentName": "Metering Production", "description": "Production analytics and metering environment.", "links": []}], "supportedInterfaces": ["api", "analytics"], "deployedBricks": [{"brickId": "aimt", "brickName": "AI Credit Metering and Prompt Orchestration", "deploymentRole": "Metering and cost-control services"}]}]}]};
     const dependencyState = {
         initialized: false,
-        interfaces: {},
         channels: {},
         bricks: {}
     };
@@ -913,40 +912,43 @@
         (deployment.channels || []).forEach(group => {
             (group.channels || []).forEach(channel => {
                 const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                (channel.deployedBricks || []).forEach(deployed => {
-                    const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
-                    if (!use) {
-                        return;
-                    }
-                    if (!channelMeta[ref]) {
-                        channelMeta[ref] = {
-                            ref: ref,
-                            groupId: group.groupId || '',
-                            groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
-                            groupDescription: group.description || '',
-                            name: channel.subChannelName || channel.subChannelId || ref,
-                            channelId: channel.subChannelId || '',
-                            channelType: channel.channelType || '',
-                            description: channel.description || '',
-                            environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
-                            supportedInterfaces: channel.supportedInterfaces || [],
-                            bricks: []
-                        };
-                    }
-                    if (!bricks[deployed.brickId]) {
-                        bricks[deployed.brickId] = {
+                (channel.environments || []).forEach(environment => {
+                    (environment.deployedBricks || []).forEach(deployed => {
+                        const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
+                        if (!use) {
+                            return;
+                        }
+                        if (!channelMeta[ref]) {
+                            channelMeta[ref] = {
+                                ref: ref,
+                                groupId: group.groupId || '',
+                                groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
+                                groupDescription: group.description || '',
+                                name: channel.subChannelName || channel.subChannelId || ref,
+                                channelId: channel.subChannelId || '',
+                                channelType: channel.channelType || '',
+                                description: channel.description || '',
+                                environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
+                                supportedInterfaces: channel.supportedInterfaces || [],
+                                bricks: []
+                            };
+                        }
+                        if (!bricks[deployed.brickId]) {
+                            bricks[deployed.brickId] = {
+                                brickId: deployed.brickId,
+                                brickName: deployed.brickName || deployed.brickId,
+                                description: use.description || '',
+                                channelRefs: new Set()
+                            };
+                        }
+                        bricks[deployed.brickId].channelRefs.add(ref);
+                        channelMeta[ref].bricks.push({
                             brickId: deployed.brickId,
                             brickName: deployed.brickName || deployed.brickId,
-                            description: use.description || '',
-                            channelRefs: new Set()
-                        };
-                    }
-                    bricks[deployed.brickId].channelRefs.add(ref);
-                    channelMeta[ref].bricks.push({
-                        brickId: deployed.brickId,
-                        brickName: deployed.brickName || deployed.brickId,
-                        deploymentRole: deployed.deploymentRole || '',
-                        description: use.description || ''
+                            deploymentRole: deployed.deploymentRole || '',
+                            environmentName: environment.environmentName || '',
+                            description: use.description || ''
+                        });
                     });
                 });
             });
@@ -1607,15 +1609,14 @@
         let html = '';
         html += '<div class="home-stage">';
         html += '<div class="home-stage-title">Dependencies</div>';
-        html += '<div class="home-stage-subtitle">Interface-to-channel dependencies come from supported interfaces; channel-to-brick dependencies come from deployment mappings on each product brick</div>';
+        html += '<div class="home-stage-subtitle">Channel-to-brick dependencies come from the deployed bricks used in this product</div>';
         html += renderDependencySummary(model);
         html += renderDependencyControls(model);
 
         if (!chart) {
-            html += '<div class="dependency-empty">Select at least one interface, channel, or brick to render the dependency diagram.</div>';
+            html += '<div class="dependency-empty">Select at least one channel or brick to render the dependency diagram.</div>';
         } else {
             html += '<div class="dependency-legend"><div class="dependency-control-title">Legend</div><div class="dependency-legend-items">';
-            html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#ede9fe; border-color:#7c3aed;"></span>Interface</span>';
             html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#dbeafe; border-color:#2563eb;"></span>Channel</span>';
             html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#d1fae5; border-color:#059669;"></span>Brick</span>';
             html += '</div></div>';

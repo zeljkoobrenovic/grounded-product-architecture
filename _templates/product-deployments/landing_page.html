@@ -748,40 +748,43 @@ ${tabs_script}
         (deployment.channels || []).forEach(group => {
             (group.channels || []).forEach(channel => {
                 const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                (channel.deployedBricks || []).forEach(deployed => {
-                    const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
-                    if (!use) {
-                        return;
-                    }
-                    if (!channelMeta[ref]) {
-                        channelMeta[ref] = {
-                            ref: ref,
-                            groupId: group.groupId || '',
-                            groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
-                            groupDescription: group.description || '',
-                            name: channel.subChannelName || channel.subChannelId || ref,
-                            channelId: channel.subChannelId || '',
-                            channelType: channel.channelType || '',
-                            description: channel.description || '',
-                            environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
-                            supportedInterfaces: channel.supportedInterfaces || [],
-                            bricks: []
-                        };
-                    }
-                    if (!bricks[deployed.brickId]) {
-                        bricks[deployed.brickId] = {
+                (channel.environments || []).forEach(environment => {
+                    (environment.deployedBricks || []).forEach(deployed => {
+                        const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
+                        if (!use) {
+                            return;
+                        }
+                        if (!channelMeta[ref]) {
+                            channelMeta[ref] = {
+                                ref: ref,
+                                groupId: group.groupId || '',
+                                groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
+                                groupDescription: group.description || '',
+                                name: channel.subChannelName || channel.subChannelId || ref,
+                                channelId: channel.subChannelId || '',
+                                channelType: channel.channelType || '',
+                                description: channel.description || '',
+                                environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
+                                supportedInterfaces: channel.supportedInterfaces || [],
+                                bricks: []
+                            };
+                        }
+                        if (!bricks[deployed.brickId]) {
+                            bricks[deployed.brickId] = {
+                                brickId: deployed.brickId,
+                                brickName: deployed.brickName || deployed.brickId,
+                                description: use.description || '',
+                                channelRefs: new Set()
+                            };
+                        }
+                        bricks[deployed.brickId].channelRefs.add(ref);
+                        channelMeta[ref].bricks.push({
                             brickId: deployed.brickId,
                             brickName: deployed.brickName || deployed.brickId,
-                            description: use.description || '',
-                            channelRefs: new Set()
-                        };
-                    }
-                    bricks[deployed.brickId].channelRefs.add(ref);
-                    channelMeta[ref].bricks.push({
-                        brickId: deployed.brickId,
-                        brickName: deployed.brickName || deployed.brickId,
-                        deploymentRole: deployed.deploymentRole || '',
-                        description: use.description || ''
+                            deploymentRole: deployed.deploymentRole || '',
+                            environmentName: environment.environmentName || '',
+                            description: use.description || ''
+                        });
                     });
                 });
             });

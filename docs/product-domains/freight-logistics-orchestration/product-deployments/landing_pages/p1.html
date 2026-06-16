@@ -899,7 +899,6 @@
     const deployment = {"metadata": {"domainId": "freight-logistics-orchestration", "domainName": "Freight Logistics Orchestration", "description": "Deployment channels and runtime surfaces for shipper, carrier, operations, integration, financial, and intelligence products."}, "channels": [{"id": "shipper-web-portal", "name": "Shipper Web Portal", "type": "web", "description": "Shipper shipment creation, booking, tracking, reporting, document, invoice, and support workspace.", "releaseCadence": "continuous", "primaryProductIds": ["p1"]}, {"id": "carrier-web-and-mobile", "name": "Carrier Web and Mobile", "type": "mobile_app", "description": "Carrier onboarding, load discovery, booking, tracking, document upload, payment, and scorecard experience.", "releaseCadence": "weekly", "primaryProductIds": ["p2"]}, {"id": "operations-control-tower", "name": "Operations Control Tower", "type": "web", "description": "Brokerage and managed transportation workspace for tendering, tracking, exception recovery, documents, and communications.", "releaseCadence": "continuous", "primaryProductIds": ["p3"]}, {"id": "customer-integration-gateway", "name": "Customer Integration Gateway", "type": "api", "description": "EDI, API, file, and webhook gateway for orders, tenders, milestones, documents, appointments, and invoices.", "releaseCadence": "versioned", "primaryProductIds": ["p1", "p4"]}, {"id": "freight-runtime", "name": "Freight Runtime", "type": "service", "description": "Backend runtime for shipment state, tendering, matching, pricing, visibility, settlement, risk, automation, and data.", "releaseCadence": "continuous", "primaryProductIds": ["p1", "p2", "p3", "p4"]}]};
     const dependencyState = {
         initialized: false,
-        interfaces: {},
         channels: {},
         bricks: {}
     };
@@ -913,40 +912,43 @@
         (deployment.channels || []).forEach(group => {
             (group.channels || []).forEach(channel => {
                 const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                (channel.deployedBricks || []).forEach(deployed => {
-                    const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
-                    if (!use) {
-                        return;
-                    }
-                    if (!channelMeta[ref]) {
-                        channelMeta[ref] = {
-                            ref: ref,
-                            groupId: group.groupId || '',
-                            groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
-                            groupDescription: group.description || '',
-                            name: channel.subChannelName || channel.subChannelId || ref,
-                            channelId: channel.subChannelId || '',
-                            channelType: channel.channelType || '',
-                            description: channel.description || '',
-                            environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
-                            supportedInterfaces: channel.supportedInterfaces || [],
-                            bricks: []
-                        };
-                    }
-                    if (!bricks[deployed.brickId]) {
-                        bricks[deployed.brickId] = {
+                (channel.environments || []).forEach(environment => {
+                    (environment.deployedBricks || []).forEach(deployed => {
+                        const use = (deployed.usedInProducts || []).find(item => item.productId === product.id);
+                        if (!use) {
+                            return;
+                        }
+                        if (!channelMeta[ref]) {
+                            channelMeta[ref] = {
+                                ref: ref,
+                                groupId: group.groupId || '',
+                                groupName: group.groupName || prettifyChannelGroup(group.groupId || 'other'),
+                                groupDescription: group.description || '',
+                                name: channel.subChannelName || channel.subChannelId || ref,
+                                channelId: channel.subChannelId || '',
+                                channelType: channel.channelType || '',
+                                description: channel.description || '',
+                                environmentName: ((channel.environments || [])[0] || {}).environmentName || '',
+                                supportedInterfaces: channel.supportedInterfaces || [],
+                                bricks: []
+                            };
+                        }
+                        if (!bricks[deployed.brickId]) {
+                            bricks[deployed.brickId] = {
+                                brickId: deployed.brickId,
+                                brickName: deployed.brickName || deployed.brickId,
+                                description: use.description || '',
+                                channelRefs: new Set()
+                            };
+                        }
+                        bricks[deployed.brickId].channelRefs.add(ref);
+                        channelMeta[ref].bricks.push({
                             brickId: deployed.brickId,
                             brickName: deployed.brickName || deployed.brickId,
-                            description: use.description || '',
-                            channelRefs: new Set()
-                        };
-                    }
-                    bricks[deployed.brickId].channelRefs.add(ref);
-                    channelMeta[ref].bricks.push({
-                        brickId: deployed.brickId,
-                        brickName: deployed.brickName || deployed.brickId,
-                        deploymentRole: deployed.deploymentRole || '',
-                        description: use.description || ''
+                            deploymentRole: deployed.deploymentRole || '',
+                            environmentName: environment.environmentName || '',
+                            description: use.description || ''
+                        });
                     });
                 });
             });
@@ -1607,15 +1609,14 @@
         let html = '';
         html += '<div class="home-stage">';
         html += '<div class="home-stage-title">Dependencies</div>';
-        html += '<div class="home-stage-subtitle">Interface-to-channel dependencies come from supported interfaces; channel-to-brick dependencies come from deployment mappings on each product brick</div>';
+        html += '<div class="home-stage-subtitle">Channel-to-brick dependencies come from the deployed bricks used in this product</div>';
         html += renderDependencySummary(model);
         html += renderDependencyControls(model);
 
         if (!chart) {
-            html += '<div class="dependency-empty">Select at least one interface, channel, or brick to render the dependency diagram.</div>';
+            html += '<div class="dependency-empty">Select at least one channel or brick to render the dependency diagram.</div>';
         } else {
             html += '<div class="dependency-legend"><div class="dependency-control-title">Legend</div><div class="dependency-legend-items">';
-            html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#ede9fe; border-color:#7c3aed;"></span>Interface</span>';
             html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#dbeafe; border-color:#2563eb;"></span>Channel</span>';
             html += '<span class="dependency-legend-item"><span class="dependency-legend-swatch" style="background:#d1fae5; border-color:#059669;"></span>Brick</span>';
             html += '</div></div>';

@@ -266,6 +266,18 @@
             gap: 10px;
         }
 
+        .env-brick-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .env-brick-count {
+            color: #9ca3af;
+            font-weight: normal;
+        }
+
         .chip {
             display: inline-flex;
             align-items: center;
@@ -430,6 +442,15 @@
         return buildDeploymentChannelRecords().find(record => record.ref === channelRef) || null;
     }
 
+    // Bricks live inside a channel's environments (environments[].deployedBricks).
+    function channelDeployedBricks(channel) {
+        const bricks = [];
+        ((channel && channel.environments) || []).forEach(environment => {
+            (environment.deployedBricks || []).forEach(brick => bricks.push(brick));
+        });
+        return bricks;
+    }
+
     function buildChannelProductUsage(record) {
         // Derive products from this channel's deployedBricks[].usedInProducts.
         const productLookup = {};
@@ -437,7 +458,7 @@
             productLookup[product.id] = product;
         });
         const byProduct = {};
-        (record.channel.deployedBricks || []).forEach(brick => {
+        channelDeployedBricks(record.channel).forEach(brick => {
             (brick.usedInProducts || []).forEach(use => {
                 const pid = use.productId;
                 if (!pid) return;
@@ -509,19 +530,21 @@
         }
 
         const productUsage = buildChannelProductUsage(current);
-        const deployedBricks = current.channel.deployedBricks || [];
         const environments = current.channel.environments || [];
+        const deployedBrickCount = channelDeployedBricks(current.channel).length;
 
         let html = '';
 
         const intro = [deployment.metadata && deployment.metadata.description, current.group.description, current.channel.description].filter(Boolean).join(' ');
         if (intro) html += '<div class="deployment-copy">' + escapeHtml(intro) + '</div>';
 
-        html += '<div class="deployment-section-title">Environment</div>';
+        html += '<div class="deployment-section-title">Environments &amp; Deployed Bricks (' + deployedBrickCount + ')</div>';
         if (environments.length) {
             environments.forEach(environment => {
+                const bricks = environment.deployedBricks || [];
                 html += '<div class="deployment-environment">';
-                html += '<div class="deployment-environment-name">' + escapeHtml(environment.environmentName || environment.environmentId || 'Environment') + '</div>';
+                html += '<div class="deployment-environment-name">' + escapeHtml(environment.environmentName || environment.environmentId || 'Environment') +
+                    ' <span class="env-brick-count">' + bricks.length + '</span></div>';
                 if (environment.description) html += '<div class="deployment-environment-copy">' + escapeHtml(environment.description) + '</div>';
                 if ((environment.links || []).length) {
                     html += '<div class="deployment-link-row">';
@@ -529,6 +552,17 @@
                         html += '<a class="deployment-link" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(link.url || '') + '">' + escapeHtml(link.linkName || link.url || 'Link') + '</a>';
                     });
                     html += '</div>';
+                }
+                if (bricks.length) {
+                    html += '<div class="env-brick-chip-row">';
+                    bricks.forEach(brick => {
+                        const productCount = (brick.usedInProducts || []).length;
+                        const meta = [brick.deploymentRole || '', productCount ? 'Used in ' + productCount + (productCount === 1 ? ' product' : ' products') : ''].filter(Boolean).join(' · ');
+                        html += renderChip('../../product-bricks/icons/' + escapeHtml(brick.brickId) + '.png', '../../product-bricks/icons/logo.png', brick.brickName || brick.brickId || 'Product brick', meta, '../../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html');
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<div class="empty-state">No bricks deployed in this environment.</div>';
                 }
                 html += '</div>';
             });
@@ -546,19 +580,6 @@
             html += '</div>';
         } else {
             html += '<div class="empty-state">No products currently reference this channel.</div>';
-        }
-
-        html += '<div class="deployment-section-title">Deployed Bricks (' + deployedBricks.length + ')</div>';
-        if (deployedBricks.length) {
-            html += '<div class="chip-row">';
-            deployedBricks.forEach(brick => {
-                const productCount = (brick.usedInProducts || []).length;
-                const meta = [brick.deploymentRole || '', productCount ? 'Used in ' + productCount + (productCount === 1 ? ' product' : ' products') : ''].filter(Boolean).join(' · ');
-                html += renderChip('../../product-bricks/icons/' + escapeHtml(brick.brickId) + '.png', '../../product-bricks/icons/logo.png', brick.brickName || brick.brickId || 'Product brick', meta, '../../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html');
-            });
-            html += '</div>';
-        } else {
-            html += '<div class="empty-state">No bricks mapped to this channel.</div>';
         }
 
         container.innerHTML = html;

@@ -208,6 +208,114 @@
             margin-top: 18px;
         }
 
+        /* channel cards with embedded environments + brick circles */
+        .deployment-channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .deployment-channel-card {
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background-color: white;
+            padding: 14px;
+        }
+
+        .deployment-channel-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .deployment-channel-head:hover .deployment-channel-name {
+            color: #1d4ed8;
+        }
+
+        .deployment-channel-head .deployment-grid-icon {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            flex: none;
+        }
+
+        .deployment-channel-name {
+            font-size: 16px;
+            color: #1f2937;
+            line-height: 1.25;
+        }
+
+        .deployment-channel-type {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 2px;
+        }
+
+        .env-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .env-block {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            padding: 10px;
+        }
+
+        .env-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+        }
+
+        .env-brick-count {
+            color: #9ca3af;
+            font-weight: normal;
+        }
+
+        .env-brick-circles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .env-brick-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid #d7dce1;
+            background-color: white;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .env-brick-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+
+        .env-empty {
+            font-size: 12px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
         .deployment-icon-link {
             display: inline-flex;
             align-items: center;
@@ -427,6 +535,25 @@
 
         .chip-icon-brick {
             border-color: #059669;
+        }
+
+        .env-pill-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid #d97706;
+            background-color: #fffbeb;
+            flex: 0 0 auto;
+        }
+
+        .env-pill-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #d97706;
         }
 
         .chip-icon-large {
@@ -960,6 +1087,7 @@
     <button class="tablinks active" id="tab_products" onclick="openTab('products')">Products</button>
     <button class="tablinks" id="tab_deployment" onclick="openTab('deployment')">Deployment Channels</button>
     <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
+    <button class="tablinks" id="tab_matrix" onclick="openTab('matrix')">Matrix</button>
 </div>
 <div>
     <div id="tab_content_products" class="tabcontent">
@@ -967,10 +1095,11 @@
             <label><input type="checkbox" id="show_text_toggle" onchange="update()"> Show text</label>
         </div>
         <div id="products_content"></div>
-
+    </div>
+    <div id="tab_content_deployment" class="tabcontent"></div>
+    <div id="tab_content_dependencies" class="tabcontent">
         <div class="pdg-section">
-            <div class="pdg-title">Dependency Graph</div>
-            <div class="pdg-intro">All dependencies between products, deployment channels, and product bricks. Filter node types on the left.</div>
+            <div class="pdg-intro">All dependencies between products, deployment channels, environments, and product bricks. Filter node types on the left.</div>
             <div class="pdg-layout">
                 <div class="pdg-controls" id="pdg_controls"></div>
                 <div class="pdg-graph-shell">
@@ -985,8 +1114,7 @@
             </div>
         </div>
     </div>
-    <div id="tab_content_deployment" class="tabcontent"></div>
-    <div id="tab_content_dependencies" class="tabcontent"></div>
+    <div id="tab_content_matrix" class="tabcontent"></div>
 </div>
 
 <script>
@@ -1026,6 +1154,47 @@
         return lookup;
     }
 
+    // Bricks live inside a channel's environments (environments[].deployedBricks),
+    // so flatten across environments to get all bricks deployed to a channel.
+    function channelDeployedBricks(channel) {
+        const bricks = [];
+        ((channel && channel.environments) || []).forEach(environment => {
+            (environment.deployedBricks || []).forEach(brick => bricks.push(brick));
+        });
+        return bricks;
+    }
+
+    // Environments a product reaches: any environment whose deployed bricks are used in
+    // the product. Returns [{ref, environmentId, environmentName, channelName, groupName, brickCount}].
+    function productEnvironments(productId) {
+        const environments = [];
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
+                (channel.environments || []).forEach(environment => {
+                    let brickCount = 0;
+                    (environment.deployedBricks || []).forEach(brick => {
+                        if ((brick.usedInProducts || []).some(use => use.productId === productId)) {
+                            brickCount += 1;
+                        }
+                    });
+                    if (brickCount > 0) {
+                        environments.push({
+                            ref: ref + '#' + (environment.environmentId || ''),
+                            environmentId: environment.environmentId || '',
+                            environmentName: environment.environmentName || environment.environmentId || 'Environment',
+                            channelName: channel.subChannelName || channel.subChannelId || ref,
+                            groupName: group.groupName || group.groupId || '',
+                            channelType: channel.channelType || '',
+                            brickCount: brickCount
+                        });
+                    }
+                });
+            });
+        });
+        return environments.sort((a, b) => a.environmentName.localeCompare(b.environmentName));
+    }
+
     // Derive each product's deployed bricks and the channels they ship to from
     // deployment.json (deployedBricks[].usedInProducts), since products.json no longer
     // carries brick/channel links. Returns { byProduct: {pid: {bricks, brickChannelRefs}} }.
@@ -1044,7 +1213,7 @@
         (deployment.channels || []).forEach(group => {
             (group.channels || []).forEach(channel => {
                 const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                (channel.deployedBricks || []).forEach(brick => {
+                channelDeployedBricks(channel).forEach(brick => {
                     (brick.usedInProducts || []).forEach(use => {
                         const pid = use.productId;
                         if (!pid) {
@@ -1159,13 +1328,49 @@
         return '<img class="deployment-card-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" title="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
     }
 
+    function renderBrickCircle(brick) {
+        const label = escapeHtml((brick.brickName || brick.brickId || 'Product brick') + (brick.deploymentRole ? ' — ' + brick.deploymentRole : ''));
+        return '<a class="env-brick-circle" href="../product-bricks/landing_pages/' + escapeHtml(brick.brickId || '') + '.html" target="_blank" title="' + label + '">' +
+            '<img src="../product-bricks/icons/' + escapeHtml(brick.brickId || '') + '.png" alt="' + escapeHtml(brick.brickName || brick.brickId || '') + '" onerror="this.onerror=null;this.src=\'../product-bricks/icons/logo.png\'">' +
+            '</a>';
+    }
+
     function renderDeploymentChannelLink(channel, group) {
         const fileName = deploymentIconFile(channel, group);
         const label = escapeHtml((channel && (channel.subChannelName || channel.subChannelId)) || 'Deployment channel');
-        return '<a class="deployment-icon-link" href="deployment/' + escapeHtml(channel.subChannelId || '') + '.html" title="' + label + '">' +
-            '<div><img class="deployment-grid-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'"></div>' +
-            '<div style="padding-left: 8px;">' + label + '</div>' +
-            '</a>';
+        const channelHref = 'deployment/' + escapeHtml(channel.subChannelId || '') + '.html';
+        const environments = channel.environments || [];
+
+        let html = '<div class="deployment-channel-card">';
+        html += '<a class="deployment-channel-head" href="' + channelHref + '" title="' + label + '">';
+        html += '<img class="deployment-grid-icon" src="icons/deployment/' + fileName + '" alt="' + label + '" onerror="this.onerror=null;this.src=\'icons/deployment/deployment.png\'">';
+        html += '<div><div class="deployment-channel-name">' + label + '</div>';
+        if (channel.channelType) {
+            html += '<div class="deployment-channel-type">' + escapeHtml(channel.channelType) + '</div>';
+        }
+        html += '</div></a>';
+
+        if (environments.length) {
+            html += '<div class="env-list">';
+            environments.forEach(environment => {
+                const bricks = environment.deployedBricks || [];
+                html += '<div class="env-block">';
+                html += '<div class="env-name">' + escapeHtml(environment.environmentName || environment.environmentId || 'Environment') +
+                    ' <span class="env-brick-count">' + bricks.length + '</span></div>';
+                if (bricks.length) {
+                    html += '<div class="env-brick-circles">';
+                    bricks.forEach(brick => { html += renderBrickCircle(brick); });
+                    html += '</div>';
+                } else {
+                    html += '<div class="env-empty">No bricks deployed.</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
     }
 
     function renderDeploymentChipIcon(channel) {
@@ -1320,6 +1525,28 @@
         return html;
     }
 
+    function renderProductsTableEnvironmentsCell(product) {
+        const environments = productEnvironments(product.id);
+        if (!environments.length) {
+            return renderProductsTableEmpty('No environments mapped');
+        }
+        let html = '<div class="products-table-cell-stack' + (showTextEnabled() ? '' : ' compact') + '">';
+        environments.forEach(environment => {
+            const meta = [environment.channelName, environment.groupName].filter(Boolean).join(' · ');
+            html += renderIconChip(
+                renderIconWithBadges(
+                    '<span class="env-pill-chip"><span class="env-pill-dot"></span></span>',
+                    'icon-badge-brick',
+                    environment.brickCount
+                ),
+                environment.environmentName,
+                (meta || '') + ' | ' + environment.brickCount + ' bricks'
+            );
+        });
+        html += '</div>';
+        return html;
+    }
+
     function renderProductsTableDeliveryChannelsCell(product, deliveryChannels) {
         if (!deliveryChannels.length) {
             return renderProductsTableEmpty('No delivery channels mapped');
@@ -1404,7 +1631,7 @@
     }
 
     function renderDependencyMatrix() {
-        const container = document.getElementById('tab_content_dependencies');
+        const container = document.getElementById('tab_content_matrix');
         const deploymentLookup = buildDeploymentChannelLookup();
         let html = '<div class="dependency-panel">';
 
@@ -1457,12 +1684,12 @@
         const container = document.getElementById('tab_content_deployment');
         const groups = deployment.channels || [];
         const channels = groups.flatMap(group => group.channels || []);
-        const deployedBrickCount = channels.reduce((sum, channel) => sum + ((channel.deployedBricks || []).length), 0);
+        const deployedBrickCount = channels.reduce((sum, channel) => sum + channelDeployedBricks(channel).length, 0);
         const productChannelMap = {};
         groups.forEach(group => {
             (group.channels || []).forEach(channel => {
                 const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
-                (channel.deployedBricks || []).forEach(brick => {
+                channelDeployedBricks(channel).forEach(brick => {
                     (brick.usedInProducts || []).forEach(use => {
                         if (!use.productId) {
                             return;
@@ -1490,7 +1717,7 @@
             if (group.description) {
                 html += '<div class="deployment-group-copy">' + escapeHtml(group.description) + '</div>';
             }
-            html += '<div class="deployment-icon-grid">';
+            html += '<div class="deployment-channel-grid">';
 
             (group.channels || []).forEach(channel => {
                 html += renderDeploymentChannelLink(channel, group);
@@ -1530,6 +1757,12 @@
 
         html += '<tr>';
         portfolioProducts.forEach(product => {
+            html += renderProductsTableLabeledCell('Environments', productEnvironments(product.id).length, renderProductsTableEnvironmentsCell(product));
+        });
+        html += '</tr>';
+
+        html += '<tr>';
+        portfolioProducts.forEach(product => {
             html += renderProductsTableLabeledCell('Bricks', productBricks(product.id).length, renderProductsTableBricksCell(product));
         });
         html += '</tr>';
@@ -1543,6 +1776,7 @@
     const PDG_NODE_TYPES = [
         {id: 'product', label: 'Products', color: '#ea580c'},
         {id: 'channel', label: 'Channels', color: '#2563eb'},
+        {id: 'environment', label: 'Environments', color: '#d97706'},
         {id: 'brick', label: 'Bricks', color: '#059669'}
     ];
     const pdgColorMap = {};
@@ -1581,14 +1815,17 @@
 
     // Build the full {nodes, edges} model across products, interfaces, channels, bricks.
     function buildProductDependencyGraph() {
-        const deploymentLookup = buildDeploymentChannelLookup();
         const nodes = {};
         const edgeSet = {};
-        const counts = {product: 0, channel: 0, brick: 0};
+        const counts = {product: 0, channel: 0, environment: 0, brick: 0};
+        const productSet = {};
+        ((products.portfolio || {}).products || []).forEach(product => {
+            productSet[product.id] = product;
+        });
 
-        function addNode(id, name, nodeType, productId) {
+        function addNode(id, name, nodeType, productId, channelKey) {
             if (!nodes[id]) {
-                nodes[id] = {id: id, name: name || id, nodeType: nodeType, productId: productId || ''};
+                nodes[id] = {id: id, name: name || id, nodeType: nodeType, productId: productId || '', channelKey: channelKey || ''};
                 counts[nodeType] += 1;
             }
         }
@@ -1603,25 +1840,37 @@
             }
         }
 
-        // Dependencies flow in a single chain: bricks -> channels -> products, derived from
-        // deployment.json (deployedBricks[].usedInProducts). Channels are scoped per product so
-        // each product forms its own cluster; bricks are shared building blocks (unclustered).
-        ((products.portfolio || {}).products || []).forEach(product => {
-            const productNodeId = 'product:' + product.id;
-            addNode(productNodeId, product.name || product.id, 'product');
+        // Chain: brick -> environment -> channel -> product, derived from deployment.json.
+        // Environments and channels are scoped per product so each product forms its own cluster;
+        // environments additionally carry channelKey so they group under their channel
+        // (force clustering + mermaid subgraphs). Bricks are shared building blocks.
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                const ref = (group.groupId || '') + '/' + (channel.subChannelId || '');
+                const channelName = channel.subChannelName || channel.subChannelId || ref;
+                (channel.environments || []).forEach(environment => {
+                    (environment.deployedBricks || []).forEach(deployed => {
+                        (deployed.usedInProducts || []).forEach(use => {
+                            const product = productSet[use.productId];
+                            if (!product) {
+                                return;
+                            }
+                            const pid = product.id;
+                            const productNodeId = 'product:' + pid;
+                            const channelNodeId = 'channel:' + pid + ':' + ref;
+                            const envNodeId = 'env:' + pid + ':' + ref + ':' + (environment.environmentId || '');
+                            const brickNodeId = 'brick:' + deployed.brickId;
 
-            productBricks(product.id).forEach(brick => {
-                const brickNodeId = 'brick:' + brick.brickId;
-                addNode(brickNodeId, brick.brickName || brick.brickId, 'brick');
+                            addNode(productNodeId, product.name || pid, 'product');
+                            addNode(channelNodeId, channelName, 'channel', pid, channelNodeId);
+                            addNode(envNodeId, environment.environmentName || environment.environmentId || 'Environment', 'environment', pid, channelNodeId);
+                            addNode(brickNodeId, deployed.brickName || deployed.brickId, 'brick');
 
-                brick.channelRefs.forEach(ref => {
-                    const resolved = deploymentLookup[ref] || {};
-                    const channelNodeId = 'channel:' + product.id + ':' + ref;
-                    addNode(channelNodeId, resolved.channelName || ref, 'channel', product.id);
-                    // brick -> channel
-                    addEdge(brickNodeId, channelNodeId);
-                    // channel -> product
-                    addEdge(channelNodeId, productNodeId);
+                            addEdge(brickNodeId, envNodeId);     // brick -> environment
+                            addEdge(envNodeId, channelNodeId);   // environment -> channel
+                            addEdge(channelNodeId, productNodeId); // channel -> product
+                        });
+                    });
                 });
             });
         });
@@ -1722,7 +1971,7 @@
             degree[edge.target] = (degree[edge.target] || 0) + 1;
         });
         const graphNodes = nodes.map(node => ({
-            id: node.id, name: node.name, nodeType: node.nodeType, productId: node.productId || '', val: (degree[node.id] || 1)
+            id: node.id, name: node.name, nodeType: node.nodeType, productId: node.productId || '', channelKey: node.channelKey || '', val: (degree[node.id] || 1)
         }));
         const graphLinks = edges.map(edge => ({source: edge.source, target: edge.target}));
         const productNodeIdById = {};
@@ -1766,24 +2015,32 @@
             })
             .graphData({nodes: graphNodes, links: graphLinks});
 
-        // Cluster interfaces/channels around their product node so each product reads
-        // as its own group. Runs each tick, nudging clustered nodes toward their product.
-        const clusterStrength = 0.12;
+        // Cluster channels/environments around their product (each product = a group), and
+        // additionally pull each environment toward its channel node so environments group
+        // per channel. Runs each tick.
+        const clusterStrength = 0.10;
+        const channelGroupStrength = 0.18;
         Graph.d3Force('pdgCluster', (alpha) => {
             const data = Graph.graphData();
             const byId = {};
             data.nodes.forEach(node => { byId[node.id] = node; });
             data.nodes.forEach(node => {
-                if (!node.productId) {
-                    return;
+                if (node.productId) {
+                    const productNode = byId[productNodeIdById[node.productId]];
+                    if (productNode && productNode !== node) {
+                        const k = clusterStrength * alpha;
+                        node.vx = (node.vx || 0) + (productNode.x - node.x) * k;
+                        node.vy = (node.vy || 0) + (productNode.y - node.y) * k;
+                    }
                 }
-                const productNode = byId[productNodeIdById[node.productId]];
-                if (!productNode || productNode === node) {
-                    return;
+                if (node.nodeType === 'environment' && node.channelKey) {
+                    const channelNode = byId[node.channelKey];
+                    if (channelNode && channelNode !== node) {
+                        const k = channelGroupStrength * alpha;
+                        node.vx = (node.vx || 0) + (channelNode.x - node.x) * k;
+                        node.vy = (node.vy || 0) + (channelNode.y - node.y) * k;
+                    }
                 }
-                const k = clusterStrength * alpha;
-                node.vx = (node.vx || 0) + (productNode.x - node.x) * k;
-                node.vy = (node.vy || 0) + (productNode.y - node.y) * k;
             });
         });
         if (typeof Graph.d3ReheatSimulation === 'function') {
@@ -1834,8 +2091,25 @@
             return;
         }
         let chart = 'flowchart LR\n\n';
-        nodes.forEach(node => {
+        // Non-environment nodes at top level.
+        nodes.filter(node => node.nodeType !== 'environment').forEach(node => {
             chart += pdgMermaidId(node.id) + '["' + pdgMermaidLabel(node.name) + '"]\n';
+        });
+        // Environment nodes grouped into a subgraph per channel.
+        const envByChannel = {};
+        nodes.filter(node => node.nodeType === 'environment').forEach(node => {
+            const key = node.channelKey || 'env-other';
+            (envByChannel[key] = envByChannel[key] || []).push(node);
+        });
+        const channelNameById = {};
+        nodes.forEach(node => { if (node.nodeType === 'channel') channelNameById[node.id] = node.name; });
+        Object.keys(envByChannel).forEach((channelKey, index) => {
+            const title = pdgMermaidLabel((channelNameById[channelKey] || 'Channel') + ' environments');
+            chart += 'subgraph pdgsub' + index + '["' + title + '"]\n';
+            envByChannel[channelKey].forEach(node => {
+                chart += pdgMermaidId(node.id) + '["' + pdgMermaidLabel(node.name) + '"]\n';
+            });
+            chart += 'end\n';
         });
         edges.forEach(edge => {
             chart += pdgMermaidId(edge.source) + ' --> ' + pdgMermaidId(edge.target) + '\n';
@@ -1852,6 +2126,15 @@
     }
 
     mermaid.initialize({startOnLoad: false, securityLevel: 'loose', flowchart: {htmlLabels: false}});
+
+    // The dependency graph lives in its own tab now; (re)render and size it when the tab opens
+    // so the force-graph canvas gets real dimensions.
+    window.afterOpenTab = function (tabName) {
+        if (tabName === 'dependencies') {
+            renderProductDependencyGraph();
+            sizePdgForce();
+        }
+    };
 
     updateTabCounts();
     update();
