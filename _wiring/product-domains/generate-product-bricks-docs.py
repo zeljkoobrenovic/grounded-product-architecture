@@ -178,36 +178,35 @@ def build_brick_context(brick, products, customers):
     return linked_products, supported_jobs
 
 
+def _iter_team_groups(groups):
+    """Yield (group, team) for every team in the recursive group tree."""
+    for group in groups or []:
+        for team in group.get('teams', []):
+            yield group, team
+        for descendant in _iter_team_groups(group.get('groups', [])):
+            yield descendant
+
+
 def build_brick_team_context(brick, teams_payload):
     related_teams = []
     brick_id = str(brick.get('id', '')).strip()
 
-    for group in teams_payload.get('groups', []):
-        for team in group.get('teams', []):
-            role = None
-            for owned in team.get('ownedProductBricks', []):
-                if str(owned.get('objectId', '')).strip() == brick_id:
-                    role = 'owner'
-                    break
-            if role is None:
-                for supported in team.get('supportingProductBricks', []):
-                    if str(supported.get('objectId', '')).strip() == brick_id:
-                        role = 'supporting'
-                        break
-            if role is None:
-                continue
+    for group, team in _iter_team_groups(teams_payload.get('groups', [])):
+        links = team.get('brickDependencies', [])
+        if not any(str(link.get('brickId', '')).strip() == brick_id for link in links):
+            continue
 
-            related_teams.append({
-                'teamId': team.get('id', ''),
-                'teamName': team.get('name', team.get('id', '')),
-                'teamType': team.get('teamType', ''),
-                'groupId': group.get('id', ''),
-                'groupName': group.get('name', ''),
-                'role': role,
-                'roleLabel': 'Owner' if role == 'owner' else 'Supporting team'
-            })
+        related_teams.append({
+            'teamId': team.get('id', ''),
+            'teamName': team.get('name', team.get('id', '')),
+            'teamType': team.get('type', ''),
+            'groupId': group.get('id', ''),
+            'groupName': group.get('name', ''),
+            'role': 'related',
+            'roleLabel': 'Related team'
+        })
 
-    related_teams.sort(key=lambda item: (0 if item['role'] == 'owner' else 1, item['teamName'].lower()))
+    related_teams.sort(key=lambda item: item['teamName'].lower())
     return related_teams
 
 
@@ -353,6 +352,8 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
         htmlFile = docs_folder + 'landing_pages/' + str(brick['id']) + '.html'
         with open(htmlFile, 'w') as html_file:
             html_file.write(landing_page_template
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
                             .replace('${date}', date_string)
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
@@ -360,8 +361,6 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${bricks_metadata}', json.dumps(data.get('metadata', {})))
                             .replace('${brick_data}', json.dumps(brick))
                             .replace('${data_assets}', json.dumps(data_assets_payload))
-                            .replace('${tabs_style}', tabs_style)
-                            .replace('${tabs_script}', tabs_script)
                             .replace('${common_style}', common_style)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -415,13 +414,13 @@ def create_stream_landing_pages(streams, bricks, activity_data, products, custom
         html_file = docs_folder + 'stream_pages/' + str(stream['id']) + '.html'
         with open(html_file, 'w') as html_file:
             html_file.write(landing_page_template
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
                             .replace('${all_streams}', json.dumps(streams))
                             .replace('${stream_data}', json.dumps(stream))
                             .replace('${related_bricks}', json.dumps(related_bricks))
-                            .replace('${tabs_style}', tabs_style)
-                            .replace('${tabs_script}', tabs_script)
                             .replace('${common_style}', common_style)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -487,6 +486,8 @@ with open(docs_folder + 'index.html', 'w') as html_file:
     content = template.replace('${domain_description}', domain['description'])
     content = content.replace('${bricks}', json.dumps(data)) \
         .replace('${data_assets}', json.dumps(data_assets_payload)) \
+        .replace('${tabs_style}', tabs_style) \
+        .replace('${tabs_script}', tabs_script) \
         .replace('${breadcrumbs_style}', breadcrumbs_style) \
         .replace('${breadcrumbs_script}', breadcrumbs_script) \
         .replace('${breadcrumbs}', breadcrumbs) \

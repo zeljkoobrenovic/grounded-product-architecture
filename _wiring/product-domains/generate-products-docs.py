@@ -118,6 +118,9 @@ def create_landing_pages(products, docs_folder, activity_data):
 
     template = open(templates_root + 'landing_page.html').read()
 
+    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
+    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+
     date_string = datetime.date.today().strftime('%Y-%m-%d')
 
     if 'portfolio' in products:
@@ -137,6 +140,7 @@ def create_landing_pages(products, docs_folder, activity_data):
                                 .replace('${date}', date_string)
                                 .replace('${config}', json.dumps(site_config))
                                 .replace('${all_products}', json.dumps(products['portfolio']['products']))
+                                .replace('${deployment}', json.dumps(deployment))
                                 .replace('${product_name}', product['name'])
                                 .replace('${product}', json.dumps(product))
                                 .replace('${initiatives}', json.dumps(filter_for_product(activity_data['initiatives'], product['id'])))

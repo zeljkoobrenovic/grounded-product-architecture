@@ -56,11 +56,7 @@ def build_facts(monthly_entries: list[dict]) -> list[dict]:
     return [
         {"value": round(latest_entry.get("costs", 0), 2), "label": "latest monthly cost", "summable": True},
         {"value": latest_entry.get("month", ""), "label": "latest month"},
-        {"value": round(total_cost, 2), "label": "observed total cost"},
-        {"value": round(peak_entry.get("costs", 0), 2), "label": "peak monthly cost"},
-        {"value": peak_entry.get("month", ""), "label": "peak month"},
-        {"value": round(total_usage, 4), "label": "observed total usage"},
-        {"value": len(monthly_entries), "label": "months observed"},
+        {"value": round(total_cost, 2), "label": "latest month cost"}
     ]
 
 

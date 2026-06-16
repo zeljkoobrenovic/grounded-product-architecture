@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "finance-operator-control-spend-to-close", "name": "Control Spend To Close", "icon": "finance-operator-control-spend-to-close.png", "type": "outcome-based-stream", "description": "Help finance operators move from spend requests and invoices to reconciled close status with fewer manual handoffs.", "group": "Service, Operations & Finance User Experience", "rootGroup": "Service, Operations & Finance User Experience", "flows": [{"id": "finance-operator-control-spend-to-close-flow", "title": "Control Spend To Close", "description": "Guide finance operations from committed spend and invoice intake to reconciled close and cost visibility.", "steps": [{"id": "capture-commitment", "title": "Capture committed spend", "keyFacts": ["Finance needs the commitment picture before cash leaves the business."], "painPoints": ["Spend control weakens when requests, vendors, and approvals fragment before invoice receipt."], "productBrickIds": ["sexc", "prvw", "paae"], "externalSystems": ["ERP", "Procurement suite"], "dependencies": []}, {"id": "match-invoice-and-expense", "title": "Match invoice and expense flows", "keyFacts": ["Invoice and reimbursement exceptions should surface in one operating thread."], "painPoints": ["AP and employee reimbursement drift apart when they use unrelated control surfaces."], "productBrickIds": ["inap", "rmbk", "daes"], "externalSystems": ["Invoice capture", "Expense platform"], "dependencies": []}, {"id": "close-and-allocate", "title": "Close and allocate spend", "keyFacts": ["Close quality depends on reconciliations, allocations, and task visibility moving together."], "painPoints": ["Finance loses time when close status, cost allocation, and operating explanations live in separate tools."], "productBrickIds": ["glcl", "cpaa", "emtl"], "externalSystems": ["ERP", "BI workspace"], "dependencies": []}]}], "outcomes": ["Shorter close cycle", "Fewer invoice and reimbursement exceptions"], "brickDependencies": [{"targetBrickId": "inap", "type": "composition"}, {"targetBrickId": "rmbk", "type": "composition"}, {"targetBrickId": "glcl", "type": "composition"}], "externalSystemsThisStreamDependsOn": [], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "inap", "name": "Invoice intake and ap matching", "type": "full-stack", "status": "invest", "description": "Captures supplier invoices, validates them against purchase data, and routes exceptions for payable processing.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-invoice-intake-and-ap-matching-workspace", "name": "Invoice intake and ap matching Workspace", "type": "web-component", "description": "Primary operator or user-facing workspace for Invoice intake and ap matching.", "dependencies": {"modules": [{"moduleId": "module-invoice-intake-and-ap-matching-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-invoice-intake-and-ap-matching-api", "name": "Invoice intake and ap matching API", "type": "api", "description": "Programmatic interface exposed by Invoice intake and ap matching.", "dependencies": {"modules": [{"moduleId": "module-invoice-intake-and-ap-matching-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-invoice-intake-and-ap-matching-controls", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-invoice-intake-and-ap-matching-event-stream", "name": "Invoice intake and ap matching Event Stream", "type": "message-consumer", "description": "Event surface published by Invoice intake and ap matching.", "dependencies": {"modules": [{"moduleId": "module-invoice-intake-and-ap-matching-core", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-invoice-intake-and-ap-matching-controls", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-invoice-intake-and-ap-matching-core", "name": "Invoice intake and ap matching Core", "type": "service", "description": "Owns the main workflow logic and state for Invoice intake and ap matching.", "dependencies": {"modules": [{"moduleId": "module-invoice-intake-and-ap-matching-controls", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-invoice-intake-and-ap-matching-controls", "name": "Invoice intake and ap matching Controls", "type": "service", "description": "Applies policy, audit, and operational control concerns inside Invoice intake and ap matching."}]}], "dataDependencies": [{"assetId": "spend-request", "moduleIds": ["module-invoice-intake-and-ap-matching-core", "module-invoice-intake-and-ap-matching-controls"], "role": "own", "description": "Acts as the primary owning brick for spend-request."}, {"assetId": "approval-policy", "moduleIds": ["module-invoice-intake-and-ap-matching-core", "module-invoice-intake-and-ap-matching-controls"], "role": "read", "description": "Reads approval-policy to support finance workflows."}], "brickDependencies": [{"targetBrickId": "sexc", "moduleId": "module-spend-and-expense-control-api", "sourceModuleId": "module-invoice-intake-and-ap-matching-api", "type": "service-api", "description": "Depends on sexc to provide reusable enterprise capability needed by Invoice intake and ap matching."}, {"targetBrickId": "emtl", "moduleId": "module-enterprise-metric-layer-event-stream", "sourceModuleId": "module-invoice-intake-and-ap-matching-event-stream", "type": "event-subscription", "description": "Depends on emtl to provide reusable enterprise capability needed by Invoice intake and ap matching."}], "externalSystemsThisBrickDependsOn": [{"system": "ERP, accounting, banking, expense, and planning platforms", "type": "enterprise-system", "interface": "Enterprise APIs and event feeds", "description": "Invoice intake and ap matching exchanges data with core finance systems.", "sourceModuleId": "module-invoice-intake-and-ap-matching-core"}], "externalSystemsDependingOnThisBrick": [{"system": "Shared-services operations, executive reporting, and budget workflows", "type": "internal-consumer", "interface": "APIs, UI modules, and event streams", "description": "Enterprise workflows depend on Invoice intake and ap matching for reusable finance capability.", "moduleId": "module-invoice-intake-and-ap-matching-api"}], "domain": "Service, Operations & Finance", "group": "Spend, vendors & reimbursement"}, {"id": "rmbk", "name": "Reimbursement and card ledger", "type": "service", "status": "sustaining", "description": "Reconciles employee expenses, corporate card transactions, and reimbursement liabilities into one finance control layer.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-reimbursement-and-card-ledger-workspace", "name": "Reimbursement and card ledger Workspace", "type": "web-component", "description": "Primary operator or user-facing workspace for Reimbursement and card ledger.", "dependencies": {"modules": [{"moduleId": "module-reimbursement-and-card-ledger-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-reimbursement-and-card-ledger-api", "name": "Reimbursement and card ledger API", "type": "api", "description": "Programmatic interface exposed by Reimbursement and card ledger.", "dependencies": {"modules": [{"moduleId": "module-reimbursement-and-card-ledger-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-reimbursement-and-card-ledger-controls", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-reimbursement-and-card-ledger-event-stream", "name": "Reimbursement and card ledger Event Stream", "type": "message-consumer", "description": "Event surface published by Reimbursement and card ledger.", "dependencies": {"modules": [{"moduleId": "module-reimbursement-and-card-ledger-core", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-reimbursement-and-card-ledger-controls", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-reimbursement-and-card-ledger-core", "name": "Reimbursement and card ledger Core", "type": "service", "description": "Owns the main workflow logic and state for Reimbursement and card ledger.", "dependencies": {"modules": [{"moduleId": "module-reimbursement-and-card-ledger-controls", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-reimbursement-and-card-ledger-controls", "name": "Reimbursement and card ledger Controls", "type": "service", "description": "Applies policy, audit, and operational control concerns inside Reimbursement and card ledger."}]}], "dataDependencies": [{"assetId": "work-item", "moduleIds": ["module-reimbursement-and-card-ledger-core", "module-reimbursement-and-card-ledger-controls"], "role": "own", "description": "Acts as the primary owning brick for work-item."}, {"assetId": "employee-profile", "moduleIds": ["module-reimbursement-and-card-ledger-core", "module-reimbursement-and-card-ledger-controls"], "role": "read", "description": "Reads employee-profile to support finance workflows."}], "brickDependencies": [{"targetBrickId": "inap", "moduleId": "module-invoice-intake-and-ap-matching-api", "sourceModuleId": "module-reimbursement-and-card-ledger-api", "type": "service-api", "description": "Depends on inap to provide reusable enterprise capability needed by Reimbursement and card ledger."}, {"targetBrickId": "emtl", "moduleId": "module-enterprise-metric-layer-event-stream", "sourceModuleId": "module-reimbursement-and-card-ledger-event-stream", "type": "event-subscription", "description": "Depends on emtl to provide reusable enterprise capability needed by Reimbursement and card ledger."}], "externalSystemsThisBrickDependsOn": [{"system": "ERP, accounting, banking, expense, and planning platforms", "type": "enterprise-system", "interface": "Enterprise APIs and event feeds", "description": "Reimbursement and card ledger exchanges data with core finance systems.", "sourceModuleId": "module-reimbursement-and-card-ledger-core"}], "externalSystemsDependingOnThisBrick": [{"system": "Shared-services operations, executive reporting, and budget workflows", "type": "internal-consumer", "interface": "APIs, UI modules, and event streams", "description": "Enterprise workflows depend on Reimbursement and card ledger for reusable finance capability.", "moduleId": "module-reimbursement-and-card-ledger-api"}], "domain": "Service, Operations & Finance", "group": "Spend, vendors & reimbursement"}, {"id": "glcl", "name": "General ledger and close cockpit", "type": "dashboard", "status": "sustaining", "description": "Coordinates close tasks, reconciliations, journals, and period status across finance teams.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-general-ledger-and-close-cockpit-workspace", "name": "General ledger and close cockpit Workspace", "type": "web-component", "description": "Primary operator or user-facing workspace for General ledger and close cockpit.", "dependencies": {"modules": [{"moduleId": "module-general-ledger-and-close-cockpit-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-general-ledger-and-close-cockpit-api", "name": "General ledger and close cockpit API", "type": "api", "description": "Programmatic interface exposed by General ledger and close cockpit.", "dependencies": {"modules": [{"moduleId": "module-general-ledger-and-close-cockpit-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-general-ledger-and-close-cockpit-controls", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-general-ledger-and-close-cockpit-event-stream", "name": "General ledger and close cockpit Event Stream", "type": "message-consumer", "description": "Event surface published by General ledger and close cockpit.", "dependencies": {"modules": [{"moduleId": "module-general-ledger-and-close-cockpit-core", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-general-ledger-and-close-cockpit-controls", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-general-ledger-and-close-cockpit-core", "name": "General ledger and close cockpit Core", "type": "service", "description": "Owns the main workflow logic and state for General ledger and close cockpit.", "dependencies": {"modules": [{"moduleId": "module-general-ledger-and-close-cockpit-controls", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-general-ledger-and-close-cockpit-controls", "name": "General ledger and close cockpit Controls", "type": "service", "description": "Applies policy, audit, and operational control concerns inside General ledger and close cockpit."}]}], "dataDependencies": [{"assetId": "enterprise-metric", "moduleIds": ["module-general-ledger-and-close-cockpit-core", "module-general-ledger-and-close-cockpit-controls"], "role": "own", "description": "Acts as the primary owning brick for enterprise-metric."}, {"assetId": "process-telemetry", "moduleIds": ["module-general-ledger-and-close-cockpit-core", "module-general-ledger-and-close-cockpit-controls"], "role": "read", "description": "Reads process-telemetry to support finance workflows."}], "brickDependencies": [{"targetBrickId": "rmbk", "moduleId": "module-reimbursement-and-card-ledger-api", "sourceModuleId": "module-general-ledger-and-close-cockpit-api", "type": "service-api", "description": "Depends on rmbk to provide reusable enterprise capability needed by General ledger and close cockpit."}, {"targetBrickId": "emtl", "moduleId": "module-enterprise-metric-layer-event-stream", "sourceModuleId": "module-general-ledger-and-close-cockpit-event-stream", "type": "event-subscription", "description": "Depends on emtl to provide reusable enterprise capability needed by General ledger and close cockpit."}], "externalSystemsThisBrickDependsOn": [{"system": "ERP, accounting, banking, expense, and planning platforms", "type": "enterprise-system", "interface": "Enterprise APIs and event feeds", "description": "General ledger and close cockpit exchanges data with core finance systems.", "sourceModuleId": "module-general-ledger-and-close-cockpit-core"}], "externalSystemsDependingOnThisBrick": [{"system": "Shared-services operations, executive reporting, and budget workflows", "type": "internal-consumer", "interface": "APIs, UI modules, and event streams", "description": "Enterprise workflows depend on General ledger and close cockpit for reusable finance capability.", "moduleId": "module-general-ledger-and-close-cockpit-api"}], "domain": "Service, Operations & Finance", "group": "Close, planning & cash management"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "finance-platforms-spend-and-close", "teamName": "Finance Platforms - Spend and Close", "teamType": "stream-aligned", "groupId": "finance-platforms", "groupName": "Service, Operations & Finance / Finance Platforms", "role": "owner", "roleLabel": "Owner"}, {"teamId": "finance-platforms-planning-and-treasury", "teamName": "Finance Platforms - Planning and Treasury", "teamType": "stream-aligned", "groupId": "finance-platforms", "groupName": "Service, Operations & Finance / Finance Platforms", "role": "owner", "roleLabel": "Owner"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

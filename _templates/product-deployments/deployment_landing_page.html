@@ -267,28 +267,29 @@ ${tabs_script}
     }
 
     function buildChannelProductUsage(record) {
-        const usages = [];
+        // Derive products from this channel's deployedBricks[].usedInProducts.
+        const productLookup = {};
         ((products.portfolio || {}).products || []).forEach(product => {
-            const interfaces = new Set();
-            let brickCount = 0;
-            (product.neededBricks || []).forEach(brick => {
-                (brick.deploymentChannels || []).forEach(channel => {
-                    if (channel.deploymentChannelRef !== record.ref) return;
-                    brickCount += 1;
-                    (channel.supportsInterfaces || []).forEach(iface => interfaces.add(iface));
-                });
-            });
-            if (brickCount > 0) {
-                usages.push({
-                    id: product.id,
-                    name: product.name,
-                    icon: product.icon || 'product.png',
-                    interfaces: Array.from(interfaces).sort(),
-                    brickCount: brickCount
-                });
-            }
+            productLookup[product.id] = product;
         });
-        return usages.sort((left, right) => left.name.localeCompare(right.name));
+        const byProduct = {};
+        (record.channel.deployedBricks || []).forEach(brick => {
+            (brick.usedInProducts || []).forEach(use => {
+                const pid = use.productId;
+                if (!pid) return;
+                if (!byProduct[pid]) {
+                    const product = productLookup[pid] || {};
+                    byProduct[pid] = {
+                        id: pid,
+                        name: product.name || pid,
+                        icon: product.icon || 'product.png',
+                        brickCount: 0
+                    };
+                }
+                byProduct[pid].brickCount += 1;
+            });
+        });
+        return Object.values(byProduct).sort((left, right) => left.name.localeCompare(right.name));
     }
 
     function renderChip(iconPath, fallbackPath, title, copy, href) {
@@ -375,7 +376,7 @@ ${tabs_script}
         if (productUsage.length) {
             html += '<div class="chip-row">';
             productUsage.forEach(product => {
-                const meta = [product.brickCount + ' bricks', product.interfaces.length ? product.interfaces.join(', ') : ''].filter(Boolean).join(' · ');
+                const meta = product.brickCount + (product.brickCount === 1 ? ' brick' : ' bricks');
                 html += renderChip('../icons/' + escapeHtml(product.icon), '../icons/product.png', product.name, meta, '../landing_pages/' + escapeHtml(product.id) + '.html');
             });
             html += '</div>';
@@ -387,7 +388,9 @@ ${tabs_script}
         if (deployedBricks.length) {
             html += '<div class="chip-row">';
             deployedBricks.forEach(brick => {
-                html += renderChip('../../product-bricks/icons/' + escapeHtml(brick.brickId) + '.png', '../../product-bricks/icons/logo.png', brick.brickName || brick.brickId || 'Product brick', brick.deploymentRole || '', '../../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html');
+                const productCount = (brick.usedInProducts || []).length;
+                const meta = [brick.deploymentRole || '', productCount ? 'Used in ' + productCount + (productCount === 1 ? ' product' : ' products') : ''].filter(Boolean).join(' · ');
+                html += renderChip('../../product-bricks/icons/' + escapeHtml(brick.brickId) + '.png', '../../product-bricks/icons/logo.png', brick.brickName || brick.brickId || 'Product brick', meta, '../../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html');
             });
             html += '</div>';
         } else {

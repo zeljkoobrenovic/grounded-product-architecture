@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "resolve-trip-issues-through-self-service-and-assisted-support", "name": "Resolve Trip Issues Through Self-Service and Assisted Support", "icon": "resolve-trip-issues-through-self-service-and-assisted-support.png", "type": "outcome-based-stream", "description": "Help riders and drivers resolve trip, payment, and trust issues quickly through structured self-service, AI-assisted triage, and agent-assisted workflows.", "group": "Marketplace Operations", "rootGroup": "Marketplace Operations", "flows": [{"id": "resolve-trip-issues-through-self-service-and-assisted-support-flow", "title": "Resolve Trip Issues Through Self-Service and Assisted Support", "description": "Help riders and drivers resolve trip, payment, and trust issues quickly through structured self-service, AI-assisted triage, and agent-assisted workflows.", "steps": [{"id": "submit-structured-issue", "title": "Submit a structured issue", "keyFacts": ["Structured issue intake reduces back-and-forth and improves routing quality.", "Trip context and issue taxonomy determine whether self-service can resolve the case."], "painPoints": ["Free-form support creates delays and inconsistent routing.", "Users lose trust when they cannot find the relevant trip context quickly."], "dependencies": [{"type": "brick", "id": "supp", "name": "Support Automation and Issue Resolution", "description": "Captures issue type, runs self-service flows, and routes support work.", "how": "Uses Support Automation and Issue Resolution to structure intake and determine the next-best resolution path."}]}, {"id": "resolve-financial-or-trust-outcome", "title": "Resolve financial or trust outcome", "keyFacts": ["Financial and trust issues require the right combination of automation and escalation.", "Resolution quality shapes retention more than raw ticket closure speed."], "painPoints": ["Billing corrections feel opaque when receipts, adjustments, and trust flows are disconnected.", "Serious incidents escalate poorly when support and trust systems are split."], "dependencies": []}, {"id": "triage-and-assist-resolution", "title": "Triage and assist resolution", "keyFacts": ["AI-assisted support only works when grounded in trip, payment, policy, and trust context.", "Agents need suggested actions, explanations, and guardrails rather than unbounded automation."], "painPoints": ["Generic chat automation creates inconsistent answers and weak policy adherence.", "Support teams cannot improve automation when resolution outcomes and issue taxonomies are disconnected from analytics."], "dependencies": [{"type": "brick", "id": "data", "name": "Marketplace Intelligence and Analytics", "description": "Publishes support metrics, issue trends, and resolution feedback loops.", "how": "Uses Marketplace Intelligence and Analytics to measure deflection quality, resolution fairness, and recurring issue patterns."}]}]}], "outcomes": ["Faster issue resolution", "Lower support cost without hurting trust"], "brickDependencies": [{"targetBrickId": "supp", "type": "composition"}, {"targetBrickId": "data", "type": "composition"}], "externalSystemsThisStreamDependsOn": [], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "supp", "name": "Support Automation and Issue Resolution", "type": "full-stack", "status": "sustaining", "description": "Handles in-app support entry, issue classification, self-service refunds or corrections, agent context assembly, and trip-resolution workflows for riders and drivers.", "links": [{"label": "Architecting Uber Support with Customer Obsession Engineering", "url": "https://www.uber.com/blog/customer-obsession-engineering/", "note": "Explains an in-app support framework, self-service flows, agent tooling, and issue routing model."}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-in-app-help-surface", "name": "In-App Help Surface", "type": "mobile-component", "description": "Rider and driver self-service support experience across mobile and web.", "dependencies": {"modules": [{"moduleId": "module-support-workflow-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-support-workflow-api", "name": "Support Workflow API", "type": "api", "description": "API for issue creation, self-service decisions, and case state transitions.", "dependencies": {"modules": [{"moduleId": "module-issue-intake-and-classification", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-self-service-resolution-engine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-agent-context-and-routing-workspace", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-issue-intake-and-classification", "name": "Issue Intake and Classification", "type": "service", "description": "Captures issue type, trip context, and structured resolution intent from riders and drivers."}, {"id": "module-self-service-resolution-engine", "name": "Self-Service Resolution Engine", "type": "service", "description": "Applies fixed rules and workflow components for refunds, adjustments, ratings, and trip corrections."}, {"id": "module-agent-context-and-routing-workspace", "name": "Agent Context and Routing Workspace", "type": "service", "description": "Assembles trip, payment, safety, and account context for faster routing and human resolution."}]}], "dataDependencies": [{"assetId": "trip-request-and-intent-capture", "moduleIds": ["module-issue-intake-and-classification", "module-self-service-resolution-engine", "module-agent-context-and-routing-workspace"], "role": "read", "description": "Reads Trip Request And Intent Capture to assemble issue context and support workflows."}, {"assetId": "rider-identity-wallet-and-payments", "moduleIds": ["module-issue-intake-and-classification", "module-self-service-resolution-engine", "module-agent-context-and-routing-workspace"], "role": "read", "description": "Reads Rider Identity Wallet And Payments to support receipt lookup and financial issue handling."}, {"assetId": "safety-and-trust-operations", "moduleIds": ["module-issue-intake-and-classification", "module-self-service-resolution-engine", "module-agent-context-and-routing-workspace"], "role": "read", "description": "Reads Safety And Trust Operations to route incidents into trust and safety workflows."}, {"assetId": "audit-log", "moduleIds": ["module-issue-intake-and-classification", "module-self-service-resolution-engine", "module-agent-context-and-routing-workspace"], "role": "publish", "description": "Publishes support-case actions and resolution records to Audit Log."}], "brickDependencies": [{"targetBrickId": "trip", "moduleId": "module-trip-request-api", "sourceModuleId": "module-support-workflow-api", "type": "context", "description": "Depends on Trip Request and Intent Capture for trip-level issue context and lifecycle history."}, {"targetBrickId": "ridp", "moduleId": "module-identity-and-billing-api", "sourceModuleId": "module-support-workflow-api", "type": "billing", "description": "Depends on Rider Identity, Wallet and Payments for receipts, adjustments, and refund execution."}, {"targetBrickId": "safe", "moduleId": "module-safety-toolkit-api", "sourceModuleId": "module-support-workflow-api", "type": "trust", "description": "Depends on Safety and Trust Operations for incidents, escalations, and sensitive trust workflows."}, {"targetBrickId": "data", "moduleId": "module-analytics-api", "sourceModuleId": "module-support-workflow-api", "type": "analytics", "description": "Depends on Marketplace Intelligence and Analytics for support routing feedback and resolution-quality measurement."}, {"targetBrickId": "capi", "moduleId": "module-client-experience-api", "sourceModuleId": "module-support-workflow-api", "type": "client-experience", "description": "Depends on Client API Composition and Server-Driven Experience to render contextual help entry points, issue panels, and server-controlled support actions consistently across apps."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [{"system": "Rider and driver applications", "type": "channel-consumer", "interface": "Support Workflow API", "description": "Mobile and web clients depend on structured issue submission and self-service resolution flows.", "moduleId": "module-support-workflow-api"}], "domain": "Rider Demand and Trip Experience", "group": "support-and-resolution"}, {"id": "data", "name": "Marketplace Intelligence and Analytics", "type": "service", "status": "sustaining", "description": "Provides KPI models, marketplace health monitoring, experimentation feedback, search and recommendation intelligence, and business reporting across rider, driver, fleet, and trust workflows.", "links": [{"label": "Meet Michelangelo: Uber's Machine Learning Platform", "url": "https://www.uber.com/us/en/blog/michelangelo-machine-learning-platform/", "note": "Explains the shared ML workflow, feature store, training, and prediction infrastructure behind marketplace intelligence."}, {"label": "Under the Hood of Uber's Experimentation Platform", "url": "https://www.uber.com/en-US/blog/xp/", "note": "Relevant to experimentation feedback loops, universal holdouts, and metric monitoring."}, {"label": "Evolving Schemaless into a Distributed SQL Database", "url": "https://www.uber.com/blog/schemaless-sql-database/", "note": "Highlights the broader evolution of business-critical operational data infrastructure used across a scaled platform."}, {"label": "Evolution and Scale of Uber's Delivery Search Platform", "url": "https://www.uber.com/us/en/blog/evolution-and-scale-of-ubers-delivery-search-platform/", "note": "Adds evidence for marketplace search systems that connect customer intent, inventory, ranking, and operational data."}, {"label": "Innovative Recommendation Applications Using Two Tower Embeddings at Uber", "url": "https://www.uber.com/us/en/blog/innovative-recommendation-applications-using-two-tower-embeddings/", "note": "Supports recommendation intelligence, embedding-based retrieval, and candidate ranking across marketplace surfaces."}, {"label": "The Journey Towards Metric Standardization", "url": "https://www.uber.com/us/en/blog/umetric/", "note": "Supports the KPI semantics, metric governance, and shared measurement responsibilities of the analytics brick."}], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-analytics-api", "name": "Analytics API", "type": "api", "description": "API for aggregated metrics and intelligence views.", "dependencies": {"modules": [{"moduleId": "module-operational-data-model", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-kpi-and-reporting-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-experiment-and-quality-analytics", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-search-and-recommendation-intelligence", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-metric-governance-and-semantic-standards", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-reporting-feed", "name": "Reporting Feed", "type": "message-consumer", "description": "Data interface for dashboards and operational reporting.", "dependencies": {"modules": [{"moduleId": "module-operational-data-model", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-kpi-and-reporting-layer", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-experiment-and-quality-analytics", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-search-and-recommendation-intelligence", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-metric-governance-and-semantic-standards", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-operational-data-model", "name": "Operational Data Model", "type": "service", "description": "Normalizes requests, trips, driver activity, and support signals into reusable facts."}, {"id": "module-kpi-and-reporting-layer", "name": "KPI and Reporting Layer", "type": "service", "description": "Publishes business, customer, and operational KPIs for teams and leaders."}, {"id": "module-experiment-and-quality-analytics", "name": "Experiment and Quality Analytics", "type": "service", "description": "Measures the impact of changes to dispatch, pricing, and trust workflows."}, {"id": "module-search-and-recommendation-intelligence", "name": "Search and Recommendation Intelligence", "type": "service", "description": "Builds retrieval, ranking, embedding, and marketplace-discovery analytics for search, feed, and growth surfaces."}, {"id": "module-metric-governance-and-semantic-standards", "name": "Metric Governance and Semantic Standards", "type": "service", "description": "Maintains common metric definitions, ownership, quality checks, and documentation for marketplace KPI interpretation."}]}], "dataDependencies": [{"assetId": "business-and-fleet-controls", "moduleIds": ["module-operational-data-model", "module-kpi-and-reporting-layer", "module-experiment-and-quality-analytics", "module-search-and-recommendation-intelligence", "module-metric-governance-and-semantic-standards"], "role": "read", "description": "Reads Business And Fleet Controls to support domain workflows."}, {"assetId": "eta-maps-and-routing-intelligence", "moduleIds": ["module-operational-data-model", "module-kpi-and-reporting-layer", "module-experiment-and-quality-analytics", "module-search-and-recommendation-intelligence", "module-metric-governance-and-semantic-standards"], "role": "read", "description": "Reads Eta Maps And Routing Intelligence to support domain workflows."}], "brickDependencies": [{"targetBrickId": "dplt", "moduleId": "module-streaming-data-api", "sourceModuleId": "module-analytics-api", "type": "data-platform", "description": "Depends on Data Platform and Streaming Foundation for large-scale ingestion, shared metadata, and analytical data access."}, {"targetBrickId": "infr", "moduleId": "module-service-runtime-apis", "sourceModuleId": "module-analytics-api", "type": "runtime", "description": "Depends on Service Runtime and Reliability Foundation for reliable analytical serving, scheduled jobs, and operational controls."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Platform Foundation", "group": "data-and-partner-connectivity"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "rider-growth-support-and-resolution", "teamName": "Rider Growth and Trip Experience Support Automation and Issue Resolution", "teamType": "stream-aligned", "groupId": "rider-growth", "groupName": "Rider Growth and Trip Experience", "role": "owner", "roleLabel": "Owner"}, {"teamId": "data-platform", "teamName": "Marketplace Intelligence Platform", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls", "role": "owner", "roleLabel": "Owner"}, {"teamId": "marketplace-controls-portfolio-insights", "teamName": "Marketplace and Trust Controls Experience Quality", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls", "role": "supporting", "roleLabel": "Supporting team"}, {"teamId": "marketplace-controls-enablement", "teamName": "Marketplace and Trust Controls Reliability and Adoption", "teamType": "platform", "groupId": "marketplace-controls", "groupName": "Marketplace and Trust Controls", "role": "supporting", "roleLabel": "Supporting team"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

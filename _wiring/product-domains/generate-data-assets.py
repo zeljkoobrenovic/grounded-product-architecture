@@ -150,14 +150,24 @@ def infer_legal_tags(classification, personal_data_level):
     return tags
 
 
-def build_brick_owner_lookup(teams_payload):
-    owner_lookup = {}
-    for group in teams_payload.get('groups', []):
+def _iter_teams(groups):
+    """Yield every team in the recursive group tree, depth-first in document order."""
+    for group in groups or []:
         for team in group.get('teams', []):
-            for owned in team.get('ownedProductBricks', []):
-                brick_id = str(owned.get('brickId', ''))
-                if brick_id and brick_id not in owner_lookup:
-                    owner_lookup[brick_id] = team.get('id', '')
+            yield team
+        for team in _iter_teams(group.get('groups', [])):
+            yield team
+
+
+def build_brick_owner_lookup(teams_payload):
+    # Lean teams model has flat brick links (no owned/supporting split), so the
+    # owner is taken as the first team that links the brick in document order.
+    owner_lookup = {}
+    for team in _iter_teams(teams_payload.get('groups', [])):
+        for link in team.get('brickDependencies', []):
+            brick_id = str(link.get('brickId', ''))
+            if brick_id and brick_id not in owner_lookup:
+                owner_lookup[brick_id] = team.get('id', '')
     return owner_lookup
 
 

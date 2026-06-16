@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "recover-from-returns-and-service-issues", "name": "Recover from Returns and Service Issues", "icon": "recover-from-returns-and-service-issues.png", "type": "outcome-based-stream", "description": "Turn delivery, packaging, product-quality, refund, exchange, and store availability issues into fast recovery and reusable product-quality signals.", "group": "Commerce and Operations", "rootGroup": "Commerce and Operations", "flows": [{"id": "recover-from-returns-and-service-issues-flow", "title": "Recover from Returns and Service Issues", "description": "From customer issue to resolution and product-quality feedback.", "steps": [{"id": "understand-order-and-issue", "title": "Understand order and issue", "dependencies": [{"type": "brick", "id": "care", "name": "Care, Returns and Recovery", "description": "Customer issue, reason, recovery, and support case workflow.", "how": "Captures the customer issue and selects the right recovery path."}, {"type": "brick", "id": "orde", "name": "Order State and Notifications", "description": "Order timeline, shipment, pickup, and notification state.", "how": "Explains what happened before a refund, resend, exchange, or store recovery is offered."}]}, {"id": "resolve-return-exchange-or-refund", "title": "Resolve return, exchange, or refund", "dependencies": [{"type": "brick", "id": "retu", "name": "Returns and Exchanges", "description": "Eligibility, inspection, return reason, and exchange flow.", "how": "Controls the operational return or exchange path."}]}, {"id": "recover-availability-and-feed-quality", "title": "Recover availability and feed quality", "dependencies": [{"type": "brick", "id": "invt", "name": "Inventory Availability and Allocation", "description": "Warehouse and channel availability, reservation, and allocation state.", "how": "Finds a replacement, resolves oversell patterns, and corrects availability defects."}]}]}], "outcomes": ["Lower gift and delivery contact rate", "Lower avoidable repeat contacts", "Higher customer recovery satisfaction"], "brickDependencies": [{"targetBrickId": "care", "type": "composition"}, {"targetBrickId": "retu", "type": "composition"}, {"targetBrickId": "orde", "type": "composition"}, {"targetBrickId": "invt", "type": "composition"}], "externalSystemsThisStreamDependsOn": [{"externalSystemId": "customer-service-platform", "name": "Customer Service Platform", "relationship": "uses"}, {"externalSystemId": "warehouse-management-system", "name": "Warehouse Management System", "relationship": "uses"}], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "care", "name": "Care, Returns and Recovery", "type": "full-stack", "status": "sustaining", "description": "Customer care, order exception recovery, product questions, allergy concerns, damaged gifts, service cases, and goodwill handling.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-care-console", "name": "Care console", "type": "web-component", "description": "Advisor and care-agent interface for customer issues.", "dependencies": {"modules": [{"moduleId": "module-case-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-case-api", "name": "Case API", "type": "api", "description": "Creates and updates service cases.", "dependencies": {"modules": [{"moduleId": "module-self-service-recovery-flows", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-self-service-recovery-flows", "name": "Self-service recovery flows", "type": "service", "description": "Provides self-service resolutions for common order and product issues.", "dependencies": {"modules": [{"moduleId": "module-case-management-adapter", "type": "integrates", "description": "Service module uses the integration adapter for external-system communication."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-case-management-adapter", "name": "Case management adapter", "type": "integration", "description": "Connects order, customer, and product context to customer care."}]}], "dataDependencies": [{"assetId": "support-case", "moduleIds": ["module-self-service-recovery-flows"], "role": "own", "description": "Owns service case, reason, outcome, and recovery state."}], "brickDependencies": [{"targetBrickId": "orde", "moduleId": "module-notification-orchestrator", "sourceModuleId": "module-self-service-recovery-flows", "type": "order", "description": "Uses order state for issue recovery."}, {"targetBrickId": "cata", "moduleId": "module-catalog-api", "sourceModuleId": "module-self-service-recovery-flows", "type": "product", "description": "Uses product data to answer ingredient and usage questions."}], "externalSystemsThisBrickDependsOn": [{"system": "crm-case-management", "description": "Customer support case and contact center tooling.", "sourceModuleId": "module-case-management-adapter"}], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Inventory and fulfillment"}, {"id": "retu", "name": "Returns and Exchanges", "type": "full-stack", "status": "sustaining", "description": "Return eligibility, exchange logic, gift returns, refund routing, store returns, and product-quality feedback loops.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-returns-ui", "name": "Returns UI", "type": "web-component", "description": "Customer and advisor return initiation and status experience.", "dependencies": {"modules": [{"moduleId": "module-returns-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-returns-api", "name": "Returns API", "type": "api", "description": "Creates return authorization and exchange orders.", "dependencies": {"modules": [{"moduleId": "module-return-eligibility-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-return-eligibility-service", "name": "Return eligibility service", "type": "service", "description": "Evaluates return windows, gift return rules, and product condition policies."}]}], "dataDependencies": [{"assetId": "return-case", "moduleIds": ["module-return-eligibility-service"], "role": "own", "description": "Owns return and exchange state."}], "brickDependencies": [{"targetBrickId": "orde", "moduleId": "module-notification-orchestrator", "sourceModuleId": "module-return-eligibility-service", "type": "order", "description": "Uses original order and payment state."}, {"targetBrickId": "paym", "moduleId": "module-payment-api", "sourceModuleId": "module-return-eligibility-service", "type": "payment", "description": "Triggers refunds through payment systems."}], "externalSystemsThisBrickDependsOn": [{"system": "returns-management-provider", "description": "Return authorization, parcel label, inspection, and warehouse disposition workflows.", "sourceModuleId": "module-return-eligibility-service"}, {"system": "payment-service-provider", "description": "Refund routing and refund status callbacks.", "sourceModuleId": "module-return-eligibility-service"}], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Inventory and fulfillment"}, {"id": "orde", "name": "Order State and Notifications", "type": "service", "status": "sustaining", "description": "Order lifecycle, status timeline, customer notifications, pickup readiness, delay messages, cancellation, and return initiation.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-order-status-api", "name": "Order status API", "type": "api", "description": "Provides current and historical order state.", "dependencies": {"modules": [{"moduleId": "module-order-state-machine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-notification-orchestrator", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-order-state-machine", "name": "Order state machine", "type": "service", "description": "Maintains order, shipment, pickup, return, and exception state."}, {"id": "module-notification-orchestrator", "name": "Notification orchestrator", "type": "service", "description": "Sends order, pickup, delivery, delay, and recovery messages by channel."}]}], "dataDependencies": [{"assetId": "order-history", "moduleIds": ["module-order-state-machine", "module-notification-orchestrator"], "role": "own", "description": "Owns order timeline and status history."}], "brickDependencies": [{"targetBrickId": "fulf", "moduleId": "module-fulfillment-option-service", "sourceModuleId": "module-order-state-machine", "type": "fulfillment", "description": "Consumes fulfillment state transitions."}, {"targetBrickId": "care", "moduleId": "module-case-api", "sourceModuleId": "module-order-state-machine", "type": "support", "description": "Feeds order exception context to customer care."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Checkout and order control"}, {"id": "invt", "name": "Inventory Availability and Allocation", "type": "service", "status": "sustaining", "description": "Inventory visibility, reservations, allocation, substitutions, safety stock, channel availability, and launch inventory controls.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-availability-api", "name": "Availability API", "type": "api", "description": "Returns inventory promise and reservation options.", "dependencies": {"modules": [{"moduleId": "module-availability-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-allocation-policy-engine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-availability-service", "name": "Availability service", "type": "service", "description": "Computes available-to-promise inventory by SKU, channel, and location."}, {"id": "module-allocation-policy-engine", "name": "Allocation policy engine", "type": "service", "description": "Controls stock allocation across ecommerce, stores, wholesale, travel retail, and samples."}]}], "dataDependencies": [{"assetId": "inventory-position", "moduleIds": ["module-availability-service", "module-allocation-policy-engine"], "role": "own", "description": "Owns current inventory, reservations, and availability."}], "brickDependencies": [{"targetBrickId": "launch", "moduleId": "module-launch-api", "sourceModuleId": "module-availability-service", "type": "planning", "description": "Uses launch plans and demand forecast to allocate stock."}], "externalSystemsThisBrickDependsOn": [{"system": "erp-inventory", "description": "Enterprise inventory and warehouse source.", "sourceModuleId": "module-allocation-policy-engine"}], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Inventory and fulfillment"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "commerce-operations-commerce-and-fulfillment", "teamName": "Commerce Operations Tax and Fiscal Receipt and Care, Returns and Recovery", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "inventory-fulfillment-and-care", "teamName": "Inventory, Fulfillment & Care", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "commerce-operations-checkout-and-order-control-3", "teamName": "Commerce Operations Order State and Notifications and Payments and Fraud Controls", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "commerce-operations-inventory-and-fulfillment-2", "teamName": "Commerce Operations Inventory Availability and Allocation", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "member-loyalty-and-replenishment", "teamName": "Member Loyalty & Replenishment", "teamType": "stream-aligned", "groupId": "customer-growth", "groupName": "Customer Growth", "role": "supporting", "roleLabel": "Supporting team"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

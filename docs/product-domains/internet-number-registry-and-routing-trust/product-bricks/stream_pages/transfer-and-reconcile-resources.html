@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "transfer-and-reconcile-resources", "name": "Transfer and Reconcile Resources", "icon": "transfer-and-reconcile-resources.png", "type": "outcome-based-stream", "description": "Help members and resource holders complete transfers, mergers, acquisitions, and registry corrections without losing trust or traceability.", "group": "Registry and Routing Trust Journeys", "rootGroup": "Registry and Routing Trust Journeys", "flows": [{"id": "transfer-and-reconcile-resources-flow", "title": "Transfer and Reconcile Resources", "description": "Move resources between holders while preserving policy compliance and accurate registry state.", "steps": [{"id": "validate-parties-and-resources", "title": "Validate parties and resources", "keyFacts": ["Transfer risk depends on holder legitimacy, documentation, registry status, and policy eligibility."], "painPoints": ["Unclear ownership or incomplete corporate evidence can block scarce IPv4 transfers."], "dependencies": [{"type": "brick", "id": "xfer", "name": "Resource Transfers and Mergers", "description": "Coordinates transfer cases and decisions.", "how": "Keeps evidence, parties, and approvals in one auditable workflow."}]}, {"id": "settle-service-state", "title": "Settle service state", "keyFacts": ["Member standing, billing state, and LIR account closure can affect transfer completion."], "painPoints": ["Transfers stall when service and finance state are handled outside the case workflow."], "dependencies": [{"type": "brick", "id": "bill", "name": "Billing and Charging Scheme", "description": "Tracks fee and invoice state.", "how": "Aligns service eligibility and financial obligations before final registry updates."}]}, {"id": "publish-final-registry-state", "title": "Publish final registry state", "keyFacts": ["Downstream operators rely on current registry and routing context after a transfer."], "painPoints": ["Partial updates create confusion in Whois, RPKI, reverse DNS, and incident response."], "dependencies": [{"type": "brick", "id": "v4al", "name": "IPv4 Allocation and Waiting List", "description": "Maintains IPv4 resource holder records.", "how": "Updates scarce address resource ownership and lifecycle state."}]}]}], "outcomes": ["Clean transfer outcomes", "Lower registry dispute risk", "Better traceability for scarce IPv4 resources"], "brickDependencies": [{"targetBrickId": "xfer", "type": "composition"}, {"targetBrickId": "bill", "type": "composition"}, {"targetBrickId": "v4al", "type": "composition"}], "externalSystemsThisStreamDependsOn": [{"system": "Peer RIRs, legal documents, and corporate registries", "type": "external-evidence", "interface": "document review and inter-RIR coordination", "description": "Provide evidence and cross-registry coordination for resource-holder changes."}], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "xfer", "name": "Resource Transfers and Mergers", "type": "full-stack", "status": "invest", "description": "Processes intra-RIR transfers, inter-RIR transfers, mergers, acquisitions, and resource-holder change requests.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-transfer-request-workspace", "name": "Transfer request workspace", "type": "web-component", "description": "Member and operations interface for transfer cases and requested evidence.", "dependencies": {"modules": [{"moduleId": "module-transfer-case-management-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-transfer-case-management-service", "name": "Transfer case management service", "type": "service", "description": "Coordinates request evidence, parties, due diligence, approvals, and registry updates."}]}], "dataDependencies": [{"assetId": "registry-request", "moduleIds": ["module-transfer-case-management-service"], "role": "write", "description": "Stores transfer and merger request evidence and decision state."}, {"assetId": "number-resource-record", "moduleIds": ["module-transfer-case-management-service"], "role": "write", "description": "Updates holder, status, and registry metadata when approved."}], "brickDependencies": [{"targetBrickId": "memb", "moduleId": "module-member-lifecycle-service", "sourceModuleId": "module-transfer-case-management-service", "type": "risk-control", "description": "Uses member account, role, and documentation state before registry state changes."}], "externalSystemsThisBrickDependsOn": [{"system": "Peer RIR transfer systems", "type": "registry-coordination", "interface": "Inter-RIR transfer coordination", "description": "Coordinates transfers when resources move between RIR service regions.", "sourceModuleId": "module-transfer-case-management-service"}], "externalSystemsDependingOnThisBrick": [], "domain": "Registry Resource Management", "group": "Transfers and Registry Quality"}, {"id": "bill", "name": "Billing and Charging Scheme", "type": "service", "status": "sustaining", "description": "Implements annual contributions, sign-up fees, independent resource charges, ASN charges, invoices, payments, and redistribution logic.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-billing-account-api", "name": "Billing account API", "type": "api", "description": "Invoice, payment, and fee status interface for portal and finance operations.", "dependencies": {"modules": [{"moduleId": "module-billing-calculation-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-billing-calculation-service", "name": "Billing calculation service", "type": "service", "description": "Calculates fees based on charging scheme, LIR accounts, independent resources, and ASNs."}]}], "dataDependencies": [{"assetId": "billing-account", "moduleIds": ["module-billing-calculation-service"], "role": "write", "description": "Maintains invoice, fee, balance, and payment status."}], "brickDependencies": [{"targetBrickId": "memb", "moduleId": "module-member-lifecycle-service", "sourceModuleId": "module-billing-calculation-service", "type": "composition", "description": "Uses active member and resource-holder state to calculate charges."}], "externalSystemsThisBrickDependsOn": [{"system": "Payment and finance systems", "type": "enterprise-integration", "interface": "invoice and payment integration", "description": "Exchanges invoice, receipt, tax, and payment status data.", "sourceModuleId": "module-billing-calculation-service"}], "externalSystemsDependingOnThisBrick": [], "domain": "Member Services and Governance", "group": "Membership Operations"}, {"id": "v4al", "name": "IPv4 Allocation and Waiting List", "type": "full-stack", "status": "sustaining", "description": "Handles scarce IPv4 allocation, /24 waiting list progression, eligibility checks, queue transparency, and member notifications.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-ipv4-request-and-waiting-list-api", "name": "IPv4 request and waiting list API", "type": "api", "description": "Programmatic and LIR Portal interface for IPv4 request status and allocation actions.", "dependencies": {"modules": [{"moduleId": "module-ipv4-allocation-workflow-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-ipv4-allocation-workflow-service", "name": "IPv4 allocation workflow service", "type": "service", "description": "Evaluates requests, queue state, eligibility, returned address pools, and allocation outcomes."}]}], "dataDependencies": [{"assetId": "number-resource-record", "moduleIds": ["module-ipv4-allocation-workflow-service"], "role": "write", "description": "Creates and updates IPv4 resource registration records."}, {"assetId": "audit-log", "moduleIds": ["module-ipv4-allocation-workflow-service"], "role": "publish", "description": "Publishes audit events for allocation decisions."}], "brickDependencies": [{"targetBrickId": "memb", "moduleId": "module-membership-api", "sourceModuleId": "module-ipv4-request-and-waiting-list-api", "type": "eligibility", "description": "Uses member account standing and LIR account state to validate request eligibility."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Registry Resource Management", "group": "Allocation and Assignment"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "registry-resource-management-transfers-and-registry-quality-3", "teamName": "Registry Resource Management Resource Transfers and Mergers", "teamType": "platform", "groupId": "registry-resource-management", "groupName": "Registry Resource Management", "role": "owner", "roleLabel": "Owner"}, {"teamId": "member-services-and-governance-membership-operations", "teamName": "Member Services and Governance Billing and Charging Scheme", "teamType": "platform", "groupId": "member-services-and-governance", "groupName": "Member Services and Governance", "role": "owner", "roleLabel": "Owner"}, {"teamId": "registry-resource-management-team", "teamName": "Registry Resource Management Team", "teamType": "stream-aligned", "groupId": "registry-resource-management", "groupName": "Registry Resource Management", "role": "supporting", "roleLabel": "Supporting team"}, {"teamId": "registry-resource-management-allocation-and-assignment-2", "teamName": "Registry Resource Management IPv4 Allocation and Waiting List", "teamType": "platform", "groupId": "registry-resource-management", "groupName": "Registry Resource Management", "role": "owner", "roleLabel": "Owner"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

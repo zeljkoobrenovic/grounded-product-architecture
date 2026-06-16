@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "buy-and-fulfill-omnichannel", "name": "Buy and Fulfill Omnichannel", "icon": "buy-and-fulfill-omnichannel.png", "type": "outcome-based-stream", "description": "Let customers complete a purchase through web, app, store, assisted checkout, pickup, or delivery while preserving availability and promise accuracy.", "group": "Commerce and Operations", "rootGroup": "Commerce and Operations", "flows": [{"id": "buy-and-fulfill-omnichannel-flow", "title": "Buy and Fulfill Omnichannel", "description": "From checkout intent to fulfilled order and recovery.", "steps": [{"id": "validate-basket-payment-and-risk", "title": "Validate basket, payment, and risk", "dependencies": [{"type": "brick", "id": "cart", "name": "Cart and Checkout", "description": "Cart and checkout orchestration.", "how": "Coordinates purchase state and order creation."}, {"type": "brick", "id": "paym", "name": "Payments and Fraud Controls", "description": "Payment authorization and fraud controls.", "how": "Keeps premium orders payable and safe."}, {"type": "brick", "id": "risk", "name": "Commerce Risk and Abuse", "description": "Abuse and risk policy decisions.", "how": "Protects margin and customer trust."}]}, {"id": "reserve-and-recover", "title": "Reserve and recover", "dependencies": [{"type": "brick", "id": "fulf", "name": "Fulfillment Promise and Delivery", "description": "Delivery and pickup promise calculation.", "how": "Creates reliable delivery and pickup commitments."}]}]}], "outcomes": ["Higher checkout completion", "Lower gift and delivery contact rate"], "brickDependencies": [{"targetBrickId": "cart", "type": "composition"}, {"targetBrickId": "paym", "type": "composition"}, {"targetBrickId": "taxf", "type": "composition"}, {"targetBrickId": "risk", "type": "composition"}, {"targetBrickId": "fulf", "type": "composition"}], "externalSystemsThisStreamDependsOn": [{"externalSystemId": "payment-service-provider", "name": "Payment Service Provider", "relationship": "uses"}, {"externalSystemId": "tax-engine", "name": "Tax Engine", "relationship": "uses"}], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "cart", "name": "Cart and Checkout", "type": "full-stack", "status": "sustaining", "description": "Cart, checkout, address, delivery choice, pickup, gift options, promotion application, and order placement.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-cart-ui", "name": "Cart UI", "type": "web-component", "description": "Cart and checkout front end across web and app.", "dependencies": {"modules": [{"moduleId": "module-checkout-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-checkout-api", "name": "Checkout API", "type": "api", "description": "Creates and validates checkout sessions.", "dependencies": {"modules": [{"moduleId": "module-checkout-orchestration", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-checkout-ui", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-checkout-orchestration", "name": "Checkout orchestration", "type": "service", "description": "Coordinates basket, price, taxes, payment, inventory, and fulfillment promise."}, {"id": "module-checkout-ui", "name": "Checkout UI", "type": "service", "description": "Customer-facing cart and checkout experience."}]}], "dataDependencies": [{"assetId": "checkout-session", "moduleIds": ["module-checkout-orchestration", "module-checkout-ui"], "role": "own", "description": "Owns active checkout and cart session state."}], "brickDependencies": [{"targetBrickId": "paym", "moduleId": "module-payment-api", "sourceModuleId": "module-checkout-orchestration", "type": "payment", "description": "Requests payment authorization and capture."}, {"targetBrickId": "fulf", "moduleId": "module-fulfillment-promise-api", "sourceModuleId": "module-checkout-orchestration", "type": "promise", "description": "Requires delivery and pickup promise options."}, {"targetBrickId": "prom", "moduleId": "module-promotion-api", "sourceModuleId": "module-checkout-orchestration", "type": "pricing", "description": "Applies promotions and explains savings."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Checkout and order control"}, {"id": "paym", "name": "Payments and Fraud Controls", "type": "integration", "status": "sustaining", "description": "Payment authorization, capture, wallets, gift cards, refund initiation, payment failure recovery, and fraud screening.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-payment-api", "name": "Payment API", "type": "api", "description": "Payment authorization, capture, refund, and failure events.", "dependencies": {"modules": [{"moduleId": "module-fraud-decision-adapter", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-fraud-decision-adapter", "name": "Fraud decision adapter", "type": "service", "description": "Coordinates risk checks and manual review state.", "dependencies": {"modules": [{"moduleId": "module-payment-gateway-adapter", "type": "integrates", "description": "Service module uses the integration adapter for external-system communication."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-payment-gateway-adapter", "name": "Payment gateway adapter", "type": "integration", "description": "Normalizes payment provider interactions."}]}], "dataDependencies": [{"assetId": "payment-transaction", "moduleIds": ["module-fraud-decision-adapter"], "role": "own", "description": "Owns payment transaction and refund state."}], "brickDependencies": [{"targetBrickId": "risk", "moduleId": "module-risk-decision-api", "sourceModuleId": "module-fraud-decision-adapter", "type": "risk", "description": "Uses risk scoring before capture or fulfillment."}], "externalSystemsThisBrickDependsOn": [{"system": "payment-service-provider", "description": "Card, wallet, and local payment processing.", "sourceModuleId": "module-payment-gateway-adapter"}], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Checkout and order control"}, {"id": "taxf", "name": "Tax and Fiscal Receipt", "type": "integration", "status": "sustaining", "description": "Tax calculation, fiscal receipt issuance, invoice logic, VAT handling, and market-specific fiscal compliance.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-tax-api", "name": "Tax API", "type": "api", "description": "Calculates tax and returns fiscal receipt state.", "dependencies": {"modules": [{"moduleId": "module-fiscal-receipt-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-fiscal-receipt-service", "name": "Fiscal receipt service", "type": "service", "description": "Produces invoices, fiscal receipts, and audit references.", "dependencies": {"modules": [{"moduleId": "module-tax-calculation-adapter", "type": "integrates", "description": "Service module uses the integration adapter for external-system communication."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-tax-calculation-adapter", "name": "Tax calculation adapter", "type": "integration", "description": "Integrates regional tax calculation and VAT rules."}]}], "dataDependencies": [{"assetId": "tax-record", "moduleIds": ["module-fiscal-receipt-service"], "role": "own", "description": "Owns tax calculation and receipt records."}], "brickDependencies": [{"targetBrickId": "pric", "moduleId": "module-pricing-api", "sourceModuleId": "module-fiscal-receipt-service", "type": "pricing", "description": "Uses price, discount, and shipping information for tax."}], "externalSystemsThisBrickDependsOn": [{"system": "tax-engine", "description": "Regional tax calculation and compliance provider.", "sourceModuleId": "module-tax-calculation-adapter"}], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Checkout and order control"}, {"id": "risk", "name": "Commerce Risk and Abuse", "type": "service", "status": "sustaining", "description": "Fraud, promo abuse, account takeover, refund abuse, bot traffic, and unusual basket behavior controls.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-risk-decision-api", "name": "Risk decision API", "type": "api", "description": "Returns allow, challenge, review, or block decisions.", "dependencies": {"modules": [{"moduleId": "module-risk-scoring-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-risk-scoring-service", "name": "Risk scoring service", "type": "service", "description": "Scores order, account, promotion, and payment risk."}]}], "dataDependencies": [{"assetId": "risk-decision", "moduleIds": ["module-risk-scoring-service"], "role": "own", "description": "Owns fraud and abuse decisions."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-identity-api", "sourceModuleId": "module-risk-scoring-service", "type": "identity", "description": "Uses identity and session information for risk decisions."}, {"targetBrickId": "data", "moduleId": "module-insight-api", "sourceModuleId": "module-risk-scoring-service", "type": "signal", "description": "Uses behavior and order pattern signals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Checkout and order control"}, {"id": "fulf", "name": "Fulfillment Promise and Delivery", "type": "integration", "status": "sustaining", "description": "Ship-from-warehouse, ship-from-store, buy-online-pickup-in-store, carrier promise, gift deadlines, hotel replenishment, and delivery exception handling.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-fulfillment-promise-api", "name": "Fulfillment promise API", "type": "api", "description": "Returns delivery and pickup options with expected dates.", "dependencies": {"modules": [{"moduleId": "module-fulfillment-option-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-fulfillment-option-service", "name": "Fulfillment option service", "type": "service", "description": "Calculates delivery, pickup, and reserve options by basket and location.", "dependencies": {"modules": [{"moduleId": "module-carrier-event-adapter", "type": "integrates", "description": "Service module uses the integration adapter for external-system communication."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-carrier-event-adapter", "name": "Carrier event adapter", "type": "integration", "description": "Normalizes carrier tracking and exception events."}]}], "dataDependencies": [{"assetId": "fulfillment-promise", "moduleIds": ["module-fulfillment-option-service"], "role": "own", "description": "Owns delivery, pickup, and carrier promise state."}], "brickDependencies": [{"targetBrickId": "invt", "moduleId": "module-availability-api", "sourceModuleId": "module-fulfillment-option-service", "type": "inventory", "description": "Uses availability and reservations to promise fulfillment."}, {"targetBrickId": "stoc", "moduleId": "module-store-availability-api", "sourceModuleId": "module-fulfillment-option-service", "type": "store", "description": "Uses store inventory and capacity for pickup promises."}], "externalSystemsThisBrickDependsOn": [{"system": "carrier-network", "description": "Parcel, postal, and local delivery carriers.", "sourceModuleId": "module-carrier-event-adapter"}, {"system": "warehouse-management-system", "description": "Warehouse pick, pack, and ship operations.", "sourceModuleId": "module-carrier-event-adapter"}], "externalSystemsDependingOnThisBrick": [], "domain": "Commerce and Fulfillment", "group": "Inventory and fulfillment"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "commerce-operations-checkout-and-order-control", "teamName": "Commerce Operations Cart and Checkout", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "commerce-operations-checkout-and-order-control-3", "teamName": "Commerce Operations Order State and Notifications and Payments and Fraud Controls", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "commerce-operations-commerce-and-fulfillment", "teamName": "Commerce Operations Tax and Fiscal Receipt and Care, Returns and Recovery", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "commerce-operations-checkout-and-order-control-2", "teamName": "Commerce Operations Commerce Risk and Abuse", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "commerce-operations-inventory-and-fulfillment", "teamName": "Commerce Operations Fulfillment Promise and Delivery", "teamType": "stream-aligned", "groupId": "commerce-operations", "groupName": "Commerce Operations", "role": "owner", "roleLabel": "Owner"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

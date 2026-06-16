@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "request-and-maintain-number-resources", "name": "Request and Maintain Number Resources", "icon": "request-and-maintain-number-resources.png", "type": "outcome-based-stream", "description": "Support IPv4, IPv6, and AS Number request, assignment, update, reverse DNS, and registry data maintenance workflows.", "group": "Registry and Routing Trust Journeys", "rootGroup": "Registry and Routing Trust Journeys", "flows": [{"id": "request-and-maintain-number-resources-flow", "title": "Request and Maintain Number Resources", "description": "Progress from resource need to registered, delegated, and maintained resource state.", "steps": [{"id": "prepare-resource-case", "title": "Prepare resource case", "keyFacts": ["The operator must know which resource type fits the business need and which evidence is required."], "painPoints": ["Incomplete justification, unclear contacts, and missing network plans slow the request."], "dependencies": [{"type": "brick", "id": "asnr", "name": "AS Number Registry", "description": "Supports ASN requests and routing reference state.", "how": "Captures routing independence and ASN assignment details."}]}, {"id": "register-and-delegate", "title": "Register and delegate", "keyFacts": ["Registry, reverse DNS, and abuse contact state must be consistent before production use."], "painPoints": ["Operators lose trust when registry and DNS state diverge or contacts are stale."], "dependencies": [{"type": "brick", "id": "abus", "name": "Abuse Contact Registry", "description": "Maintains abuse contact records.", "how": "Keeps incident routing contact data usable."}]}, {"id": "review-and-correct", "title": "Review and correct", "keyFacts": ["Periodic review is needed to keep registry data trustworthy after organization and network changes."], "painPoints": ["Data quality degrades when member records are updated only during emergencies."], "dependencies": [{"type": "brick", "id": "arcx", "name": "Assisted Registry Check", "description": "Reviews registry accuracy and drives remediation.", "how": "Closes the loop between records, contacts, and member operations."}]}]}], "outcomes": ["Accurate Internet number registry records", "Faster resource request turnaround", "Lower avoidable support escalation"], "brickDependencies": [{"targetBrickId": "asnr", "type": "composition"}, {"targetBrickId": "arcx", "type": "quality"}, {"targetBrickId": "abus", "type": "quality"}], "externalSystemsThisStreamDependsOn": [{"system": "Member network planning and DNS systems", "type": "operator-integration", "interface": "address plans, route plans, authoritative DNS", "description": "Provide source evidence and operational configuration for registered resources."}], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "asnr", "name": "AS Number Registry", "type": "service", "status": "invest", "description": "Assigns and maintains AS Numbers, routing policy references, ASN fee status, and registry data quality controls.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-as-number-registry-api", "name": "AS Number Registry API", "type": "api", "description": "API used by portal, Whois, and routing security workflows to validate AS Number state.", "dependencies": {"modules": [{"moduleId": "module-asn-lifecycle-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-asn-lifecycle-service", "name": "ASN lifecycle service", "type": "service", "description": "Manages ASN request, assignment, sponsorship, update, and retirement workflows."}]}], "dataDependencies": [{"assetId": "number-resource-record", "moduleIds": ["module-asn-lifecycle-service"], "role": "write", "description": "Creates and updates AS Number registration records."}], "brickDependencies": [{"targetBrickId": "rpki", "moduleId": "module-hosted-ca-service", "sourceModuleId": "module-asn-lifecycle-service", "type": "trust", "description": "Provides ASN context used in certification and routing authorization workflows."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Registry Resource Management", "group": "Allocation and Assignment"}, {"id": "arcx", "name": "Assisted Registry Check", "type": "service", "status": "invest", "description": "Provides proactive registry data reviews, member guidance, correction tracking, and evidence of registry accuracy improvement.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-arc-operations-dashboard", "name": "ARC operations dashboard", "type": "web-component", "description": "Internal and member-facing surface for registry review status and actions.", "dependencies": {"modules": [{"moduleId": "module-arc-review-workflow", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-arc-review-workflow", "name": "ARC review workflow", "type": "service", "description": "Schedules reviews, tracks issues, records member responses, and closes remediation items."}]}], "dataDependencies": [{"assetId": "registry-request", "moduleIds": ["module-arc-review-workflow"], "role": "write", "description": "Stores ARC review findings and remediation state."}], "brickDependencies": [{"targetBrickId": "lirp", "moduleId": "module-lir-portal-application", "sourceModuleId": "module-arc-operations-dashboard", "type": "composition", "description": "Publishes correction tasks into the member portal."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Registry Resource Management", "group": "Transfers and Registry Quality"}, {"id": "abus", "name": "Abuse Contact Registry", "type": "service", "status": "invest", "description": "Maintains abuse-c contact data, validation workflows, and consumer access paths for incident reporters and network operators.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-abuse-contact-lookup-api", "name": "Abuse contact lookup API", "type": "api", "description": "Lookup and validation interface for abuse contact information.", "dependencies": {"modules": [{"moduleId": "module-abuse-contact-validation-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-abuse-contact-validation-service", "name": "Abuse contact validation service", "type": "service", "description": "Checks contact existence, freshness, and validation outcomes for registered resources."}]}], "dataDependencies": [{"assetId": "abuse-contact-record", "moduleIds": ["module-abuse-contact-validation-service"], "role": "write", "description": "Maintains abuse contact state tied to number resources."}], "brickDependencies": [{"targetBrickId": "stat", "moduleId": "module-ripestat-api-and-widgets", "sourceModuleId": "module-abuse-contact-validation-service", "type": "data-publishing", "description": "Makes abuse contact signals visible in public lookup and analysis tools."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [{"system": "Incident response and abuse reporting tools", "type": "external-consumer", "interface": "Whois and API lookup", "description": "Use abuse contact data to route incident reports.", "moduleId": "module-abuse-contact-lookup-api"}], "domain": "Registry Resource Management", "group": "Transfers and Registry Quality"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "registry-resource-management-allocation-and-assignment", "teamName": "Registry Resource Management AS Number Registry", "teamType": "platform", "groupId": "registry-resource-management", "groupName": "Registry Resource Management", "role": "owner", "roleLabel": "Owner"}, {"teamId": "registry-resource-management-transfers-and-registry-quality-2", "teamName": "Registry Resource Management Assisted Registry Check", "teamType": "platform", "groupId": "registry-resource-management", "groupName": "Registry Resource Management", "role": "owner", "roleLabel": "Owner"}, {"teamId": "registry-resource-management-transfers-and-registry-quality", "teamName": "Registry Resource Management Abuse Contact Registry", "teamType": "platform", "groupId": "registry-resource-management", "groupName": "Registry Resource Management", "role": "owner", "roleLabel": "Owner"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

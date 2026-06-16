@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "run-reliable-rider-and-driver-mobile-app-experiences", "name": "Run Reliable Rider and Driver Mobile App Experiences", "icon": "run-reliable-rider-and-driver-mobile-app-experiences.png", "type": "outcome-based-stream", "description": "Help the marketplace deliver fast, synchronized, observable, and consistently instrumented mobile experiences for riders and drivers across network conditions and app surfaces.", "group": "Platform Foundations", "rootGroup": "Platform Foundations", "flows": [{"id": "run-reliable-rider-and-driver-mobile-app-experiences-flow", "title": "Run Reliable Rider and Driver Mobile App Experiences", "description": "Help the marketplace deliver fast, synchronized, observable mobile experiences for riders and drivers across network conditions.", "steps": [{"id": "keep-apps-synchronized", "title": "Keep apps synchronized in real time", "keyFacts": ["Pickup, route, and support flows degrade quickly when app state lags backend state.", "Realtime messaging and failover behavior are part of the product experience, not only infrastructure.", "Shared mobile analytics contracts are needed to compare rider and driver funnels across iOS, Android, and web-adjacent surfaces."], "painPoints": ["Polling or weak connection management creates stale rider and driver state.", "Network outages are customer-visible if failover is not handled in the app stack."], "dependencies": [{"type": "brick", "id": "trip", "name": "Trip Request and Intent Capture", "description": "Provides trip state and lifecycle context.", "how": "Uses Trip Request and Intent Capture as the underlying trip state that must be reflected cleanly in the app."}]}, {"id": "instrument-and-diagnose-mobile-flows", "title": "Instrument and diagnose mobile flows", "keyFacts": ["Mobile reliability cannot be separated from analytics quality and client-to-edge observability.", "Generated funnel definitions and shared event schemas reduce instrumentation drift across platforms."], "painPoints": ["Different mobile platforms often report subtly different events for the same customer journey.", "Client networking failures are hard to debug when the mobile-to-edge hop is not observable."], "dependencies": []}]}], "outcomes": ["Lower app friction on critical trip flows", "Faster diagnosis of broken or degraded mobile experiences", "More trustworthy cross-platform mobile analytics"], "brickDependencies": [{"targetBrickId": "trip", "type": "composition"}], "externalSystemsThisStreamDependsOn": [], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "trip", "name": "Trip Request and Intent Capture", "type": "full-stack", "status": "sustaining", "description": "Captures rider pickup, destination, timing, ride type, account context, and trip intent before dispatch begins.", "links": [{"label": "The Architecture of Schemaless, Uber Engineering's Trip Datastore Using MySQL", "url": "https://www.uber.com/en-IT/blog/schemaless-part-two-architecture/", "note": "Explains the distributed trip datastore architecture behind core trip state."}, {"label": "Using Triggers On Schemaless, Uber Engineering's Datastore Using MySQL", "url": "https://www.uber.com/blog/schemaless-part-three-datastore-triggers/", "note": "Shows how trip lifecycle changes feed billing, workflow, and downstream processing."}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-request-ux-surface", "name": "Request UX Surface", "type": "web-component", "description": "Rider-facing request flow in mobile surfaces.", "dependencies": {"modules": [{"moduleId": "module-trip-request-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-trip-request-api", "name": "Trip Request API", "type": "api", "description": "API for creating and updating ride requests.", "dependencies": {"modules": [{"moduleId": "module-request-capture-and-validation", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-product-selection-logic", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-request-state-management", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-request-events", "name": "Request Events", "type": "message-consumer", "description": "Event stream for request creation, update, and cancellation.", "dependencies": {"modules": [{"moduleId": "module-request-capture-and-validation", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-product-selection-logic", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}, {"moduleId": "module-request-state-management", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-request-capture-and-validation", "name": "Request Capture and Validation", "type": "service", "description": "Validates trip inputs, eligibility, and account context."}, {"id": "module-product-selection-logic", "name": "Product Selection Logic", "type": "service", "description": "Determines which ride products and variants are offered for the requested trip."}, {"id": "module-request-state-management", "name": "Request State Management", "type": "service", "description": "Stores request lifecycle state before, during, and after dispatch."}]}], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-request-capture-and-validation", "module-product-selection-logic", "module-request-state-management"], "role": "own", "description": "Acts as the primary owning brick for Customer Profile."}, {"assetId": "customer-contact-point", "moduleIds": ["module-request-capture-and-validation", "module-product-selection-logic", "module-request-state-management"], "role": "write", "description": "Writes or updates Customer Contact Point during domain workflows."}, {"assetId": "consent-record", "moduleIds": ["module-request-capture-and-validation", "module-product-selection-logic", "module-request-state-management"], "role": "read", "description": "Reads Consent Record to support domain workflows."}, {"assetId": "trip-request-and-intent-capture", "moduleIds": ["module-request-capture-and-validation", "module-product-selection-logic", "module-request-state-management"], "role": "own", "description": "Acts as the primary owning brick for Trip Request And Intent Capture."}], "brickDependencies": [{"targetBrickId": "mapp", "moduleId": "module-mobile-experience-sdk", "sourceModuleId": "module-request-capture-and-validation", "type": "mobile-surface", "description": "Depends on Mobile App Experience Platform for realtime client state, analytics instrumentation, and resilient trip-request surfaces."}, {"targetBrickId": "capi", "moduleId": "module-client-experience-api", "sourceModuleId": "module-trip-request-api", "type": "client-api", "description": "Depends on Client API Composition and Server-Driven Experience to assemble rider-facing view models and action contracts without forcing mobile apps to own marketplace orchestration details."}, {"targetBrickId": "pric", "moduleId": "module-quote-api", "sourceModuleId": "module-trip-request-api", "type": "pricing", "description": "Depends on Dynamic Pricing and Incentives for upfront fare and offer packaging."}, {"targetBrickId": "ridp", "moduleId": "module-identity-and-billing-api", "sourceModuleId": "module-trip-request-api", "type": "identity", "description": "Depends on Rider Identity, Wallet and Payments for account, wallet, and billing context."}], "externalSystemsThisBrickDependsOn": [{"system": "Maps and geocoding providers", "type": "data", "interface": "Location API", "description": "Supports address normalization and pickup or destination interpretation.", "sourceModuleId": "module-request-capture-and-validation"}], "externalSystemsDependingOnThisBrick": [{"system": "Rider applications", "type": "channel-consumer", "interface": "Trip Request API", "description": "Rider clients depend on request capture to start trips.", "moduleId": "module-trip-request-api"}], "domain": "Rider Demand and Trip Experience", "group": "request-and-choice"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "rider-growth-request-and-choice", "teamName": "Rider Growth and Trip Experience Trip Request and Intent Capture", "teamType": "stream-aligned", "groupId": "rider-growth", "groupName": "Rider Growth and Trip Experience", "role": "owner", "roleLabel": "Owner"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

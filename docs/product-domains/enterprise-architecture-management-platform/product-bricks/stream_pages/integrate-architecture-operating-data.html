@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "integrate-architecture-operating-data", "name": "Integrate Architecture Operating Data", "icon": "integrate-architecture-operating-data.png", "type": "outcome-based-stream", "description": "Connect architecture models to operational systems so data quality, freshness, and source lineage can be governed over time.", "group": "Architecture and Transformation Journeys", "rootGroup": "Architecture and Transformation Journeys", "flows": [{"id": "integrate-architecture-operating-data-flow", "title": "Integrate Architecture Operating Data", "description": "Create trustworthy pipelines from operational systems into the architecture model.", "steps": [{"id": "connect-sources", "title": "Connect sources", "keyFacts": ["Architecture data comes from many systems with different owners and quality levels."], "painPoints": ["Manual imports cannot keep up with fast-changing application and technology estates."], "dependencies": [{"type": "brick", "id": "sync", "name": "Source System Synchronization", "description": "Runs connector syncs and preserves source lineage.", "how": "Keeps source data flowing."}]}, {"id": "map-and-validate", "title": "Map and validate", "keyFacts": ["Data mapping must be visible and correctable by architecture administrators."], "painPoints": ["Silent mapping errors create false confidence in dashboards and impact analysis."], "dependencies": [{"type": "brick", "id": "qual", "name": "Architecture Data Quality Monitor", "description": "Scores freshness, completeness, and confidence.", "how": "Identifies quality gaps before users rely on the data."}]}, {"id": "operate-freshness", "title": "Operate freshness", "keyFacts": ["Data freshness needs operational monitoring, not one-time migration validation."], "painPoints": ["Architecture trust erodes when source syncs fail silently."], "dependencies": [{"type": "brick", "id": "repo", "name": "Architecture Repository", "description": "Maintains the current architecture graph.", "how": "Receives validated operating data."}]}]}], "outcomes": ["Higher model freshness", "Lower manual data collection effort"], "brickDependencies": [{"targetBrickId": "sync", "type": "composition"}, {"targetBrickId": "repo", "type": "composition"}, {"targetBrickId": "qual", "type": "composition"}], "externalSystemsThisStreamDependsOn": [{"system": "ITSM, CMDB, cloud, SPM, security, HR, finance, and procurement systems", "type": "enterprise-integration", "interface": "REST APIs, webhooks, file imports, and secure connectors", "description": "Provide operating data used for architecture insight."}], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "sync", "name": "Source System Synchronization", "type": "integration", "status": "invest", "description": "Scheduled and event-driven connectors for ITSM, CMDB, SPM, cloud, security, ERP, HR, and finance systems.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-connector-configuration-api", "name": "Connector Configuration API", "type": "api", "description": "Manage source connections, schedules, credentials, and field mappings.", "dependencies": {"modules": [{"moduleId": "module-connector-orchestration-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-connector-orchestration-service", "name": "Connector orchestration service", "type": "service", "description": "Runs incremental syncs, handles retries, and preserves source lineage."}]}], "dataDependencies": [{"assetId": "integration-telemetry", "moduleIds": ["module-connector-orchestration-service"], "role": "publish", "description": "Publishes connector freshness and mapping drift events."}], "brickDependencies": [{"targetBrickId": "repo", "moduleId": "module-architecture-graph-api", "sourceModuleId": "module-connector-orchestration-service", "type": "composition"}, {"targetBrickId": "qual", "moduleId": "module-model-quality-api", "sourceModuleId": "module-connector-orchestration-service", "type": "feedback"}], "externalSystemsThisBrickDependsOn": [{"system": "ServiceNow, Jira, Azure, AWS, SAP, Microsoft 365, identity, and finance systems", "type": "enterprise-integration", "interface": "REST APIs, webhooks, secure connectors", "description": "Provide operating data used to keep architecture models current.", "sourceModuleId": "module-connector-orchestration-service"}], "externalSystemsDependingOnThisBrick": [], "domain": "Architecture Knowledge Graph", "group": "Data Intake and Metamodel"}, {"id": "repo", "name": "Architecture Repository", "type": "service", "status": "sustaining", "description": "Tenant-isolated graph repository for architecture objects, relationships, versions, and evidence references.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-architecture-graph-api", "name": "Architecture Graph API", "type": "api", "description": "Query and mutation API for architecture graph content.", "dependencies": {"modules": [{"moduleId": "module-graph-persistence-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-graph-persistence-service", "name": "Graph persistence service", "type": "service", "description": "Stores and retrieves object and relationship graphs at enterprise scale."}]}], "dataDependencies": [{"assetId": "architecture-object", "moduleIds": ["module-graph-persistence-service"], "role": "store", "description": "Stores canonical architecture objects."}, {"assetId": "model-relationship", "moduleIds": ["module-graph-persistence-service"], "role": "store", "description": "Stores canonical architecture relationships."}], "brickDependencies": [{"targetBrickId": "meta", "moduleId": "module-metamodel-admin-api", "sourceModuleId": "module-graph-persistence-service", "type": "foundation"}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Architecture Knowledge Graph", "group": "Data Intake and Metamodel"}, {"id": "qual", "name": "Architecture Data Quality Monitor", "type": "service", "status": "invest", "description": "Completeness, freshness, ownership, source lineage, validation, duplicate, and confidence scoring for architecture data.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-model-quality-api", "name": "Model Quality API", "type": "api", "description": "Model health and data quality score interface.", "dependencies": {"modules": [{"moduleId": "module-model-quality-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-model-quality-service", "name": "Model quality service", "type": "service", "description": "Computes data quality scores and improvement queues for architecture content."}]}], "dataDependencies": [{"assetId": "integration-telemetry", "moduleIds": ["module-model-quality-service"], "role": "read", "description": "Uses sync freshness and error signals for model quality."}], "brickDependencies": [{"targetBrickId": "repo", "moduleId": "module-architecture-graph-api", "sourceModuleId": "module-model-quality-service", "type": "composition"}, {"targetBrickId": "sync", "moduleId": "module-connector-configuration-api", "sourceModuleId": "module-model-quality-service", "type": "feedback"}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Portfolio Intelligence", "group": "Dependency and Impact Analytics"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "knowledge-graph-platform-data-intake-and-metamodel-2", "teamName": "Knowledge Graph Platform Source System Synchronization", "teamType": "platform", "groupId": "knowledge-graph-platform", "groupName": "Knowledge Graph Platform", "role": "owner", "roleLabel": "Owner"}, {"teamId": "integrations-data-quality", "teamName": "Integrations and Data Quality", "teamType": "platform", "groupId": "knowledge-graph-platform", "groupName": "Knowledge Graph Platform", "role": "owner", "roleLabel": "Owner"}, {"teamId": "knowledge-graph-platform-dependency-and-impact-analytics", "teamName": "Knowledge Graph Platform Architecture Data Quality Monitor", "teamType": "platform", "groupId": "knowledge-graph-platform", "groupName": "Knowledge Graph Platform", "role": "owner", "roleLabel": "Owner"}, {"teamId": "collaboration-and-ai", "teamName": "Collaboration and AI", "teamType": "stream-aligned", "groupId": "engagement-and-trust", "groupName": "Engagement and Trust", "role": "supporting", "roleLabel": "Supporting team"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>
@@ -1102,7 +1139,7 @@
 
 
 <script>
-    const evidence = {"objectId": "integrate-architecture-operating-data", "tabs": [{"label": "Example Evidence", "groups": [{"name": "Source system integration", "description": "Representative evidence for file import, API connectors, source freshness, mapping telemetry, and operational data lineage.", "fragments": [{"id": "aws/Account 007", "type": "aws-account-cost", "icon": "evidence-aws.png", "title": "Account 007", "description": "AWS account cost evidence for Account 007. Latest observed month: 2026-02. Latest monthly cost: 2574.02.", "facts": [{"value": 2574.02, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}, {"value": 30786.51, "label": "observed total cost"}, {"value": 3514.41, "label": "peak monthly cost"}, {"value": "2025-04", "label": "peak month"}, {"value": 0.1339, "label": "observed total usage"}, {"value": 12, "label": "months observed"}], "links": [], "tags": ["aws", "account-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "source synchronization and import services"}, {"id": "aws/Account 008", "type": "aws-account-cost", "icon": "evidence-aws.png", "title": "Account 008", "description": "AWS account cost evidence for Account 008. Latest observed month: 2026-02. Latest monthly cost: 2510.12.", "facts": [{"value": 2510.12, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}, {"value": 28698.64, "label": "observed total cost"}, {"value": 3526.44, "label": "peak monthly cost"}, {"value": "2026-01", "label": "peak month"}, {"value": 0.1285, "label": "observed total usage"}, {"value": 12, "label": "months observed"}], "links": [], "tags": ["aws", "account-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "source synchronization and import services"}, {"id": "aws/Account 009", "type": "aws-account-cost", "icon": "evidence-aws.png", "title": "Account 009", "description": "AWS account cost evidence for Account 009. Latest observed month: 2026-02. Latest monthly cost: 1362.34.", "facts": [{"value": 1362.34, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}, {"value": 25241.31, "label": "observed total cost"}, {"value": 2695.98, "label": "peak monthly cost"}, {"value": "2025-03", "label": "peak month"}, {"value": 0.1094, "label": "observed total usage"}, {"value": 12, "label": "months observed"}], "links": [], "tags": ["aws", "account-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "source synchronization and import services"}, {"id": "gcp/Project 005", "type": "gcp-project-cost", "icon": "evidence-gcp.png", "title": "Project 005", "description": "GCP project cost evidence for Project 005 based on the latest observed month 2026-02 with cost 4173.96.", "facts": [{"value": 4173.96, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}, {"value": 121418.17, "label": "observed total cost"}, {"value": 8346.39, "label": "peak monthly cost"}, {"value": "2024-04", "label": "peak month"}, {"value": 25, "label": "months observed"}], "links": [], "tags": ["gcp", "project-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "integration staging and transformation jobs"}, {"id": "gcp/Project 006", "type": "gcp-project-cost", "icon": "evidence-gcp.png", "title": "Project 006", "description": "GCP project cost evidence for Project 006 based on the latest observed month 2026-02 with cost 3143.04.", "facts": [{"value": 3143.04, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}, {"value": 88662.45, "label": "observed total cost"}, {"value": 4457.72, "label": "peak monthly cost"}, {"value": "2024-07", "label": "peak month"}, {"value": 25, "label": "months observed"}], "links": [], "tags": ["gcp", "project-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "integration staging and transformation jobs"}]}, {"name": "Freshness and mapping operations", "description": "KTLO evidence for connector reliability, mapping error reduction, and data-quality incident response.", "fragments": []}]}]};
+    const evidence = {"objectId": "integrate-architecture-operating-data", "tabs": [{"label": "Example Evidence", "groups": [{"name": "Source system integration", "description": "Representative evidence for file import, API connectors, source freshness, mapping telemetry, and operational data lineage.", "fragments": [{"id": "aws/Account 007", "type": "aws-account-cost", "icon": "evidence-aws.png", "title": "Account 007", "description": "", "facts": [{"value": 2574.02, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}], "links": [], "tags": ["aws", "account-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "source synchronization and import services"}, {"id": "aws/Account 008", "type": "aws-account-cost", "icon": "evidence-aws.png", "title": "Account 008", "description": "", "facts": [{"value": 2510.12, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}], "links": [], "tags": ["aws", "account-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "source synchronization and import services"}, {"id": "aws/Account 009", "type": "aws-account-cost", "icon": "evidence-aws.png", "title": "Account 009", "description": "", "facts": [{"value": 1362.34, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}], "links": [], "tags": ["aws", "account-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "source synchronization and import services"}, {"id": "gcp/Project 005", "type": "gcp-project-cost", "icon": "evidence-gcp.png", "title": "Project 005", "description": "GCP project cost evidence for Project 005 based on the latest observed month 2026-02 with cost 4173.96.", "facts": [{"value": 4173.96, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}, {"value": 121418.17, "label": "observed total cost"}, {"value": 8346.39, "label": "peak monthly cost"}, {"value": "2024-04", "label": "peak month"}, {"value": 25, "label": "months observed"}], "links": [], "tags": ["gcp", "project-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "integration staging and transformation jobs"}, {"id": "gcp/Project 006", "type": "gcp-project-cost", "icon": "evidence-gcp.png", "title": "Project 006", "description": "GCP project cost evidence for Project 006 based on the latest observed month 2026-02 with cost 3143.04.", "facts": [{"value": 3143.04, "label": "latest monthly cost", "summable": true}, {"value": "2026-02", "label": "latest month"}, {"value": 88662.45, "label": "observed total cost"}, {"value": 4457.72, "label": "peak monthly cost"}, {"value": "2024-07", "label": "peak month"}, {"value": 25, "label": "months observed"}], "links": [], "tags": ["gcp", "project-cost"], "evidenceGroupTitle": "", "evidenceGroupDescription": "", "note": "integration staging and transformation jobs"}]}, {"name": "Freshness and mapping operations", "description": "KTLO evidence for connector reliability, mapping error reduction, and data-quality incident response.", "fragments": []}]}]};
     tabsNavigationId = 'primary_tabs';
     tabsContentId = 'tab_content_evidence';
 </script>

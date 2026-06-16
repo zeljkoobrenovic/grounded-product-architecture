@@ -23,6 +23,84 @@
         color: #343434;;
     }
 </style>
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
 
     <style>
         body {
@@ -112,38 +190,6 @@
             margin-bottom: 14px;
             max-width: 960px;
             line-height: 1.4;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .bricks-panel {
@@ -406,6 +452,22 @@
         .data-panel {
             padding: 18px;
             background-color: white;
+        }
+
+        .data-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .data-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4b5563;
+            cursor: pointer;
         }
 
         .data-summary {
@@ -800,11 +862,59 @@
             flex: 0 0 auto;
         }
 
+        .dependency-controls-column {
+            min-width: 0;
+        }
+
+        .dependency-labels-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
         .dependency-graph-summary {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .dependency-graph-summary strong {
+            color: #1f2937;
+        }
+
+        .dependency-view-toggle {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .dependency-view-btn {
+            border: 1px solid #d1d5db;
+            background-color: #f8fafc;
+            color: #4b5563;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .dependency-view-btn:hover {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .dependency-view-btn.active {
+            background-color: #202124;
+            border-color: #202124;
+            color: white;
         }
 
         .dependency-graph-stat {
@@ -841,7 +951,13 @@
             background-color: white;
             padding: 14px;
             overflow: auto;
-            min-height: 420px;
+            min-height: 560px;
+        }
+
+        .dependency-graph.force {
+            padding: 0;
+            overflow: hidden;
+            height: 620px;
         }
 
         .dependency-empty {
@@ -995,59 +1111,33 @@
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@1.51.4/dist/force-graph.min.js"></script>
     <script>
-        function initTab() {
-            if (window.location.hash) {
-                const tabName = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + tabName)) {
-                    openTab(tabName, {replaceHash: true, scrollToTop: true});
-                }
-            }
-        }
-
         function updateTabLabels() {
             const brickCount = getBrickCatalog().length;
             const streamCount = getStreamCatalogItems().length;
             const dataAssetCount = (dataAssetsPayload.assets || []).length;
-            document.getElementById('tab_BigPicture').textContent = 'Bricks (' + brickCount + ')';
-            document.getElementById('tab_Streams').textContent = 'Streams (' + streamCount + ')';
-            document.getElementById('tab_Data').textContent = 'Data (' + dataAssetCount + ')';
+            document.getElementById('tab_bricks').textContent = 'Bricks (' + brickCount + ')';
+            document.getElementById('tab_streams').textContent = 'Streams (' + streamCount + ')';
+            document.getElementById('tab_data').textContent = 'Data (' + dataAssetCount + ')';
         }
+
+        // The shared tabs script (_imports/tabs) calls this hook after a tab opens.
+        // Render the lazily-built views for the tab that just became visible.
+        window.afterOpenTab = function (tabName) {
+            if (tabName === 'dependencies') {
+                renderDependenciesView();
+            } else if (tabName === 'streams') {
+                renderStreamsView();
+            } else if (tabName === 'data') {
+                renderDataView();
+            }
+        };
 
         function scrollPageToTop() {
             window.scrollTo(0, 0);
             requestAnimationFrame(() => window.scrollTo(0, 0));
             setTimeout(() => window.scrollTo(0, 0), 0);
-        }
-
-        function openTab(tabName, options = {}) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            if (options.replaceHash) {
-                history.replaceState({}, '', '#' + tabName);
-            } else {
-                history.pushState({}, '', '#' + tabName);
-            }
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
-            if (tabName === 'Dependencies') {
-                renderDependenciesView();
-            }
-            if (tabName === 'Streams') {
-                renderStreamsView();
-            }
-            if (tabName === 'Data') {
-                renderDataView();
-            }
-            if (options.scrollToTop) {
-                scrollPageToTop();
-            }
         }
 
         const bricksPayload = {"metadata": {"title": "Product Bricks & Streams", "description": "Hierarchical product brick map for the technical-design-collaboration-platform domain.", "brickTypes": [{"id": "full-stack", "name": "full-stack brick", "color": "#b6d7a8ff"}, {"id": "service", "name": "service", "color": "#fff2ccff"}, {"id": "integration", "name": "complex integration", "color": "#ead1dcff"}, {"id": "development", "name": "development/design", "color": "#c9daf8ff"}, {"id": "other", "name": "other", "color": "#f3f3f3ff"}], "brickStatuses": [{"id": "invest", "name": "invest", "color": "blue"}, {"id": "sustaining", "name": "sustaining", "color": "#B8F4B8"}, {"id": "sunset", "name": "sunset", "color": "crimson"}], "modulesConfig": {"layerTypes": [{"id": "ui", "name": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "hostsModules": ["web-component", "mobile-component"]}, {"id": "interfaces", "name": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "hostsModules": ["bff", "api", "backoffice-interface"]}, {"id": "worker", "name": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "hostsModules": ["message-queue", "message-consumer", "daemon"]}, {"id": "stateless-service", "name": "stateless service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "hostsModules": ["stateless-service"]}, {"id": "service", "name": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "hostsModules": ["stateful-service", "service"]}, {"id": "integration", "name": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "hostsModules": ["integration"]}], "moduleTypes": [{"id": "web-component", "name": "web component", "description": "A browser-based user interface module.", "color": "#dbeafe"}, {"id": "mobile-component", "name": "mobile component", "description": "A mobile application user interface module.", "color": "#ede9fe"}, {"id": "bff", "name": "bff", "description": "A backend-for-frontend module that shapes APIs for a specific client experience.", "color": "#fef3c7"}, {"id": "api", "name": "api", "description": "A programmatic API module exposed to product clients, partners, or other systems.", "color": "#e0f2fe"}, {"id": "backoffice-interface", "name": "backoffice interface", "description": "An internal operations or administration interface module.", "color": "#fce7f3"}, {"id": "message-queue", "name": "message queue", "description": "A queue module used for asynchronous communication between modules or systems.", "color": "#ffedd5"}, {"id": "message-consumer", "name": "message consumer", "description": "A consumer module that processes messages or events in the worker layer.", "color": "#fef9c3"}, {"id": "daemon", "name": "daemon", "description": "A background worker or daemon module.", "color": "#e5e7eb"}, {"id": "stateless-service", "name": "stateless service", "description": "A service module that orchestrates work without owning durable state.", "color": "#ccfbf1"}, {"id": "stateful-service", "name": "stateful service", "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.", "color": "#dcfce7"}, {"id": "service", "name": "service", "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.", "color": "#d1fae5"}, {"id": "integration", "name": "integration", "description": "A connector or adapter module for an external system, partner, device, or platform.", "color": "#fae8ff"}]}}, "rootGroups": [{"name": "authoring_experience", "description": "", "subGroups": [{"name": "diagram_authoring", "description": "", "subGroups": [], "bricks": [{"id": "daco", "name": "Diagram as Code Engine", "type": "development", "status": "sustaining", "description": "Structured diagram source engine for text-based and model-based technical diagram authoring.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-diagram-as-code-engine-ui", "name": "Diagram as Code Engine UI", "type": "web-component", "description": "User-facing surface for diagram as code engine.", "dependencies": {"modules": [{"moduleId": "module-diagram-as-code-engine-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-diagram-as-code-engine-api", "name": "Diagram as Code Engine API", "type": "api", "description": "Programmatic surface for diagram as code engine.", "dependencies": {"modules": [{"moduleId": "module-diagram-as-code-engine-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-diagram-as-code-engine-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-diagram-as-code-engine-core", "name": "Diagram as Code Engine Core", "type": "service", "description": "Core logic for diagram as code engine.", "dependencies": {"modules": [{"moduleId": "module-diagram-as-code-engine-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-diagram-as-code-engine-control-layer", "name": "Diagram as Code Engine Control Layer", "type": "service", "description": "Workflow and control layer for diagram as code engine."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "diagram-source", "moduleIds": ["module-diagram-as-code-engine-core", "module-diagram-as-code-engine-control-layer"], "role": "read", "description": "Uses diagram source in the diagram as code engine workflow."}, {"assetId": "diagram-artifact", "moduleIds": ["module-diagram-as-code-engine-core", "module-diagram-as-code-engine-control-layer"], "role": "publish", "description": "Uses diagram artifact in the diagram as code engine workflow."}]}, {"id": "aidi", "name": "AI Diagram Generation", "type": "development", "status": "invest", "description": "AI-assisted drafting, editing, and transformation workflows for technical diagrams and architecture sketches.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-ai-diagram-generation-ui", "name": "AI Diagram Generation UI", "type": "web-component", "description": "User-facing surface for ai diagram generation.", "dependencies": {"modules": [{"moduleId": "module-ai-diagram-generation-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-ai-diagram-generation-api", "name": "AI Diagram Generation API", "type": "api", "description": "Programmatic surface for ai diagram generation.", "dependencies": {"modules": [{"moduleId": "module-ai-diagram-generation-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-ai-diagram-generation-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-ai-diagram-generation-core", "name": "AI Diagram Generation Core", "type": "service", "description": "Core logic for ai diagram generation.", "dependencies": {"modules": [{"moduleId": "module-ai-diagram-generation-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-ai-diagram-generation-control-layer", "name": "AI Diagram Generation Control Layer", "type": "service", "description": "Workflow and control layer for ai diagram generation."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "diagram-source", "moduleIds": ["module-ai-diagram-generation-core", "module-ai-diagram-generation-control-layer"], "role": "read", "description": "Uses diagram source in the ai diagram generation workflow."}, {"assetId": "usage-meter", "moduleIds": ["module-ai-diagram-generation-core", "module-ai-diagram-generation-control-layer"], "role": "publish", "description": "Uses usage meter in the ai diagram generation workflow."}]}, {"id": "cavs", "name": "Canvas Editing and Figure Layout", "type": "full-stack", "status": "sustaining", "description": "Interactive canvas, selection, grouping, layout, and editing controls for technical figures.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-canvas-editing-and-figure-layout-ui", "name": "Canvas Editing and Figure Layout UI", "type": "web-component", "description": "User-facing surface for canvas editing and figure layout.", "dependencies": {"modules": [{"moduleId": "module-canvas-editing-and-figure-layout-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-canvas-editing-and-figure-layout-api", "name": "Canvas Editing and Figure Layout API", "type": "api", "description": "Programmatic surface for canvas editing and figure layout.", "dependencies": {"modules": [{"moduleId": "module-canvas-editing-and-figure-layout-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-canvas-editing-and-figure-layout-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-canvas-editing-and-figure-layout-core", "name": "Canvas Editing and Figure Layout Core", "type": "service", "description": "Core logic for canvas editing and figure layout.", "dependencies": {"modules": [{"moduleId": "module-canvas-editing-and-figure-layout-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-canvas-editing-and-figure-layout-control-layer", "name": "Canvas Editing and Figure Layout Control Layer", "type": "service", "description": "Workflow and control layer for canvas editing and figure layout."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "diagram-artifact", "moduleIds": ["module-canvas-editing-and-figure-layout-core", "module-canvas-editing-and-figure-layout-control-layer"], "role": "read", "description": "Uses diagram artifact in the canvas editing and figure layout workflow."}, {"assetId": "technical-document", "moduleIds": ["module-canvas-editing-and-figure-layout-core", "module-canvas-editing-and-figure-layout-control-layer"], "role": "publish", "description": "Uses technical document in the canvas editing and figure layout workflow."}]}, {"id": "icns", "name": "Technical Icon and Shape Library", "type": "development", "status": "sustaining", "description": "Curated infrastructure, architecture, and reference shape libraries used in technical diagrams.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-technical-icon-and-shape-library-ui", "name": "Technical Icon and Shape Library UI", "type": "web-component", "description": "User-facing surface for technical icon and shape library.", "dependencies": {"modules": [{"moduleId": "module-technical-icon-and-shape-library-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-technical-icon-and-shape-library-api", "name": "Technical Icon and Shape Library API", "type": "api", "description": "Programmatic surface for technical icon and shape library.", "dependencies": {"modules": [{"moduleId": "module-technical-icon-and-shape-library-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-technical-icon-and-shape-library-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-technical-icon-and-shape-library-core", "name": "Technical Icon and Shape Library Core", "type": "service", "description": "Core logic for technical icon and shape library.", "dependencies": {"modules": [{"moduleId": "module-technical-icon-and-shape-library-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-technical-icon-and-shape-library-control-layer", "name": "Technical Icon and Shape Library Control Layer", "type": "service", "description": "Workflow and control layer for technical icon and shape library."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "reference-library", "moduleIds": ["module-technical-icon-and-shape-library-core", "module-technical-icon-and-shape-library-control-layer"], "role": "read", "description": "Uses reference library in the technical icon and shape library workflow."}, {"assetId": "diagram-artifact", "moduleIds": ["module-technical-icon-and-shape-library-core", "module-technical-icon-and-shape-library-control-layer"], "role": "publish", "description": "Uses diagram artifact in the technical icon and shape library workflow."}]}]}, {"name": "doc_authoring_and_knowledge", "description": "", "subGroups": [], "bricks": [{"id": "mdoc", "name": "Markdown Document Editor", "type": "full-stack", "status": "sustaining", "description": "Markdown-native editor for technical documents, design proposals, and architecture notes.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-markdown-document-editor-ui", "name": "Markdown Document Editor UI", "type": "web-component", "description": "User-facing surface for markdown document editor.", "dependencies": {"modules": [{"moduleId": "module-markdown-document-editor-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-markdown-document-editor-api", "name": "Markdown Document Editor API", "type": "api", "description": "Programmatic surface for markdown document editor.", "dependencies": {"modules": [{"moduleId": "module-markdown-document-editor-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-markdown-document-editor-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-markdown-document-editor-core", "name": "Markdown Document Editor Core", "type": "service", "description": "Core logic for markdown document editor.", "dependencies": {"modules": [{"moduleId": "module-markdown-document-editor-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-markdown-document-editor-control-layer", "name": "Markdown Document Editor Control Layer", "type": "service", "description": "Workflow and control layer for markdown document editor."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "technical-document", "moduleIds": ["module-markdown-document-editor-core", "module-markdown-document-editor-control-layer"], "role": "read", "description": "Uses technical document in the markdown document editor workflow."}, {"assetId": "workspace", "moduleIds": ["module-markdown-document-editor-core", "module-markdown-document-editor-control-layer"], "role": "publish", "description": "Uses workspace in the markdown document editor workflow."}]}, {"id": "embe", "name": "Figure Embeds and Live References", "type": "full-stack", "status": "sustaining", "description": "Embedding layer for diagrams, snippets, linked references, and live content inside docs and external tools.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-figure-embeds-and-live-references-ui", "name": "Figure Embeds and Live References UI", "type": "web-component", "description": "User-facing surface for figure embeds and live references.", "dependencies": {"modules": [{"moduleId": "module-figure-embeds-and-live-references-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-figure-embeds-and-live-references-api", "name": "Figure Embeds and Live References API", "type": "api", "description": "Programmatic surface for figure embeds and live references.", "dependencies": {"modules": [{"moduleId": "module-figure-embeds-and-live-references-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-figure-embeds-and-live-references-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-figure-embeds-and-live-references-core", "name": "Figure Embeds and Live References Core", "type": "service", "description": "Core logic for figure embeds and live references.", "dependencies": {"modules": [{"moduleId": "module-figure-embeds-and-live-references-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-figure-embeds-and-live-references-control-layer", "name": "Figure Embeds and Live References Control Layer", "type": "service", "description": "Workflow and control layer for figure embeds and live references."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "technical-document", "moduleIds": ["module-figure-embeds-and-live-references-core", "module-figure-embeds-and-live-references-control-layer"], "role": "read", "description": "Uses technical document in the figure embeds and live references workflow."}, {"assetId": "diagram-artifact", "moduleIds": ["module-figure-embeds-and-live-references-core", "module-figure-embeds-and-live-references-control-layer"], "role": "publish", "description": "Uses diagram artifact in the figure embeds and live references workflow."}]}, {"id": "wiki", "name": "Wikilinks and Knowledge Graph Search", "type": "service", "status": "sustaining", "description": "Cross-document linking, search, and related-artifact discovery for technical knowledge.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-wikilinks-and-knowledge-graph-search-ui", "name": "Wikilinks and Knowledge Graph Search UI", "type": "web-component", "description": "User-facing surface for wikilinks and knowledge graph search.", "dependencies": {"modules": [{"moduleId": "module-wikilinks-and-knowledge-graph-search-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-wikilinks-and-knowledge-graph-search-api", "name": "Wikilinks and Knowledge Graph Search API", "type": "api", "description": "Programmatic surface for wikilinks and knowledge graph search.", "dependencies": {"modules": [{"moduleId": "module-wikilinks-and-knowledge-graph-search-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-wikilinks-and-knowledge-graph-search-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-wikilinks-and-knowledge-graph-search-core", "name": "Wikilinks and Knowledge Graph Search Core", "type": "service", "description": "Core logic for wikilinks and knowledge graph search.", "dependencies": {"modules": [{"moduleId": "module-wikilinks-and-knowledge-graph-search-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-wikilinks-and-knowledge-graph-search-control-layer", "name": "Wikilinks and Knowledge Graph Search Control Layer", "type": "service", "description": "Workflow and control layer for wikilinks and knowledge graph search."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "technical-document", "moduleIds": ["module-wikilinks-and-knowledge-graph-search-core", "module-wikilinks-and-knowledge-graph-search-control-layer"], "role": "read", "description": "Uses technical document in the wikilinks and knowledge graph search workflow."}, {"assetId": "workspace", "moduleIds": ["module-wikilinks-and-knowledge-graph-search-core", "module-wikilinks-and-knowledge-graph-search-control-layer"], "role": "publish", "description": "Uses workspace in the wikilinks and knowledge graph search workflow."}]}, {"id": "refl", "name": "Reference Libraries and Templates", "type": "service", "status": "sustaining", "description": "Managed template sets, starter docs, and architecture references for repeatable technical design work.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-reference-libraries-and-templates-ui", "name": "Reference Libraries and Templates UI", "type": "web-component", "description": "User-facing surface for reference libraries and templates.", "dependencies": {"modules": [{"moduleId": "module-reference-libraries-and-templates-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-reference-libraries-and-templates-api", "name": "Reference Libraries and Templates API", "type": "api", "description": "Programmatic surface for reference libraries and templates.", "dependencies": {"modules": [{"moduleId": "module-reference-libraries-and-templates-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-reference-libraries-and-templates-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-reference-libraries-and-templates-core", "name": "Reference Libraries and Templates Core", "type": "service", "description": "Core logic for reference libraries and templates.", "dependencies": {"modules": [{"moduleId": "module-reference-libraries-and-templates-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-reference-libraries-and-templates-control-layer", "name": "Reference Libraries and Templates Control Layer", "type": "service", "description": "Workflow and control layer for reference libraries and templates."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "reference-library", "moduleIds": ["module-reference-libraries-and-templates-core", "module-reference-libraries-and-templates-control-layer"], "role": "read", "description": "Uses reference library in the reference libraries and templates workflow."}, {"assetId": "workspace", "moduleIds": ["module-reference-libraries-and-templates-core", "module-reference-libraries-and-templates-control-layer"], "role": "publish", "description": "Uses workspace in the reference libraries and templates workflow."}]}]}], "bricks": []}, {"name": "collaboration_and_workflow", "description": "", "subGroups": [{"name": "shared_workspaces_and_review", "description": "", "subGroups": [], "bricks": [{"id": "work", "name": "Workspace and Folder Management", "type": "full-stack", "status": "sustaining", "description": "Workspace hierarchy, organization boundaries, foldering, and artifact organization for teams.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-workspace-and-folder-management-ui", "name": "Workspace and Folder Management UI", "type": "web-component", "description": "User-facing surface for workspace and folder management.", "dependencies": {"modules": [{"moduleId": "module-workspace-and-folder-management-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-workspace-and-folder-management-api", "name": "Workspace and Folder Management API", "type": "api", "description": "Programmatic surface for workspace and folder management.", "dependencies": {"modules": [{"moduleId": "module-workspace-and-folder-management-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-workspace-and-folder-management-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-workspace-and-folder-management-core", "name": "Workspace and Folder Management Core", "type": "service", "description": "Core logic for workspace and folder management.", "dependencies": {"modules": [{"moduleId": "module-workspace-and-folder-management-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-workspace-and-folder-management-control-layer", "name": "Workspace and Folder Management Control Layer", "type": "service", "description": "Workflow and control layer for workspace and folder management."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "workspace", "moduleIds": ["module-workspace-and-folder-management-core", "module-workspace-and-folder-management-control-layer"], "role": "read", "description": "Uses workspace in the workspace and folder management workflow."}, {"assetId": "identity-membership", "moduleIds": ["module-workspace-and-folder-management-core", "module-workspace-and-folder-management-control-layer"], "role": "publish", "description": "Uses identity membership in the workspace and folder management workflow."}]}, {"id": "rtco", "name": "Realtime Collaboration", "type": "full-stack", "status": "sustaining", "description": "Presence, live edits, cursor sharing, and collaborative artifact sessions for teams.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-realtime-collaboration-ui", "name": "Realtime Collaboration UI", "type": "web-component", "description": "User-facing surface for realtime collaboration.", "dependencies": {"modules": [{"moduleId": "module-realtime-collaboration-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-realtime-collaboration-api", "name": "Realtime Collaboration API", "type": "api", "description": "Programmatic surface for realtime collaboration.", "dependencies": {"modules": [{"moduleId": "module-realtime-collaboration-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-realtime-collaboration-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-realtime-collaboration-core", "name": "Realtime Collaboration Core", "type": "service", "description": "Core logic for realtime collaboration.", "dependencies": {"modules": [{"moduleId": "module-realtime-collaboration-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-realtime-collaboration-control-layer", "name": "Realtime Collaboration Control Layer", "type": "service", "description": "Workflow and control layer for realtime collaboration."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "workspace", "moduleIds": ["module-realtime-collaboration-core", "module-realtime-collaboration-control-layer"], "role": "read", "description": "Uses workspace in the realtime collaboration workflow."}, {"assetId": "technical-document", "moduleIds": ["module-realtime-collaboration-core", "module-realtime-collaboration-control-layer"], "role": "publish", "description": "Uses technical document in the realtime collaboration workflow."}]}, {"id": "comm", "name": "Comments and Review Threads", "type": "full-stack", "status": "sustaining", "description": "Contextual review comments, decisions, mentions, and resolution workflows linked to docs and diagrams.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-comments-and-review-threads-ui", "name": "Comments and Review Threads UI", "type": "web-component", "description": "User-facing surface for comments and review threads.", "dependencies": {"modules": [{"moduleId": "module-comments-and-review-threads-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-comments-and-review-threads-api", "name": "Comments and Review Threads API", "type": "api", "description": "Programmatic surface for comments and review threads.", "dependencies": {"modules": [{"moduleId": "module-comments-and-review-threads-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-comments-and-review-threads-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-comments-and-review-threads-core", "name": "Comments and Review Threads Core", "type": "service", "description": "Core logic for comments and review threads.", "dependencies": {"modules": [{"moduleId": "module-comments-and-review-threads-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-comments-and-review-threads-control-layer", "name": "Comments and Review Threads Control Layer", "type": "service", "description": "Workflow and control layer for comments and review threads."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "review-thread", "moduleIds": ["module-comments-and-review-threads-core", "module-comments-and-review-threads-control-layer"], "role": "read", "description": "Uses review thread in the comments and review threads workflow."}, {"assetId": "technical-document", "moduleIds": ["module-comments-and-review-threads-core", "module-comments-and-review-threads-control-layer"], "role": "publish", "description": "Uses technical document in the comments and review threads workflow."}]}, {"id": "vers", "name": "Version History and Snapshots", "type": "service", "status": "sustaining", "description": "Artifact history, comparisons, snapshots, and rollback points for technical docs and diagrams.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-version-history-and-snapshots-ui", "name": "Version History and Snapshots UI", "type": "web-component", "description": "User-facing surface for version history and snapshots.", "dependencies": {"modules": [{"moduleId": "module-version-history-and-snapshots-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-version-history-and-snapshots-api", "name": "Version History and Snapshots API", "type": "api", "description": "Programmatic surface for version history and snapshots.", "dependencies": {"modules": [{"moduleId": "module-version-history-and-snapshots-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-version-history-and-snapshots-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-version-history-and-snapshots-core", "name": "Version History and Snapshots Core", "type": "service", "description": "Core logic for version history and snapshots.", "dependencies": {"modules": [{"moduleId": "module-version-history-and-snapshots-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-version-history-and-snapshots-control-layer", "name": "Version History and Snapshots Control Layer", "type": "service", "description": "Workflow and control layer for version history and snapshots."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "technical-document", "moduleIds": ["module-version-history-and-snapshots-core", "module-version-history-and-snapshots-control-layer"], "role": "read", "description": "Uses technical document in the version history and snapshots workflow."}, {"assetId": "diagram-artifact", "moduleIds": ["module-version-history-and-snapshots-core", "module-version-history-and-snapshots-control-layer"], "role": "publish", "description": "Uses diagram artifact in the version history and snapshots workflow."}]}]}, {"name": "integrations_and_sync", "description": "", "subGroups": [], "bricks": [{"id": "gcon", "name": "Git Repository Connection", "type": "integration", "status": "sustaining", "description": "Connects repositories, branches, and auth state into technical design workflows.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-git-repository-connection-ui", "name": "Git Repository Connection UI", "type": "web-component", "description": "User-facing surface for git repository connection.", "dependencies": {"modules": [{"moduleId": "module-git-repository-connection-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-git-repository-connection-api", "name": "Git Repository Connection API", "type": "api", "description": "Programmatic surface for git repository connection.", "dependencies": {"modules": [{"moduleId": "module-git-repository-connection-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-git-repository-connection-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-git-repository-connection-core", "name": "Git Repository Connection Core", "type": "service", "description": "Core logic for git repository connection.", "dependencies": {"modules": [{"moduleId": "module-git-repository-connection-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-git-repository-connection-control-layer", "name": "Git Repository Connection Control Layer", "type": "service", "description": "Workflow and control layer for git repository connection."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "repo-connection", "moduleIds": ["module-git-repository-connection-core", "module-git-repository-connection-control-layer"], "role": "read", "description": "Uses repo connection in the git repository connection workflow."}, {"assetId": "identity-membership", "moduleIds": ["module-git-repository-connection-core", "module-git-repository-connection-control-layer"], "role": "publish", "description": "Uses identity membership in the git repository connection workflow."}]}, {"id": "sync", "name": "Git Sync and Pull Request Automation", "type": "integration", "status": "sustaining", "description": "Syncs docs and diagrams with repos and supports pull-request-centric workflows.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-git-sync-and-pull-request-automation-ui", "name": "Git Sync and Pull Request Automation UI", "type": "web-component", "description": "User-facing surface for git sync and pull request automation.", "dependencies": {"modules": [{"moduleId": "module-git-sync-and-pull-request-automation-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-git-sync-and-pull-request-automation-api", "name": "Git Sync and Pull Request Automation API", "type": "api", "description": "Programmatic surface for git sync and pull request automation.", "dependencies": {"modules": [{"moduleId": "module-git-sync-and-pull-request-automation-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-git-sync-and-pull-request-automation-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-git-sync-and-pull-request-automation-core", "name": "Git Sync and Pull Request Automation Core", "type": "service", "description": "Core logic for git sync and pull request automation.", "dependencies": {"modules": [{"moduleId": "module-git-sync-and-pull-request-automation-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-git-sync-and-pull-request-automation-control-layer", "name": "Git Sync and Pull Request Automation Control Layer", "type": "service", "description": "Workflow and control layer for git sync and pull request automation."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "repo-connection", "moduleIds": ["module-git-sync-and-pull-request-automation-core", "module-git-sync-and-pull-request-automation-control-layer"], "role": "read", "description": "Uses repo connection in the git sync and pull request automation workflow."}, {"assetId": "technical-document", "moduleIds": ["module-git-sync-and-pull-request-automation-core", "module-git-sync-and-pull-request-automation-control-layer"], "role": "publish", "description": "Uses technical document in the git sync and pull request automation workflow."}]}, {"id": "inte", "name": "Confluence Notion and IDE Integrations", "type": "integration", "status": "sustaining", "description": "Distribution and authoring integrations for adjacent documentation, wiki, and development tools.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-confluence-notion-and-ide-integrations-ui", "name": "Confluence Notion and IDE Integrations UI", "type": "web-component", "description": "User-facing surface for confluence notion and ide integrations.", "dependencies": {"modules": [{"moduleId": "module-confluence-notion-and-ide-integrations-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-confluence-notion-and-ide-integrations-api", "name": "Confluence Notion and IDE Integrations API", "type": "api", "description": "Programmatic surface for confluence notion and ide integrations.", "dependencies": {"modules": [{"moduleId": "module-confluence-notion-and-ide-integrations-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-confluence-notion-and-ide-integrations-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-confluence-notion-and-ide-integrations-core", "name": "Confluence Notion and IDE Integrations Core", "type": "service", "description": "Core logic for confluence notion and ide integrations.", "dependencies": {"modules": [{"moduleId": "module-confluence-notion-and-ide-integrations-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-confluence-notion-and-ide-integrations-control-layer", "name": "Confluence Notion and IDE Integrations Control Layer", "type": "service", "description": "Workflow and control layer for confluence notion and ide integrations."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "workspace", "moduleIds": ["module-confluence-notion-and-ide-integrations-core", "module-confluence-notion-and-ide-integrations-control-layer"], "role": "read", "description": "Uses workspace in the confluence notion and ide integrations workflow."}, {"assetId": "api-credential", "moduleIds": ["module-confluence-notion-and-ide-integrations-core", "module-confluence-notion-and-ide-integrations-control-layer"], "role": "publish", "description": "Uses api credential in the confluence notion and ide integrations workflow."}]}, {"id": "code", "name": "Codebase Diagram Extraction", "type": "integration", "status": "sustaining", "description": "Parses repository structure and code relationships into draft technical diagrams and views.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-codebase-diagram-extraction-ui", "name": "Codebase Diagram Extraction UI", "type": "web-component", "description": "User-facing surface for codebase diagram extraction.", "dependencies": {"modules": [{"moduleId": "module-codebase-diagram-extraction-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-codebase-diagram-extraction-api", "name": "Codebase Diagram Extraction API", "type": "api", "description": "Programmatic surface for codebase diagram extraction.", "dependencies": {"modules": [{"moduleId": "module-codebase-diagram-extraction-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-codebase-diagram-extraction-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-codebase-diagram-extraction-core", "name": "Codebase Diagram Extraction Core", "type": "service", "description": "Core logic for codebase diagram extraction.", "dependencies": {"modules": [{"moduleId": "module-codebase-diagram-extraction-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-codebase-diagram-extraction-control-layer", "name": "Codebase Diagram Extraction Control Layer", "type": "service", "description": "Workflow and control layer for codebase diagram extraction."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "repo-connection", "moduleIds": ["module-codebase-diagram-extraction-core", "module-codebase-diagram-extraction-control-layer"], "role": "read", "description": "Uses repo connection in the codebase diagram extraction workflow."}, {"assetId": "diagram-artifact", "moduleIds": ["module-codebase-diagram-extraction-core", "module-codebase-diagram-extraction-control-layer"], "role": "publish", "description": "Uses diagram artifact in the codebase diagram extraction workflow."}]}]}], "bricks": []}, {"name": "platform_and_monetization", "description": "", "subGroups": [{"name": "enterprise_governance_and_security", "description": "", "subGroups": [], "bricks": [{"id": "auth", "name": "Identity SSO and Provisioning", "type": "service", "status": "sustaining", "description": "Enterprise identity, SSO, lifecycle provisioning, and role assignment for organizations.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-identity-sso-and-provisioning-ui", "name": "Identity SSO and Provisioning UI", "type": "web-component", "description": "User-facing surface for identity sso and provisioning.", "dependencies": {"modules": [{"moduleId": "module-identity-sso-and-provisioning-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-identity-sso-and-provisioning-api", "name": "Identity SSO and Provisioning API", "type": "api", "description": "Programmatic surface for identity sso and provisioning.", "dependencies": {"modules": [{"moduleId": "module-identity-sso-and-provisioning-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-identity-sso-and-provisioning-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-identity-sso-and-provisioning-core", "name": "Identity SSO and Provisioning Core", "type": "service", "description": "Core logic for identity sso and provisioning.", "dependencies": {"modules": [{"moduleId": "module-identity-sso-and-provisioning-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-identity-sso-and-provisioning-control-layer", "name": "Identity SSO and Provisioning Control Layer", "type": "service", "description": "Workflow and control layer for identity sso and provisioning."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "identity-membership", "moduleIds": ["module-identity-sso-and-provisioning-core", "module-identity-sso-and-provisioning-control-layer"], "role": "read", "description": "Uses identity membership in the identity sso and provisioning workflow."}, {"assetId": "audit-log", "moduleIds": ["module-identity-sso-and-provisioning-core", "module-identity-sso-and-provisioning-control-layer"], "role": "publish", "description": "Uses audit log in the identity sso and provisioning workflow."}]}, {"id": "perm", "name": "Sharing Permissions and Link Access", "type": "service", "status": "sustaining", "description": "Artifact-level sharing, permissioning, link policy, and external access controls.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-sharing-permissions-and-link-access-ui", "name": "Sharing Permissions and Link Access UI", "type": "web-component", "description": "User-facing surface for sharing permissions and link access.", "dependencies": {"modules": [{"moduleId": "module-sharing-permissions-and-link-access-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-sharing-permissions-and-link-access-api", "name": "Sharing Permissions and Link Access API", "type": "api", "description": "Programmatic surface for sharing permissions and link access.", "dependencies": {"modules": [{"moduleId": "module-sharing-permissions-and-link-access-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-sharing-permissions-and-link-access-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-sharing-permissions-and-link-access-core", "name": "Sharing Permissions and Link Access Core", "type": "service", "description": "Core logic for sharing permissions and link access.", "dependencies": {"modules": [{"moduleId": "module-sharing-permissions-and-link-access-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-sharing-permissions-and-link-access-control-layer", "name": "Sharing Permissions and Link Access Control Layer", "type": "service", "description": "Workflow and control layer for sharing permissions and link access."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "identity-membership", "moduleIds": ["module-sharing-permissions-and-link-access-core", "module-sharing-permissions-and-link-access-control-layer"], "role": "read", "description": "Uses identity membership in the sharing permissions and link access workflow."}, {"assetId": "audit-log", "moduleIds": ["module-sharing-permissions-and-link-access-core", "module-sharing-permissions-and-link-access-control-layer"], "role": "publish", "description": "Uses audit log in the sharing permissions and link access workflow."}]}, {"id": "admi", "name": "Admin Controls and Usage Reporting", "type": "full-stack", "status": "sustaining", "description": "Admin console, workspace governance, activity views, and adoption reporting for organization owners.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-admin-controls-and-usage-reporting-ui", "name": "Admin Controls and Usage Reporting UI", "type": "web-component", "description": "User-facing surface for admin controls and usage reporting.", "dependencies": {"modules": [{"moduleId": "module-admin-controls-and-usage-reporting-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-admin-controls-and-usage-reporting-api", "name": "Admin Controls and Usage Reporting API", "type": "api", "description": "Programmatic surface for admin controls and usage reporting.", "dependencies": {"modules": [{"moduleId": "module-admin-controls-and-usage-reporting-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-admin-controls-and-usage-reporting-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-admin-controls-and-usage-reporting-core", "name": "Admin Controls and Usage Reporting Core", "type": "service", "description": "Core logic for admin controls and usage reporting.", "dependencies": {"modules": [{"moduleId": "module-admin-controls-and-usage-reporting-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-admin-controls-and-usage-reporting-control-layer", "name": "Admin Controls and Usage Reporting Control Layer", "type": "service", "description": "Workflow and control layer for admin controls and usage reporting."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "usage-meter", "moduleIds": ["module-admin-controls-and-usage-reporting-core", "module-admin-controls-and-usage-reporting-control-layer"], "role": "read", "description": "Uses usage meter in the admin controls and usage reporting workflow."}, {"assetId": "workspace", "moduleIds": ["module-admin-controls-and-usage-reporting-core", "module-admin-controls-and-usage-reporting-control-layer"], "role": "publish", "description": "Uses workspace in the admin controls and usage reporting workflow."}]}, {"id": "secu", "name": "Security Compliance and Deployment Options", "type": "service", "status": "sustaining", "description": "Security controls, data handling posture, deployment options, and compliance-support features.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-security-compliance-and-deployment-options-ui", "name": "Security Compliance and Deployment Options UI", "type": "web-component", "description": "User-facing surface for security compliance and deployment options.", "dependencies": {"modules": [{"moduleId": "module-security-compliance-and-deployment-options-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-security-compliance-and-deployment-options-api", "name": "Security Compliance and Deployment Options API", "type": "api", "description": "Programmatic surface for security compliance and deployment options.", "dependencies": {"modules": [{"moduleId": "module-security-compliance-and-deployment-options-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-security-compliance-and-deployment-options-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-security-compliance-and-deployment-options-core", "name": "Security Compliance and Deployment Options Core", "type": "service", "description": "Core logic for security compliance and deployment options.", "dependencies": {"modules": [{"moduleId": "module-security-compliance-and-deployment-options-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-security-compliance-and-deployment-options-control-layer", "name": "Security Compliance and Deployment Options Control Layer", "type": "service", "description": "Workflow and control layer for security compliance and deployment options."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "audit-log", "moduleIds": ["module-security-compliance-and-deployment-options-core", "module-security-compliance-and-deployment-options-control-layer"], "role": "read", "description": "Uses audit log in the security compliance and deployment options workflow."}, {"assetId": "workspace", "moduleIds": ["module-security-compliance-and-deployment-options-core", "module-security-compliance-and-deployment-options-control-layer"], "role": "publish", "description": "Uses workspace in the security compliance and deployment options workflow."}]}]}, {"name": "ai_operations_and_api", "description": "", "subGroups": [], "bricks": [{"id": "aimt", "name": "AI Credit Metering and Prompt Orchestration", "type": "service", "status": "sustaining", "description": "Usage controls, prompt routing, model policy, and cost metering for AI-assisted workflows.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-ai-credit-metering-and-prompt-orchestration-ui", "name": "AI Credit Metering and Prompt Orchestration UI", "type": "web-component", "description": "User-facing surface for ai credit metering and prompt orchestration.", "dependencies": {"modules": [{"moduleId": "module-ai-credit-metering-and-prompt-orchestration-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-ai-credit-metering-and-prompt-orchestration-api", "name": "AI Credit Metering and Prompt Orchestration API", "type": "api", "description": "Programmatic surface for ai credit metering and prompt orchestration.", "dependencies": {"modules": [{"moduleId": "module-ai-credit-metering-and-prompt-orchestration-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-ai-credit-metering-and-prompt-orchestration-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-ai-credit-metering-and-prompt-orchestration-core", "name": "AI Credit Metering and Prompt Orchestration Core", "type": "service", "description": "Core logic for ai credit metering and prompt orchestration.", "dependencies": {"modules": [{"moduleId": "module-ai-credit-metering-and-prompt-orchestration-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-ai-credit-metering-and-prompt-orchestration-control-layer", "name": "AI Credit Metering and Prompt Orchestration Control Layer", "type": "service", "description": "Workflow and control layer for ai credit metering and prompt orchestration."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "usage-meter", "moduleIds": ["module-ai-credit-metering-and-prompt-orchestration-core", "module-ai-credit-metering-and-prompt-orchestration-control-layer"], "role": "read", "description": "Uses usage meter in the ai credit metering and prompt orchestration workflow."}, {"assetId": "billing-subscription", "moduleIds": ["module-ai-credit-metering-and-prompt-orchestration-core", "module-ai-credit-metering-and-prompt-orchestration-control-layer"], "role": "publish", "description": "Uses billing subscription in the ai credit metering and prompt orchestration workflow."}]}, {"id": "apii", "name": "Diagramming API and Embedded Workspaces", "type": "full-stack", "status": "invest", "description": "Programmable diagram rendering, editing, and workspace embedding for customers and partners.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-diagramming-api-and-embedded-workspaces-ui", "name": "Diagramming API and Embedded Workspaces UI", "type": "web-component", "description": "User-facing surface for diagramming api and embedded workspaces.", "dependencies": {"modules": [{"moduleId": "module-diagramming-api-and-embedded-workspaces-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-diagramming-api-and-embedded-workspaces-api", "name": "Diagramming API and Embedded Workspaces API", "type": "api", "description": "Programmatic surface for diagramming api and embedded workspaces.", "dependencies": {"modules": [{"moduleId": "module-diagramming-api-and-embedded-workspaces-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-diagramming-api-and-embedded-workspaces-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-diagramming-api-and-embedded-workspaces-core", "name": "Diagramming API and Embedded Workspaces Core", "type": "service", "description": "Core logic for diagramming api and embedded workspaces.", "dependencies": {"modules": [{"moduleId": "module-diagramming-api-and-embedded-workspaces-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-diagramming-api-and-embedded-workspaces-control-layer", "name": "Diagramming API and Embedded Workspaces Control Layer", "type": "service", "description": "Workflow and control layer for diagramming api and embedded workspaces."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "api-credential", "moduleIds": ["module-diagramming-api-and-embedded-workspaces-core", "module-diagramming-api-and-embedded-workspaces-control-layer"], "role": "read", "description": "Uses api credential in the diagramming api and embedded workspaces workflow."}, {"assetId": "usage-meter", "moduleIds": ["module-diagramming-api-and-embedded-workspaces-core", "module-diagramming-api-and-embedded-workspaces-control-layer"], "role": "publish", "description": "Uses usage meter in the diagramming api and embedded workspaces workflow."}]}, {"id": "moni", "name": "Eraserbot Monitors and Change Detection", "type": "service", "status": "sustaining", "description": "Automated monitoring of connected technical artifacts and repos to highlight drift, changes, and stale design knowledge.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-eraserbot-monitors-and-change-detection-ui", "name": "Eraserbot Monitors and Change Detection UI", "type": "web-component", "description": "User-facing surface for eraserbot monitors and change detection.", "dependencies": {"modules": [{"moduleId": "module-eraserbot-monitors-and-change-detection-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-eraserbot-monitors-and-change-detection-api", "name": "Eraserbot Monitors and Change Detection API", "type": "api", "description": "Programmatic surface for eraserbot monitors and change detection.", "dependencies": {"modules": [{"moduleId": "module-eraserbot-monitors-and-change-detection-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-eraserbot-monitors-and-change-detection-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-eraserbot-monitors-and-change-detection-core", "name": "Eraserbot Monitors and Change Detection Core", "type": "service", "description": "Core logic for eraserbot monitors and change detection.", "dependencies": {"modules": [{"moduleId": "module-eraserbot-monitors-and-change-detection-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-eraserbot-monitors-and-change-detection-control-layer", "name": "Eraserbot Monitors and Change Detection Control Layer", "type": "service", "description": "Workflow and control layer for eraserbot monitors and change detection."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "repo-connection", "moduleIds": ["module-eraserbot-monitors-and-change-detection-core", "module-eraserbot-monitors-and-change-detection-control-layer"], "role": "read", "description": "Uses repo connection in the eraserbot monitors and change detection workflow."}, {"assetId": "audit-log", "moduleIds": ["module-eraserbot-monitors-and-change-detection-core", "module-eraserbot-monitors-and-change-detection-control-layer"], "role": "publish", "description": "Uses audit log in the eraserbot monitors and change detection workflow."}]}, {"id": "expo", "name": "Export and Publishing Pipeline", "type": "service", "status": "sustaining", "description": "Rendering, export, and controlled publishing pipeline for docs, diagrams, embeds, and shared views.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-export-and-publishing-pipeline-ui", "name": "Export and Publishing Pipeline UI", "type": "web-component", "description": "User-facing surface for export and publishing pipeline.", "dependencies": {"modules": [{"moduleId": "module-export-and-publishing-pipeline-api", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-export-and-publishing-pipeline-api", "name": "Export and Publishing Pipeline API", "type": "api", "description": "Programmatic surface for export and publishing pipeline.", "dependencies": {"modules": [{"moduleId": "module-export-and-publishing-pipeline-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}, {"moduleId": "module-export-and-publishing-pipeline-control-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-export-and-publishing-pipeline-core", "name": "Export and Publishing Pipeline Core", "type": "service", "description": "Core logic for export and publishing pipeline.", "dependencies": {"modules": [{"moduleId": "module-export-and-publishing-pipeline-control-layer", "type": "governs", "description": "Core service logic applies the brick control, policy, or rule module."}]}}, {"id": "module-export-and-publishing-pipeline-control-layer", "name": "Export and Publishing Pipeline Control Layer", "type": "service", "description": "Workflow and control layer for export and publishing pipeline."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "diagram-artifact", "moduleIds": ["module-export-and-publishing-pipeline-core", "module-export-and-publishing-pipeline-control-layer"], "role": "read", "description": "Uses diagram artifact in the export and publishing pipeline workflow."}, {"assetId": "technical-document", "moduleIds": ["module-export-and-publishing-pipeline-core", "module-export-and-publishing-pipeline-control-layer"], "role": "publish", "description": "Uses technical document in the export and publishing pipeline workflow."}]}]}], "bricks": []}]};
@@ -1067,6 +1157,8 @@
         let brickStatusControlsInitialized = false;
         let dependenciesInitialized = false;
         let activeDependencySubtab = 'declared';
+        let dataShowBricks = false;
+        let dataShowDetail = false;
         const dependencySelectionState = {
             declared: {
                 streamIds: null,
@@ -1816,7 +1908,25 @@
             }
 
             function renderAssetCard(asset) {
-                const usage = buildDataAssetUsage(asset.id);
+                let detailMarkup = '';
+                if (dataShowDetail) {
+                    detailMarkup = `
+                        <div class="data-card-subtitle">Metadata</div>
+                        ${renderMetaList(asset)}
+                        <div class="data-card-subtitle">Stores</div>
+                        ${renderStoreList(asset)}
+                    `;
+                }
+                let brickMarkup = '';
+                if (dataShowBricks) {
+                    const usage = buildDataAssetUsage(asset.id);
+                    brickMarkup = `
+                        <div class="data-card-subtitle">Producing Bricks</div>
+                        ${renderDataBrickPills(usage.producingBricks, 'crimson', 'write-data')}
+                        <div class="data-card-subtitle">Consuming Bricks</div>
+                        ${renderDataBrickPills(usage.consumingBricks, 'blue', 'read-data')}
+                    `;
+                }
                 return `
                     <div class="data-card">
                         <div class="data-card-head">
@@ -1824,14 +1934,8 @@
                             <div class="data-card-title">${escapeHtml(asset.name || asset.id)}</div>
                         </div>
                         ${asset.description ? `<div class="data-card-copy">${escapeHtml(asset.description)}</div>` : ''}
-                        <div class="data-card-subtitle">Metadata</div>
-                        ${renderMetaList(asset)}
-                        <div class="data-card-subtitle">Stores</div>
-                        ${renderStoreList(asset)}
-                        <div class="data-card-subtitle">Producing Bricks</div>
-                        ${renderDataBrickPills(usage.producingBricks, 'crimson', 'write-data')}
-                        <div class="data-card-subtitle">Consuming Bricks</div>
-                        ${renderDataBrickPills(usage.consumingBricks, 'blue', 'read-data')}
+                        ${detailMarkup}
+                        ${brickMarkup}
                     </div>
                 `;
             }
@@ -1862,6 +1966,10 @@
                 : `<div class="data-grid">${assets.map(renderAssetCard).join('')}</div>`;
 
             container.innerHTML = `
+                <div class="data-options">
+                    <label class="data-option"><input type="checkbox" id="dataShowDetailToggle" ${dataShowDetail ? 'checked' : ''} onchange="setDataShowDetail(this.checked)"> Show detail</label>
+                    <label class="data-option"><input type="checkbox" id="dataShowBricksToggle" ${dataShowBricks ? 'checked' : ''} onchange="setDataShowBricks(this.checked)"> Show bricks</label>
+                </div>
                 <div class="data-summary">
                     <div class="dependency-graph-stat">
                         <div class="dependency-graph-stat-value">${assets.length}</div>
@@ -1882,6 +1990,16 @@
                 </div>
                 ${assets.length ? assetMarkup : '<div class="activity-muted">No data assets are defined for this domain yet.</div>'}
             `;
+        }
+
+        function setDataShowBricks(show) {
+            dataShowBricks = show;
+            renderDataView();
+        }
+
+        function setDataShowDetail(show) {
+            dataShowDetail = show;
+            renderDataView();
         }
 
         function sortByDisplayName(left, right) {
@@ -2464,11 +2582,152 @@
         function renderDependencyGraphShell() {
             return `
                 <div class="dependency-graph-shell">
-                    <div class="dependency-graph-summary" id="DependenciesSummary"></div>
+                    <div class="dependency-view-toggle">
+                        <button type="button" class="dependency-view-btn active" data-depview="force" onclick="setDependencyGraphView('force')">2D force graph</button>
+                        <button type="button" class="dependency-view-btn" data-depview="mermaid" onclick="setDependencyGraphView('mermaid')">Flow diagram</button>
+                    </div>
                     <div class="dependency-graph" id="DependenciesGraph"></div>
                 </div>
             `;
         }
+
+        let dependencyGraphView = 'force';
+        let dependencyForceInstance = null;
+
+        function setDependencyGraphView(view) {
+            dependencyGraphView = view;
+            document.querySelectorAll('.dependency-view-btn').forEach(button => {
+                button.classList.toggle('active', button.getAttribute('data-depview') === view);
+            });
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (graphContainer) {
+                graphContainer.classList.toggle('force', view === 'force');
+            }
+            renderActiveDependencyGraph();
+        }
+
+        const dependencyNodeColors = {
+            streamNode: '#f59e0b',
+            brickNode: '#2563eb',
+            dataAssetNode: '#16a34a'
+        };
+
+        // Convert a #rrggbb color to rgba with the given alpha so overlapping
+        // force-graph nodes blend instead of forming a solid color block.
+        function dependencyNodeColorWithAlpha(hexColor, alpha) {
+            const hex = String(hexColor || '').replace('#', '');
+            if (hex.length !== 6) {
+                return hexColor;
+            }
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+        }
+
+        function renderDependencyGraph(graph, emptyMessage) {
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (!graphContainer) {
+                return;
+            }
+            graphContainer.classList.toggle('force', dependencyGraphView === 'force');
+            dependencyForceInstance = null;
+            if (dependencyGraphView === 'force') {
+                renderDependencyForce(graph, emptyMessage);
+            } else {
+                renderDependencyMermaid(graph, emptyMessage);
+            }
+        }
+
+        function renderDependencyForce(graph, emptyMessage) {
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (!graphContainer) {
+                return;
+            }
+            if (!graph.nodes.length || !graph.edges.length) {
+                graphContainer.innerHTML = `<div class="dependency-empty">${escapeHtml(emptyMessage)}</div>`;
+                return;
+            }
+            if (typeof ForceGraph === 'undefined') {
+                graphContainer.innerHTML = '<div class="dependency-empty">Force graph library failed to load.</div>';
+                return;
+            }
+            graphContainer.innerHTML = '';
+
+            const degree = {};
+            graph.edges.forEach(edge => {
+                degree[edge.source] = (degree[edge.source] || 0) + 1;
+                degree[edge.target] = (degree[edge.target] || 0) + 1;
+            });
+            const nodes = graph.nodes.map(node => ({
+                id: node.id,
+                name: node.label,
+                nodeClass: node.nodeClass,
+                val: (degree[node.id] || 1)
+            }));
+            const links = graph.edges.map(edge => ({source: edge.source, target: edge.target, label: edge.label || ''}));
+
+            const Graph = ForceGraph()(graphContainer)
+                .nodeRelSize(5)
+                .nodeVal(() => 1)
+                .nodeLabel(node => escapeHtml(node.name))
+                .nodeColor(node => dependencyNodeColorWithAlpha(dependencyNodeColors[node.nodeClass] || '#6b7280', 0.65))
+                .nodeCanvasObjectMode(() => 'after')
+                .nodeCanvasObject((node, ctx, globalScale) => {
+                    if (!dependencyForceShowLabels) return;
+                    const fontSize = 12 / globalScale;
+                    ctx.font = fontSize + 'px Ubuntu, Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = '#374151';
+                    ctx.fillText(node.name, node.x, node.y + 7);
+                })
+                .linkColor(() => 'rgba(100,116,139,0.5)')
+                .linkWidth(1.5)
+                .linkDirectionalArrowLength(4)
+                .linkDirectionalArrowRelPos(1)
+                .linkDirectionalParticles(1)
+                .linkDirectionalParticleSpeed(0.006)
+                .linkLabel(link => escapeHtml(link.label))
+                .onNodeClick(node => {
+                    if (node.id.indexOf('brick:') === 0) {
+                        window.open('landing_pages/' + node.id.substring('brick:'.length) + '.html', '_blank');
+                    }
+                })
+                .graphData({nodes: nodes, links: links});
+
+            dependencyForceInstance = Graph;
+            sizeDependencyForce();
+        }
+
+        let dependencyForceShowLabels = false;
+
+        function setDependencyForceLabels(show) {
+            dependencyForceShowLabels = show;
+            if (dependencyForceInstance && dependencyGraphView === 'force') {
+                dependencyForceInstance.nodeCanvasObjectMode(() => 'after');
+            }
+        }
+
+        function sizeDependencyForce() {
+            if (!dependencyForceInstance) {
+                return;
+            }
+            const container = document.getElementById('DependenciesGraph');
+            if (!container) {
+                return;
+            }
+            const w = container.clientWidth || container.offsetWidth;
+            const h = container.clientHeight || container.offsetHeight;
+            if (w > 0 && h > 0) {
+                dependencyForceInstance.width(w).height(h);
+                if (typeof dependencyForceInstance.d3ReheatSimulation === 'function') {
+                    dependencyForceInstance.d3ReheatSimulation();
+                }
+            }
+        }
+
+        window.addEventListener('resize', sizeDependencyForce);
 
         function renderDependencyMermaid(graph, emptyMessage) {
             const graphContainer = document.getElementById('DependenciesGraph');
@@ -2517,12 +2776,9 @@
             if (!summary) {
                 return;
             }
-            summary.innerHTML = stats.map(stat => `
-                <div class="dependency-graph-stat">
-                    <span class="dependency-graph-stat-value">${stat.value}</span>
-                    <span class="dependency-graph-stat-label">${stat.label}</span>
-                </div>
-            `).join('');
+            summary.innerHTML = 'Showing ' + stats.map(stat =>
+                '<strong>' + stat.value + '</strong> ' + escapeHtml(String(stat.label).toLowerCase())
+            ).join(' &middot; ') + '.';
         }
 
         function renderDeclaredDependencyGraph() {
@@ -2534,7 +2790,7 @@
                 {value: graph.scopedBrickCount, label: 'Scoped Bricks'},
                 {value: graph.edges.length, label: 'Declared Links'}
             ]);
-            renderDependencyMermaid(graph, 'Select streams and dependency types to render declared brick dependencies.');
+            renderDependencyGraph(graph, 'Select streams and dependency types to render declared brick dependencies.');
         }
 
         function renderDataDependencyGraph() {
@@ -2549,7 +2805,7 @@
                 {value: selectedAssetIds.size, label: 'Assets'},
                 {value: graph.edges.length, label: aggregate ? 'Shared Asset Links' : 'Data Links'}
             ]);
-            renderDependencyMermaid(graph, aggregate
+            renderDependencyGraph(graph, aggregate
                 ? 'Select at least two bricks sharing selected data assets to render aggregated dependencies.'
                 : 'Select bricks and data assets to render data-asset dependency links.');
         }
@@ -2566,7 +2822,7 @@
                 {value: selectedBrickIds.size, label: 'Bricks'},
                 {value: graph.edges.length, label: aggregate ? 'Shared Stream Links' : 'Stream Links'}
             ]);
-            renderDependencyMermaid(graph, aggregate
+            renderDependencyGraph(graph, aggregate
                 ? 'Select at least two bricks sharing selected streams to render aggregated brick links.'
                 : 'Select bricks and streams to render stream dependency links.');
         }
@@ -2593,7 +2849,11 @@
                 container.innerHTML = `
                     <div class="dependency-subtabs" id="DependencySubtabs"></div>
                     <div class="dependencies-layout">
-                        <div id="DependencyControls"></div>
+                        <div class="dependency-controls-column">
+                            <div id="DependencyControls"></div>
+                            <label class="dependency-labels-toggle"><input type="checkbox" onchange="setDependencyForceLabels(this.checked)"> Show labels</label>
+                            <div class="dependency-graph-summary" id="DependenciesSummary"></div>
+                        </div>
                         ${renderDependencyGraphShell()}
                     </div>
                 `;
@@ -2872,9 +3132,69 @@
     </script>
 </head>
 
-<body onload="initTab(); updateBricksView(); updateTabLabels();" onhashchange="initTab()">
+<body onload="updateBricksView(); updateTabLabels(); initTab('bricks');" onhashchange="initTab('bricks')">
 
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 
 <div class="hero">
     <table class="hero-table">
@@ -2889,12 +3209,12 @@
 </div>
 <div>
     <div class="tab">
-        <button class="tablinks active" id="tab_BigPicture" onclick="openTab('BigPicture')">Bricks</button>
-        <button class="tablinks" id="tab_Streams" onclick="openTab('Streams')">Streams</button>
-        <button class="tablinks" id="tab_Data" onclick="openTab('Data')">Data</button>
-        <button class="tablinks" id="tab_Dependencies" onclick="openTab('Dependencies')">Dependencies</button>
+        <button class="tablinks active" id="tab_bricks" onclick="openTab('bricks')">Bricks</button>
+        <button class="tablinks" id="tab_streams" onclick="openTab('streams')">Streams</button>
+        <button class="tablinks" id="tab_data" onclick="openTab('data')">Data</button>
+        <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
     </div>
-    <div id="BigPicture" class="tabcontent" style="display: block">
+    <div id="tab_content_bricks" class="tabcontent">
         <div class="bricks-panel">
             <div class="bricks-toolbar">
                 <label class="bricks-toggle" for="brickStructureToggle">
@@ -2911,7 +3231,7 @@
             <div class="legend" id="Legend"></div>
         </div>
     </div>
-    <div id="Streams" class="tabcontent">
+    <div id="tab_content_streams" class="tabcontent">
         <div class="streams-panel">
             <div class="streams-toolbar">
                 <label class="streams-toggle" for="streamDescriptionToggle">
@@ -2922,12 +3242,12 @@
             <div id="StreamsContent"></div>
         </div>
     </div>
-    <div id="Data" class="tabcontent">
+    <div id="tab_content_data" class="tabcontent">
         <div class="data-panel">
             <div id="DataContent"></div>
         </div>
     </div>
-    <div id="Dependencies" class="tabcontent">
+    <div id="tab_content_dependencies" class="tabcontent">
         <div class="dependencies-panel">
             <div id="DependenciesContent"></div>
         </div>

@@ -290,6 +290,15 @@ def brick_ref_id(ref):
     return str(ref.get('brickId') or ref.get('objectId') or '').strip()
 
 
+def iter_team_groups(groups):
+    """Yield every (group, team) pair across the recursive group tree."""
+    for group in groups or []:
+        for team in group.get('teams', []) or []:
+            yield group, team
+        for pair in iter_team_groups(group.get('groups', [])):
+            yield pair
+
+
 def validate_team_model(domain_dir, bricks, errors):
     teams_path = domain_dir / 'teams' / 'teams.json'
     if not teams_path.exists():
@@ -299,8 +308,11 @@ def validate_team_model(domain_dir, bricks, errors):
     if payload is None:
         return
 
+    org_design = payload.get('orgDesign', {}) if isinstance(payload, dict) else {}
     groups = payload.get('groups', []) if isinstance(payload, dict) else []
-    teams = [team for group in groups for team in group.get('teams', []) or []]
+    team_pairs = list(iter_team_groups(groups))
+    teams = [team for _, team in team_pairs]
+
     team_ids = [team.get('id') for team in teams if team.get('id')]
     duplicate_team_ids = sorted({team_id for team_id in team_ids if team_ids.count(team_id) > 1})
     for team_id in duplicate_team_ids:
@@ -308,56 +320,35 @@ def validate_team_model(domain_dir, bricks, errors):
 
     team_id_set = set(team_ids)
     brick_ids = set(bricks)
-    owned = {}
-
-    for group in groups:
-        group_id = group.get('id', '<missing-id>')
-        leadership = group.get('groupLeadership')
-        if leadership is not None:
-            if not isinstance(leadership, dict):
-                errors.append(f'{domain_dir.name}: group {group_id} groupLeadership must be an object')
-            else:
-                roles_text = ' '.join(role.get('role', '') for role in leadership.get('roles', []) or []).lower()
-                if leadership.get('roles') and ('head of' not in roles_text or 'director' not in roles_text or ('staff' not in roles_text and 'principal' not in roles_text)):
-                    errors.append(f'{domain_dir.name}: group {group_id} leadership should include head of, director, and staff/principal roles')
+    valid_types = {str(item.get('id', '')) for item in org_design.get('teamTypes', [])}
+    valid_dependency_types = {str(item.get('id', '')) for item in org_design.get('teamDependencyTypes', [])}
 
     for team in teams:
         team_id = team.get('id', '<missing-id>')
-        staffing = team.get('staffing') or {}
-        headcount = staffing.get('suggestedHeadcount')
-        if isinstance(headcount, int):
-            if headcount > 10:
-                errors.append(f'{domain_dir.name}: team {team_id} has headcount above 10: {headcount}')
-            role_sum = sum((role.get('count') or 0) for role in staffing.get('roles', []) or [])
-            if staffing.get('roles') and role_sum != headcount:
-                errors.append(f'{domain_dir.name}: team {team_id} role count {role_sum} != suggestedHeadcount {headcount}')
 
-        for dependency_id in (team.get('dependsOnTeamIds') or []) + (team.get('defaultSupportingTeamIds') or []):
-            if dependency_id not in team_id_set:
+        team_type = team.get('type')
+        if valid_types and team_type not in valid_types:
+            errors.append(f'{domain_dir.name}: team {team_id} has type {team_type} not in orgDesign.teamTypes')
+
+        headcount = (team.get('teamHeadcount') or {}).get('headcount')
+        if headcount is not None and (not isinstance(headcount, int) or headcount < 0):
+            errors.append(f'{domain_dir.name}: team {team_id} teamHeadcount.headcount must be a non-negative integer')
+
+        for dependency in team.get('otherTeamDependencies', []) or []:
+            dependency_id = dependency.get('teamId')
+            if dependency_id and dependency_id not in team_id_set:
                 errors.append(f'{domain_dir.name}: team {team_id} references missing team {dependency_id}')
+            dependency_type = dependency.get('type')
+            if valid_dependency_types and dependency_type and dependency_type not in valid_dependency_types:
+                errors.append(f'{domain_dir.name}: team {team_id} uses dependency type {dependency_type} not in orgDesign.teamDependencyTypes')
 
-        for ref in team.get('ownedProductBricks', []) or []:
-            ref_id = brick_ref_id(ref)
+        for ref in team.get('brickDependencies', []) or []:
+            ref_id = str(ref.get('brickId', '')).strip()
             if not ref_id:
-                errors.append(f'{domain_dir.name}: team {team_id} has ownedProductBricks entry without brickId/objectId')
+                errors.append(f'{domain_dir.name}: team {team_id} has brickDependencies entry without brickId')
                 continue
             if brick_ids and ref_id not in brick_ids:
-                errors.append(f'{domain_dir.name}: team {team_id} owns missing brick {ref_id}')
-            owned.setdefault(ref_id, []).append(team_id)
-
-        for ref in team.get('supportingProductBricks', []) or []:
-            ref_id = brick_ref_id(ref)
-            if ref_id and brick_ids and ref_id not in brick_ids:
-                errors.append(f'{domain_dir.name}: team {team_id} supports missing brick {ref_id}')
-
-    duplicate_owned = {brick_id: owners for brick_id, owners in owned.items() if len(owners) > 1}
-    for brick_id, owners in sorted(duplicate_owned.items()):
-        errors.append(f'{domain_dir.name}: brick {brick_id} has multiple owning teams: {", ".join(owners)}')
-
-    if brick_ids and team_ids:
-        missing_owners = sorted(brick_ids - set(owned))
-        for brick_id in missing_owners:
-            errors.append(f'{domain_dir.name}: brick {brick_id} has no owning team')
+                errors.append(f'{domain_dir.name}: team {team_id} links missing brick {ref_id}')
 
 
 def validate_domain(domain_dir, strict_ids=False):

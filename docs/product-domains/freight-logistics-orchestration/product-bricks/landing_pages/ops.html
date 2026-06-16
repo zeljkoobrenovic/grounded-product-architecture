@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -911,7 +948,7 @@
 
 
 </head>
-<body onload="updateBrickTabLabels(); initBrickTab('overview')" onhashchange="initBrickTab()">
+<body onload="updateBrickTabLabels(); initTab('overview')" onhashchange="initTab('overview')">
 
 <div id="breadcrumbs" style="margin-left: 24px;"></div>
 
@@ -923,7 +960,7 @@
     const modulesConfig = bricksMetadata.modulesConfig || {};
     const dataAssetsPayload = {"metadata": {"title": "Freight Logistics Orchestration Data Assets", "description": "Starter catalog of key business, operational, financial, compliance, and sensitive data assets for the freight logistics orchestration domain.", "modelVersion": "1.0"}, "rootGroups": [{"name": "People, Accounts, and Access Data", "description": "Profiles, accounts, credentials, consent, entitlements, and access records used to identify people and govern their access.", "subGroups": [{"name": "Core Records", "description": "Durable domain entities and business objects.", "assets": [{"id": "shipper-account", "name": "Shipper Account", "kind": "logical-object", "description": "Shipper organization, users, contracts, billing setup, service policies, facilities, and integration profile.", "classification": "restricted", "personalDataLevel": "business-confidential", "dataSubjects": ["shipper-user"], "legalTags": ["contract", "tax", "privacy"], "securityCriticality": "high", "accessScope": "shipper portal, TMS, billing, support, and integrations", "businessMeaning": "Source of truth for shipper eligibility, commercial terms, operating policies, and user access.", "status": "active", "stores": [{"storeId": "shipper-account-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "shipper-account api", "description": "Access interface for shipper account and policy data."}], "ownerTeamId": "shipper-control-tower", "stewardTeamIds": ["settlement-and-risk", "customer-integrations"], "derivedFromAssetIds": [], "governance": {"retention": "commercial contract plus tax retention", "residency": "market-specific", "sharingPolicy": "restricted to shipper, operations, finance, and support workflows"}}, {"id": "carrier-profile", "name": "Carrier Profile", "kind": "logical-object", "description": "Carrier identity, authority, insurance, safety, equipment, contacts, bank, tax, compliance, and operating preferences.", "classification": "restricted", "personalDataLevel": "personal", "dataSubjects": ["carrier-contact", "driver"], "legalTags": ["kyb", "tax", "privacy"], "securityCriticality": "critical", "accessScope": "carrier onboarding, matching, booking, tracking, payment, risk, and support", "businessMeaning": "Core supply-side identity and eligibility data for freight execution and settlement.", "status": "active", "stores": [{"storeId": "carrier-profile-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "carrier-profile api", "description": "Access interface for carrier eligibility and profile data."}], "ownerTeamId": "carrier-network", "stewardTeamIds": ["settlement-and-risk"], "derivedFromAssetIds": [], "governance": {"retention": "carrier contract plus regulatory retention", "residency": "market-specific", "sharingPolicy": "restricted to capacity, compliance, payment, and operations workflows"}}]}]}, {"name": "Commercial and Financial Data", "description": "Pricing, payment, billing, subscription, revenue, settlement, ledger, and other commercial records.", "subGroups": [{"name": "Core Records", "description": "Durable domain entities and business objects.", "assets": [{"id": "contract-rate", "name": "Contract Rate", "kind": "logical-object", "description": "Awarded lane rates, fuel rules, accessorial terms, routing guide commitments, mode rules, and effective dates.", "classification": "confidential", "personalDataLevel": "none", "dataSubjects": [], "legalTags": ["contract"], "securityCriticality": "high", "accessScope": "procurement, tendering, quoting, audit, and settlement", "businessMeaning": "Commercial source for pricing, routing guide, and invoice validation decisions.", "status": "active", "stores": [{"storeId": "contract-rate-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "contract-rate api", "description": "Access interface for active and historical rate terms."}], "ownerTeamId": "shipper-control-tower", "stewardTeamIds": ["settlement-and-risk", "freight-intelligence"], "derivedFromAssetIds": ["shipper-account", "carrier-profile"], "governance": {"retention": "contract lifecycle plus audit history", "residency": "market-specific", "sharingPolicy": "restricted by customer, carrier, and commercial role"}}]}, {"name": "Financial Records", "description": "Commercial, payment, billing, ledger, and settlement records.", "assets": [{"id": "freight-invoice", "name": "Freight Invoice", "kind": "logical-object", "description": "Carrier invoices, shipper bills, accessorials, fuel, detention, taxes, accruals, audit results, disputes, and allocation references.", "classification": "restricted", "personalDataLevel": "business-confidential", "dataSubjects": ["carrier-contact", "shipper-user"], "legalTags": ["tax", "finance", "contract"], "securityCriticality": "critical", "accessScope": "freight audit, payment, billing, claims, finance, and reporting", "businessMeaning": "Financial record connecting operational shipment facts to payable, receivable, and accrual workflows.", "status": "active", "stores": [{"storeId": "freight-invoice-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "freight-invoice api", "description": "Access interface for invoice and audit state."}], "ownerTeamId": "settlement-and-risk", "stewardTeamIds": ["shipper-control-tower", "carrier-network"], "derivedFromAssetIds": ["shipment-record", "contract-rate"], "governance": {"retention": "tax and financial audit retention", "residency": "market-specific", "sharingPolicy": "finance and account-permission controlled"}}]}]}, {"name": "Operational Workflow and Event Data", "description": "Orders, bookings, trips, tasks, incidents, service requests, workflow states, and operational events used to run the domain.", "subGroups": [{"name": "Core Records", "description": "Durable domain entities and business objects.", "assets": [{"id": "shipment-record", "name": "Shipment Record", "kind": "logical-object", "description": "Canonical shipment, load, stop, tender, carrier, appointment, visibility, document, cost, and settlement references.", "classification": "restricted", "personalDataLevel": "business-confidential", "dataSubjects": ["shipper-user", "carrier-contact", "driver"], "legalTags": ["contract", "tax", "privacy"], "securityCriticality": "critical", "accessScope": "TMS, tendering, visibility, operations, audit, settlement, and analytics", "businessMeaning": "Central business object connecting demand, carrier supply, execution, documents, and finance.", "status": "active", "stores": [{"storeId": "shipment-record-db", "role": "system-of-record"}, {"storeId": "shipment-event-stream", "role": "event-stream"}], "interfaces": [{"type": "api", "name": "shipment api", "description": "Canonical shipment lifecycle interface."}], "ownerTeamId": "shipper-control-tower", "stewardTeamIds": ["capacity-marketplace", "operations-automation", "settlement-and-risk"], "derivedFromAssetIds": ["shipper-account", "carrier-profile"], "governance": {"retention": "commercial and tax retention by market", "residency": "market-specific", "sharingPolicy": "customer-visible shipment data controlled by account permissions"}}]}, {"name": "Events and Logs", "description": "Append-only events, logs, state changes, and operational traces.", "assets": [{"id": "visibility-event", "name": "Visibility Event", "kind": "event-stream", "description": "Location, milestone, geofence, ETA, tracking source, appointment, arrival, departure, and dwell events.", "classification": "restricted", "personalDataLevel": "personal", "dataSubjects": ["driver"], "legalTags": ["privacy", "telematics"], "securityCriticality": "high", "accessScope": "visibility, exception management, analytics, and customer status updates", "businessMeaning": "Operational signal set used to predict risk, report status, and measure service quality.", "status": "active", "stores": [{"storeId": "visibility-event-stream", "role": "event-stream"}], "interfaces": [{"type": "api", "name": "visibility api", "description": "Access interface for shipment milestones and ETA."}], "ownerTeamId": "execution-visibility", "stewardTeamIds": ["settlement-and-risk", "freight-intelligence"], "derivedFromAssetIds": ["shipment-record"], "governance": {"retention": "operational retention with privacy controls", "residency": "market-specific", "sharingPolicy": "shared only for shipment execution, customer visibility, and compliance-approved analytics"}}]}]}], "assets": [{"id": "shipper-account", "name": "Shipper Account", "kind": "logical-object", "description": "Shipper organization, users, contracts, billing setup, service policies, facilities, and integration profile.", "classification": "restricted", "personalDataLevel": "business-confidential", "dataSubjects": ["shipper-user"], "legalTags": ["contract", "tax", "privacy"], "securityCriticality": "high", "accessScope": "shipper portal, TMS, billing, support, and integrations", "businessMeaning": "Source of truth for shipper eligibility, commercial terms, operating policies, and user access.", "status": "active", "stores": [{"storeId": "shipper-account-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "shipper-account api", "description": "Access interface for shipper account and policy data."}], "ownerTeamId": "shipper-control-tower", "stewardTeamIds": ["settlement-and-risk", "customer-integrations"], "derivedFromAssetIds": [], "governance": {"retention": "commercial contract plus tax retention", "residency": "market-specific", "sharingPolicy": "restricted to shipper, operations, finance, and support workflows"}}, {"id": "carrier-profile", "name": "Carrier Profile", "kind": "logical-object", "description": "Carrier identity, authority, insurance, safety, equipment, contacts, bank, tax, compliance, and operating preferences.", "classification": "restricted", "personalDataLevel": "personal", "dataSubjects": ["carrier-contact", "driver"], "legalTags": ["kyb", "tax", "privacy"], "securityCriticality": "critical", "accessScope": "carrier onboarding, matching, booking, tracking, payment, risk, and support", "businessMeaning": "Core supply-side identity and eligibility data for freight execution and settlement.", "status": "active", "stores": [{"storeId": "carrier-profile-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "carrier-profile api", "description": "Access interface for carrier eligibility and profile data."}], "ownerTeamId": "carrier-network", "stewardTeamIds": ["settlement-and-risk"], "derivedFromAssetIds": [], "governance": {"retention": "carrier contract plus regulatory retention", "residency": "market-specific", "sharingPolicy": "restricted to capacity, compliance, payment, and operations workflows"}}, {"id": "contract-rate", "name": "Contract Rate", "kind": "logical-object", "description": "Awarded lane rates, fuel rules, accessorial terms, routing guide commitments, mode rules, and effective dates.", "classification": "confidential", "personalDataLevel": "none", "dataSubjects": [], "legalTags": ["contract"], "securityCriticality": "high", "accessScope": "procurement, tendering, quoting, audit, and settlement", "businessMeaning": "Commercial source for pricing, routing guide, and invoice validation decisions.", "status": "active", "stores": [{"storeId": "contract-rate-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "contract-rate api", "description": "Access interface for active and historical rate terms."}], "ownerTeamId": "shipper-control-tower", "stewardTeamIds": ["settlement-and-risk", "freight-intelligence"], "derivedFromAssetIds": ["shipper-account", "carrier-profile"], "governance": {"retention": "contract lifecycle plus audit history", "residency": "market-specific", "sharingPolicy": "restricted by customer, carrier, and commercial role"}}, {"id": "freight-invoice", "name": "Freight Invoice", "kind": "logical-object", "description": "Carrier invoices, shipper bills, accessorials, fuel, detention, taxes, accruals, audit results, disputes, and allocation references.", "classification": "restricted", "personalDataLevel": "business-confidential", "dataSubjects": ["carrier-contact", "shipper-user"], "legalTags": ["tax", "finance", "contract"], "securityCriticality": "critical", "accessScope": "freight audit, payment, billing, claims, finance, and reporting", "businessMeaning": "Financial record connecting operational shipment facts to payable, receivable, and accrual workflows.", "status": "active", "stores": [{"storeId": "freight-invoice-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "freight-invoice api", "description": "Access interface for invoice and audit state."}], "ownerTeamId": "settlement-and-risk", "stewardTeamIds": ["shipper-control-tower", "carrier-network"], "derivedFromAssetIds": ["shipment-record", "contract-rate"], "governance": {"retention": "tax and financial audit retention", "residency": "market-specific", "sharingPolicy": "finance and account-permission controlled"}}, {"id": "shipment-record", "name": "Shipment Record", "kind": "logical-object", "description": "Canonical shipment, load, stop, tender, carrier, appointment, visibility, document, cost, and settlement references.", "classification": "restricted", "personalDataLevel": "business-confidential", "dataSubjects": ["shipper-user", "carrier-contact", "driver"], "legalTags": ["contract", "tax", "privacy"], "securityCriticality": "critical", "accessScope": "TMS, tendering, visibility, operations, audit, settlement, and analytics", "businessMeaning": "Central business object connecting demand, carrier supply, execution, documents, and finance.", "status": "active", "stores": [{"storeId": "shipment-record-db", "role": "system-of-record"}, {"storeId": "shipment-event-stream", "role": "event-stream"}], "interfaces": [{"type": "api", "name": "shipment api", "description": "Canonical shipment lifecycle interface."}], "ownerTeamId": "shipper-control-tower", "stewardTeamIds": ["capacity-marketplace", "operations-automation", "settlement-and-risk"], "derivedFromAssetIds": ["shipper-account", "carrier-profile"], "governance": {"retention": "commercial and tax retention by market", "residency": "market-specific", "sharingPolicy": "customer-visible shipment data controlled by account permissions"}}, {"id": "visibility-event", "name": "Visibility Event", "kind": "event-stream", "description": "Location, milestone, geofence, ETA, tracking source, appointment, arrival, departure, and dwell events.", "classification": "restricted", "personalDataLevel": "personal", "dataSubjects": ["driver"], "legalTags": ["privacy", "telematics"], "securityCriticality": "high", "accessScope": "visibility, exception management, analytics, and customer status updates", "businessMeaning": "Operational signal set used to predict risk, report status, and measure service quality.", "status": "active", "stores": [{"storeId": "visibility-event-stream", "role": "event-stream"}], "interfaces": [{"type": "api", "name": "visibility api", "description": "Access interface for shipment milestones and ETA."}], "ownerTeamId": "execution-visibility", "stewardTeamIds": ["settlement-and-risk", "freight-intelligence"], "derivedFromAssetIds": ["shipment-record"], "governance": {"retention": "operational retention with privacy controls", "residency": "market-specific", "sharingPolicy": "shared only for shipment execution, customer visibility, and compliance-approved analytics"}}], "stores": []};
     const brick = {"id": "ops", "name": "Operations Control Tower", "type": "full-stack", "status": "invest", "description": "Unified operations workspace for load queues, customer commitments, carrier activity, exceptions, communications, documents, and escalations.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-control-tower-ui", "name": "Control tower UI", "type": "web-component", "description": "Primary workspace for brokerage and managed transportation operations teams.", "dependencies": {"modules": [{"moduleId": "module-work-queue-orchestrator", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-work-queue-orchestrator", "name": "Work queue orchestrator", "type": "service", "description": "Composes operator queues by customer priority, shipment risk, SLA, margin, and automation state."}]}], "dataDependencies": [{"assetId": "operations-case", "moduleIds": ["module-work-queue-orchestrator"], "role": "read-write", "description": "Stores work queues, ownership, notes, case states, and escalation outcomes."}], "brickDependencies": [{"targetBrickId": "exc", "moduleId": "module-exception-api", "sourceModuleId": "module-work-queue-orchestrator", "type": "composition", "description": "Uses ranked exceptions and recommended recovery actions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Execution and Visibility", "group": "Operations and recovery"};
-    const relatedTeams = [{"teamId": "operations-automation", "teamName": "Operations Automation", "teamType": "stream-aligned", "groupId": "execution-and-foundations-group", "groupName": "Execution and Foundations", "role": "owner", "roleLabel": "Owner"}];
+    const relatedTeams = [];
     const linkedProducts = [];
     const supportedJobs = [];
     mermaid.initialize({
@@ -953,19 +990,8 @@
         renderModuleDependencyGraph();
     }
 
-    function initBrickTab(tabName) {
-        const resolvedTabName = openTab(tabName, { updateHistory: false });
-        if (resolvedTabName === 'dependencies') {
-            renderDependenciesDiagramIfNeeded();
-        }
-        if (resolvedTabName === 'modules') {
-            updateModuleDetailsVisibility();
-            renderModuleDependencyGraphIfNeeded();
-        }
-    }
-
-    function openBrickTab(tabName) {
-        openTab(tabName);
+    // The shared tabs script (_imports/tabs) calls this hook after a tab opens.
+    window.afterOpenTab = function (tabName) {
         if (tabName === 'dependencies') {
             renderDependenciesDiagramIfNeeded();
         }
@@ -973,7 +999,7 @@
             updateModuleDetailsVisibility();
             renderModuleDependencyGraphIfNeeded();
         }
-    }
+    };
 
     function updateModuleDetailsVisibility() {
         const toggle = document.getElementById('moduleDetailsToggle');
@@ -1019,11 +1045,11 @@
 
 <div style="margin: 20px;">
     <div class="tab" id="primary_tabs">
-        <button class="tablinks active" id="tab_overview" onclick="openBrickTab('overview')">Overview</button>
-        <button class="tablinks" id="tab_modules" onclick="openBrickTab('modules')">Modules</button>
-        <button class="tablinks" id="tab_data" onclick="openBrickTab('data')">Data</button>
-        <button class="tablinks" id="tab_dependencies" onclick="openBrickTab('dependencies')">Dependencies</button>
-        <button class="tablinks" id="tab_links" onclick="openBrickTab('links')">Links</button>
+        <button class="tablinks active" id="tab_overview" onclick="openTab('overview')">Overview</button>
+        <button class="tablinks" id="tab_modules" onclick="openTab('modules')">Modules</button>
+        <button class="tablinks" id="tab_data" onclick="openTab('data')">Data</button>
+        <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
+        <button class="tablinks" id="tab_links" onclick="openTab('links')">Links</button>
     </div>
 
     <div id="tab_content_overview" class="tabcontent" style="padding: 10px">

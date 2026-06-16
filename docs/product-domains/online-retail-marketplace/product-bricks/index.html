@@ -23,6 +23,84 @@
         color: #343434;;
     }
 </style>
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
 
     <style>
         body {
@@ -112,38 +190,6 @@
             margin-bottom: 14px;
             max-width: 960px;
             line-height: 1.4;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .bricks-panel {
@@ -406,6 +452,22 @@
         .data-panel {
             padding: 18px;
             background-color: white;
+        }
+
+        .data-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .data-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4b5563;
+            cursor: pointer;
         }
 
         .data-summary {
@@ -800,11 +862,59 @@
             flex: 0 0 auto;
         }
 
+        .dependency-controls-column {
+            min-width: 0;
+        }
+
+        .dependency-labels-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
         .dependency-graph-summary {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .dependency-graph-summary strong {
+            color: #1f2937;
+        }
+
+        .dependency-view-toggle {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .dependency-view-btn {
+            border: 1px solid #d1d5db;
+            background-color: #f8fafc;
+            color: #4b5563;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .dependency-view-btn:hover {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .dependency-view-btn.active {
+            background-color: #202124;
+            border-color: #202124;
+            color: white;
         }
 
         .dependency-graph-stat {
@@ -841,7 +951,13 @@
             background-color: white;
             padding: 14px;
             overflow: auto;
-            min-height: 420px;
+            min-height: 560px;
+        }
+
+        .dependency-graph.force {
+            padding: 0;
+            overflow: hidden;
+            height: 620px;
         }
 
         .dependency-empty {
@@ -995,59 +1111,33 @@
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@1.51.4/dist/force-graph.min.js"></script>
     <script>
-        function initTab() {
-            if (window.location.hash) {
-                const tabName = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + tabName)) {
-                    openTab(tabName, {replaceHash: true, scrollToTop: true});
-                }
-            }
-        }
-
         function updateTabLabels() {
             const brickCount = getBrickCatalog().length;
             const streamCount = getStreamCatalogItems().length;
             const dataAssetCount = (dataAssetsPayload.assets || []).length;
-            document.getElementById('tab_BigPicture').textContent = 'Bricks (' + brickCount + ')';
-            document.getElementById('tab_Streams').textContent = 'Streams (' + streamCount + ')';
-            document.getElementById('tab_Data').textContent = 'Data (' + dataAssetCount + ')';
+            document.getElementById('tab_bricks').textContent = 'Bricks (' + brickCount + ')';
+            document.getElementById('tab_streams').textContent = 'Streams (' + streamCount + ')';
+            document.getElementById('tab_data').textContent = 'Data (' + dataAssetCount + ')';
         }
+
+        // The shared tabs script (_imports/tabs) calls this hook after a tab opens.
+        // Render the lazily-built views for the tab that just became visible.
+        window.afterOpenTab = function (tabName) {
+            if (tabName === 'dependencies') {
+                renderDependenciesView();
+            } else if (tabName === 'streams') {
+                renderStreamsView();
+            } else if (tabName === 'data') {
+                renderDataView();
+            }
+        };
 
         function scrollPageToTop() {
             window.scrollTo(0, 0);
             requestAnimationFrame(() => window.scrollTo(0, 0));
             setTimeout(() => window.scrollTo(0, 0), 0);
-        }
-
-        function openTab(tabName, options = {}) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            if (options.replaceHash) {
-                history.replaceState({}, '', '#' + tabName);
-            } else {
-                history.pushState({}, '', '#' + tabName);
-            }
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
-            if (tabName === 'Dependencies') {
-                renderDependenciesView();
-            }
-            if (tabName === 'Streams') {
-                renderStreamsView();
-            }
-            if (tabName === 'Data') {
-                renderDataView();
-            }
-            if (options.scrollToTop) {
-                scrollPageToTop();
-            }
         }
 
         const bricksPayload = {"metadata": {"title": "Product Bricks & Streams", "description": "Hierarchical product brick map for the online-retail-marketplace domain.", "rendering": {"rows": [{"row": 2, "rootGroupNames": ["Shopper Experience"]}, {"row": 3, "rootGroupNames": ["Seller Growth"]}, {"row": 4, "rootGroupNames": ["Marketplace Foundations"]}]}, "brickTypes": [{"id": "full-stack", "name": "full-stack brick", "color": "#b6d7a8ff"}, {"id": "service", "name": "service", "color": "#fff2ccff"}, {"id": "integration", "name": "complex integration", "color": "#ead1dcff"}, {"id": "development", "name": "development/design", "color": "#c9daf8ff"}], "brickStatuses": [{"id": "invest", "name": "invest", "color": "blue"}, {"id": "sustaining", "name": "sustaining", "color": "#B8F4B8"}, {"id": "sunset", "name": "sunset", "color": "crimson"}], "modulesConfig": {"layerTypes": [{"id": "ui", "name": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "hostsModules": ["web-component", "mobile-component"]}, {"id": "interfaces", "name": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "hostsModules": ["bff", "api", "backoffice-interface"]}, {"id": "worker", "name": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "hostsModules": ["message-queue", "message-consumer", "daemon"]}, {"id": "stateless-service", "name": "stateless service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "hostsModules": ["stateless-service"]}, {"id": "service", "name": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "hostsModules": ["stateful-service", "service"]}, {"id": "integration", "name": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "hostsModules": ["integration"]}], "moduleTypes": [{"id": "web-component", "name": "web component", "description": "A browser-based user interface module.", "color": "#dbeafe"}, {"id": "mobile-component", "name": "mobile component", "description": "A mobile application user interface module.", "color": "#ede9fe"}, {"id": "bff", "name": "bff", "description": "A backend-for-frontend module that shapes APIs for a specific client experience.", "color": "#fef3c7"}, {"id": "api", "name": "api", "description": "A programmatic API module exposed to product clients, partners, or other systems.", "color": "#e0f2fe"}, {"id": "backoffice-interface", "name": "backoffice interface", "description": "An internal operations or administration interface module.", "color": "#fce7f3"}, {"id": "message-queue", "name": "message queue", "description": "A queue module used for asynchronous communication between modules or systems.", "color": "#ffedd5"}, {"id": "message-consumer", "name": "message consumer", "description": "A consumer module that processes messages or events in the worker layer.", "color": "#fef9c3"}, {"id": "daemon", "name": "daemon", "description": "A background worker or daemon module.", "color": "#e5e7eb"}, {"id": "stateless-service", "name": "stateless service", "description": "A service module that orchestrates work without owning durable state.", "color": "#ccfbf1"}, {"id": "stateful-service", "name": "stateful service", "description": "A service module that owns or manages persistent state, such as a database, stored domain data, or durable business records.", "color": "#dcfce7"}, {"id": "service", "name": "service", "description": "A domain or platform service module; prefer stateful-service or stateless-service for new modules when the state boundary is known.", "color": "#d1fae5"}, {"id": "integration", "name": "integration", "description": "A connector or adapter module for an external system, partner, device, or platform.", "color": "#fae8ff"}]}}, "rootGroups": [{"name": "Shopper Experience", "description": "Shopper-facing discovery, conversion, and post-purchase capabilities.", "subGroups": [{"name": "Discovery and evaluation", "description": "", "subGroups": [], "bricks": [{"id": "home", "name": "Shopping Home & Entry", "type": "full-stack", "status": "sustaining", "description": "Personalized entry surfaces that route shoppers into high-intent categories, replenishment missions, and promotional discovery.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-shopping-home-ui", "name": "Shopping home UI", "type": "web-component", "description": "Web and app entry surface for shopping sessions.", "dependencies": {"modules": [{"moduleId": "module-home-feed-composition", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-home-feed-composition", "name": "Home feed composition", "type": "service", "description": "Builds personalized modules, deals, and recency-aware shortcuts."}]}], "brickDependencies": [{"targetBrickId": "reco", "moduleId": "module-recommendation-apis", "sourceModuleId": "module-home-feed-composition", "type": "composition", "description": "Uses recommendation candidates and replenishment signals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-home-feed-composition"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-home-feed-composition"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}, {"id": "sear", "name": "Search, Browse & Facets", "type": "full-stack", "status": "invest", "description": "Search, browse, filters, category navigation, and ranking for broad and explicit shopping intent.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-search-ui", "name": "Search UI", "type": "web-component", "description": "Keyword, browse, and filter shopping surface.", "dependencies": {"modules": [{"moduleId": "module-search-index-and-ranking", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-search-index-and-ranking", "name": "Search index and ranking", "type": "service", "description": "Indexes catalog entities and ranks offer relevance."}]}], "brickDependencies": [{"targetBrickId": "list", "moduleId": "module-catalog-authoring-pipeline", "sourceModuleId": "module-search-index-and-ranking", "type": "data", "description": "Depends on normalized product attributes and category content."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "search-browse-facets", "moduleIds": ["module-search-index-and-ranking"], "role": "own", "description": "Acts as the primary owning brick for Search Browse Facets."}]}, {"id": "rufu", "name": "AI Shopping Assistant", "type": "full-stack", "status": "invest", "description": "Conversational and guided shopping assistance that clarifies product tradeoffs and helps shoppers narrow broad intent.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-assistant-conversation-ui", "name": "Assistant conversation UI", "type": "web-component", "description": "In-session guided shopping interaction.", "dependencies": {"modules": [{"moduleId": "module-intent-interpretation-and-grounding", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-intent-interpretation-and-grounding", "name": "Intent interpretation and grounding", "type": "service", "description": "Transforms natural-language shopping questions into catalog-aware comparisons and suggestions."}]}], "brickDependencies": [{"targetBrickId": "sear", "moduleId": "module-search-index-and-ranking", "sourceModuleId": "module-intent-interpretation-and-grounding", "type": "composition", "description": "Uses ranked catalog results and attribute data."}, {"targetBrickId": "pdet", "moduleId": "module-offer-and-content-assembly", "sourceModuleId": "module-intent-interpretation-and-grounding", "type": "context", "description": "Uses product content and offer context for grounded assistance."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "customer-contact-point", "moduleIds": ["module-intent-interpretation-and-grounding"], "role": "read", "description": "Reads Customer Contact Point to support domain workflows."}, {"assetId": "audit-log", "moduleIds": ["module-intent-interpretation-and-grounding"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}]}, {"id": "pdet", "name": "Product Detail Experience", "type": "full-stack", "status": "invest", "description": "Product detail pages, offer presentation, compatibility guidance, and structured comparison logic.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-detail-page-ui", "name": "Detail page UI", "type": "web-component", "description": "Primary product decision surface for shoppers.", "dependencies": {"modules": [{"moduleId": "module-offer-and-content-assembly", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-offer-and-content-assembly", "name": "Offer and content assembly", "type": "service", "description": "Assembles product content, seller offers, shipping promise, and merchandising context."}]}], "brickDependencies": [{"targetBrickId": "revi", "moduleId": "module-review-moderation-and-ranking", "sourceModuleId": "module-offer-and-content-assembly", "type": "composition", "description": "Uses reviews and answer signals in purchase decisions."}, {"targetBrickId": "deli", "moduleId": "module-promise-apis", "sourceModuleId": "module-offer-and-content-assembly", "type": "context", "description": "Uses delivery promise state in final decision-making."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-offer-and-content-assembly"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-offer-and-content-assembly"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}, {"id": "revi", "name": "Reviews, Ratings & Q&A", "type": "full-stack", "status": "sustaining", "description": "Ratings, reviews, question-answer content, and shopper trust feedback loops.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-review-surfaces", "name": "Review surfaces", "type": "web-component", "description": "Review summaries, filters, and question-answer views.", "dependencies": {"modules": [{"moduleId": "module-review-moderation-and-ranking", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-review-moderation-and-ranking", "name": "Review moderation and ranking", "type": "service", "description": "Ranks and moderates review content and quality signals."}]}], "brickDependencies": [{"targetBrickId": "risk", "moduleId": "module-risk-scoring-and-enforcement", "sourceModuleId": "module-review-moderation-and-ranking", "type": "policy", "description": "Uses fraud and abuse controls to defend review integrity."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "reviews-ratings-q-a", "moduleIds": ["module-review-moderation-and-ranking"], "role": "own", "description": "Acts as the primary owning brick for Reviews Ratings Q A."}, {"assetId": "catalog-authoring-content", "moduleIds": ["module-review-moderation-and-ranking"], "role": "query", "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows."}]}, {"id": "deal", "name": "Deals, Promotions & Merchandising", "type": "full-stack", "status": "sustaining", "description": "Promotional placements, deal eligibility, badges, and merchandising programs that stimulate conversion.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-promotion-surfaces", "name": "Promotion surfaces", "type": "web-component", "description": "Deal pages, badging, and offer modules.", "dependencies": {"modules": [{"moduleId": "module-promotion-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-promotion-orchestration", "name": "Promotion orchestration", "type": "service", "description": "Schedules, validates, and merchandises promotional offers."}]}], "brickDependencies": [{"targetBrickId": "price", "moduleId": "module-offer-health-monitoring", "sourceModuleId": "module-promotion-orchestration", "type": "context", "description": "Uses price and buyability status to ensure offer quality."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-promotion-orchestration"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-promotion-orchestration"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}]}, {"name": "Conversion and service", "description": "", "subGroups": [], "bricks": [{"id": "cart", "name": "Cart & Save-for-Later", "type": "full-stack", "status": "sustaining", "description": "Cart state, save-for-later, and basket-building utilities prior to checkout.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-cart-ui", "name": "Cart UI", "type": "web-component", "description": "Basket review and purchase staging surface.", "dependencies": {"modules": [{"moduleId": "module-cart-state-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-cart-state-orchestration", "name": "Cart state orchestration", "type": "service", "description": "Maintains line items, availability, and basket promotions."}]}], "brickDependencies": [{"targetBrickId": "price", "moduleId": "module-offer-health-monitoring", "sourceModuleId": "module-cart-state-orchestration", "type": "data", "description": "Uses current price and buyability state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "payment-instrument-reference", "moduleIds": ["module-cart-state-orchestration"], "role": "read", "description": "Reads Payment Instrument Reference to support domain workflows."}, {"assetId": "transaction", "moduleIds": ["module-cart-state-orchestration"], "role": "write", "description": "Writes or updates Transaction during domain workflows."}, {"assetId": "audit-log", "moduleIds": ["module-cart-state-orchestration"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}, {"assetId": "checkout-payments", "moduleIds": ["module-cart-state-orchestration"], "role": "read", "description": "Reads Checkout Payments to support domain workflows."}]}, {"id": "chec", "name": "Checkout & Payments", "type": "full-stack", "status": "sustaining", "description": "Checkout, payment authorization, address selection, and order placement flow.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-checkout-ui", "name": "Checkout UI", "type": "web-component", "description": "Purchase completion surface across web and mobile.", "dependencies": {"modules": [{"moduleId": "module-payment-and-order-placement", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-payment-and-order-placement", "name": "Payment and order placement", "type": "service", "description": "Handles transaction completion and order creation."}]}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-identity-apis", "sourceModuleId": "module-payment-and-order-placement", "type": "identity", "description": "Uses saved addresses, payment methods, and household entitlements."}, {"targetBrickId": "deli", "moduleId": "module-promise-apis", "sourceModuleId": "module-payment-and-order-placement", "type": "context", "description": "Uses final delivery options and promise state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "identity-credential", "moduleIds": ["module-payment-and-order-placement"], "role": "read", "description": "Reads Identity Credential to support domain workflows."}, {"assetId": "session-token", "moduleIds": ["module-payment-and-order-placement"], "role": "own", "description": "Acts as the primary owning brick for Session Token."}, {"assetId": "access-policy", "moduleIds": ["module-payment-and-order-placement"], "role": "own", "description": "Acts as the primary owning brick for Access Policy."}, {"assetId": "audit-log", "moduleIds": ["module-payment-and-order-placement"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}]}, {"id": "orde", "name": "Order Management & Tracking", "type": "full-stack", "status": "invest", "description": "Order history, shipment visibility, exception handling, and delivery event communication.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-orders-ui", "name": "Orders UI", "type": "web-component", "description": "Order visibility and tracking surface.", "dependencies": {"modules": [{"moduleId": "module-order-state-timeline", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-order-state-timeline", "name": "Order state timeline", "type": "service", "description": "Tracks order progression and exception states after purchase."}]}], "brickDependencies": [{"targetBrickId": "deli", "moduleId": "module-promise-apis", "sourceModuleId": "module-order-state-timeline", "type": "event", "description": "Uses network and shipment events to show promise status."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "order-management-tracking", "moduleIds": ["module-order-state-timeline"], "role": "own", "description": "Acts as the primary owning brick for Order Management Tracking."}]}, {"id": "deli", "name": "Delivery Promise & Last Mile", "type": "full-stack", "status": "invest", "description": "Promise calculation, carrier routing, last-mile eventing, and shopper-visible delivery commitments.", "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-promise-apis", "name": "Promise APIs", "type": "api", "description": "Delivery promise and shipment event interfaces.", "dependencies": {"modules": [{"moduleId": "module-promise-calculation-engine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-promise-calculation-engine", "name": "Promise calculation engine", "type": "service", "description": "Converts network capacity and inventory into shopper-visible promise windows."}]}], "brickDependencies": [{"targetBrickId": "invn", "moduleId": "module-forecast-and-replenishment-engine", "sourceModuleId": "module-promise-calculation-engine", "type": "data", "description": "Uses current inventory and node allocation state."}, {"targetBrickId": "fbao", "moduleId": "module-inbound-orchestration", "sourceModuleId": "module-promise-calculation-engine", "type": "composition", "description": "Uses Amazon fulfillment network capabilities."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-promise-calculation-engine"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-promise-calculation-engine"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}, {"id": "retu", "name": "Returns, Refunds & Exchanges", "type": "full-stack", "status": "invest", "description": "Reverse-logistics workflows, refund handling, exchange logic, and policy-aware issue recovery.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-returns-ui", "name": "Returns UI", "type": "web-component", "description": "Self-service return and refund experience.", "dependencies": {"modules": [{"moduleId": "module-reverse-logistics-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-reverse-logistics-orchestration", "name": "Reverse-logistics orchestration", "type": "service", "description": "Coordinates return method, refund state, and item disposition."}]}], "brickDependencies": [{"targetBrickId": "care", "moduleId": "module-case-orchestration", "sourceModuleId": "module-reverse-logistics-orchestration", "type": "fallback", "description": "Escalates complex exceptions into support resolution."}, {"targetBrickId": "risk", "moduleId": "module-policy-decision-apis", "sourceModuleId": "module-reverse-logistics-orchestration", "type": "policy", "description": "Uses return-abuse and fraud checks."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "returns-refunds-exchanges", "moduleIds": ["module-reverse-logistics-orchestration"], "role": "own", "description": "Acts as the primary owning brick for Returns Refunds Exchanges."}]}, {"id": "prim", "name": "Prime Membership & Benefits", "type": "full-stack", "status": "sustaining", "description": "Prime sign-up, membership state, benefit eligibility, and retention-oriented value communication.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-prime-ui", "name": "Prime UI", "type": "web-component", "description": "Membership, benefit, and renewal surfaces.", "dependencies": {"modules": [{"moduleId": "module-prime-entitlement-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-prime-entitlement-service", "name": "Prime entitlement service", "type": "service", "description": "Maintains membership state and benefit eligibility."}]}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-identity-apis", "sourceModuleId": "module-prime-entitlement-service", "type": "identity", "description": "Uses account and household-state foundations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-prime-entitlement-service"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-prime-entitlement-service"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}]}], "bricks": []}, {"name": "Seller Growth", "description": "Seller-facing onboarding, catalog, fulfillment, and advertising capabilities.", "subGroups": [{"name": "Commercial control", "description": "", "subGroups": [], "bricks": [{"id": "sell", "name": "Seller Identity & Onboarding", "type": "full-stack", "status": "sustaining", "description": "Merchant registration, compliance, tax, verification, and account health setup.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-seller-onboarding-ui", "name": "Seller onboarding UI", "type": "web-component", "description": "Account setup and compliance workflow.", "dependencies": {"modules": [{"moduleId": "module-merchant-onboarding-workflow", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-merchant-onboarding-workflow", "name": "Merchant onboarding workflow", "type": "service", "description": "Guides merchants through registration and verification."}]}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-identity-apis", "sourceModuleId": "module-merchant-onboarding-workflow", "type": "identity", "description": "Uses shared account and entitlement primitives."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "identity-credential", "moduleIds": ["module-merchant-onboarding-workflow"], "role": "read", "description": "Reads Identity Credential to support domain workflows."}, {"assetId": "session-token", "moduleIds": ["module-merchant-onboarding-workflow"], "role": "own", "description": "Acts as the primary owning brick for Session Token."}, {"assetId": "access-policy", "moduleIds": ["module-merchant-onboarding-workflow"], "role": "own", "description": "Acts as the primary owning brick for Access Policy."}, {"assetId": "audit-log", "moduleIds": ["module-merchant-onboarding-workflow"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}]}, {"id": "list", "name": "Catalog Authoring & Content", "type": "full-stack", "status": "invest", "description": "Product content creation, variation logic, compliance attributes, and listing publication.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-listing-management-ui", "name": "Listing management UI", "type": "web-component", "description": "Seller listing authoring and maintenance workflows.", "dependencies": {"modules": [{"moduleId": "module-catalog-authoring-pipeline", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-catalog-authoring-pipeline", "name": "Catalog authoring pipeline", "type": "service", "description": "Validates, enriches, and publishes listing content."}]}], "brickDependencies": [{"targetBrickId": "bran", "moduleId": "module-brand-rights-and-enforcement", "sourceModuleId": "module-catalog-authoring-pipeline", "type": "policy", "description": "Uses brand rights and ownership controls."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "identity-credential", "moduleIds": ["module-catalog-authoring-pipeline"], "role": "read", "description": "Reads Identity Credential to support domain workflows."}, {"assetId": "session-token", "moduleIds": ["module-catalog-authoring-pipeline"], "role": "own", "description": "Acts as the primary owning brick for Session Token."}, {"assetId": "access-policy", "moduleIds": ["module-catalog-authoring-pipeline"], "role": "own", "description": "Acts as the primary owning brick for Access Policy."}, {"assetId": "audit-log", "moduleIds": ["module-catalog-authoring-pipeline"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}]}, {"id": "bran", "name": "Brand Protection & Registry", "type": "full-stack", "status": "sustaining", "description": "Brand ownership, counterfeit defense, content control, and enforcement workflows.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-brand-registry-ui", "name": "Brand Registry UI", "type": "web-component", "description": "Brand ownership and abuse-resolution workflow.", "dependencies": {"modules": [{"moduleId": "module-brand-rights-and-enforcement", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-brand-rights-and-enforcement", "name": "Brand rights and enforcement", "type": "service", "description": "Handles ownership validation and enforcement actions."}]}], "brickDependencies": [{"targetBrickId": "auth", "moduleId": "module-listing-trust-engine", "sourceModuleId": "module-brand-rights-and-enforcement", "type": "composition", "description": "Uses authenticity signals and listing trust controls."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "brand-protection-registry", "moduleIds": ["module-brand-rights-and-enforcement"], "role": "own", "description": "Acts as the primary owning brick for Brand Protection Registry."}, {"assetId": "catalog-authoring-content", "moduleIds": ["module-brand-rights-and-enforcement"], "role": "query", "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows."}]}, {"id": "price", "name": "Pricing & Offer Health", "type": "full-stack", "status": "sustaining", "description": "Price competitiveness, buy box monitoring, offer health, and suppression awareness.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-offer-health-ui", "name": "Offer health UI", "type": "web-component", "description": "Seller-facing offer competitiveness and buyability console.", "dependencies": {"modules": [{"moduleId": "module-offer-health-monitoring", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-offer-health-monitoring", "name": "Offer health monitoring", "type": "service", "description": "Tracks buyability, competitiveness, and suppression issues."}]}], "brickDependencies": [{"targetBrickId": "repr", "moduleId": "module-commerce-reporting-model", "sourceModuleId": "module-offer-health-monitoring", "type": "feedback", "description": "Uses performance feedback for commercial prioritization."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-offer-health-monitoring"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-offer-health-monitoring"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}]}, {"name": "Operations and demand generation", "description": "", "subGroups": [], "bricks": [{"id": "fbao", "name": "FBA Inbound & Operations", "type": "full-stack", "status": "invest", "description": "Inbound planning, receiving, prep compliance, and operational workflow for FBA inventory.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-fba-operations-ui", "name": "FBA operations UI", "type": "web-component", "description": "Inbound creation and network handoff workflow.", "dependencies": {"modules": [{"moduleId": "module-inbound-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-inbound-orchestration", "name": "Inbound orchestration", "type": "service", "description": "Coordinates shipments into Amazon fulfillment nodes."}]}], "brickDependencies": [{"targetBrickId": "invn", "moduleId": "module-forecast-and-replenishment-engine", "sourceModuleId": "module-inbound-orchestration", "type": "data", "description": "Uses replenishment and capacity guidance."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-inbound-orchestration"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-inbound-orchestration"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}, {"id": "invn", "name": "Inventory Planning & Availability", "type": "full-stack", "status": "invest", "description": "Forecasting, replenishment, availability control, and stock-risk management across Amazon and merchant nodes.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-inventory-planning-ui", "name": "Inventory planning UI", "type": "web-component", "description": "Seller-facing stock health and replenishment workflow.", "dependencies": {"modules": [{"moduleId": "module-forecast-and-replenishment-engine", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-forecast-and-replenishment-engine", "name": "Forecast and replenishment engine", "type": "service", "description": "Predicts availability risks and replenishment needs."}]}], "brickDependencies": [{"targetBrickId": "repr", "moduleId": "module-commerce-reporting-model", "sourceModuleId": "module-forecast-and-replenishment-engine", "type": "feedback", "description": "Uses traffic and sales signals for forecasting."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "order-management-tracking", "moduleIds": ["module-forecast-and-replenishment-engine"], "role": "query", "description": "Queries Order Management Tracking to support search, analytics, or decision flows."}]}, {"id": "supp", "name": "Seller-Fulfilled Operations", "type": "full-stack", "status": "sustaining", "description": "Merchant-managed order handling, promise management, shipping eventing, and operational service quality.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-merchant-fulfillment-ui", "name": "Merchant fulfillment UI", "type": "web-component", "description": "Seller-facing operational workflow for self-fulfilled orders.", "dependencies": {"modules": [{"moduleId": "module-merchant-fulfillment-workflow", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-merchant-fulfillment-workflow", "name": "Merchant fulfillment workflow", "type": "service", "description": "Coordinates merchant-side shipment handling and status events."}]}], "brickDependencies": [{"targetBrickId": "deli", "moduleId": "module-promise-apis", "sourceModuleId": "module-merchant-fulfillment-workflow", "type": "contract", "description": "Uses promise requirements and event expectations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "order-management-tracking", "moduleIds": ["module-merchant-fulfillment-workflow"], "role": "query", "description": "Queries Order Management Tracking to support search, analytics, or decision flows."}, {"assetId": "seller-identity-onboarding", "moduleIds": ["module-merchant-fulfillment-workflow"], "role": "read", "description": "Reads Seller Identity Onboarding to support domain workflows."}]}, {"id": "payo", "name": "Payouts, Fees & Ledgers", "type": "full-stack", "status": "sustaining", "description": "Seller balances, fee explanation, reserve logic, settlement timing, and billing reconciliation.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-financial-account-ui", "name": "Financial account UI", "type": "web-component", "description": "Seller-facing payouts, balance, and fee views.", "dependencies": {"modules": [{"moduleId": "module-merchant-ledger-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-merchant-ledger-service", "name": "Merchant ledger service", "type": "service", "description": "Tracks charges, reserves, disbursements, and reconciliation state."}]}], "brickDependencies": [{"targetBrickId": "sell", "moduleId": "module-merchant-onboarding-workflow", "sourceModuleId": "module-merchant-ledger-service", "type": "identity", "description": "Uses seller identity and compliance state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "payment-instrument-reference", "moduleIds": ["module-merchant-ledger-service"], "role": "read", "description": "Reads Payment Instrument Reference to support domain workflows."}, {"assetId": "transaction", "moduleIds": ["module-merchant-ledger-service"], "role": "write", "description": "Writes or updates Transaction during domain workflows."}, {"assetId": "audit-log", "moduleIds": ["module-merchant-ledger-service"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}, {"assetId": "seller-identity-onboarding", "moduleIds": ["module-merchant-ledger-service"], "role": "read", "description": "Reads Seller Identity Onboarding to support domain workflows."}]}, {"id": "spon", "name": "Sponsored Ads & Retail Media", "type": "full-stack", "status": "invest", "description": "Sponsored Products, Sponsored Brands, Sponsored Display, and related retail-intent ad products.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-ads-console-ui", "name": "Ads console UI", "type": "web-component", "description": "Campaign setup and optimization workflow.", "dependencies": {"modules": [{"moduleId": "module-retail-media-serving-and-optimization", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-retail-media-serving-and-optimization", "name": "Retail media serving and optimization", "type": "service", "description": "Handles campaign delivery, bidding, and placement optimization."}]}], "brickDependencies": [{"targetBrickId": "price", "moduleId": "module-offer-health-monitoring", "sourceModuleId": "module-retail-media-serving-and-optimization", "type": "context", "description": "Uses buyability context to avoid poor retail outcomes."}, {"targetBrickId": "invn", "moduleId": "module-forecast-and-replenishment-engine", "sourceModuleId": "module-retail-media-serving-and-optimization", "type": "context", "description": "Uses availability context to limit wasted spend."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "brand-protection-registry", "moduleIds": ["module-retail-media-serving-and-optimization"], "role": "read", "description": "Reads Brand Protection Registry to support domain workflows."}]}, {"id": "dspm", "name": "DSP Audiences & Programmatic Media", "type": "full-stack", "status": "sustaining", "description": "Audience building, programmatic buying, retargeting, and off-surface media orchestration.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-dsp-workflow-ui", "name": "DSP workflow UI", "type": "web-component", "description": "Audience planning and media control surface.", "dependencies": {"modules": [{"moduleId": "module-audience-and-programmatic-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-audience-and-programmatic-orchestration", "name": "Audience and programmatic orchestration", "type": "service", "description": "Builds addressable audiences and media controls for DSP workflows."}]}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-measurement-apis", "sourceModuleId": "module-audience-and-programmatic-orchestration", "type": "insight", "description": "Uses advanced measurement and experimentation context."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-audience-and-programmatic-orchestration"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-audience-and-programmatic-orchestration"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}, {"id": "repr", "name": "Retail Analytics & Reporting", "type": "full-stack", "status": "invest", "description": "Operational and commercial reporting across traffic, conversion, sales, inventory, and campaign performance.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-reporting-ui", "name": "Reporting UI", "type": "web-component", "description": "Operational and commercial analytics surface.", "dependencies": {"modules": [{"moduleId": "module-commerce-reporting-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-commerce-reporting-model", "name": "Commerce reporting model", "type": "service", "description": "Builds seller and advertiser-facing performance reporting views."}]}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-measurement-apis", "sourceModuleId": "module-commerce-reporting-model", "type": "platform", "description": "Uses shared measurement and experiment data."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-commerce-reporting-model"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-commerce-reporting-model"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}]}], "bricks": []}, {"name": "Marketplace Foundations", "description": "Shared identity, trust, intelligence, and integration foundations.", "subGroups": [{"name": "Trust and platform control", "description": "", "subGroups": [], "bricks": [{"id": "iden", "name": "Identity, Accounts & Entitlements", "type": "full-stack", "status": "sustaining", "description": "Shared account, household, entitlement, and merchant identity platform.", "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-identity-apis", "name": "Identity APIs", "type": "api", "description": "Authenticated account and entitlement interfaces.", "dependencies": {"modules": [{"moduleId": "module-account-graph-and-entitlements", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-account-graph-and-entitlements", "name": "Account graph and entitlements", "type": "service", "description": "Maintains shopper, seller, and household identity state."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "identity-credential", "moduleIds": ["module-account-graph-and-entitlements"], "role": "read", "description": "Reads Identity Credential to support domain workflows."}, {"assetId": "session-token", "moduleIds": ["module-account-graph-and-entitlements"], "role": "own", "description": "Acts as the primary owning brick for Session Token."}, {"assetId": "access-policy", "moduleIds": ["module-account-graph-and-entitlements"], "role": "own", "description": "Acts as the primary owning brick for Access Policy."}, {"assetId": "audit-log", "moduleIds": ["module-account-graph-and-entitlements"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}]}, {"id": "risk", "name": "Fraud, Abuse & Policy Controls", "type": "full-stack", "status": "sustaining", "description": "Abuse detection, policy enforcement, account-risk controls, and trust interventions across commerce flows.", "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-policy-decision-apis", "name": "Policy decision APIs", "type": "api", "description": "Trust and risk decisions for dependent workflows.", "dependencies": {"modules": [{"moduleId": "module-risk-scoring-and-enforcement", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-risk-scoring-and-enforcement", "name": "Risk scoring and enforcement", "type": "service", "description": "Scores and enforces abuse, fraud, and policy risks."}]}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-account-graph-and-entitlements", "sourceModuleId": "module-risk-scoring-and-enforcement", "type": "identity", "description": "Uses identity state to evaluate risk patterns."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-risk-scoring-and-enforcement"], "role": "own", "description": "Acts as the primary owning brick for Customer Profile."}, {"assetId": "customer-contact-point", "moduleIds": ["module-risk-scoring-and-enforcement"], "role": "write", "description": "Writes or updates Customer Contact Point during domain workflows."}, {"assetId": "consent-record", "moduleIds": ["module-risk-scoring-and-enforcement"], "role": "read", "description": "Reads Consent Record to support domain workflows."}]}, {"id": "auth", "name": "Authenticity & Listing Trust", "type": "full-stack", "status": "sustaining", "description": "Listing legitimacy, authenticity signals, and trust controls that protect shoppers and brands.", "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-trust-signal-apis", "name": "Trust signal APIs", "type": "api", "description": "Product and offer trust signal interfaces.", "dependencies": {"modules": [{"moduleId": "module-listing-trust-engine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-listing-trust-engine", "name": "Listing trust engine", "type": "service", "description": "Scores content legitimacy, brand authorization, and authenticity indicators."}]}], "brickDependencies": [{"targetBrickId": "bran", "moduleId": "module-brand-rights-and-enforcement", "sourceModuleId": "module-listing-trust-engine", "type": "rights", "description": "Uses brand-rights and enforcement context."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "identity-credential", "moduleIds": ["module-listing-trust-engine"], "role": "read", "description": "Reads Identity Credential to support domain workflows."}, {"assetId": "session-token", "moduleIds": ["module-listing-trust-engine"], "role": "own", "description": "Acts as the primary owning brick for Session Token."}, {"assetId": "access-policy", "moduleIds": ["module-listing-trust-engine"], "role": "own", "description": "Acts as the primary owning brick for Access Policy."}, {"assetId": "audit-log", "moduleIds": ["module-listing-trust-engine"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}]}, {"id": "care", "name": "Customer Care & Resolution", "type": "full-stack", "status": "sustaining", "description": "Case management, support escalation, policy-guided recovery, and cross-party issue resolution.", "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-support-ui", "name": "Support UI", "type": "web-component", "description": "Self-service and assisted support surfaces.", "dependencies": {"modules": [{"moduleId": "module-case-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-case-orchestration", "name": "Case orchestration", "type": "service", "description": "Routes and resolves support cases across shopper and seller flows."}]}], "brickDependencies": [{"targetBrickId": "risk", "moduleId": "module-risk-scoring-and-enforcement", "sourceModuleId": "module-case-orchestration", "type": "policy", "description": "Uses trust and policy rules in resolution workflows."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-case-orchestration"], "role": "own", "description": "Acts as the primary owning brick for Customer Profile."}, {"assetId": "customer-contact-point", "moduleIds": ["module-case-orchestration"], "role": "write", "description": "Writes or updates Customer Contact Point during domain workflows."}, {"assetId": "consent-record", "moduleIds": ["module-case-orchestration"], "role": "read", "description": "Reads Consent Record to support domain workflows."}, {"assetId": "customer-contact-point", "moduleIds": ["module-case-orchestration"], "role": "read", "description": "Reads Customer Contact Point to support domain workflows."}]}]}, {"name": "Shared intelligence and integration", "description": "", "subGroups": [], "bricks": [{"id": "reco", "name": "Personalization & Recommendations", "type": "full-stack", "status": "sustaining", "description": "Personalized merchandising, replenishment suggestions, and recirculation logic across shopping surfaces.", "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-recommendation-apis", "name": "Recommendation APIs", "type": "api", "description": "Recommendation interfaces for home and detail surfaces.", "dependencies": {"modules": [{"moduleId": "module-recommendation-model-serving", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-recommendation-model-serving", "name": "Recommendation model serving", "type": "service", "description": "Serves personalized product and category suggestions."}]}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-measurement-apis", "sourceModuleId": "module-recommendation-model-serving", "type": "insight", "description": "Uses shared behavior and experiment signals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-recommendation-model-serving"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-recommendation-model-serving"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}, {"id": "anal", "name": "Commerce Measurement & Experimentation", "type": "full-stack", "status": "invest", "description": "Shared measurement, experimentation, incrementality analysis, and decision-support platform across commerce flows.", "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-measurement-apis", "name": "Measurement APIs", "type": "api", "description": "Experiment, reporting, and causal measurement interfaces.", "dependencies": {"modules": [{"moduleId": "module-experiment-and-measurement-platform", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-experiment-and-measurement-platform", "name": "Experiment and measurement platform", "type": "service", "description": "Runs experiments and builds shared commerce reporting datasets."}]}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "customer-contact-point", "moduleIds": ["module-experiment-and-measurement-platform"], "role": "read", "description": "Reads Customer Contact Point to support domain workflows."}, {"assetId": "audit-log", "moduleIds": ["module-experiment-and-measurement-platform"], "role": "publish", "description": "Publishes events or audit records related to Audit Log."}]}, {"id": "apii", "name": "Commerce APIs & External Integrations", "type": "integration", "status": "sustaining", "description": "APIs and integration surfaces for reporting, partner tooling, and ecosystem commerce workflows.", "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-partner-api-gateway", "name": "Partner API gateway", "type": "api", "description": "Programmatic workflow and reporting interfaces.", "dependencies": {"modules": [{"moduleId": "module-partner-integration-gateway", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-partner-integration-gateway", "name": "Partner integration gateway", "type": "integration", "description": "Exposes commerce and reporting workflows to internal and external consumers."}]}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-measurement-apis", "sourceModuleId": "module-partner-api-gateway", "type": "data", "description": "Uses shared measurement outputs for integrations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "dataDependencies": [{"assetId": "transaction", "moduleIds": ["module-partner-api-gateway"], "role": "read", "description": "Reads Transaction to support domain workflows."}, {"assetId": "search-browse-facets", "moduleIds": ["module-partner-api-gateway"], "role": "read", "description": "Reads Search Browse Facets to support domain workflows."}]}]}], "bricks": []}]};
@@ -1067,6 +1157,8 @@
         let brickStatusControlsInitialized = false;
         let dependenciesInitialized = false;
         let activeDependencySubtab = 'declared';
+        let dataShowBricks = false;
+        let dataShowDetail = false;
         const dependencySelectionState = {
             declared: {
                 streamIds: null,
@@ -1816,7 +1908,25 @@
             }
 
             function renderAssetCard(asset) {
-                const usage = buildDataAssetUsage(asset.id);
+                let detailMarkup = '';
+                if (dataShowDetail) {
+                    detailMarkup = `
+                        <div class="data-card-subtitle">Metadata</div>
+                        ${renderMetaList(asset)}
+                        <div class="data-card-subtitle">Stores</div>
+                        ${renderStoreList(asset)}
+                    `;
+                }
+                let brickMarkup = '';
+                if (dataShowBricks) {
+                    const usage = buildDataAssetUsage(asset.id);
+                    brickMarkup = `
+                        <div class="data-card-subtitle">Producing Bricks</div>
+                        ${renderDataBrickPills(usage.producingBricks, 'crimson', 'write-data')}
+                        <div class="data-card-subtitle">Consuming Bricks</div>
+                        ${renderDataBrickPills(usage.consumingBricks, 'blue', 'read-data')}
+                    `;
+                }
                 return `
                     <div class="data-card">
                         <div class="data-card-head">
@@ -1824,14 +1934,8 @@
                             <div class="data-card-title">${escapeHtml(asset.name || asset.id)}</div>
                         </div>
                         ${asset.description ? `<div class="data-card-copy">${escapeHtml(asset.description)}</div>` : ''}
-                        <div class="data-card-subtitle">Metadata</div>
-                        ${renderMetaList(asset)}
-                        <div class="data-card-subtitle">Stores</div>
-                        ${renderStoreList(asset)}
-                        <div class="data-card-subtitle">Producing Bricks</div>
-                        ${renderDataBrickPills(usage.producingBricks, 'crimson', 'write-data')}
-                        <div class="data-card-subtitle">Consuming Bricks</div>
-                        ${renderDataBrickPills(usage.consumingBricks, 'blue', 'read-data')}
+                        ${detailMarkup}
+                        ${brickMarkup}
                     </div>
                 `;
             }
@@ -1862,6 +1966,10 @@
                 : `<div class="data-grid">${assets.map(renderAssetCard).join('')}</div>`;
 
             container.innerHTML = `
+                <div class="data-options">
+                    <label class="data-option"><input type="checkbox" id="dataShowDetailToggle" ${dataShowDetail ? 'checked' : ''} onchange="setDataShowDetail(this.checked)"> Show detail</label>
+                    <label class="data-option"><input type="checkbox" id="dataShowBricksToggle" ${dataShowBricks ? 'checked' : ''} onchange="setDataShowBricks(this.checked)"> Show bricks</label>
+                </div>
                 <div class="data-summary">
                     <div class="dependency-graph-stat">
                         <div class="dependency-graph-stat-value">${assets.length}</div>
@@ -1882,6 +1990,16 @@
                 </div>
                 ${assets.length ? assetMarkup : '<div class="activity-muted">No data assets are defined for this domain yet.</div>'}
             `;
+        }
+
+        function setDataShowBricks(show) {
+            dataShowBricks = show;
+            renderDataView();
+        }
+
+        function setDataShowDetail(show) {
+            dataShowDetail = show;
+            renderDataView();
         }
 
         function sortByDisplayName(left, right) {
@@ -2464,11 +2582,152 @@
         function renderDependencyGraphShell() {
             return `
                 <div class="dependency-graph-shell">
-                    <div class="dependency-graph-summary" id="DependenciesSummary"></div>
+                    <div class="dependency-view-toggle">
+                        <button type="button" class="dependency-view-btn active" data-depview="force" onclick="setDependencyGraphView('force')">2D force graph</button>
+                        <button type="button" class="dependency-view-btn" data-depview="mermaid" onclick="setDependencyGraphView('mermaid')">Flow diagram</button>
+                    </div>
                     <div class="dependency-graph" id="DependenciesGraph"></div>
                 </div>
             `;
         }
+
+        let dependencyGraphView = 'force';
+        let dependencyForceInstance = null;
+
+        function setDependencyGraphView(view) {
+            dependencyGraphView = view;
+            document.querySelectorAll('.dependency-view-btn').forEach(button => {
+                button.classList.toggle('active', button.getAttribute('data-depview') === view);
+            });
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (graphContainer) {
+                graphContainer.classList.toggle('force', view === 'force');
+            }
+            renderActiveDependencyGraph();
+        }
+
+        const dependencyNodeColors = {
+            streamNode: '#f59e0b',
+            brickNode: '#2563eb',
+            dataAssetNode: '#16a34a'
+        };
+
+        // Convert a #rrggbb color to rgba with the given alpha so overlapping
+        // force-graph nodes blend instead of forming a solid color block.
+        function dependencyNodeColorWithAlpha(hexColor, alpha) {
+            const hex = String(hexColor || '').replace('#', '');
+            if (hex.length !== 6) {
+                return hexColor;
+            }
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+        }
+
+        function renderDependencyGraph(graph, emptyMessage) {
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (!graphContainer) {
+                return;
+            }
+            graphContainer.classList.toggle('force', dependencyGraphView === 'force');
+            dependencyForceInstance = null;
+            if (dependencyGraphView === 'force') {
+                renderDependencyForce(graph, emptyMessage);
+            } else {
+                renderDependencyMermaid(graph, emptyMessage);
+            }
+        }
+
+        function renderDependencyForce(graph, emptyMessage) {
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (!graphContainer) {
+                return;
+            }
+            if (!graph.nodes.length || !graph.edges.length) {
+                graphContainer.innerHTML = `<div class="dependency-empty">${escapeHtml(emptyMessage)}</div>`;
+                return;
+            }
+            if (typeof ForceGraph === 'undefined') {
+                graphContainer.innerHTML = '<div class="dependency-empty">Force graph library failed to load.</div>';
+                return;
+            }
+            graphContainer.innerHTML = '';
+
+            const degree = {};
+            graph.edges.forEach(edge => {
+                degree[edge.source] = (degree[edge.source] || 0) + 1;
+                degree[edge.target] = (degree[edge.target] || 0) + 1;
+            });
+            const nodes = graph.nodes.map(node => ({
+                id: node.id,
+                name: node.label,
+                nodeClass: node.nodeClass,
+                val: (degree[node.id] || 1)
+            }));
+            const links = graph.edges.map(edge => ({source: edge.source, target: edge.target, label: edge.label || ''}));
+
+            const Graph = ForceGraph()(graphContainer)
+                .nodeRelSize(5)
+                .nodeVal(() => 1)
+                .nodeLabel(node => escapeHtml(node.name))
+                .nodeColor(node => dependencyNodeColorWithAlpha(dependencyNodeColors[node.nodeClass] || '#6b7280', 0.65))
+                .nodeCanvasObjectMode(() => 'after')
+                .nodeCanvasObject((node, ctx, globalScale) => {
+                    if (!dependencyForceShowLabels) return;
+                    const fontSize = 12 / globalScale;
+                    ctx.font = fontSize + 'px Ubuntu, Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = '#374151';
+                    ctx.fillText(node.name, node.x, node.y + 7);
+                })
+                .linkColor(() => 'rgba(100,116,139,0.5)')
+                .linkWidth(1.5)
+                .linkDirectionalArrowLength(4)
+                .linkDirectionalArrowRelPos(1)
+                .linkDirectionalParticles(1)
+                .linkDirectionalParticleSpeed(0.006)
+                .linkLabel(link => escapeHtml(link.label))
+                .onNodeClick(node => {
+                    if (node.id.indexOf('brick:') === 0) {
+                        window.open('landing_pages/' + node.id.substring('brick:'.length) + '.html', '_blank');
+                    }
+                })
+                .graphData({nodes: nodes, links: links});
+
+            dependencyForceInstance = Graph;
+            sizeDependencyForce();
+        }
+
+        let dependencyForceShowLabels = false;
+
+        function setDependencyForceLabels(show) {
+            dependencyForceShowLabels = show;
+            if (dependencyForceInstance && dependencyGraphView === 'force') {
+                dependencyForceInstance.nodeCanvasObjectMode(() => 'after');
+            }
+        }
+
+        function sizeDependencyForce() {
+            if (!dependencyForceInstance) {
+                return;
+            }
+            const container = document.getElementById('DependenciesGraph');
+            if (!container) {
+                return;
+            }
+            const w = container.clientWidth || container.offsetWidth;
+            const h = container.clientHeight || container.offsetHeight;
+            if (w > 0 && h > 0) {
+                dependencyForceInstance.width(w).height(h);
+                if (typeof dependencyForceInstance.d3ReheatSimulation === 'function') {
+                    dependencyForceInstance.d3ReheatSimulation();
+                }
+            }
+        }
+
+        window.addEventListener('resize', sizeDependencyForce);
 
         function renderDependencyMermaid(graph, emptyMessage) {
             const graphContainer = document.getElementById('DependenciesGraph');
@@ -2517,12 +2776,9 @@
             if (!summary) {
                 return;
             }
-            summary.innerHTML = stats.map(stat => `
-                <div class="dependency-graph-stat">
-                    <span class="dependency-graph-stat-value">${stat.value}</span>
-                    <span class="dependency-graph-stat-label">${stat.label}</span>
-                </div>
-            `).join('');
+            summary.innerHTML = 'Showing ' + stats.map(stat =>
+                '<strong>' + stat.value + '</strong> ' + escapeHtml(String(stat.label).toLowerCase())
+            ).join(' &middot; ') + '.';
         }
 
         function renderDeclaredDependencyGraph() {
@@ -2534,7 +2790,7 @@
                 {value: graph.scopedBrickCount, label: 'Scoped Bricks'},
                 {value: graph.edges.length, label: 'Declared Links'}
             ]);
-            renderDependencyMermaid(graph, 'Select streams and dependency types to render declared brick dependencies.');
+            renderDependencyGraph(graph, 'Select streams and dependency types to render declared brick dependencies.');
         }
 
         function renderDataDependencyGraph() {
@@ -2549,7 +2805,7 @@
                 {value: selectedAssetIds.size, label: 'Assets'},
                 {value: graph.edges.length, label: aggregate ? 'Shared Asset Links' : 'Data Links'}
             ]);
-            renderDependencyMermaid(graph, aggregate
+            renderDependencyGraph(graph, aggregate
                 ? 'Select at least two bricks sharing selected data assets to render aggregated dependencies.'
                 : 'Select bricks and data assets to render data-asset dependency links.');
         }
@@ -2566,7 +2822,7 @@
                 {value: selectedBrickIds.size, label: 'Bricks'},
                 {value: graph.edges.length, label: aggregate ? 'Shared Stream Links' : 'Stream Links'}
             ]);
-            renderDependencyMermaid(graph, aggregate
+            renderDependencyGraph(graph, aggregate
                 ? 'Select at least two bricks sharing selected streams to render aggregated brick links.'
                 : 'Select bricks and streams to render stream dependency links.');
         }
@@ -2593,7 +2849,11 @@
                 container.innerHTML = `
                     <div class="dependency-subtabs" id="DependencySubtabs"></div>
                     <div class="dependencies-layout">
-                        <div id="DependencyControls"></div>
+                        <div class="dependency-controls-column">
+                            <div id="DependencyControls"></div>
+                            <label class="dependency-labels-toggle"><input type="checkbox" onchange="setDependencyForceLabels(this.checked)"> Show labels</label>
+                            <div class="dependency-graph-summary" id="DependenciesSummary"></div>
+                        </div>
                         ${renderDependencyGraphShell()}
                     </div>
                 `;
@@ -2872,9 +3132,69 @@
     </script>
 </head>
 
-<body onload="initTab(); updateBricksView(); updateTabLabels();" onhashchange="initTab()">
+<body onload="updateBricksView(); updateTabLabels(); initTab('bricks');" onhashchange="initTab('bricks')">
 
 <div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
 
 <div class="hero">
     <table class="hero-table">
@@ -2889,12 +3209,12 @@
 </div>
 <div>
     <div class="tab">
-        <button class="tablinks active" id="tab_BigPicture" onclick="openTab('BigPicture')">Bricks</button>
-        <button class="tablinks" id="tab_Streams" onclick="openTab('Streams')">Streams</button>
-        <button class="tablinks" id="tab_Data" onclick="openTab('Data')">Data</button>
-        <button class="tablinks" id="tab_Dependencies" onclick="openTab('Dependencies')">Dependencies</button>
+        <button class="tablinks active" id="tab_bricks" onclick="openTab('bricks')">Bricks</button>
+        <button class="tablinks" id="tab_streams" onclick="openTab('streams')">Streams</button>
+        <button class="tablinks" id="tab_data" onclick="openTab('data')">Data</button>
+        <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
     </div>
-    <div id="BigPicture" class="tabcontent" style="display: block">
+    <div id="tab_content_bricks" class="tabcontent">
         <div class="bricks-panel">
             <div class="bricks-toolbar">
                 <label class="bricks-toggle" for="brickStructureToggle">
@@ -2911,7 +3231,7 @@
             <div class="legend" id="Legend"></div>
         </div>
     </div>
-    <div id="Streams" class="tabcontent">
+    <div id="tab_content_streams" class="tabcontent">
         <div class="streams-panel">
             <div class="streams-toolbar">
                 <label class="streams-toggle" for="streamDescriptionToggle">
@@ -2922,12 +3242,12 @@
             <div id="StreamsContent"></div>
         </div>
     </div>
-    <div id="Data" class="tabcontent">
+    <div id="tab_content_data" class="tabcontent">
         <div class="data-panel">
             <div id="DataContent"></div>
         </div>
     </div>
-    <div id="Dependencies" class="tabcontent">
+    <div id="tab_content_dependencies" class="tabcontent">
         <div class="dependencies-panel">
             <div id="DependenciesContent"></div>
         </div>

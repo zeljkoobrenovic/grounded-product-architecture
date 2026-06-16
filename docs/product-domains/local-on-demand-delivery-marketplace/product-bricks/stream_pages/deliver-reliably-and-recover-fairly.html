@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "deliver-reliably-and-recover-fairly", "name": "Deliver Reliably and Recover Fairly", "icon": "deliver-reliably-and-recover-fairly.png", "type": "outcome-based-stream", "description": "Coordinate merchant preparation, courier assignment, tracking, and issue resolution so orders arrive as promised and defects are handled fairly.", "group": "Consumer Marketplace", "rootGroup": "Consumer Marketplace", "flows": [{"id": "reliable-delivery-recovery-flow", "title": "Coordinate delivery and recover issues", "description": "From canonical order state through merchant prep, dispatch, tracking, and support recovery.", "steps": [{"id": "establish-order-and-prep-state", "title": "Establish order and prep state", "dependencies": [{"type": "brick", "id": "orde", "name": "Order Management & State Machine", "description": "Canonical order lifecycle and exception state.", "how": "Anchors the order state used by consumer, merchant, courier, support, and finance workflows."}, {"type": "brick", "id": "prep", "name": "Merchant Order Prep & POS Integration", "description": "Merchant preparation state, POS sync, and readiness signals.", "how": "Keeps dispatch aligned with merchant readiness."}]}, {"id": "assign-and-route-courier", "title": "Assign and route courier", "dependencies": [{"type": "brick", "id": "disp", "name": "Dispatch, Matching & Assignment", "description": "Courier assignment, offer, and work allocation.", "how": "Matches orders with available courier supply."}, {"type": "brick", "id": "rout", "name": "Routing, Geospatial & ETA", "description": "Routing, geospatial, travel-time, and ETA services.", "how": "Predicts pickup, delivery, and delay timing."}, {"type": "brick", "id": "trac", "name": "Live Tracking & Notifications", "description": "Consumer-facing order state, courier progress, and exception notifications.", "how": "Explains order progress and delivery changes."}]}, {"id": "recover-order-defects", "title": "Recover order defects", "dependencies": [{"type": "brick", "id": "care", "name": "Customer Care & Issue Resolution", "description": "Self-service and assisted issue recovery.", "how": "Resolves late, missing, wrong, damaged, or unsafe orders."}, {"type": "brick", "id": "risk", "name": "Fraud, Abuse & Policy Controls", "description": "Fraud, refund abuse, promotion abuse, and policy controls.", "how": "Balances fair recovery with abuse prevention."}]}]}], "outcomes": ["Higher on-time delivery promise adherence", "Lower cancellation and defect rates", "Higher self-service resolution satisfaction"], "brickDependencies": [{"targetBrickId": "orde", "type": "composition"}, {"targetBrickId": "prep", "type": "composition"}, {"targetBrickId": "disp", "type": "composition"}, {"targetBrickId": "rout", "type": "composition"}, {"targetBrickId": "trac", "type": "composition"}, {"targetBrickId": "care", "type": "composition"}, {"targetBrickId": "risk", "type": "data"}], "externalSystemsThisStreamDependsOn": [], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "orde", "name": "Order Management & State Machine", "type": "service", "status": "invest", "description": "Canonical order lifecycle from placement through merchant acceptance, preparation, courier pickup, delivery, cancellation, refund, and dispute.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-order-api", "name": "Order API", "type": "api", "description": "Canonical order state API used by consumer, merchant, courier, support, and finance surfaces.", "dependencies": {"modules": [{"moduleId": "module-order-state-machine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-order-state-machine", "name": "Order state machine", "type": "service", "description": "Maintains valid state transitions, ownership handoffs, and exception handling."}]}], "dataDependencies": [{"assetId": "order-record", "moduleIds": ["module-order-state-machine"], "role": "own", "description": "Owns canonical order state and event history."}], "brickDependencies": [{"targetBrickId": "disp", "moduleId": "module-assignment-optimizer", "sourceModuleId": "module-order-state-machine", "type": "event", "description": "Coordinates fulfillment state with courier assignment."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Consumer Marketplace", "group": "Order and loyalty"}, {"id": "prep", "name": "Merchant Order Prep & POS Integration", "type": "integration", "status": "invest", "description": "Merchant order tablet, POS injection, accept/reject flows, prep-time updates, substitution communication, and store busy-mode controls.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-merchant-order-manager", "name": "Merchant order manager", "type": "web-component", "description": "Order acceptance, prep, substitution, and handoff surface.", "dependencies": {"modules": [{"moduleId": "module-pos-order-adapter", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-pos-order-adapter", "name": "POS order adapter", "type": "integration", "description": "Maps marketplace order states into restaurant and retailer POS workflows."}]}], "dataDependencies": [{"assetId": "merchant-operation-event", "moduleIds": ["module-pos-order-adapter"], "role": "own", "description": "Owns merchant accept, prep, delay, and handoff events."}], "brickDependencies": [{"targetBrickId": "orde", "moduleId": "module-order-api", "sourceModuleId": "module-pos-order-adapter", "type": "event", "description": "Updates canonical order state as merchants accept and prepare orders."}], "externalSystemsThisBrickDependsOn": [{"name": "Restaurant and retailer POS systems", "description": "Order injection and menu sync integrations.", "sourceModuleId": "module-pos-order-adapter"}], "externalSystemsDependingOnThisBrick": [], "domain": "Merchant and Retailer Growth", "group": "Merchant operations"}, {"id": "disp", "name": "Dispatch, Matching & Assignment", "type": "service", "status": "invest", "description": "Real-time order dispatch, courier matching, pickup assignment, offer acceptance, reassignment, and marketplace balance controls.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-dispatch-operations-console", "name": "Dispatch operations console", "type": "web-component", "description": "Live city operations, exception, and manual intervention surface.", "dependencies": {"modules": [{"moduleId": "module-assignment-optimizer", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-assignment-optimizer", "name": "Assignment optimizer", "type": "service", "description": "Matches orders to couriers using location, mode, prep time, reliability, cost, batching, and fairness constraints."}]}], "dataDependencies": [{"assetId": "dispatch-assignment", "moduleIds": ["module-assignment-optimizer"], "role": "own", "description": "Owns courier assignment, offer, acceptance, and reassignment state."}], "brickDependencies": [{"targetBrickId": "prep", "moduleId": "module-merchant-order-manager", "sourceModuleId": "module-assignment-optimizer", "type": "event", "description": "Uses prep-time and ready-for-pickup state."}], "externalSystemsThisBrickDependsOn": [{"name": "Mapping and routing providers", "description": "Travel-time, route, and geospatial services.", "sourceModuleId": "module-assignment-optimizer"}], "externalSystemsDependingOnThisBrick": [], "domain": "Courier Logistics", "group": "Fulfillment optimization"}, {"id": "rout", "name": "Routing, Geospatial & ETA", "type": "service", "status": "invest", "description": "Travel-time prediction, geocoding, dropoff validation, delivery zones, routing, weather-aware ETA, and courier navigation context.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-eta-and-route-api", "name": "ETA and route API", "type": "api", "description": "Shared interface for promise, dispatch, tracking, and courier navigation.", "dependencies": {"modules": [{"moduleId": "module-eta-prediction-model", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-eta-prediction-model", "name": "ETA prediction model", "type": "service", "description": "Predicts prep, pickup, route, handoff, and dropoff times for consumer and operations use."}]}], "dataDependencies": [{"assetId": "geospatial-event", "moduleIds": ["module-eta-prediction-model"], "role": "own", "description": "Owns address, zone, route, ETA, and location-derived events."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [{"name": "Maps, traffic, and geocoding providers", "description": "Routing, address validation, and travel-time inputs.", "sourceModuleId": "module-eta-prediction-model"}], "externalSystemsDependingOnThisBrick": [], "domain": "Courier Logistics", "group": "Fulfillment optimization"}, {"id": "trac", "name": "Live Tracking & Notifications", "type": "full-stack", "status": "invest", "description": "Consumer-facing estimated time of arrival, map tracking, preparation visibility, courier arrival notifications, and exception updates.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-live-order-tracker", "name": "Live order tracker", "type": "web-component", "description": "Map and status timeline across app, web, SMS, push, and email.", "dependencies": {"modules": [{"moduleId": "module-eta-explanation-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-eta-explanation-service", "name": "ETA explanation service", "type": "service", "description": "Combines preparation, dispatch, route, and delay signals into customer-readable promises."}]}], "dataDependencies": [{"assetId": "delivery-event", "moduleIds": ["module-eta-explanation-service"], "role": "read", "description": "Reads courier, route, and order tracking events."}], "brickDependencies": [{"targetBrickId": "disp", "moduleId": "module-assignment-optimizer", "sourceModuleId": "module-eta-explanation-service", "type": "event", "description": "Uses dispatch and courier location events."}, {"targetBrickId": "orde", "moduleId": "module-order-state-machine", "sourceModuleId": "module-eta-explanation-service", "type": "event", "description": "Uses canonical order state updates."}], "externalSystemsThisBrickDependsOn": [{"name": "Push notification providers", "description": "Mobile notification delivery.", "sourceModuleId": "module-eta-explanation-service"}, {"name": "Mapping providers", "description": "Map rendering, geocoding, and route visualization.", "sourceModuleId": "module-eta-explanation-service"}], "externalSystemsDependingOnThisBrick": [], "domain": "Consumer Marketplace", "group": "Order and loyalty"}, {"id": "care", "name": "Customer Care & Issue Resolution", "type": "full-stack", "status": "invest", "description": "Self-service help, refunds, credits, missing item claims, late-order recovery, support case routing, and agent tooling.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-help-and-support-ui", "name": "Help and support UI", "type": "web-component", "description": "Consumer, merchant, courier, and agent resolution workflows.", "dependencies": {"modules": [{"moduleId": "module-resolution-policy-engine", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-resolution-policy-engine", "name": "Resolution policy engine", "type": "service", "description": "Determines refund, credit, escalation, and merchant or courier claim workflows."}]}], "dataDependencies": [{"assetId": "support-case", "moduleIds": ["module-resolution-policy-engine"], "role": "own", "description": "Owns issue, resolution, and escalation records."}], "brickDependencies": [{"targetBrickId": "risk", "moduleId": "module-risk-decision-engine", "sourceModuleId": "module-resolution-policy-engine", "type": "policy", "description": "Uses trust signals to prevent refund and promotion abuse."}], "externalSystemsThisBrickDependsOn": [{"name": "Contact-center platform", "description": "Agent routing, conversation history, and workforce operations.", "sourceModuleId": "module-resolution-policy-engine"}], "externalSystemsDependingOnThisBrick": [], "domain": "Consumer Marketplace", "group": "Order and loyalty"}, {"id": "risk", "name": "Fraud, Abuse & Policy Controls", "type": "service", "status": "invest", "description": "Payment fraud, refund abuse, promo abuse, fake accounts, merchant abuse, courier collusion, restricted items, and marketplace policy enforcement.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-risk-decision-api", "name": "Risk decision API", "type": "api", "description": "Real-time risk checks for checkout, onboarding, support, and payout flows.", "dependencies": {"modules": [{"moduleId": "module-risk-decision-engine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-risk-decision-engine", "name": "Risk decision engine", "type": "service", "description": "Combines rules, models, and case outcomes into account, transaction, and order decisions."}]}], "dataDependencies": [{"assetId": "risk-signal", "moduleIds": ["module-risk-decision-engine"], "role": "own", "description": "Owns risk signals, decisions, and policy actions."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-identity-api", "sourceModuleId": "module-risk-decision-engine", "type": "data", "description": "Uses account and device trust signals."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Marketplace Foundations", "group": "Trust and financial control"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "consumer-marketplace-order-and-loyalty-4", "teamName": "Consumer Marketplace Order Management & State Machine", "teamType": "stream-aligned", "groupId": "consumer-marketplace", "groupName": "Consumer Marketplace", "role": "owner", "roleLabel": "Owner"}, {"teamId": "merchant-and-retail-growth-merchant-operations-3", "teamName": "Merchant and Retail Growth Merchant Order Prep & POS Integration", "teamType": "platform", "groupId": "merchant-and-retail-growth", "groupName": "Merchant and Retail Growth", "role": "owner", "roleLabel": "Owner"}, {"teamId": "dispatch-optimization", "teamName": "Dispatch Optimization", "teamType": "stream-aligned", "groupId": "courier-logistics-group", "groupName": "Courier Logistics", "role": "supporting", "roleLabel": "Supporting team"}, {"teamId": "courier-logistics-group-fulfillment-optimization-2", "teamName": "Courier Logistics Courier Safety & Incident Response and Dispatch, Matching & Assignment", "teamType": "stream-aligned", "groupId": "courier-logistics-group", "groupName": "Courier Logistics", "role": "owner", "roleLabel": "Owner"}, {"teamId": "consumer-ordering", "teamName": "Consumer Ordering", "teamType": "stream-aligned", "groupId": "consumer-marketplace", "groupName": "Consumer Marketplace", "role": "owner", "roleLabel": "Owner"}, {"teamId": "identity-risk", "teamName": "Identity and Risk", "teamType": "platform", "groupId": "marketplace-foundations", "groupName": "Marketplace Foundations", "role": "owner", "roleLabel": "Owner"}, {"teamId": "courier-supply-and-safety", "teamName": "Courier Supply & Safety", "teamType": "stream-aligned", "groupId": "courier-logistics-group", "groupName": "Courier Logistics", "role": "supporting", "roleLabel": "Supporting team"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>

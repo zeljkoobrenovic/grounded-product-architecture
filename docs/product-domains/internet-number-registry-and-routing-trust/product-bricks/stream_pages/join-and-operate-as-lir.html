@@ -17,45 +17,82 @@
 </style>
     <style>
     .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background-color: #f1f1f1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
     }
 
     .tab button {
-        background-color: inherit;
-        float: left;
+        position: relative;
+        background-color: transparent;
         border: none;
         outline: none;
         cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
         font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .tab button:hover {
-        background-color: #ddd;
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
     }
 
     .tab button.active {
-        background-color: #ccc;
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
     }
 
     .tabcontent {
         display: none;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-top: none;
+        padding: 22px 2px;
+        animation: tabContentFade 0.2s ease;
     }
 
-    @media (max-width: 720px) {
-        .tab button {
-            width: 100%;
-            text-align: left;
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
 </style>
+
     <style>
     .evidence-group {
         margin-top: 18px;
@@ -713,7 +750,7 @@
     const currentStream = {"id": "join-and-operate-as-lir", "name": "Join and Operate as a Local Internet Registry", "icon": "join-and-operate-as-lir.png", "type": "outcome-based-stream", "description": "Help an organization become a RIPE NCC member, activate its LIR account, understand obligations, and operate registry workflows with low effort.", "group": "Registry and Routing Trust Journeys", "rootGroup": "Registry and Routing Trust Journeys", "flows": [{"id": "join-and-operate-as-lir-flow", "title": "Join and Operate as a Local Internet Registry", "description": "Move from membership intent to a working LIR account with clear billing, roles, and service access.", "steps": [{"id": "evaluate-membership-fit", "title": "Evaluate membership fit", "keyFacts": ["Organizations need clarity on fees, obligations, resource eligibility, and expected effort before joining."], "painPoints": ["Teams can delay joining when legal, billing, and technical responsibilities are unclear."], "dependencies": [{"type": "brick", "id": "memb", "name": "Membership Lifecycle", "description": "Tracks application and eligibility state.", "how": "Gives the applicant a single source of truth for status and next action."}]}, {"id": "activate-member-workspace", "title": "Activate member workspace", "keyFacts": ["New members need account roles, service access, and guided next steps immediately after approval."], "painPoints": ["Member value is delayed when portal permissions, contacts, and first tasks are fragmented."], "dependencies": [{"type": "brick", "id": "lirp", "name": "LIR Portal Workspace", "description": "Main authenticated workspace for members.", "how": "Provides account administration, task inbox, and resource service entry points."}, {"type": "brick", "id": "mntn", "name": "Maintainer and Access Control", "description": "Controls authority for registry object updates.", "how": "Ensures new member roles and maintainers can safely operate registry objects."}]}, {"id": "build-operating-confidence", "title": "Build operating confidence", "keyFacts": ["Members sustain good registry hygiene when training and certification connect directly to recurring tasks."], "painPoints": ["Operational mistakes increase when new LIRs learn policies only through support tickets."], "dependencies": []}]}], "outcomes": ["Faster member onboarding", "Lower registry service effort", "More accurate member and resource-holder data"], "brickDependencies": [{"targetBrickId": "memb", "type": "composition"}, {"targetBrickId": "lirp", "type": "composition"}, {"targetBrickId": "mntn", "type": "authorization"}], "externalSystemsThisStreamDependsOn": [{"system": "RIPE NCC Access and finance systems", "type": "identity-and-finance", "interface": "SSO, invoices, payments", "description": "Provide authentication and payment state required for membership activation."}], "externalSystemsDependingOnThisStream": []};
     const related_bricks = [{"id": "memb", "name": "Membership Lifecycle", "type": "service", "status": "sustaining", "description": "Manages application, onboarding, LIR account state, closure, sponsoring relationships, voting eligibility, and member communications.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-membership-api", "name": "Membership API", "type": "api", "description": "Account state and eligibility interface used by registry, billing, and governance workflows.", "dependencies": {"modules": [{"moduleId": "module-member-lifecycle-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-member-lifecycle-service", "name": "Member lifecycle service", "type": "service", "description": "System of record workflows for member state changes and eligibility decisions."}]}], "dataDependencies": [{"assetId": "member-organization", "moduleIds": ["module-member-lifecycle-service"], "role": "write", "description": "Maintains member organization, LIR account, role, and status data."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Member Services and Governance", "group": "Membership Operations"}, {"id": "lirp", "name": "LIR Portal Workspace", "type": "full-stack", "status": "invest", "description": "Authenticated member workspace for resource requests, account management, registry updates, meetings, billing, and service tasks.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-lir-portal-ui", "name": "LIR Portal UI", "type": "web-component", "description": "Secure web interface for members and sponsoring LIRs."}, {"id": "module-lir-portal-application", "name": "LIR Portal application", "type": "mobile-component", "description": "Member-facing workflow application and task inbox."}]}], "dataDependencies": [{"assetId": "member-organization", "moduleIds": ["module-lir-portal-ui", "module-lir-portal-application"], "role": "read", "description": "Reads member profile, contacts, roles, and service entitlements."}], "brickDependencies": [{"targetBrickId": "memb", "moduleId": "module-membership-api", "sourceModuleId": "module-lir-portal-ui", "type": "composition", "description": "Uses member identity, role, and account state for authorization."}], "externalSystemsThisBrickDependsOn": [{"system": "RIPE NCC Access", "type": "identity-provider", "interface": "SSO", "description": "Authenticates member and operator users.", "sourceModuleId": "module-lir-portal-application"}], "externalSystemsDependingOnThisBrick": [], "domain": "Member Services and Governance", "group": "Membership Operations"}, {"id": "mntn", "name": "Maintainer and Access Control", "type": "service", "status": "invest", "description": "Controls update authority for RIPE Database objects through maintainers, role mappings, authentication state, API keys, and audited permission checks.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-maintainer-authorization-api", "name": "Maintainer authorization API", "type": "api", "description": "Authorization interface used by RIPE Database, LIR Portal, registry workflows, and API clients.", "dependencies": {"modules": [{"moduleId": "module-maintainer-authorization-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-maintainer-authorization-service", "name": "Maintainer authorization service", "type": "service", "description": "Evaluates object update authority, role memberships, authentication methods, API credentials, and audit events."}]}], "dataDependencies": [{"assetId": "maintainer-access-record", "moduleIds": ["module-maintainer-authorization-service"], "role": "write", "description": "Maintains object authorization, maintainer, role, and credential metadata."}, {"assetId": "member-organization", "moduleIds": ["module-maintainer-authorization-service"], "role": "read", "description": "Reads member and role context used for authorization decisions."}, {"assetId": "audit-log", "moduleIds": ["module-maintainer-authorization-service"], "role": "publish", "description": "Publishes audited authorization and object update events."}], "brickDependencies": [{"targetBrickId": "memb", "moduleId": "module-member-lifecycle-service", "sourceModuleId": "module-maintainer-authorization-service", "type": "account-context", "description": "Uses membership, LIR account, and role state to determine authorized maintainers."}, {"targetBrickId": "lirp", "moduleId": "module-lir-portal-application", "sourceModuleId": "module-maintainer-authorization-service", "type": "composition", "description": "Exposes maintainer and access-control tasks through the member workspace."}], "externalSystemsThisBrickDependsOn": [{"system": "RIPE NCC Access", "type": "identity-provider", "interface": "SSO, account roles, and authentication factors", "description": "Provides authenticated user identity and account lifecycle state.", "sourceModuleId": "module-maintainer-authorization-service"}], "externalSystemsDependingOnThisBrick": [{"system": "Member automation and registry update clients", "type": "external-consumer", "interface": "API keys and authenticated update flows", "description": "Use maintainer authority to safely automate object updates.", "moduleId": "module-maintainer-authorization-api"}], "domain": "Registry Resource Management", "group": "Registry Publication and Access Control"}];
     const linked_products = [];
-    const related_teams = [{"teamId": "member-services-and-governance-membership-operations-2", "teamName": "Member Services and Governance Membership Lifecycle", "teamType": "platform", "groupId": "member-services-and-governance", "groupName": "Member Services and Governance", "role": "owner", "roleLabel": "Owner"}, {"teamId": "member-services-and-governance-team", "teamName": "Member Services and Governance Team", "teamType": "stream-aligned", "groupId": "member-services-and-governance", "groupName": "Member Services and Governance", "role": "owner", "roleLabel": "Owner"}, {"teamId": "registry-resource-management-team", "teamName": "Registry Resource Management Team", "teamType": "stream-aligned", "groupId": "registry-resource-management", "groupName": "Registry Resource Management", "role": "supporting", "roleLabel": "Supporting team"}];
+    const related_teams = [];
     const supported_jobs = [];
 
     mermaid.initialize({
@@ -836,7 +873,7 @@
         <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
     </div>
 
-    <div id="tab_content_home" class="tabcontent" style="display: block;"></div>
+    <div id="tab_content_home" class="tabcontent"></div>
     <div id="tab_content_flows" class="tabcontent"></div>
 
     <div id="tab_content_evidence"></div>
