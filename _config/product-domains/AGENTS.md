@@ -16,14 +16,14 @@ Prefer evolving the existing model and generator conventions over inventing a ne
 
 Use this `AGENTS.md` file for always-on repository rules, source-vs-generated policy, folder structure, ID conventions, validation, generator workflow, and completion checks.
 
-For deeper product-domain modeling guidance, use the repo-local skill library under `_skills/product-domains/`:
+For deeper product-domain modeling guidance, use the invocable skills under `.claude/skills/`:
 
-- Start with `_skills/product-domains/SKILLS-OVERVIEW.md` to choose the relevant skill or skill cluster.
-- Load only the relevant `SKILL.md` files for the task, such as market research, competition analysis, customer segmentation, JTBD, KPI architecture, product-brick architecture, delivery design, team topology, roadmap design, or structured JSON authoring.
-- Use `_skills/product-domains/meta-skills/new-product-domain-definition/SKILL.md` when creating a complete new domain end to end.
-- Use `_skills/product-domains/meta-skills/spec-driven-product-architecture-modeling/SKILL.md` when checking or repairing coherence across customers, strategy, delivery, product bricks, teams, and planning artifacts.
+- Start with the `product-domain` router skill to orient and pick the right skill.
+- Shared schema, ID conventions, the cross-file reference map, and the validate→regenerate loop live in `.claude/skills/_references/domain-model.md`.
+- Use a per-artifact `edit-*` skill (`edit-customers`, `edit-product-bricks`, `edit-products`, `edit-streams`, `edit-data-assets`, `edit-teams`, `edit-competition`, `edit-evidence`) or `set-domain-strategy` for focused edits.
+- Use `new-product-domain` when creating a complete new domain end to end, and `audit-domain-balance` / `validate-domain` to check coherence and integrity.
 
-The `_skills/product-domains` directory is repository-local guidance. It is not an automatically discovered Codex skill location unless separately installed or linked into `${CODEX_HOME:-~/.codex}/skills`. Keep the detailed modeling guidance in `_skills/product-domains`; keep this file focused on operational rules that should apply to every product-domain edit.
+These are Claude Code skills, discovered automatically via the Skill tool. The validation scripts they call live at `.claude/skills/scripts/`. Keep the detailed modeling guidance in the skills; keep this file focused on operational rules that should apply to every product-domain edit.
 
 ## Core Principle
 

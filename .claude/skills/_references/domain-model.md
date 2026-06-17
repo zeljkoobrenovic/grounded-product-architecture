@@ -1,0 +1,140 @@
+# Product Domain Model — Shared Reference
+
+Single source of truth for the structure, IDs, cross-file references, and the
+validate→regenerate loop that every `edit-*` / `new-product-domain` skill relies on.
+Skills link here instead of duplicating schema. Read this once per session before
+editing any artifact.
+
+## Repository shape
+
+```
+_config/product-domains/<domain>/   JSON source of truth (edit here)
+_templates/<area>/                   HTML templates (presentation only)
+_wiring/product-domains/             Python generators (logic; do not edit for content)
+docs/product-domains/<domain>/       Generated output (never hand-edit)
+```
+
+Pipeline is one-directional: `_config + _templates --(Python in _wiring)--> docs`.
+No framework, no build system, no npm. Generators `shutil.rmtree` their target
+docs folder before rebuilding, so **never** hand-edit `docs/**`, and inspect a
+dirty worktree before regenerating.
+
+## Live artifacts (the set these skills cover)
+
+| Artifact | File(s) | Generator |
+|---|---|---|
+| Start / domain config | `start/config.json` | `generate-start-docs.py` |
+| Customers | `customers/customers.json`, `customers/insights.json` | `generate-customers-docs.py` |
+| Products & deployment | `product-deployments/products.json`, `deployment.json` | `generate-products-docs.py` |
+| Product bricks | `product-bricks/product-bricks.json` | `generate-product-bricks-docs.py` |
+| Streams | `product-bricks/product-stream.json` | `generate-product-bricks-docs.py` |
+| Data assets | `data/data-assets.json` | `generate-product-bricks-docs.py` |
+| Evidence | `product-bricks/bricks-evidence.json`, `streams-evidence.json` | `generate-product-bricks-docs.py` |
+| Teams | `teams/teams.json` | `generate-teams-docs.py` |
+| Competition | `business/competition.json` | `generate-competition-docs.py` |
+| Domain brief | `_domain/DOMAIN.md` | (narrative, not generated) |
+
+> **Not live on this branch.** `objectives/{current,next,ktlo,archived}/*.json`,
+> `delivery/releases.json`, and the `initiatives`/`discoveries` docs are being
+> **removed** across all domains (their generators are already gone from `run.sh`).
+> Do not author or restore these unless the user explicitly asks. If you see them
+> referenced in old methodology, treat the reference as stale.
+
+## ID conventions (enforced by `validate-domain-model.py --strict-ids`)
+
+- Every `id`, `*Id`, `*Ids`, `objectId` value in `_config/**` is **lowercase**,
+  matching `^[a-z0-9][a-z0-9._:-]*$`. Exceptions: `evidence-ids` values and
+  `keyResultId` may contain regex/path-like characters.
+- Customer / brick IDs are short stable codes (`ridu`, `drvu`, `trip`, `disp`).
+  Stream / asset / team / insight IDs are hyphenated slugs
+  (`rider-book-and-complete-a-reliable-trip`, `customer-profile`, `rider-core`,
+  `rsm-01`).
+- Product-brick **module** IDs must start with `module-`.
+- IDs are stable: renaming an ID breaks every cross-file reference to it.
+
+## Cross-file reference map (the integrity that must hold)
+
+```
+customers.json
+  customer.id ─────────────┬─▶ insights.json     linkedCustomers[].customerId
+                           ├─▶ products.json      portfolio.products[].primaryCustomers[].id
+                           └─▶ teams.json         ...teams[].primaryCustomers[].customerId
+  jobsToBeDone[].id ───────┬─▶ insights.json     linkedCustomers[].jobIds[]
+                           └─▶ customerJourneyStories[].linkedJobIds[]
+  jtbd.steps[].streamsNeeded[].id ─▶ product-stream.json  stream id (or brick id)
+  kpiPyramids ... names ───▶ teams.json metrics, insights kpis (by NAME, not id)
+
+product-bricks.json
+  brick.id ────────────────┬─▶ products.json      neededBricks[].brickId
+                           ├─▶ deployment.json     ...deployedBricks[].brickId
+                           ├─▶ product-stream.json brickDependencies[].targetBrickId, flows steps deps
+                           ├─▶ teams.json          ...brickDependencies[].brickId
+                           └─▶ bricks-evidence.json object-id
+  brick.dataDependencies[].assetId ─▶ data-assets.json  asset.id
+  brick.layers[].modules[].id (module-*) ─▶ referenced by brickDependencies[].moduleId
+
+product-stream.json
+  stream.id ───────────────▶ streams-evidence.json object-id
+
+deployment.json
+  channels[].channels[].subChannelId ─▶ products.json deploymentChannelRef
+  ...environments[].environmentId ────▶ products.json deploymentEnvironmentRef
+
+data-assets.json
+  asset.ownerTeamId ───────▶ teams.json team id
+```
+
+When you add or rename an entity, update **every** referencing file in the same
+edit. The validator catches brick/team/module breakage; customer- and
+asset-level references you must check by hand (see each `edit-*` skill).
+
+## Product-brick layer model (fixed)
+
+`PRODUCT_BRICK_LAYER_ORDER` = `ui → interfaces → worker → stateless-service → service → integration`.
+
+Module `type` must be one of:
+`web-component, mobile-component, bff, api, backoffice-interface, message-queue,
+message-consumer, daemon, stateless-service, stateful-service, service, integration`.
+
+`metadata.modulesConfig.layerTypes` / `moduleTypes` (when present) must match these
+sets exactly, and each module type needs a `color`. Source of truth:
+`_wiring/product-domains/product_bricks_support.py`.
+
+## Validate → regenerate loop (run after every edit)
+
+```bash
+# 1. Validate JSON + cross-file references for the domain you touched
+python3 .claude/skills/scripts/validate-domain-model.py <domain-id>
+#    add --strict-ids for a lowercase/ID-format pass
+
+# 2. Regenerate that domain's docs (from _wiring/product-domains/)
+cd _wiring/product-domains
+#    temporarily ensure <domain-id> is the active entry in run.sh `domains=(...)`,
+#    or run a single generator directly:
+python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"
+```
+
+> The `domains=(...)` array in `run.sh` usually holds a single active domain.
+> To regenerate a different domain without editing run.sh, call the relevant
+> generator(s) directly with the three positional args (id, name, description) —
+> the canonical name/description live in the `domains_ALL=(...)` array in run.sh.
+
+## Reference domain
+
+`ride-sharing-marketplace` is the structural reference (most complete: 4 customer
+groups, ~12 bricks across 3 levels, 17 data assets, 10+ teams, 11 competitors,
+sourced insights). Use it as the shape and density target. `audio-streaming-platform`
+is an example of a **sparse** domain — useful as a "before" for balance audits, not
+as a structural model.
+
+## Working principles (apply to all edits)
+
+- Source JSON first; presentation in templates; `docs/**` is output.
+- Separate sourced facts from assumptions and inference. Don't invent business
+  metrics or source-backed claims. Use official URLs for competition stats.
+- Reuse existing JSON schemas and `${...}` template patterns; don't invent parallel
+  structures.
+- Keep domain language: customers, objectives, delivery, product bricks, streams,
+  releases, teams, evidence.
+- Every entity must earn its place — a segment/brick/team that doesn't change a
+  decision should be merged or dropped.
