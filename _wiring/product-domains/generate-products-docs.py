@@ -3,7 +3,6 @@ import os
 import shutil
 import datetime
 from domain_cli import load_domain_args
-from initiatives_support import load_domain_activity, filter_for_product
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
@@ -113,10 +112,13 @@ def create_overview_docs(domain, docs_folder):
                         .replace('${products}', json.dumps(products))
                         .replace('${deployment}', json.dumps(deployment)))
 
-def create_landing_pages(products, docs_folder, activity_data):
+def create_landing_pages(products, docs_folder):
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
 
     template = open(templates_root + 'landing_page.html').read()
+
+    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
+    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
 
     date_string = datetime.date.today().strftime('%Y-%m-%d')
 
@@ -137,10 +139,9 @@ def create_landing_pages(products, docs_folder, activity_data):
                                 .replace('${date}', date_string)
                                 .replace('${config}', json.dumps(site_config))
                                 .replace('${all_products}', json.dumps(products['portfolio']['products']))
+                                .replace('${deployment}', json.dumps(deployment))
                                 .replace('${product_name}', product['name'])
-                                .replace('${product}', json.dumps(product))
-                                .replace('${initiatives}', json.dumps(filter_for_product(activity_data['initiatives'], product['id'])))
-                                .replace('${releases}', json.dumps(filter_for_product(activity_data['releases'], product['id']))))
+                                .replace('${product}', json.dumps(product)))
 
 
 def create_deployment_landing_pages(domain, products, docs_folder):
@@ -192,9 +193,8 @@ customers = json.load(open(customers_path)) if os.path.exists(customers_path) el
 customers_lookup = build_customers_lookup(customers)
 
 products = enrich_products_with_customers(json.load(open(products_file_path)), customers_lookup)
-activity_data = load_domain_activity(domains_root, domain_id)
 
 docs_folder = domain_id + '/product-deployments/'
 create_overview_docs(domain, docs_folder)
-create_landing_pages(products, docs_folder, activity_data)
+create_landing_pages(products, docs_folder)
 create_deployment_landing_pages(domain, products, docs_folder)

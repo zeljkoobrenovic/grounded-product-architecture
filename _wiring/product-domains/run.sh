@@ -9,13 +9,12 @@ scripts=(
   "generate-customers-docs.py"
   "generate-products-docs.py"
   "generate-product-bricks-docs.py"
-  "generate-delivery-docs.py"
-  "generate-objectives-docs.py"
   "generate-teams-docs.py"
   "generate-competition-docs.py"
 )
 
 domains=(
+  "digital-medication-management|Digital Medication Management|The Digital Medication Management domain covers the patient, carer, care-provider, and pharmacy workflows required to run an automated medicine-dispensing and remote medication-management service for home care and supported living — spanning the in-home dispensing device, pharmacy multi-dose pouch logistics, remote adherence monitoring, missed-dose alarm escalation, care-team portals, and the regulated medical-device software platform behind them."
   "cloud-data-and-ai-platform|Cloud Data and AI Platform|Cloud Data and AI Platform covers the managed cloud services, developer experiences, governance controls, and operating workflows required to ingest data, analyze it, train and serve models, build AI applications, and run governed enterprise AI at scale."
   "internet-number-registry-and-routing-trust|Internet Number Registry and Routing Trust|Internet Number Registry and Routing Trust covers the member, registry, routing security, DNS, policy, and measurement services needed to distribute and maintain Internet number resources and help operators keep Internet routing data trustworthy."
   "enterprise-architecture-management-platform|Enterprise Architecture Management Platform|Enterprise Architecture Management Platform covers SaaS products that maintain a living model of enterprise capabilities, applications, technologies, processes, risks, roadmaps, and transformation decisions so business and technology leaders can govern change with shared evidence."
@@ -28,7 +27,6 @@ domains=(
   "digital-news-publishing-platform|Digital News Publishing Platform|Covers the audience, editorial, advertising, subscription, loyalty, partner-bundle, and data capabilities required to run a multi-brand digital news publisher across web, apps, print-linked editions, social, newsletters, and commercial partnerships."
   "technical-design-collaboration-platform|Technical Design Collaboration Platform|Product-led B2B SaaS company serving engineering organizations with AI-assisted technical design and collaboration workflows."
   "mental-wellbeing-community-platform|Mental Wellbeing Community Platform|Covers the member, employer, contributor, and trust workflows required to operate a digital mental wellbeing platform built around community support, live programming, on-demand content, and employer-sponsored access."
-  "industrial-water-intelligence|Industrial Water Intelligence|The Industrial Water Intelligence domain covers connected water treatment, plant-system monitoring, enterprise water analytics, wastewater compliance, and reuse workflows used by water-intensive industrial operators to improve uptime, conserve water, reduce energy and chemistry waste, and prove financial impact."
   "big-enterprise|Big Enterprise|The Big Enterprise domain covers the tools, workflows, and enabling capabilities used by internal teams and enterprise employees across revenue and growth, service, operations, finance, control, workplace, and internal productivity."
   "emobility|eMobility|The eMobility domain covers the platforms, operations, and customer journeys required to run charging networks, roaming services, driver experiences, and fleet electrification at scale."
   "nutrition|Nutrition|The Nutrition domain covers the products, capabilities, and stakeholders needed to design, produce, govern, and improve nutrition solutions with strong compliance, quality, and sustainability outcomes."
@@ -36,7 +34,6 @@ domains=(
   "general-listings-marketplace|General Listings Marketplace|Covers the customer journeys, trust mechanisms, commercial workflows, and platform streams required to run a broad local classifieds marketplace across goods, vehicles, services, jobs, and professional storefront supply."
   "maas|Mobility-as-a-Service (MaaS)|The products, workflows, and platform capabilities required to run parking, curbside, public transport payments, fleet mobility, city-planning intelligence, and partner ecosystems at global urban-mobility scale."
   "internal-developer-platform|Internal Developer Platform|The Internal Developer Platform domain covers the developer portal, golden paths, runtime foundations, delivery guardrails, reliability workflows, and platform insights used by product and technology teams to ship software faster, safer, and with lower cognitive load."
-  "mambu|Mambu|The Mambu domain covers the banking products, platform capabilities, and ecosystem integrations needed for lenders and financial institutions to launch and scale modern cloud-native banking services."
   "payments-and-revenue-infrastructure|Payments and Revenue Infrastructure|The Payments and Revenue Infrastructure domain covers the merchant, platform, finance, and risk workflows required to accept payments globally, automate recurring revenue, orchestrate multi-party funds flows, and operate internet-scale commerce with compliance and financial control."
   "bike-mobility|Bike Mobility|The Bike Mobility domain covers the products, workflows, and platform capabilities required to launch and scale employer-backed bike leasing, rider services, dealer ecosystems, pooled bike fleets, and lifecycle services across European markets."
   "premium-long-haul-airline|Premium Long-Haul Airline|The Premium Long-Haul Airline domain covers the products, workflows, and platform capabilities required to retail, operate, service, recover, and grow a premium airline across long-haul passenger travel, holidays, loyalty, partner connectivity, and cargo."

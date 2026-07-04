@@ -10,9 +10,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DATE_STRING = datetime.date.today().strftime('%Y-%m-%d')
 
 TEMPLATES_ROOT = REPO_ROOT / '_templates' / 'start'
+IMPORTS_ROOT = REPO_ROOT / '_templates' / '_imports'
 PACKAGES_ROOT = REPO_ROOT / '_config' / 'start-packages'
 DOCS_ROOT = REPO_ROOT / 'docs'
 DOCS_PACKAGES_ROOT = DOCS_ROOT / 'start-packages'
+
+TABS_STYLE = (IMPORTS_ROOT / 'tabs' / 'style.html').read_text(encoding='utf-8')
+TABS_SCRIPT = (IMPORTS_ROOT / 'tabs' / 'script.html').read_text(encoding='utf-8')
 
 
 def copy_icons(icons_path, docs_folder):
@@ -112,6 +116,8 @@ def render_package(package_folder, template):
     with (output_folder / 'index.html').open('w', encoding='utf-8') as html_file:
         html_file.write(
             template
+            .replace('${tabs_style}', TABS_STYLE)
+            .replace('${tabs_script}', TABS_SCRIPT)
             .replace('${date}', DATE_STRING)
             .replace('${apps}', json.dumps(rendered_apps))
             .replace('${domain_name}', config['domain_name'])

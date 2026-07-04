@@ -15,6 +15,9 @@ domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/start/'
 domain, _ = load_domain_args()
 
+tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
+
 
 def copy_icons(icons_path, docs_folder):
     if os.path.exists(icons_path):
@@ -35,6 +38,8 @@ def create_docs(domain, docs_folder):
         template = open(templates_root + 'index.html').read()
         print(domain['description'])
         html_file.write(template
+                        .replace('${tabs_style}', tabs_style)
+                        .replace('${tabs_script}', tabs_script)
                         .replace('${date}', date_string)
                         .replace('${apps}', json.dumps(apps))
                         .replace('${domain_name}', domain['name'])

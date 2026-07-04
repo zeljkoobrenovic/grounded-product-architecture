@@ -5,6 +5,7 @@
     <title>Product Bricks</title>
 
     ${breadcrumbs_style}
+    ${tabs_style}
 
     <style>
         body {
@@ -94,38 +95,6 @@
             margin-bottom: 14px;
             max-width: 960px;
             line-height: 1.4;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
         }
 
         .bricks-panel {
@@ -388,6 +357,22 @@
         .data-panel {
             padding: 18px;
             background-color: white;
+        }
+
+        .data-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .data-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4b5563;
+            cursor: pointer;
         }
 
         .data-summary {
@@ -782,11 +767,59 @@
             flex: 0 0 auto;
         }
 
+        .dependency-controls-column {
+            min-width: 0;
+        }
+
+        .dependency-labels-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
         .dependency-graph-summary {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .dependency-graph-summary strong {
+            color: #1f2937;
+        }
+
+        .dependency-view-toggle {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .dependency-view-btn {
+            border: 1px solid #d1d5db;
+            background-color: #f8fafc;
+            color: #4b5563;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .dependency-view-btn:hover {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .dependency-view-btn.active {
+            background-color: #202124;
+            border-color: #202124;
+            color: white;
         }
 
         .dependency-graph-stat {
@@ -823,7 +856,13 @@
             background-color: white;
             padding: 14px;
             overflow: auto;
-            min-height: 420px;
+            min-height: 560px;
+        }
+
+        .dependency-graph.force {
+            padding: 0;
+            overflow: hidden;
+            height: 620px;
         }
 
         .dependency-empty {
@@ -977,59 +1016,33 @@
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@1.51.4/dist/force-graph.min.js"></script>
     <script>
-        function initTab() {
-            if (window.location.hash) {
-                const tabName = window.location.hash.substring(1);
-                if (document.getElementById('tab_' + tabName)) {
-                    openTab(tabName, {replaceHash: true, scrollToTop: true});
-                }
-            }
-        }
-
         function updateTabLabels() {
             const brickCount = getBrickCatalog().length;
             const streamCount = getStreamCatalogItems().length;
             const dataAssetCount = (dataAssetsPayload.assets || []).length;
-            document.getElementById('tab_BigPicture').textContent = 'Bricks (' + brickCount + ')';
-            document.getElementById('tab_Streams').textContent = 'Streams (' + streamCount + ')';
-            document.getElementById('tab_Data').textContent = 'Data (' + dataAssetCount + ')';
+            document.getElementById('tab_bricks').textContent = 'Bricks (' + brickCount + ')';
+            document.getElementById('tab_streams').textContent = 'Streams (' + streamCount + ')';
+            document.getElementById('tab_data').textContent = 'Data (' + dataAssetCount + ')';
         }
+
+        // The shared tabs script (_imports/tabs) calls this hook after a tab opens.
+        // Render the lazily-built views for the tab that just became visible.
+        window.afterOpenTab = function (tabName) {
+            if (tabName === 'dependencies') {
+                renderDependenciesView();
+            } else if (tabName === 'streams') {
+                renderStreamsView();
+            } else if (tabName === 'data') {
+                renderDataView();
+            }
+        };
 
         function scrollPageToTop() {
             window.scrollTo(0, 0);
             requestAnimationFrame(() => window.scrollTo(0, 0));
             setTimeout(() => window.scrollTo(0, 0), 0);
-        }
-
-        function openTab(tabName, options = {}) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            if (options.replaceHash) {
-                history.replaceState({}, '', '#' + tabName);
-            } else {
-                history.pushState({}, '', '#' + tabName);
-            }
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
-            if (tabName === 'Dependencies') {
-                renderDependenciesView();
-            }
-            if (tabName === 'Streams') {
-                renderStreamsView();
-            }
-            if (tabName === 'Data') {
-                renderDataView();
-            }
-            if (options.scrollToTop) {
-                scrollPageToTop();
-            }
         }
 
         const bricksPayload = ${bricks};
@@ -1049,6 +1062,8 @@
         let brickStatusControlsInitialized = false;
         let dependenciesInitialized = false;
         let activeDependencySubtab = 'declared';
+        let dataShowBricks = false;
+        let dataShowDetail = false;
         const dependencySelectionState = {
             declared: {
                 streamIds: null,
@@ -1798,22 +1813,34 @@
             }
 
             function renderAssetCard(asset) {
-                const usage = buildDataAssetUsage(asset.id);
-                return `
-                    <div class="data-card">
-                        <div class="data-card-head">
-                            <img class="data-card-icon" src="icons/data.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
-                            <div class="data-card-title">${escapeHtml(asset.name || asset.id)}</div>
-                        </div>
-                        ${asset.description ? `<div class="data-card-copy">${escapeHtml(asset.description)}</div>` : ''}
+                let detailMarkup = '';
+                if (dataShowDetail) {
+                    detailMarkup = `
                         <div class="data-card-subtitle">Metadata</div>
                         ${renderMetaList(asset)}
                         <div class="data-card-subtitle">Stores</div>
                         ${renderStoreList(asset)}
+                    `;
+                }
+                let brickMarkup = '';
+                if (dataShowBricks) {
+                    const usage = buildDataAssetUsage(asset.id);
+                    brickMarkup = `
                         <div class="data-card-subtitle">Producing Bricks</div>
                         ${renderDataBrickPills(usage.producingBricks, 'crimson', 'write-data')}
                         <div class="data-card-subtitle">Consuming Bricks</div>
                         ${renderDataBrickPills(usage.consumingBricks, 'blue', 'read-data')}
+                    `;
+                }
+                return `
+                    <div class="data-card">
+                        <a class="data-card-head" target="_blank" rel="noopener noreferrer" href="data_pages/${escapeHtml(asset.id)}.html" style="text-decoration:none;color:inherit;">
+                            <img class="data-card-icon" src="icons/data.png" alt="" onerror="this.onerror=null;this.src='icons/brick.png'">
+                            <div class="data-card-title">${escapeHtml(asset.name || asset.id)}</div>
+                        </a>
+                        ${asset.description ? `<div class="data-card-copy">${escapeHtml(asset.description)}</div>` : ''}
+                        ${detailMarkup}
+                        ${brickMarkup}
                     </div>
                 `;
             }
@@ -1844,6 +1871,10 @@
                 : `<div class="data-grid">${assets.map(renderAssetCard).join('')}</div>`;
 
             container.innerHTML = `
+                <div class="data-options">
+                    <label class="data-option"><input type="checkbox" id="dataShowDetailToggle" ${dataShowDetail ? 'checked' : ''} onchange="setDataShowDetail(this.checked)"> Show detail</label>
+                    <label class="data-option"><input type="checkbox" id="dataShowBricksToggle" ${dataShowBricks ? 'checked' : ''} onchange="setDataShowBricks(this.checked)"> Show bricks</label>
+                </div>
                 <div class="data-summary">
                     <div class="dependency-graph-stat">
                         <div class="dependency-graph-stat-value">${assets.length}</div>
@@ -1864,6 +1895,16 @@
                 </div>
                 ${assets.length ? assetMarkup : '<div class="activity-muted">No data assets are defined for this domain yet.</div>'}
             `;
+        }
+
+        function setDataShowBricks(show) {
+            dataShowBricks = show;
+            renderDataView();
+        }
+
+        function setDataShowDetail(show) {
+            dataShowDetail = show;
+            renderDataView();
         }
 
         function sortByDisplayName(left, right) {
@@ -2446,11 +2487,152 @@
         function renderDependencyGraphShell() {
             return `
                 <div class="dependency-graph-shell">
-                    <div class="dependency-graph-summary" id="DependenciesSummary"></div>
+                    <div class="dependency-view-toggle">
+                        <button type="button" class="dependency-view-btn active" data-depview="force" onclick="setDependencyGraphView('force')">2D force graph</button>
+                        <button type="button" class="dependency-view-btn" data-depview="mermaid" onclick="setDependencyGraphView('mermaid')">Flow diagram</button>
+                    </div>
                     <div class="dependency-graph" id="DependenciesGraph"></div>
                 </div>
             `;
         }
+
+        let dependencyGraphView = 'force';
+        let dependencyForceInstance = null;
+
+        function setDependencyGraphView(view) {
+            dependencyGraphView = view;
+            document.querySelectorAll('.dependency-view-btn').forEach(button => {
+                button.classList.toggle('active', button.getAttribute('data-depview') === view);
+            });
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (graphContainer) {
+                graphContainer.classList.toggle('force', view === 'force');
+            }
+            renderActiveDependencyGraph();
+        }
+
+        const dependencyNodeColors = {
+            streamNode: '#f59e0b',
+            brickNode: '#2563eb',
+            dataAssetNode: '#16a34a'
+        };
+
+        // Convert a #rrggbb color to rgba with the given alpha so overlapping
+        // force-graph nodes blend instead of forming a solid color block.
+        function dependencyNodeColorWithAlpha(hexColor, alpha) {
+            const hex = String(hexColor || '').replace('#', '');
+            if (hex.length !== 6) {
+                return hexColor;
+            }
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+        }
+
+        function renderDependencyGraph(graph, emptyMessage) {
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (!graphContainer) {
+                return;
+            }
+            graphContainer.classList.toggle('force', dependencyGraphView === 'force');
+            dependencyForceInstance = null;
+            if (dependencyGraphView === 'force') {
+                renderDependencyForce(graph, emptyMessage);
+            } else {
+                renderDependencyMermaid(graph, emptyMessage);
+            }
+        }
+
+        function renderDependencyForce(graph, emptyMessage) {
+            const graphContainer = document.getElementById('DependenciesGraph');
+            if (!graphContainer) {
+                return;
+            }
+            if (!graph.nodes.length || !graph.edges.length) {
+                graphContainer.innerHTML = `<div class="dependency-empty">${escapeHtml(emptyMessage)}</div>`;
+                return;
+            }
+            if (typeof ForceGraph === 'undefined') {
+                graphContainer.innerHTML = '<div class="dependency-empty">Force graph library failed to load.</div>';
+                return;
+            }
+            graphContainer.innerHTML = '';
+
+            const degree = {};
+            graph.edges.forEach(edge => {
+                degree[edge.source] = (degree[edge.source] || 0) + 1;
+                degree[edge.target] = (degree[edge.target] || 0) + 1;
+            });
+            const nodes = graph.nodes.map(node => ({
+                id: node.id,
+                name: node.label,
+                nodeClass: node.nodeClass,
+                val: (degree[node.id] || 1)
+            }));
+            const links = graph.edges.map(edge => ({source: edge.source, target: edge.target, label: edge.label || ''}));
+
+            const Graph = ForceGraph()(graphContainer)
+                .nodeRelSize(5)
+                .nodeVal(() => 1)
+                .nodeLabel(node => escapeHtml(node.name))
+                .nodeColor(node => dependencyNodeColorWithAlpha(dependencyNodeColors[node.nodeClass] || '#6b7280', 0.65))
+                .nodeCanvasObjectMode(() => 'after')
+                .nodeCanvasObject((node, ctx, globalScale) => {
+                    if (!dependencyForceShowLabels) return;
+                    const fontSize = 12 / globalScale;
+                    ctx.font = fontSize + 'px Ubuntu, Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = '#374151';
+                    ctx.fillText(node.name, node.x, node.y + 7);
+                })
+                .linkColor(() => 'rgba(100,116,139,0.5)')
+                .linkWidth(1.5)
+                .linkDirectionalArrowLength(4)
+                .linkDirectionalArrowRelPos(1)
+                .linkDirectionalParticles(1)
+                .linkDirectionalParticleSpeed(0.006)
+                .linkLabel(link => escapeHtml(link.label))
+                .onNodeClick(node => {
+                    if (node.id.indexOf('brick:') === 0) {
+                        window.open('landing_pages/' + node.id.substring('brick:'.length) + '.html', '_blank');
+                    }
+                })
+                .graphData({nodes: nodes, links: links});
+
+            dependencyForceInstance = Graph;
+            sizeDependencyForce();
+        }
+
+        let dependencyForceShowLabels = false;
+
+        function setDependencyForceLabels(show) {
+            dependencyForceShowLabels = show;
+            if (dependencyForceInstance && dependencyGraphView === 'force') {
+                dependencyForceInstance.nodeCanvasObjectMode(() => 'after');
+            }
+        }
+
+        function sizeDependencyForce() {
+            if (!dependencyForceInstance) {
+                return;
+            }
+            const container = document.getElementById('DependenciesGraph');
+            if (!container) {
+                return;
+            }
+            const w = container.clientWidth || container.offsetWidth;
+            const h = container.clientHeight || container.offsetHeight;
+            if (w > 0 && h > 0) {
+                dependencyForceInstance.width(w).height(h);
+                if (typeof dependencyForceInstance.d3ReheatSimulation === 'function') {
+                    dependencyForceInstance.d3ReheatSimulation();
+                }
+            }
+        }
+
+        window.addEventListener('resize', sizeDependencyForce);
 
         function renderDependencyMermaid(graph, emptyMessage) {
             const graphContainer = document.getElementById('DependenciesGraph');
@@ -2499,12 +2681,9 @@
             if (!summary) {
                 return;
             }
-            summary.innerHTML = stats.map(stat => `
-                <div class="dependency-graph-stat">
-                    <span class="dependency-graph-stat-value">${stat.value}</span>
-                    <span class="dependency-graph-stat-label">${stat.label}</span>
-                </div>
-            `).join('');
+            summary.innerHTML = 'Showing ' + stats.map(stat =>
+                '<strong>' + stat.value + '</strong> ' + escapeHtml(String(stat.label).toLowerCase())
+            ).join(' &middot; ') + '.';
         }
 
         function renderDeclaredDependencyGraph() {
@@ -2516,7 +2695,7 @@
                 {value: graph.scopedBrickCount, label: 'Scoped Bricks'},
                 {value: graph.edges.length, label: 'Declared Links'}
             ]);
-            renderDependencyMermaid(graph, 'Select streams and dependency types to render declared brick dependencies.');
+            renderDependencyGraph(graph, 'Select streams and dependency types to render declared brick dependencies.');
         }
 
         function renderDataDependencyGraph() {
@@ -2531,7 +2710,7 @@
                 {value: selectedAssetIds.size, label: 'Assets'},
                 {value: graph.edges.length, label: aggregate ? 'Shared Asset Links' : 'Data Links'}
             ]);
-            renderDependencyMermaid(graph, aggregate
+            renderDependencyGraph(graph, aggregate
                 ? 'Select at least two bricks sharing selected data assets to render aggregated dependencies.'
                 : 'Select bricks and data assets to render data-asset dependency links.');
         }
@@ -2548,7 +2727,7 @@
                 {value: selectedBrickIds.size, label: 'Bricks'},
                 {value: graph.edges.length, label: aggregate ? 'Shared Stream Links' : 'Stream Links'}
             ]);
-            renderDependencyMermaid(graph, aggregate
+            renderDependencyGraph(graph, aggregate
                 ? 'Select at least two bricks sharing selected streams to render aggregated brick links.'
                 : 'Select bricks and streams to render stream dependency links.');
         }
@@ -2575,7 +2754,11 @@
                 container.innerHTML = `
                     <div class="dependency-subtabs" id="DependencySubtabs"></div>
                     <div class="dependencies-layout">
-                        <div id="DependencyControls"></div>
+                        <div class="dependency-controls-column">
+                            <div id="DependencyControls"></div>
+                            <label class="dependency-labels-toggle"><input type="checkbox" onchange="setDependencyForceLabels(this.checked)"> Show labels</label>
+                            <div class="dependency-graph-summary" id="DependenciesSummary"></div>
+                        </div>
                         ${renderDependencyGraphShell()}
                     </div>
                 `;
@@ -2854,9 +3037,10 @@
     </script>
 </head>
 
-<body onload="initTab(); updateBricksView(); updateTabLabels();" onhashchange="initTab()">
+<body onload="updateBricksView(); updateTabLabels(); initTab('bricks');" onhashchange="initTab('bricks')">
 
 <div id="breadcrumbs"></div>
+${tabs_script}
 
 <div class="hero">
     <table class="hero-table">
@@ -2871,12 +3055,12 @@
 </div>
 <div>
     <div class="tab">
-        <button class="tablinks active" id="tab_BigPicture" onclick="openTab('BigPicture')">Bricks</button>
-        <button class="tablinks" id="tab_Streams" onclick="openTab('Streams')">Streams</button>
-        <button class="tablinks" id="tab_Data" onclick="openTab('Data')">Data</button>
-        <button class="tablinks" id="tab_Dependencies" onclick="openTab('Dependencies')">Dependencies</button>
+        <button class="tablinks active" id="tab_bricks" onclick="openTab('bricks')">Bricks</button>
+        <button class="tablinks" id="tab_streams" onclick="openTab('streams')">Streams</button>
+        <button class="tablinks" id="tab_data" onclick="openTab('data')">Data</button>
+        <button class="tablinks" id="tab_dependencies" onclick="openTab('dependencies')">Dependencies</button>
     </div>
-    <div id="BigPicture" class="tabcontent" style="display: block">
+    <div id="tab_content_bricks" class="tabcontent">
         <div class="bricks-panel">
             <div class="bricks-toolbar">
                 <label class="bricks-toggle" for="brickStructureToggle">
@@ -2893,7 +3077,7 @@
             <div class="legend" id="Legend"></div>
         </div>
     </div>
-    <div id="Streams" class="tabcontent">
+    <div id="tab_content_streams" class="tabcontent">
         <div class="streams-panel">
             <div class="streams-toolbar">
                 <label class="streams-toggle" for="streamDescriptionToggle">
@@ -2904,12 +3088,12 @@
             <div id="StreamsContent"></div>
         </div>
     </div>
-    <div id="Data" class="tabcontent">
+    <div id="tab_content_data" class="tabcontent">
         <div class="data-panel">
             <div id="DataContent"></div>
         </div>
     </div>
-    <div id="Dependencies" class="tabcontent">
+    <div id="tab_content_dependencies" class="tabcontent">
         <div class="dependencies-panel">
             <div id="DependenciesContent"></div>
         </div>

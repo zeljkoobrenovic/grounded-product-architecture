@@ -79,69 +79,17 @@
             filter: grayscale(100%);
         }
 
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
-        }
     </style>
+    ${tabs_style}
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    ${tabs_script}
     <script>
         const START_TAB_STORAGE_KEY = 'spec-driven-product-architecture:start-active-tab';
 
-        function initTab() {
-            let tabName = '';
-            if (typeof apps !== 'undefined' && apps.length > 0) {
-                tabName = 'tab_content_' + apps[0].tab;
-            }
-            const storedTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
-            if (storedTab && document.getElementById('tab_' + storedTab)) {
-                tabName = storedTab;
-            }
-            if (tabName) {
-                openTab(tabName);
-            }
-        }
-
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        // Persist the last opened tab (shared tabs script calls this hook after opening).
+        window.afterOpenTab = function (tabName) {
             window.sessionStorage.setItem(START_TAB_STORAGE_KEY, tabName);
-        }
+        };
     </script>
 </head>
 <body>
@@ -170,7 +118,7 @@
     let tabNavigationHtml = '';
     let tabContentHtml = '';
     apps.forEach(tab => {
-        tabNavigationHtml += '<button id="tab_tab_content_' + tab.tab + '" class="tablinks" onclick="openTab(\'tab_content_' + tab.tab + '\')">' + tab.tab + '</button>';
+        tabNavigationHtml += '<button id="tab_' + tab.tab + '" class="tablinks" onclick="openTab(\'' + tab.tab + '\')">' + tab.tab + '</button>';
 
         tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;">' +
             '<div id="content_' + tab.tab + '"></div>' +
@@ -179,7 +127,14 @@
 
     document.getElementById('tab_navigation').innerHTML = tabNavigationHtml;
     document.getElementById('tab_content').innerHTML = tabContentHtml;
-    initTab();
+
+    // Default to the first tab, but prefer the last opened tab (URL hash wins over both,
+    // resolved inside the shared initTab).
+    const storedStartTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
+    const defaultStartTab = (storedStartTab && document.getElementById('tab_' + storedStartTab))
+        ? storedStartTab
+        : (apps.length ? apps[0].tab : '');
+    initTab(defaultStartTab);
 </script>
 
 <script>

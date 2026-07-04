@@ -273,7 +273,7 @@
                     "module-home-feed-composition"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
                 }
               ]
             },
@@ -302,6 +302,18 @@
                           }
                         ]
                       }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-catalog-indexing-pipeline",
+                      "name": "Catalog indexing pipeline",
+                      "type": "message-consumer",
+                      "description": "Consumes catalog, offer, and availability events to keep search indexes fresh."
                     }
                   ]
                 },
@@ -336,16 +348,16 @@
                     "module-search-index-and-ranking"
                   ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Search Browse Facets."
+                  "description": "Acts as the primary owning brick for Search, Browse & Facets."
                 }
               ]
             },
             {
               "id": "rufu",
-              "name": "AI Shopping Assistant",
+              "name": "Alexa for Shopping",
               "type": "full-stack",
               "status": "invest",
-              "description": "Conversational and guided shopping assistance that clarifies product tradeoffs and helps shoppers narrow broad intent.",
+              "description": "Alexa for Shopping (formerly Rufus): conversational and guided shopping assistance that clarifies product tradeoffs and helps shoppers narrow broad intent.",
               "layers": [
                 {
                   "layer": "ui",
@@ -362,6 +374,48 @@
                             "moduleId": "module-intent-interpretation-and-grounding",
                             "type": "uses",
                             "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "interfaces",
+                  "description": "API, BFF, and back-office interface modules that expose the brick to callers and operators.",
+                  "modules": [
+                    {
+                      "id": "module-assistant-api",
+                      "name": "Assistant API",
+                      "type": "api",
+                      "description": "Exposes conversational shopping requests and grounded responses to shopper surfaces and partner clients.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-intent-interpretation-and-grounding",
+                            "type": "delegates",
+                            "description": "Delegates intent parsing and grounding to the interpretation service."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "stateless-service",
+                  "description": "Stateless service modules that serve models or computations without owning durable state.",
+                  "modules": [
+                    {
+                      "id": "module-model-serving",
+                      "name": "Model serving & grounding",
+                      "type": "stateless-service",
+                      "description": "Serves the assistant model behind a stateless boundary, applying retrieval grounding and safety guardrails without owning durable state.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-intent-interpretation-and-grounding",
+                            "type": "uses",
+                            "description": "Provides model inferences the grounding service composes into responses."
                           }
                         ]
                       }
@@ -492,7 +546,7 @@
                     "module-offer-and-content-assembly"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
                 }
               ]
             },
@@ -555,7 +609,7 @@
                     "module-review-moderation-and-ranking"
                   ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Reviews Ratings Q A."
+                  "description": "Acts as the primary owning brick for Reviews, Ratings & Q&A."
                 },
                 {
                   "assetId": "catalog-authoring-content",
@@ -563,7 +617,7 @@
                     "module-review-moderation-and-ranking"
                   ],
                   "role": "query",
-                  "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows."
+                  "description": "Queries Catalog Authoring & Content to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -634,7 +688,7 @@
                     "module-promotion-orchestration"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
                 }
               ]
             }
@@ -728,7 +782,7 @@
                     "module-cart-state-orchestration"
                   ],
                   "role": "read",
-                  "description": "Reads Checkout Payments to support domain workflows."
+                  "description": "Reads Checkout & Payments to support domain workflows."
                 }
               ]
             },
@@ -754,6 +808,48 @@
                             "moduleId": "module-payment-and-order-placement",
                             "type": "uses",
                             "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "interfaces",
+                  "description": "API, BFF, and back-office interface modules that expose the brick to callers and operators.",
+                  "modules": [
+                    {
+                      "id": "module-checkout-api",
+                      "name": "Checkout & order API",
+                      "type": "api",
+                      "description": "Exposes checkout, payment-authorization, and order-placement operations to shopper surfaces and internal callers.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-payment-and-order-placement",
+                            "type": "delegates",
+                            "description": "Delegates placement and settlement to the payment/order service."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Asynchronous workers, consumers, and daemons that process events and scheduled work.",
+                  "modules": [
+                    {
+                      "id": "module-order-event-publisher",
+                      "name": "Order event publisher",
+                      "type": "message-consumer",
+                      "description": "Emits order-placed, payment-authorized, and settlement events consumed by fulfillment, promise, and trust systems.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-payment-and-order-placement",
+                            "type": "uses",
+                            "description": "Reads committed order and payment state to publish events."
                           }
                         ]
                       }
@@ -789,7 +885,16 @@
                   "description": "Uses final delivery options and promise state."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-payment-processors-and-wallet-networks",
+                  "system": "Payment processors and wallet networks",
+                  "type": "financial-partner",
+                  "interface": "Payments APIs",
+                  "description": "Authorizes charges, executes settlement and refunds, and handles wallet and buy-now-pay-later tenders.",
+                  "sourceModuleId": "module-payment-and-order-placement"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -805,16 +910,16 @@
                   "moduleIds": [
                     "module-payment-and-order-placement"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token."
+                  "role": "read",
+                  "description": "Reads Session Token via the identity platform."
                 },
                 {
                   "assetId": "access-policy",
                   "moduleIds": [
                     "module-payment-and-order-placement"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy."
+                  "role": "read",
+                  "description": "Reads Access Policy via the identity platform."
                 },
                 {
                   "assetId": "audit-log",
@@ -823,6 +928,30 @@
                   ],
                   "role": "publish",
                   "description": "Publishes events or audit records related to Audit Log."
+                },
+                {
+                  "assetId": "transaction",
+                  "moduleIds": [
+                    "module-payment-and-order-placement"
+                  ],
+                  "role": "own",
+                  "description": "Owns completed purchase transactions as system of record."
+                },
+                {
+                  "assetId": "payment-instrument-reference",
+                  "moduleIds": [
+                    "module-payment-and-order-placement"
+                  ],
+                  "role": "own",
+                  "description": "Owns tokenized payment instrument references as system of record."
+                },
+                {
+                  "assetId": "checkout-payments",
+                  "moduleIds": [
+                    "module-payment-and-order-placement"
+                  ],
+                  "role": "own",
+                  "description": "Owns checkout and payment workflow state as system of record."
                 }
               ]
             },
@@ -851,6 +980,18 @@
                           }
                         ]
                       }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-order-event-processor",
+                      "name": "Order event processor",
+                      "type": "message-consumer",
+                      "description": "Consumes order, payment, and shipment events to keep order state current."
                     }
                   ]
                 },
@@ -885,7 +1026,15 @@
                     "module-order-state-timeline"
                   ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Order Management Tracking."
+                  "description": "Acts as the primary owning brick for Order Management & Tracking."
+                },
+                {
+                  "assetId": "delivery-promise",
+                  "moduleIds": [
+                    "module-order-state-timeline"
+                  ],
+                  "role": "read",
+                  "description": "Shows promise state and re-plans on the order timeline."
                 }
               ]
             },
@@ -918,6 +1067,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-promise-risk-monitor",
+                      "name": "Promise risk monitor",
+                      "type": "daemon",
+                      "description": "Continuously detects at-risk delivery promises and triggers re-planning."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -946,7 +1107,16 @@
                   "description": "Uses Amazon fulfillment network capabilities."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-carrier-and-last-mile-networks",
+                  "system": "Carrier and last-mile networks",
+                  "type": "logistics-partner",
+                  "interface": "Carrier tracking APIs and EDI",
+                  "description": "Provides pickup, transit, and delivery scan events behind the delivery promise.",
+                  "sourceModuleId": "module-promise-risk-monitor"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -963,7 +1133,32 @@
                     "module-promise-calculation-engine"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
+                },
+                {
+                  "assetId": "delivery-promise",
+                  "moduleIds": [
+                    "module-promise-calculation-engine",
+                    "module-promise-risk-monitor"
+                  ],
+                  "role": "own",
+                  "description": "Owns per-order delivery promises and their risk state as system of record."
+                },
+                {
+                  "assetId": "fulfillment-event",
+                  "moduleIds": [
+                    "module-promise-risk-monitor"
+                  ],
+                  "role": "read",
+                  "description": "Reads fulfillment events to detect promise risk early."
+                },
+                {
+                  "assetId": "inventory-position",
+                  "moduleIds": [
+                    "module-promise-calculation-engine"
+                  ],
+                  "role": "read",
+                  "description": "Reads availability to compute promise windows."
                 }
               ]
             },
@@ -989,6 +1184,27 @@
                             "moduleId": "module-reverse-logistics-orchestration",
                             "type": "uses",
                             "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Asynchronous workers, consumers, and daemons that process events and scheduled work.",
+                  "modules": [
+                    {
+                      "id": "module-reverse-logistics-events",
+                      "name": "Reverse-logistics event processor",
+                      "type": "message-consumer",
+                      "description": "Processes carrier drop-off, receipt, inspection, and disposition events to advance refunds and exchanges asynchronously.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-reverse-logistics-orchestration",
+                            "type": "uses",
+                            "description": "Updates return-case state as reverse-logistics events arrive."
                           }
                         ]
                       }
@@ -1024,7 +1240,16 @@
                   "description": "Uses return-abuse and fraud checks."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-return-drop-off-and-reverse-logistics-networks",
+                  "system": "Return drop-off and reverse-logistics networks",
+                  "type": "logistics-partner",
+                  "interface": "Drop-off and return label interfaces",
+                  "description": "Accepts label-free returns and moves goods back through grading and restock.",
+                  "sourceModuleId": "module-reverse-logistics-orchestration"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -1033,7 +1258,7 @@
                     "module-reverse-logistics-orchestration"
                   ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Returns Refunds Exchanges."
+                  "description": "Acts as the primary owning brick for Returns, Refunds & Exchanges."
                 }
               ]
             },
@@ -1104,7 +1329,7 @@
                     "module-prime-entitlement-service"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
                 }
               ]
             }
@@ -1151,6 +1376,27 @@
                   ]
                 },
                 {
+                  "layer": "interfaces",
+                  "description": "API, BFF, and back-office interface modules that expose the brick to callers and operators.",
+                  "modules": [
+                    {
+                      "id": "module-kyc-verification-api",
+                      "name": "KYC & reverification API",
+                      "type": "api",
+                      "description": "Exposes seller KYC, INFORM/DSA disclosure, and periodic reverification operations to onboarding and trust workflows.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-merchant-onboarding-workflow",
+                            "type": "delegates",
+                            "description": "Drives verification and reverification through the onboarding workflow."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -1172,7 +1418,16 @@
                   "description": "Uses shared account and entitlement primitives."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-business-registries-and-kyc-data-providers",
+                  "system": "Business registries and KYC data providers",
+                  "type": "data",
+                  "interface": "Verification APIs",
+                  "description": "Verifies merchant identity, bank ownership, and INFORM Act business data.",
+                  "sourceModuleId": "module-merchant-onboarding-workflow"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -1188,16 +1443,16 @@
                   "moduleIds": [
                     "module-merchant-onboarding-workflow"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token."
+                  "role": "read",
+                  "description": "Reads Session Token via the identity platform."
                 },
                 {
                   "assetId": "access-policy",
                   "moduleIds": [
                     "module-merchant-onboarding-workflow"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy."
+                  "role": "read",
+                  "description": "Reads Access Policy via the identity platform."
                 },
                 {
                   "assetId": "audit-log",
@@ -1206,6 +1461,30 @@
                   ],
                   "role": "publish",
                   "description": "Publishes events or audit records related to Audit Log."
+                },
+                {
+                  "assetId": "seller-identity-onboarding",
+                  "moduleIds": [
+                    "module-merchant-onboarding-workflow"
+                  ],
+                  "role": "own",
+                  "description": "Owns seller identity and onboarding records as system of record."
+                },
+                {
+                  "assetId": "enforcement-appeal",
+                  "moduleIds": [
+                    "module-merchant-onboarding-workflow"
+                  ],
+                  "role": "read",
+                  "description": "Shows appeal status and outcomes to sellers."
+                },
+                {
+                  "assetId": "seller-account-health",
+                  "moduleIds": [
+                    "module-merchant-onboarding-workflow"
+                  ],
+                  "role": "own",
+                  "description": "Owns seller-facing account health state as system of record."
                 }
               ]
             },
@@ -1234,6 +1513,18 @@
                           }
                         ]
                       }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-listing-ingestion-pipeline",
+                      "name": "Listing ingestion pipeline",
+                      "type": "message-consumer",
+                      "description": "Processes bulk listing feeds and content updates into the catalog."
                     }
                   ]
                 },
@@ -1275,16 +1566,16 @@
                   "moduleIds": [
                     "module-catalog-authoring-pipeline"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token."
+                  "role": "read",
+                  "description": "Reads Session Token via the identity platform."
                 },
                 {
                   "assetId": "access-policy",
                   "moduleIds": [
                     "module-catalog-authoring-pipeline"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy."
+                  "role": "read",
+                  "description": "Reads Access Policy via the identity platform."
                 },
                 {
                   "assetId": "audit-log",
@@ -1293,6 +1584,14 @@
                   ],
                   "role": "publish",
                   "description": "Publishes events or audit records related to Audit Log."
+                },
+                {
+                  "assetId": "catalog-authoring-content",
+                  "moduleIds": [
+                    "module-catalog-authoring-pipeline"
+                  ],
+                  "role": "own",
+                  "description": "Owns catalog authoring content as system of record."
                 }
               ]
             },
@@ -1355,7 +1654,7 @@
                     "module-brand-rights-and-enforcement"
                   ],
                   "role": "own",
-                  "description": "Acts as the primary owning brick for Brand Protection Registry."
+                  "description": "Acts as the primary owning brick for Brand Protection & Registry."
                 },
                 {
                   "assetId": "catalog-authoring-content",
@@ -1363,7 +1662,7 @@
                     "module-brand-rights-and-enforcement"
                   ],
                   "role": "query",
-                  "description": "Queries Catalog Authoring Content to support search, analytics, or decision flows."
+                  "description": "Queries Catalog Authoring & Content to support search, analytics, or decision flows."
                 }
               ]
             },
@@ -1434,7 +1733,7 @@
                     "module-offer-health-monitoring"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
                 }
               ]
             }
@@ -1474,6 +1773,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-fulfillment-event-ingestor",
+                      "name": "Fulfillment event ingestor",
+                      "type": "message-consumer",
+                      "description": "Ingests inbound, pick-pack-ship, and carrier scan events from the fulfillment network."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -1495,7 +1806,16 @@
                   "description": "Uses replenishment and capacity guidance."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-freight-carrier-and-customs-networks",
+                  "system": "Freight, carrier, and customs networks",
+                  "type": "logistics-partner",
+                  "interface": "Carrier and customs interfaces",
+                  "description": "Moves inbound freight into the fulfillment network and ships customer orders.",
+                  "sourceModuleId": "module-fulfillment-event-ingestor"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -1512,7 +1832,15 @@
                     "module-inbound-orchestration"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
+                },
+                {
+                  "assetId": "fulfillment-event",
+                  "moduleIds": [
+                    "module-fulfillment-event-ingestor"
+                  ],
+                  "role": "own",
+                  "description": "Owns fulfillment network events as system of record."
                 }
               ]
             },
@@ -1538,6 +1866,27 @@
                             "moduleId": "module-forecast-and-replenishment-engine",
                             "type": "uses",
                             "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Asynchronous workers, consumers, and daemons that process events and scheduled work.",
+                  "modules": [
+                    {
+                      "id": "module-inventory-signal-worker",
+                      "name": "Inventory signal worker",
+                      "type": "message-consumer",
+                      "description": "Consumes fulfillment, sales, and receipt events to recompute availability and replenishment positions in near real time.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-forecast-and-replenishment-engine",
+                            "type": "uses",
+                            "description": "Feeds fresh demand and position signals into the forecast engine."
                           }
                         ]
                       }
@@ -1575,7 +1924,15 @@
                     "module-forecast-and-replenishment-engine"
                   ],
                   "role": "query",
-                  "description": "Queries Order Management Tracking to support search, analytics, or decision flows."
+                  "description": "Queries Order Management & Tracking to support search, analytics, or decision flows."
+                },
+                {
+                  "assetId": "inventory-position",
+                  "moduleIds": [
+                    "module-forecast-and-replenishment-engine"
+                  ],
+                  "role": "own",
+                  "description": "Owns sellable inventory positions as system of record."
                 }
               ]
             },
@@ -1629,7 +1986,16 @@
                   "description": "Uses promise requirements and event expectations."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-third-party-shipping-carriers",
+                  "system": "Third-party shipping carriers",
+                  "type": "logistics-partner",
+                  "interface": "Buy-shipping and label APIs",
+                  "description": "Purchases labels and tracks merchant-fulfilled shipments.",
+                  "sourceModuleId": "module-merchant-fulfillment-workflow"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -1638,7 +2004,7 @@
                     "module-merchant-fulfillment-workflow"
                   ],
                   "role": "query",
-                  "description": "Queries Order Management Tracking to support search, analytics, or decision flows."
+                  "description": "Queries Order Management & Tracking to support search, analytics, or decision flows."
                 },
                 {
                   "assetId": "seller-identity-onboarding",
@@ -1646,7 +2012,15 @@
                     "module-merchant-fulfillment-workflow"
                   ],
                   "role": "read",
-                  "description": "Reads Seller Identity Onboarding to support domain workflows."
+                  "description": "Reads Seller Identity & Onboarding to support domain workflows."
+                },
+                {
+                  "assetId": "fulfillment-event",
+                  "moduleIds": [
+                    "module-merchant-fulfillment-workflow"
+                  ],
+                  "role": "write",
+                  "description": "Writes merchant-fulfilled shipment and scan events."
                 }
               ]
             },
@@ -1679,6 +2053,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-settlement-ledger-poster",
+                      "name": "Settlement ledger poster",
+                      "type": "message-consumer",
+                      "description": "Posts settlement, fee, and adjustment events to the seller payout ledger."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -1700,7 +2086,16 @@
                   "description": "Uses seller identity and compliance state."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-banking-and-tax-rails",
+                  "system": "Banking and tax rails",
+                  "type": "financial-partner",
+                  "interface": "Settlement and tax reporting interfaces",
+                  "description": "Disburses seller payouts and files transaction tax and information reports.",
+                  "sourceModuleId": "module-merchant-ledger-service"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -1733,7 +2128,16 @@
                     "module-merchant-ledger-service"
                   ],
                   "role": "read",
-                  "description": "Reads Seller Identity Onboarding to support domain workflows."
+                  "description": "Reads Seller Identity & Onboarding to support domain workflows."
+                },
+                {
+                  "assetId": "seller-payout-ledger",
+                  "moduleIds": [
+                    "module-merchant-ledger-service",
+                    "module-settlement-ledger-poster"
+                  ],
+                  "role": "own",
+                  "description": "Owns the seller payout ledger as system of record."
                 }
               ]
             },
@@ -1766,6 +2170,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-ad-pacing-controller",
+                      "name": "Ad pacing controller",
+                      "type": "daemon",
+                      "description": "Controls campaign pacing, budget delivery, and serving eligibility in near real time."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -1794,7 +2210,16 @@
                   "description": "Uses availability context to limit wasted spend."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-third-party-ad-verification-and-measurement-providers",
+                  "system": "Third-party ad verification and measurement providers",
+                  "type": "data",
+                  "interface": "Measurement and clean-room integrations",
+                  "description": "Provides the independent verification and incrementality measurement advertisers require.",
+                  "sourceModuleId": "module-retail-media-serving-and-optimization"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -1803,7 +2228,23 @@
                     "module-retail-media-serving-and-optimization"
                   ],
                   "role": "read",
-                  "description": "Reads Brand Protection Registry to support domain workflows."
+                  "description": "Reads Brand Protection & Registry to support domain workflows."
+                },
+                {
+                  "assetId": "inventory-position",
+                  "moduleIds": [
+                    "module-ad-pacing-controller"
+                  ],
+                  "role": "read",
+                  "description": "Suppresses spend on unavailable or suppressed ASINs."
+                },
+                {
+                  "assetId": "ad-campaign",
+                  "moduleIds": [
+                    "module-retail-media-serving-and-optimization"
+                  ],
+                  "role": "own",
+                  "description": "Owns campaign structure and pacing state as system of record."
                 }
               ]
             },
@@ -1836,6 +2277,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-audience-sync-worker",
+                      "name": "Audience sync worker",
+                      "type": "message-consumer",
+                      "description": "Builds and refreshes audience segments from commerce signals under privacy constraints."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -1857,7 +2310,16 @@
                   "description": "Uses advanced measurement and experimentation context."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-programmatic-supply-exchanges-and-publishers",
+                  "system": "Programmatic supply exchanges and publishers",
+                  "type": "media-partner",
+                  "interface": "OpenRTB and deal interfaces",
+                  "description": "Supplies off-Amazon inventory for DSP campaigns.",
+                  "sourceModuleId": "module-audience-and-programmatic-orchestration"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -1874,7 +2336,15 @@
                     "module-audience-and-programmatic-orchestration"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
+                },
+                {
+                  "assetId": "ad-campaign",
+                  "moduleIds": [
+                    "module-audience-and-programmatic-orchestration"
+                  ],
+                  "role": "write",
+                  "description": "Writes DSP campaign and audience configuration."
                 }
               ]
             },
@@ -1900,6 +2370,48 @@
                             "moduleId": "module-commerce-reporting-model",
                             "type": "uses",
                             "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "interfaces",
+                  "description": "API, BFF, and back-office interface modules that expose the brick to callers and operators.",
+                  "modules": [
+                    {
+                      "id": "module-reporting-api",
+                      "name": "Reporting & export API",
+                      "type": "api",
+                      "description": "Exposes reporting queries, scheduled exports, and metric feeds to seller, advertiser, and operator consumers.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-commerce-reporting-model",
+                            "type": "delegates",
+                            "description": "Serves report queries from the commerce reporting model."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Asynchronous workers, consumers, and daemons that process events and scheduled work.",
+                  "modules": [
+                    {
+                      "id": "module-reporting-pipeline",
+                      "name": "Reporting pipeline",
+                      "type": "daemon",
+                      "description": "Batch and streaming pipelines that build seller and advertiser reporting datasets from commerce, fulfillment, and media events.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-commerce-reporting-model",
+                            "type": "uses",
+                            "description": "Populates the reporting model consumed by reporting surfaces."
                           }
                         ]
                       }
@@ -1945,7 +2457,31 @@
                     "module-commerce-reporting-model"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
+                },
+                {
+                  "assetId": "seller-payout-ledger",
+                  "moduleIds": [
+                    "module-commerce-reporting-model"
+                  ],
+                  "role": "read",
+                  "description": "Reads the payout ledger for seller economics reporting."
+                },
+                {
+                  "assetId": "retail-media-attribution",
+                  "moduleIds": [
+                    "module-commerce-reporting-model"
+                  ],
+                  "role": "read",
+                  "description": "Reads attribution outcomes for advertiser reporting."
+                },
+                {
+                  "assetId": "seller-account-health",
+                  "moduleIds": [
+                    "module-commerce-reporting-model"
+                  ],
+                  "role": "read",
+                  "description": "Reads account health for seller performance reporting."
                 }
               ]
             }
@@ -2005,7 +2541,16 @@
                 }
               ],
               "brickDependencies": [],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-government-id-and-kyc-verification-providers",
+                  "system": "Government ID and KYC verification providers",
+                  "type": "data",
+                  "interface": "Identity verification APIs",
+                  "description": "Supports account identity proofing and re-verification cases.",
+                  "sourceModuleId": "module-account-graph-and-entitlements"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -2013,8 +2558,8 @@
                   "moduleIds": [
                     "module-account-graph-and-entitlements"
                   ],
-                  "role": "read",
-                  "description": "Reads Identity Credential to support domain workflows."
+                  "role": "own",
+                  "description": "Owns Identity Credential as system of record."
                 },
                 {
                   "assetId": "session-token",
@@ -2037,8 +2582,32 @@
                   "moduleIds": [
                     "module-account-graph-and-entitlements"
                   ],
-                  "role": "publish",
-                  "description": "Publishes events or audit records related to Audit Log."
+                  "role": "own",
+                  "description": "Owns Audit Log as system of record."
+                },
+                {
+                  "assetId": "customer-profile",
+                  "moduleIds": [
+                    "module-account-graph-and-entitlements"
+                  ],
+                  "role": "own",
+                  "description": "Owns the customer profile as the account system of record."
+                },
+                {
+                  "assetId": "customer-contact-point",
+                  "moduleIds": [
+                    "module-account-graph-and-entitlements"
+                  ],
+                  "role": "own",
+                  "description": "Owns verified contact points as system of record."
+                },
+                {
+                  "assetId": "consent-record",
+                  "moduleIds": [
+                    "module-account-graph-and-entitlements"
+                  ],
+                  "role": "own",
+                  "description": "Owns auditable consent decisions as system of record."
                 }
               ]
             },
@@ -2071,6 +2640,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-abuse-signal-consumer",
+                      "name": "Abuse signal consumer",
+                      "type": "message-consumer",
+                      "description": "Consumes behavioral and transaction signals feeding risk models and enforcement queues."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -2092,7 +2673,16 @@
                   "description": "Uses identity state to evaluate risk patterns."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-regulator-and-transparency-reporting-endpoints",
+                  "system": "Regulator and transparency reporting endpoints",
+                  "type": "regulatory",
+                  "interface": "DSA and INFORM disclosure reporting",
+                  "description": "Receives required disclosure, transparency, and enforcement reporting.",
+                  "sourceModuleId": "module-risk-scoring-and-enforcement"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -2100,8 +2690,8 @@
                   "moduleIds": [
                     "module-risk-scoring-and-enforcement"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile."
+                  "role": "read",
+                  "description": "Reads Customer Profile via the identity platform."
                 },
                 {
                   "assetId": "customer-contact-point",
@@ -2118,6 +2708,30 @@
                   ],
                   "role": "read",
                   "description": "Reads Consent Record to support domain workflows."
+                },
+                {
+                  "assetId": "trust-case",
+                  "moduleIds": [
+                    "module-risk-scoring-and-enforcement"
+                  ],
+                  "role": "own",
+                  "description": "Owns trust investigation cases as system of record."
+                },
+                {
+                  "assetId": "enforcement-appeal",
+                  "moduleIds": [
+                    "module-risk-scoring-and-enforcement"
+                  ],
+                  "role": "own",
+                  "description": "Owns enforcement appeals and their outcomes as system of record."
+                },
+                {
+                  "assetId": "seller-account-health",
+                  "moduleIds": [
+                    "module-risk-scoring-and-enforcement"
+                  ],
+                  "role": "write",
+                  "description": "Writes enforcement outcomes and defect signals into account health."
                 }
               ]
             },
@@ -2150,6 +2764,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-listing-scan-worker",
+                      "name": "Listing scan worker",
+                      "type": "daemon",
+                      "description": "Continuously scans new and changed listings for authenticity and policy risk."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -2171,7 +2797,16 @@
                   "description": "Uses brand-rights and enforcement context."
                 }
               ],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-trademark-and-brand-rights-registries",
+                  "system": "Trademark and brand-rights registries",
+                  "type": "data",
+                  "interface": "Rights lookup interfaces",
+                  "description": "Grounds authenticity decisions in registered brand rights.",
+                  "sourceModuleId": "module-listing-trust-engine"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -2187,16 +2822,16 @@
                   "moduleIds": [
                     "module-listing-trust-engine"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Session Token."
+                  "role": "read",
+                  "description": "Reads Session Token via the identity platform."
                 },
                 {
                   "assetId": "access-policy",
                   "moduleIds": [
                     "module-listing-trust-engine"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Access Policy."
+                  "role": "read",
+                  "description": "Reads Access Policy via the identity platform."
                 },
                 {
                   "assetId": "audit-log",
@@ -2205,6 +2840,14 @@
                   ],
                   "role": "publish",
                   "description": "Publishes events or audit records related to Audit Log."
+                },
+                {
+                  "assetId": "trust-case",
+                  "moduleIds": [
+                    "module-listing-trust-engine"
+                  ],
+                  "role": "write",
+                  "description": "Files authenticity findings into trust cases."
                 }
               ]
             },
@@ -2230,6 +2873,48 @@
                             "moduleId": "module-case-orchestration",
                             "type": "uses",
                             "description": "UI module calls the brick API or backing service for this experience."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "interfaces",
+                  "description": "API, BFF, and back-office interface modules that expose the brick to callers and operators.",
+                  "modules": [
+                    {
+                      "id": "module-agent-console",
+                      "name": "Agent & operator console",
+                      "type": "backoffice-interface",
+                      "description": "Operator-facing console for case queues, routing, and agent-assisted resolution across post-purchase and trust cases.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-case-orchestration",
+                            "type": "uses",
+                            "description": "Presents and acts on cases managed by case orchestration."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Asynchronous workers, consumers, and daemons that process events and scheduled work.",
+                  "modules": [
+                    {
+                      "id": "module-case-routing-worker",
+                      "name": "Case routing worker",
+                      "type": "message-consumer",
+                      "description": "Consumes issue, return, and abuse-signal events to route, prioritize, and escalate cases to the right operator queue.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-case-orchestration",
+                            "type": "uses",
+                            "description": "Updates case assignment and priority in the orchestration service."
                           }
                         ]
                       }
@@ -2266,8 +2951,8 @@
                   "moduleIds": [
                     "module-case-orchestration"
                   ],
-                  "role": "own",
-                  "description": "Acts as the primary owning brick for Customer Profile."
+                  "role": "read",
+                  "description": "Reads Customer Profile via the identity platform."
                 },
                 {
                   "assetId": "customer-contact-point",
@@ -2292,6 +2977,14 @@
                   ],
                   "role": "read",
                   "description": "Reads Customer Contact Point to support domain workflows."
+                },
+                {
+                  "assetId": "trust-case",
+                  "moduleIds": [
+                    "module-case-orchestration"
+                  ],
+                  "role": "write",
+                  "description": "Opens and updates trust cases from customer contacts."
                 }
               ]
             }
@@ -2369,7 +3062,7 @@
                     "module-recommendation-model-serving"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
                 }
               ]
             },
@@ -2402,6 +3095,18 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-attribution-pipeline",
+                      "name": "Attribution pipeline",
+                      "type": "message-consumer",
+                      "description": "Processes exposure and conversion events into attribution and incrementality measures."
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -2415,7 +3120,16 @@
                 }
               ],
               "brickDependencies": [],
-              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "systemId": "ext-advertiser-clean-rooms-and-analytics-environments",
+                  "system": "Advertiser clean rooms and analytics environments",
+                  "type": "data",
+                  "interface": "Clean-room data collaboration",
+                  "description": "Lets advertisers join first-party data with commerce signals under privacy controls.",
+                  "sourceModuleId": "module-experiment-and-measurement-platform"
+                }
+              ],
               "externalSystemsDependingOnThisBrick": [],
               "dataDependencies": [
                 {
@@ -2433,6 +3147,14 @@
                   ],
                   "role": "publish",
                   "description": "Publishes events or audit records related to Audit Log."
+                },
+                {
+                  "assetId": "retail-media-attribution",
+                  "moduleIds": [
+                    "module-attribution-pipeline"
+                  ],
+                  "role": "own",
+                  "description": "Owns attribution and incrementality measures as system of record."
                 }
               ]
             },
@@ -2487,7 +3209,16 @@
                 }
               ],
               "externalSystemsThisBrickDependsOn": [],
-              "externalSystemsDependingOnThisBrick": [],
+              "externalSystemsDependingOnThisBrick": [
+                {
+                  "systemId": "ext-seller-erp-repricer-and-integrator-systems",
+                  "system": "Seller ERP, repricer, and integrator systems",
+                  "type": "partner",
+                  "interface": "Selling Partner APIs",
+                  "description": "Third-party merchant tools that operate catalogs, inventory, orders, and fulfillment through the partner APIs.",
+                  "moduleId": "module-partner-api-gateway"
+                }
+              ],
               "dataDependencies": [
                 {
                   "assetId": "transaction",
@@ -2503,7 +3234,7 @@
                     "module-partner-api-gateway"
                   ],
                   "role": "read",
-                  "description": "Reads Search Browse Facets to support domain workflows."
+                  "description": "Reads Search, Browse & Facets to support domain workflows."
                 }
               ]
             }

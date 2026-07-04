@@ -1069,7 +1069,7 @@ def data_asset_root_group_key(asset):
 
     if _text_has_any(text, [
         'architecture', 'relationship', 'application inventory', 'stream',
-        'technology standard', 'portfolio', 'roadmap', 'initiative', 'metamodel',
+        'technology standard', 'portfolio', 'roadmap', 'metamodel',
         'standard', 'process model', 'transformation'
     ]):
         return 'architecture-portfolio-planning'
@@ -1300,7 +1300,8 @@ def flatten_product_streams(payload):
                 'outcomes': stream.get('outcomes', []),
                 'brickDependencies': stream.get('brickDependencies', stream.get('productBrickDependencies', [])),
                 'externalSystemsThisStreamDependsOn': stream.get('externalSystemsThisStreamDependsOn', []),
-                'externalSystemsDependingOnThisStream': stream.get('externalSystemsDependingOnThisStream', [])
+                'externalSystemsDependingOnThisStream': stream.get('externalSystemsDependingOnThisStream', []),
+                'owningTeams': stream.get('owningTeams', [])
             })
 
     for group in product_stream_root_groups(payload):
@@ -1335,7 +1336,8 @@ def sanitize_product_stream_root_groups(groups, ancestors=None):
                     'outcomes': stream.get('outcomes', []),
                     'brickDependencies': stream.get('brickDependencies', stream.get('productBrickDependencies', [])),
                     'externalSystemsThisStreamDependsOn': stream.get('externalSystemsThisStreamDependsOn', []),
-                    'externalSystemsDependingOnThisStream': stream.get('externalSystemsDependingOnThisStream', [])
+                    'externalSystemsDependingOnThisStream': stream.get('externalSystemsDependingOnThisStream', []),
+                    'owningTeams': stream.get('owningTeams', [])
                 }
                 for stream in group.get('streams', [])
             ]

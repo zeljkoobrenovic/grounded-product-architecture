@@ -415,9 +415,6 @@ ${tabs_script}
     const all_customers = ${all_customers};
     const customer = ${customer};
     const customerInsights = ${customer_insights};
-    const discoveries = ${discoveries};
-    const initiatives = ${initiatives};
-    const releases = ${releases};
 </script>
 <div id="Navigation"></div>
 <div style="margin: 20px">
@@ -601,6 +598,30 @@ ${tabs_script}
         return (jobIds || []).map(jobId => jobLookup[jobId] || jobId);
     }
 
+    function kpiNamesForLink(link) {
+        // Prefer stable KPI IDs resolved against this customer's KPI pyramid; fall back to legacy display-name kpis.
+        if (link && link.kpiIds && link.kpiIds.length) {
+            const lookup = {};
+            function walk(node) {
+                if (!node) return;
+                if (node.id) {
+                    lookup[node.id] = node.name || node.id;
+                }
+                (node.branches || []).forEach(walk);
+                (node.children || []).forEach(walk);
+            }
+            const pyramids = (customer || {}).kpiPyramids || {};
+            ['customerOutcomes', 'businessOutcomes'].forEach(key => {
+                const pyramid = pyramids[key];
+                if (!pyramid) return;
+                walk(pyramid.top);
+                (pyramid.branches || []).forEach(walk);
+            });
+            return link.kpiIds.map(kpiId => lookup[kpiId] || kpiId);
+        }
+        return (link && link.kpis) || [];
+    }
+
     function addInsights() {
         let html = '';
 
@@ -620,8 +641,9 @@ ${tabs_script}
                     if (insight.link.jobIds && insight.link.jobIds.length) {
                         html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>Jobs:</b> ' + escapeHtml(jobNamesForCustomer(insight.link.jobIds).join(', ')) + '</div>';
                     }
-                    if (insight.link.kpis && insight.link.kpis.length) {
-                        html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>KPIs:</b> ' + escapeHtml(insight.link.kpis.join(', ')) + '</div>';
+                    const kpiNames = kpiNamesForLink(insight.link);
+                    if (kpiNames.length) {
+                        html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>KPIs:</b> ' + escapeHtml(kpiNames.join(', ')) + '</div>';
                     }
                 }
                 if (insight.tags && insight.tags.length) {
@@ -728,6 +750,17 @@ ${tabs_script}
                     html += '</div>';
                     html += '<div style="font-size: 70%;">';
                     html += stream.how_it_supports;
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</td>';
+                    html += '</tr>';
+                });
+                (step.bricksNeeded || []).forEach(brick => {
+                    html += '<tr>';
+                    html += '<td style=" text-align: left; padding: 0;">';
+                    html += '<div style="margin: 6px 6px 6px 24px; border-left: 2px solid #eee; padding: 2px 6px; ">';
+                    html += '<div style="color: #888; font-size: 70%; white-space: nowrap; overflow: hidden; ">';
+                    html += '&#8627; ' + brick.name;
                     html += '</div>';
                     html += '</div>';
                     html += '</td>';
@@ -965,10 +998,45 @@ ${tabs_script}
         return String(node.currentValue) + (node.unit ? ' (' + String(node.unit) + ')' : '');
     }
 
+    function kpiValueStatusLabel(node) {
+        if (!node || !node.valueStatus) {
+            return '';
+        }
+        const labels = {
+            example: 'illustrative example',
+            baseline: 'measured baseline',
+            target: 'target',
+            placeholder: 'placeholder'
+        };
+        return labels[node.valueStatus] || String(node.valueStatus);
+    }
+
     function renderKpiMeta(node) {
         let html = '';
         if (node && node.currentValue) {
-            html += '<div style="font-size: 80%; color: #1d4ed8; margin-top: 4px"><b>Current:</b> ' + escapeHtml(kpiCurrentValue(node)) + '</div>';
+            const statusLabel = kpiValueStatusLabel(node);
+            const valueLabel = (node.valueStatus === 'target') ? 'Target:' : 'Current:';
+            html += '<div style="font-size: 80%; color: #1d4ed8; margin-top: 4px"><b>' + valueLabel + '</b> ' + escapeHtml(kpiCurrentValue(node));
+            if (statusLabel) {
+                html += ' <span style="color:#888; font-style: italic;">(' + escapeHtml(statusLabel) + ')</span>';
+            }
+            html += '</div>';
+        }
+        if (node && node.target) {
+            html += '<div style="font-size: 80%; color: #047857; margin-top: 2px"><b>Target:</b> ' + escapeHtml(String(node.target)) + '</div>';
+        }
+        if (node && node.guardrailRole) {
+            html += '<div style="font-size: 78%; color: #b91c1c; margin-top: 2px"><b>Guardrail:</b> ' + escapeHtml(String(node.guardrailRole)) + '</div>';
+        }
+        if (node && (node.period || node.calculationMethod || node.valueSource)) {
+            html += '<div style="font-size: 76%; color: #6b7280; margin-top: 3px">';
+            if (node.period) { html += '<div><b>Period:</b> ' + escapeHtml(String(node.period)) + '</div>'; }
+            if (node.calculationMethod) { html += '<div><b>How measured:</b> ' + escapeHtml(String(node.calculationMethod)) + '</div>'; }
+            if (node.valueSource) { html += '<div><b>Value source:</b> ' + escapeHtml(String(node.valueSource)) + '</div>'; }
+            html += '</div>';
+        }
+        if (node && node.guardrail) {
+            html += '<div style="font-size: 76%; color: #7c3aed; margin-top: 3px"><b>Composite guardrail:</b> ' + escapeHtml(String(node.guardrail)) + '</div>';
         }
         if (node && node.link) {
             html += '<div style="font-size: 80%; margin-top: 4px"><a target="_blank" rel="noopener noreferrer" href="' + escapeHtml(node.link) + '">' + escapeHtml(node.linkLabel || 'Open link') + '</a></div>';
@@ -1082,6 +1150,14 @@ ${tabs_script}
         return normalized;
     }
 
+    function renderCategoryGate(horizon) {
+        if (!horizon || !horizon.categoryGate) {
+            return '';
+        }
+        return '<div style="padding: 8px 10px; margin: 4px 6px; font-size: 72%; background:#fff8e1; border-left: 3px solid #f0b429; color:#5c4400">'
+            + '<b>Category gate:</b> ' + horizon.categoryGate + '</div>';
+    }
+
     function addProductVision() {
         if (!customer.productStrategy || !customer.productStrategy.timeHorizons) {
             document.getElementById('Roadmap').innerHTML = '<div class="group">No product vision defined for this customer yet.</div>';
@@ -1126,14 +1202,17 @@ ${tabs_script}
         html += '<td style="padding: 6px; width: 250px; border-left: 2px solid grey; vertical-align: top">';
         html += '<div style="padding: 6px; width: 250px">' + timeHorizon1.productTheme + '</div>';
         html += '<div style="padding: 10px; font-size: 80%">' + timeHorizon1.focus + '</div>';
+        html += renderCategoryGate(timeHorizon1);
         html += '</td>';
         html += '<td style="padding: 6px; width: 250px; border-left: 2px solid grey; vertical-align: top">';
         html += '<div style="padding: 6px; width: 250px">' + timeHorizon2.productTheme + '</div>';
         html += '<div style="padding: 10px; font-size: 80%">' + timeHorizon2.focus + '</div>';
+        html += renderCategoryGate(timeHorizon2);
         html += '</td>';
         html += '<td style="padding: 6px; width: 250px; border-left: 2px solid grey; vertical-align: top">';
         html += '<div style="padding: 6px; width: 250px">' + timeHorizon3.productTheme + '</div>';
         html += '<div style="padding: 10px; font-size: 80%">' + timeHorizon3.focus + '</div>';
+        html += renderCategoryGate(timeHorizon3);
         html += '</td>';
         html += '<td style="padding: 10px"></td>';
         html += '<td>';

@@ -79,69 +79,153 @@
             filter: grayscale(100%);
         }
 
+    </style>
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
         .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
+            flex-direction: column;
+            gap: 0;
         }
 
         .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
         }
 
         .tab button.active {
-            background-color: #ccc;
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
         }
 
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </style>
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
     <script>
         const START_TAB_STORAGE_KEY = 'spec-driven-product-architecture:start-active-tab';
 
-        function initTab() {
-            let tabName = '';
-            if (typeof apps !== 'undefined' && apps.length > 0) {
-                tabName = 'tab_content_' + apps[0].tab;
-            }
-            const storedTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
-            if (storedTab && document.getElementById('tab_' + storedTab)) {
-                tabName = storedTab;
-            }
-            if (tabName) {
-                openTab(tabName);
-            }
-        }
-
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        // Persist the last opened tab (shared tabs script calls this hook after opening).
+        window.afterOpenTab = function (tabName) {
             window.sessionStorage.setItem(START_TAB_STORAGE_KEY, tabName);
-        }
+        };
     </script>
 </head>
 <body>
@@ -165,12 +249,12 @@
 <div id="tab_content"></div>
 
 <script>
-    const apps = {"config": {"openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product", "apps": [{"group": "strategy", "apps": [{"name": "Customers-Centric<br>Product Vision", "link": "../customers/index.html", "icon": "../customers/icons/logo.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Insights", "link": "../customers/index.html#insights", "icon": "../customers/icons/insights.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Competition", "link": "../competition/index.html", "icon": "../competition/icons/logo.png", "description": "key players, stats, and geography", "source": ""}]}, {"group": "org design", "apps": [{"name": "Teams", "link": "../teams/index.html", "icon": "../teams/icons/logo.png", "description": "teams, topology, and staffing", "source": ""}]}, {"group": "product architecture", "apps": [{"name": "Product Bricks", "link": "../product-bricks/index.html", "icon": "../product-bricks/icons/logo.png", "description": "basic building blocks", "source": ""}, {"name": "Streams", "link": "../product-bricks/index.html#Streams", "icon": "../product-bricks/icons/stream.png", "description": "grouping of product bricks by user journey", "source": ""}, {"name": "Data Assets", "link": "../product-bricks/index.html#Data", "icon": "../product-bricks/icons/data.png", "description": "data assets and data flows", "source": ""}, {"name": "Product<br>Deployments", "link": "../product-deployments/index.html", "icon": "../product-deployments/icons/logo.png", "description": "product deployments and environments", "source": ""}]}]}, {"tab": "Execution", "apps": [{"group": "execution", "apps": [{"name": "Strategic Objectives Examples", "link": "../objectives/current/index.html", "icon": "../objectives/current/icons/logo.png", "description": "current objectives and linked OKRs", "source": ""}, {"name": "Keeping The Lights On (KTLO) Examples", "link": "../objectives/ktlo/index.html", "icon": "../objectives/ktlo/icons/ktlo.png", "description": "KTLO objectives and initiatives", "source": ""}, {"name": "Releases Examples", "link": "../releases/index.html", "icon": "../releases/icons/logo.png", "description": "release timeline and scope", "source": ""}]}]}]}.apps;
-    const config = {"config": {"openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product", "apps": [{"group": "strategy", "apps": [{"name": "Customers-Centric<br>Product Vision", "link": "../customers/index.html", "icon": "../customers/icons/logo.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Insights", "link": "../customers/index.html#insights", "icon": "../customers/icons/insights.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Competition", "link": "../competition/index.html", "icon": "../competition/icons/logo.png", "description": "key players, stats, and geography", "source": ""}]}, {"group": "org design", "apps": [{"name": "Teams", "link": "../teams/index.html", "icon": "../teams/icons/logo.png", "description": "teams, topology, and staffing", "source": ""}]}, {"group": "product architecture", "apps": [{"name": "Product Bricks", "link": "../product-bricks/index.html", "icon": "../product-bricks/icons/logo.png", "description": "basic building blocks", "source": ""}, {"name": "Streams", "link": "../product-bricks/index.html#Streams", "icon": "../product-bricks/icons/stream.png", "description": "grouping of product bricks by user journey", "source": ""}, {"name": "Data Assets", "link": "../product-bricks/index.html#Data", "icon": "../product-bricks/icons/data.png", "description": "data assets and data flows", "source": ""}, {"name": "Product<br>Deployments", "link": "../product-deployments/index.html", "icon": "../product-deployments/icons/logo.png", "description": "product deployments and environments", "source": ""}]}]}, {"tab": "Execution", "apps": [{"group": "execution", "apps": [{"name": "Strategic Objectives Examples", "link": "../objectives/current/index.html", "icon": "../objectives/current/icons/logo.png", "description": "current objectives and linked OKRs", "source": ""}, {"name": "Keeping The Lights On (KTLO) Examples", "link": "../objectives/ktlo/index.html", "icon": "../objectives/ktlo/icons/ktlo.png", "description": "KTLO objectives and initiatives", "source": ""}, {"name": "Releases Examples", "link": "../releases/index.html", "icon": "../releases/icons/logo.png", "description": "release timeline and scope", "source": ""}]}]}]}.config;
+    const apps = {"config": {"openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product", "apps": [{"group": "strategy", "apps": [{"name": "Customers-Centric<br>Product Vision", "link": "../customers/index.html", "icon": "../customers/icons/logo.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Insights", "link": "../customers/index.html#insights", "icon": "../customers/icons/insights.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Competition", "link": "../competition/index.html", "icon": "../competition/icons/logo.png", "description": "key players, stats, and geography", "source": ""}]}, {"group": "org design", "apps": [{"name": "Teams", "link": "../teams/index.html", "icon": "../teams/icons/logo.png", "description": "teams, topology, and staffing", "source": ""}]}, {"group": "product architecture", "apps": [{"name": "Product Bricks", "link": "../product-bricks/index.html", "icon": "../product-bricks/icons/logo.png", "description": "basic building blocks", "source": ""}, {"name": "Streams", "link": "../product-bricks/index.html#streams", "icon": "../product-bricks/icons/stream.png", "description": "grouping of product bricks by user journey", "source": ""}, {"name": "Data Assets", "link": "../product-bricks/index.html#data", "icon": "../product-bricks/icons/data-asset.png", "description": "data assets and data flows", "source": ""}, {"name": "Product<br>Deployments", "link": "../product-deployments/index.html", "icon": "../product-deployments/icons/logo.png", "description": "product deployments and environments", "source": ""}]}]}]}.apps;
+    const config = {"config": {"openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product", "apps": [{"group": "strategy", "apps": [{"name": "Customers-Centric<br>Product Vision", "link": "../customers/index.html", "icon": "../customers/icons/logo.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Insights", "link": "../customers/index.html#insights", "icon": "../customers/icons/insights.png", "description": "customer groups, personas, and JTBDs", "source": ""}, {"name": "Competition", "link": "../competition/index.html", "icon": "../competition/icons/logo.png", "description": "key players, stats, and geography", "source": ""}]}, {"group": "org design", "apps": [{"name": "Teams", "link": "../teams/index.html", "icon": "../teams/icons/logo.png", "description": "teams, topology, and staffing", "source": ""}]}, {"group": "product architecture", "apps": [{"name": "Product Bricks", "link": "../product-bricks/index.html", "icon": "../product-bricks/icons/logo.png", "description": "basic building blocks", "source": ""}, {"name": "Streams", "link": "../product-bricks/index.html#streams", "icon": "../product-bricks/icons/stream.png", "description": "grouping of product bricks by user journey", "source": ""}, {"name": "Data Assets", "link": "../product-bricks/index.html#data", "icon": "../product-bricks/icons/data-asset.png", "description": "data assets and data flows", "source": ""}, {"name": "Product<br>Deployments", "link": "../product-deployments/index.html", "icon": "../product-deployments/icons/logo.png", "description": "product deployments and environments", "source": ""}]}]}]}.config;
     let tabNavigationHtml = '';
     let tabContentHtml = '';
     apps.forEach(tab => {
-        tabNavigationHtml += '<button id="tab_tab_content_' + tab.tab + '" class="tablinks" onclick="openTab(\'tab_content_' + tab.tab + '\')">' + tab.tab + '</button>';
+        tabNavigationHtml += '<button id="tab_' + tab.tab + '" class="tablinks" onclick="openTab(\'' + tab.tab + '\')">' + tab.tab + '</button>';
 
         tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;">' +
             '<div id="content_' + tab.tab + '"></div>' +
@@ -179,7 +263,14 @@
 
     document.getElementById('tab_navigation').innerHTML = tabNavigationHtml;
     document.getElementById('tab_content').innerHTML = tabContentHtml;
-    initTab();
+
+    // Default to the first tab, but prefer the last opened tab (URL hash wins over both,
+    // resolved inside the shared initTab).
+    const storedStartTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
+    const defaultStartTab = (storedStartTab && document.getElementById('tab_' + storedStartTab))
+        ? storedStartTab
+        : (apps.length ? apps[0].tab : '');
+    initTab(defaultStartTab);
 </script>
 
 <script>
