@@ -39,9 +39,6 @@ def copy_icons(icons_path, docs_folder):
             src = os.path.join(icons_path, filename)
             dst = os.path.join(docs_folder, 'icons', filename)
             if os.path.isfile(src):
-                print('************')
-                print(src + ' -> ' + dst)
-                print('************')
                 shutil.copy2(src, dst)
 
 
@@ -578,16 +575,6 @@ streams_evidence_items = load_json_from_paths([
     root_domain + 'stream-evidence.json',
     root_domain + 'streams-evidence.json',
 ], [])
-
-print('===========')
-print('===========')
-print('===========')
-print('===========')
-print(root_templates + 'icons')
-print('===========')
-print('===========')
-print('===========')
-print('===========')
 
 copy_icons(root_templates + 'icons', docs_folder)
 copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)

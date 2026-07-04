@@ -42,10 +42,25 @@ Target files (per domain):
   retention/expansion. Include trust/compliance/payment moments when material.
 
 ### KPI pyramids
-- A top customer outcome and (where modeled) business outcome, decomposed into
-  branches with ≥2 meaningful children. Measurable leaves with units. Avoid
-  one-child chains and vanity metrics. Reuse KPI **names** consistently across
-  customers, teams, and insights (they link by name, not id).
+- A top customer outcome and (where modeled) business outcome, each decomposed into a
+  real pyramid that **fans out at every level**.
+- **Shape invariant (enforce this): every non-leaf node has ≥2 children; a leaf has 0.
+  Never exactly one child, at any level.** A `top → 1 branch → 1 child → 1 leaf` chain
+  is a line, not a pyramid — the single most common mistake here.
+- **Target shape:** 4 levels — `top → 2 branches → 2 mid metrics each → 2 diagnostic
+  leaves each` (1 + 2 + 4 + 8 = 15 nodes). A 3-level pyramid
+  (`top → 2 branches → 2 leaves each`, 7 nodes) is acceptable when a domain genuinely
+  has fewer meaningful diagnostics — but still ≥2 children per non-leaf node. Do not
+  pad with vanity metrics just to hit the count; every node must be a real,
+  decision-relevant measure.
+- Each level decomposes the parent: branches are outcome themes, mid metrics are the
+  drivers of that theme, leaves are the measurable diagnostics that move the driver.
+- Only leaves carry a `unit` + `currentValue` that is a terminal measurement; give
+  every metric a `unit` and avoid vanity terminals.
+- KPI **ids** must be unique within a customer (across both pyramids). Reuse KPI
+  **names** consistently across customers, teams, and insights (they link by name, not
+  id) — every `northStar`/`supporting`/insight `kpis` name must exist as a node in that
+  customer's pyramids.
 
 ### Insights (evidence)
 - Record sourced facts with `sourceIds`; make inference explicit; don't invent
@@ -130,6 +145,9 @@ Target files (per domain):
 
 ### kpiPyramids
 
+Every non-leaf node below has ≥2 children — mirror this fan-out (top → 2 branches →
+2 mid metrics each → 2 leaves each). Do NOT emit single-child chains.
+
 ```json
 {
   "customerOutcomes": {
@@ -139,16 +157,38 @@ Target files (per domain):
              "icon": "kpi-ridu-rrel.png" },
     "branches": [
       { "id": "rspd", "name": "Speed and predictability",
+        "currentValue": "72", "link": "…", "linkLabel": "Open KPI dashboard",
+        "icon": "kpi-ridu-rspd.png",
         "children": [
-          { "id": "reta", "name": "ETA accuracy", "unit": "minutes",
-            "children": [ { "id": "rwtm", "name": "Rider wait time",
-                            "unit": "minutes", "children": [] } ] }
+          { "id": "reta", "name": "ETA accuracy", "description": "…",
+            "unit": "minutes", "currentValue": "58", "icon": "kpi-ridu-reta.png",
+            "children": [
+              { "id": "rwtm", "name": "Rider wait time", "description": "…",
+                "unit": "minutes", "currentValue": "6.9", "icon": "kpi-ridu-rwtm.png",
+                "children": [] },
+              { "id": "rpup", "name": "Pickup punctuality", "description": "…",
+                "unit": "%", "currentValue": "88", "icon": "kpi-ridu-rpup.png",
+                "children": [] }
+            ] },
+          { "id": "rcxl", "name": "Avoidable cancellation rate", "description": "…",
+            "unit": "%", "currentValue": "3.1", "icon": "kpi-ridu-rcxl.png",
+            "children": [
+              { "id": "rrem", "name": "Rematch recovery rate", "description": "…",
+                "unit": "%", "currentValue": "75", "icon": "kpi-ridu-rrem.png",
+                "children": [] },
+              { "id": "rdrv", "name": "Driver no-show rate", "description": "…",
+                "unit": "%", "currentValue": "1.4", "icon": "kpi-ridu-rdrv.png",
+                "children": [] }
+            ] }
         ] }
+      // ... a second branch (e.g. "Trust and confidence") with the same 2×2 fan-out
     ]
   }
   // a businessOutcomes pyramid of the same shape may also be present
 }
 ```
+> Shape rule: `top → ≥2 branches → ≥2 mid metrics each → ≥2 leaves each`. Every
+> non-leaf node has ≥2 children; only leaves have `children: []`. Never one child.
 
 ### productStrategy.timeHorizons (per horizon: `1_year`, `3_year`, `5_year`)
 
@@ -243,7 +283,12 @@ add the stream (`edit-streams`) or point at an existing brick id.
 - A single generic "user" segment in a multi-sided domain.
 - JTBD written as feature usage, or `Discovery`/`Evaluation` used for in-product
   search/browse.
-- One-child KPI chains, vanity terminal metrics, arbitrary precise targets.
+- **KPI pyramids that are lines, not pyramids** — any non-leaf node with exactly one
+  child (`top → 1 branch → 1 child → 1 leaf`). Every non-leaf node needs ≥2 children.
+- Vanity terminal metrics, arbitrary precise targets, or padding leaves just to reach
+  a node count.
+- `northStar`/`supporting`/insight `kpis` names that don't exist as a node in the
+  customer's pyramids; duplicate KPI ids within a customer.
 - Inventing business metrics or sources; copying identical strategy horizons across
   personas.
 - Leaving cross-file customer references dangling.

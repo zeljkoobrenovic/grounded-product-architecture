@@ -79,69 +79,153 @@
             filter: grayscale(100%);
         }
 
+    </style>
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
         .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
+            flex-direction: column;
+            gap: 0;
         }
 
         .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 14px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
         }
 
         .tab button.active {
-            background-color: #ccc;
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
         }
 
-        .tabcontent {
-            display: none;
-            padding: 0;
-            border: 1px solid #ccc;
-            border-top: none;
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
         }
-    </style>
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
     <script>
         const START_TAB_STORAGE_KEY = 'spec-driven-product-architecture:start-active-tab';
 
-        function initTab() {
-            let tabName = '';
-            if (typeof apps !== 'undefined' && apps.length > 0) {
-                tabName = 'tab_content_' + apps[0].tab;
-            }
-            const storedTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
-            if (storedTab && document.getElementById('tab_' + storedTab)) {
-                tabName = storedTab;
-            }
-            if (tabName) {
-                openTab(tabName);
-            }
-        }
-
-        function openTab(tabName) {
-            const tabcontent = document.getElementsByClassName('tabcontent');
-            for (let i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = 'none';
-            }
-            const tablinks = document.getElementsByClassName('tablinks');
-            for (let i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(' active', '');
-            }
-            document.getElementById(tabName).style.display = 'block';
-            document.getElementById('tab_' + tabName).className += ' active';
+        // Persist the last opened tab (shared tabs script calls this hook after opening).
+        window.afterOpenTab = function (tabName) {
             window.sessionStorage.setItem(START_TAB_STORAGE_KEY, tabName);
-        }
+        };
     </script>
 </head>
 <body>
@@ -165,12 +249,12 @@
 <div id="tab_content"></div>
 
 <script>
-    const apps = {"config": {"name": "Spec-Driven Product Architectures", "description": "Defining <a target=\"blank\" href=\"https://zeljkoobrenovic.github.io/spec-driven-journals/spec-driven-product-architecture/index.html\">spec-driven, customer-centric product architecture</a> rooted in reality,<br> combining the power of GenAI with <a target=\"_blank\" href=\"https://grounded-architecture.io/\">grounded architecture</a> principles. Available free on on <a target=\"_blank\" href=\"https://github.com/zeljkoobrenovic/spec-driven-product-architecture\">GitHub</a>", "openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product Domains", "apps": [{"group": "marketplaces", "apps": [{"name": "Real Estate<br>Marketplace", "link": "../../product-domains/real-estate-marketplace/start/index.html", "icon": "../../product-domains/real-estate-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "General Listings<br>Marketplace", "link": "../../product-domains/general-listings-marketplace/start/index.html", "icon": "../../product-domains/general-listings-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Online Retail<br>Marketplace", "link": "../../product-domains/online-retail-marketplace/start/index.html", "icon": "../../product-domains/online-retail-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Local On-Demand<br>Delivery Marketplace", "link": "../../product-domains/local-on-demand-delivery-marketplace/start/index.html", "icon": "../../product-domains/local-on-demand-delivery-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "accomodation marketplaces", "apps": [{"name": "Travel Accommodations<br>Marketplace", "link": "../../product-domains/travel-accommodations-marketplace/start/index.html", "icon": "../../product-domains/travel-accommodations-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Hosted Stays Marketplace", "link": "../../product-domains/hosted-stays-marketplace/start/index.html", "icon": "../../product-domains/hosted-stays-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "mobility", "apps": [{"name": "Ride Sharing<br>Marketplace", "link": "../../product-domains/ride-sharing-marketplace/start/index.html", "icon": "../../product-domains/ride-sharing-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Freight Logistics Orchestration", "link": "../../product-domains/freight-logistics-orchestration/start/index.html", "icon": "../../product-domains/freight-logistics-orchestration/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "eMobility", "link": "../../product-domains/emobility/start/index.html", "icon": "../../product-domains/emobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Bike Mobility", "link": "../../product-domains/bike-mobility/start/index.html", "icon": "../../product-domains/bike-mobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mobility-as-a-Service", "link": "../../product-domains/maas/start/index.html", "icon": "../../product-domains/maas/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "travel", "apps": [{"name": "Premium Long-Haul<br>Airline", "link": "../../product-domains/premium-long-haul-airline/start/index.html", "icon": "../../product-domains/premium-long-haul-airline/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "finops", "apps": [{"name": "Travel & Expense Management", "link": "../../product-domains/travel-and-expense-management/start/index.html", "icon": "../../product-domains/travel-and-expense-management/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Payments and Revenue Infrastructure", "link": "../../product-domains/payments-and-revenue-infrastructure/start/index.html", "icon": "../../product-domains/payments-and-revenue-infrastructure/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "bio tech", "apps": [{"name": "Nutrition", "link": "../../product-domains/nutrition/start/index.html", "icon": "../../product-domains/nutrition/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Industrial Water Intelligence", "link": "../../product-domains/industrial-water-intelligence/start/index.html", "icon": "../../product-domains/industrial-water-intelligence/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "technical infrastructure", "apps": [{"name": "Public Cloud Services", "link": "../../product-domains/public-cloud-services/start/index.html", "icon": "../../product-domains/public-cloud-services/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Cloud Data and AI Platform", "link": "../../product-domains/cloud-data-and-ai-platform/start/index.html", "icon": "../../product-domains/cloud-data-and-ai-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internet Registry and Routing Trust", "link": "../../product-domains/internet-number-registry-and-routing-trust/start/index.html", "icon": "../../product-domains/internet-number-registry-and-routing-trust/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "employee customers", "apps": [{"name": "Big Enterprise", "link": "../../product-domains/big-enterprise/start/index.html", "icon": "../../product-domains/big-enterprise/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise CRM and Revenue Operations", "link": "../../product-domains/enterprise-crm-and-revenue-operations/start/index.html", "icon": "../../product-domains/enterprise-crm-and-revenue-operations/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internal Developer Platform", "link": "../../product-domains/internal-developer-platform/start/index.html", "icon": "../../product-domains/internal-developer-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "other", "apps": [{"name": "Digital News Publishing Platform", "link": "../../product-domains/digital-news-publishing-platform/start/index.html", "icon": "../../product-domains/digital-news-publishing-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mental Wellbeing Community Platform", "link": "../../product-domains/mental-wellbeing-community-platform/start/index.html", "icon": "../../product-domains/mental-wellbeing-community-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Premium Body Care and Home Fragrance", "link": "../../product-domains/premium-body-care-and-home-fragrance/start/index.html", "icon": "../../product-domains/premium-body-care-and-home-fragrance/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Municipal Public Space Enforcement", "link": "../../product-domains/municipal-public-space-enforcement/start/index.html", "icon": "../../product-domains/municipal-public-space-enforcement/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Audio Streaming Platform", "link": "../../product-domains/audio-streaming-platform/start/index.html", "icon": "../../product-domains/audio-streaming-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise Architecture Management Platform", "link": "../../product-domains/enterprise-architecture-management-platform/start/index.html", "icon": "../../product-domains/enterprise-architecture-management-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Technical Design Collaboration Platform", "link": "../../product-domains/technical-design-collaboration-platform/start/index.html", "icon": "../../product-domains/technical-design-collaboration-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}]}]}.apps;
-    const config = {"config": {"name": "Spec-Driven Product Architectures", "description": "Defining <a target=\"blank\" href=\"https://zeljkoobrenovic.github.io/spec-driven-journals/spec-driven-product-architecture/index.html\">spec-driven, customer-centric product architecture</a> rooted in reality,<br> combining the power of GenAI with <a target=\"_blank\" href=\"https://grounded-architecture.io/\">grounded architecture</a> principles. Available free on on <a target=\"_blank\" href=\"https://github.com/zeljkoobrenovic/spec-driven-product-architecture\">GitHub</a>", "openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product Domains", "apps": [{"group": "marketplaces", "apps": [{"name": "Real Estate<br>Marketplace", "link": "../../product-domains/real-estate-marketplace/start/index.html", "icon": "../../product-domains/real-estate-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "General Listings<br>Marketplace", "link": "../../product-domains/general-listings-marketplace/start/index.html", "icon": "../../product-domains/general-listings-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Online Retail<br>Marketplace", "link": "../../product-domains/online-retail-marketplace/start/index.html", "icon": "../../product-domains/online-retail-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Local On-Demand<br>Delivery Marketplace", "link": "../../product-domains/local-on-demand-delivery-marketplace/start/index.html", "icon": "../../product-domains/local-on-demand-delivery-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "accomodation marketplaces", "apps": [{"name": "Travel Accommodations<br>Marketplace", "link": "../../product-domains/travel-accommodations-marketplace/start/index.html", "icon": "../../product-domains/travel-accommodations-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Hosted Stays Marketplace", "link": "../../product-domains/hosted-stays-marketplace/start/index.html", "icon": "../../product-domains/hosted-stays-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "mobility", "apps": [{"name": "Ride Sharing<br>Marketplace", "link": "../../product-domains/ride-sharing-marketplace/start/index.html", "icon": "../../product-domains/ride-sharing-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Freight Logistics Orchestration", "link": "../../product-domains/freight-logistics-orchestration/start/index.html", "icon": "../../product-domains/freight-logistics-orchestration/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "eMobility", "link": "../../product-domains/emobility/start/index.html", "icon": "../../product-domains/emobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Bike Mobility", "link": "../../product-domains/bike-mobility/start/index.html", "icon": "../../product-domains/bike-mobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mobility-as-a-Service", "link": "../../product-domains/maas/start/index.html", "icon": "../../product-domains/maas/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "travel", "apps": [{"name": "Premium Long-Haul<br>Airline", "link": "../../product-domains/premium-long-haul-airline/start/index.html", "icon": "../../product-domains/premium-long-haul-airline/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "finops", "apps": [{"name": "Travel & Expense Management", "link": "../../product-domains/travel-and-expense-management/start/index.html", "icon": "../../product-domains/travel-and-expense-management/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Payments and Revenue Infrastructure", "link": "../../product-domains/payments-and-revenue-infrastructure/start/index.html", "icon": "../../product-domains/payments-and-revenue-infrastructure/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "bio tech", "apps": [{"name": "Nutrition", "link": "../../product-domains/nutrition/start/index.html", "icon": "../../product-domains/nutrition/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Industrial Water Intelligence", "link": "../../product-domains/industrial-water-intelligence/start/index.html", "icon": "../../product-domains/industrial-water-intelligence/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "technical infrastructure", "apps": [{"name": "Public Cloud Services", "link": "../../product-domains/public-cloud-services/start/index.html", "icon": "../../product-domains/public-cloud-services/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Cloud Data and AI Platform", "link": "../../product-domains/cloud-data-and-ai-platform/start/index.html", "icon": "../../product-domains/cloud-data-and-ai-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internet Registry and Routing Trust", "link": "../../product-domains/internet-number-registry-and-routing-trust/start/index.html", "icon": "../../product-domains/internet-number-registry-and-routing-trust/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "employee customers", "apps": [{"name": "Big Enterprise", "link": "../../product-domains/big-enterprise/start/index.html", "icon": "../../product-domains/big-enterprise/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise CRM and Revenue Operations", "link": "../../product-domains/enterprise-crm-and-revenue-operations/start/index.html", "icon": "../../product-domains/enterprise-crm-and-revenue-operations/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internal Developer Platform", "link": "../../product-domains/internal-developer-platform/start/index.html", "icon": "../../product-domains/internal-developer-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "other", "apps": [{"name": "Digital News Publishing Platform", "link": "../../product-domains/digital-news-publishing-platform/start/index.html", "icon": "../../product-domains/digital-news-publishing-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mental Wellbeing Community Platform", "link": "../../product-domains/mental-wellbeing-community-platform/start/index.html", "icon": "../../product-domains/mental-wellbeing-community-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Premium Body Care and Home Fragrance", "link": "../../product-domains/premium-body-care-and-home-fragrance/start/index.html", "icon": "../../product-domains/premium-body-care-and-home-fragrance/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Municipal Public Space Enforcement", "link": "../../product-domains/municipal-public-space-enforcement/start/index.html", "icon": "../../product-domains/municipal-public-space-enforcement/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Audio Streaming Platform", "link": "../../product-domains/audio-streaming-platform/start/index.html", "icon": "../../product-domains/audio-streaming-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise Architecture Management Platform", "link": "../../product-domains/enterprise-architecture-management-platform/start/index.html", "icon": "../../product-domains/enterprise-architecture-management-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Technical Design Collaboration Platform", "link": "../../product-domains/technical-design-collaboration-platform/start/index.html", "icon": "../../product-domains/technical-design-collaboration-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}]}]}.config;
+    const apps = {"config": {"name": "Spec-Driven Product Architectures", "description": "Defining <a target=\"blank\" href=\"https://zeljkoobrenovic.github.io/spec-driven-journals/spec-driven-product-architecture/index.html\">spec-driven, customer-centric product architecture</a> rooted in reality,<br> combining the power of GenAI with <a target=\"_blank\" href=\"https://grounded-architecture.io/\">grounded architecture</a> principles. Available free on on <a target=\"_blank\" href=\"https://github.com/zeljkoobrenovic/spec-driven-product-architecture\">GitHub</a>", "openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product Domains", "apps": [{"group": "marketplaces", "apps": [{"name": "Real Estate<br>Marketplace", "link": "../../product-domains/real-estate-marketplace/start/index.html", "icon": "../../product-domains/real-estate-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "General Listings<br>Marketplace", "link": "../../product-domains/general-listings-marketplace/start/index.html", "icon": "../../product-domains/general-listings-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Online Retail<br>Marketplace", "link": "../../product-domains/online-retail-marketplace/start/index.html", "icon": "../../product-domains/online-retail-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Local On-Demand<br>Delivery Marketplace", "link": "../../product-domains/local-on-demand-delivery-marketplace/start/index.html", "icon": "../../product-domains/local-on-demand-delivery-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "accomodation marketplaces", "apps": [{"name": "Travel Accommodations<br>Marketplace", "link": "../../product-domains/travel-accommodations-marketplace/start/index.html", "icon": "../../product-domains/travel-accommodations-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Hosted Stays Marketplace", "link": "../../product-domains/hosted-stays-marketplace/start/index.html", "icon": "../../product-domains/hosted-stays-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "mobility", "apps": [{"name": "Ride Sharing<br>Marketplace", "link": "../../product-domains/ride-sharing-marketplace/start/index.html", "icon": "../../product-domains/ride-sharing-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Freight Logistics Orchestration", "link": "../../product-domains/freight-logistics-orchestration/start/index.html", "icon": "../../product-domains/freight-logistics-orchestration/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "eMobility", "link": "../../product-domains/emobility/start/index.html", "icon": "../../product-domains/emobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Bike Mobility", "link": "../../product-domains/bike-mobility/start/index.html", "icon": "../../product-domains/bike-mobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mobility-as-a-Service", "link": "../../product-domains/maas/start/index.html", "icon": "../../product-domains/maas/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "travel", "apps": [{"name": "Premium Long-Haul<br>Airline", "link": "../../product-domains/premium-long-haul-airline/start/index.html", "icon": "../../product-domains/premium-long-haul-airline/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "finops", "apps": [{"name": "Travel & Expense Management", "link": "../../product-domains/travel-and-expense-management/start/index.html", "icon": "../../product-domains/travel-and-expense-management/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Payments and Revenue Infrastructure", "link": "../../product-domains/payments-and-revenue-infrastructure/start/index.html", "icon": "../../product-domains/payments-and-revenue-infrastructure/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "bio tech", "apps": [{"name": "Nutrition", "link": "../../product-domains/nutrition/start/index.html", "icon": "../../product-domains/nutrition/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Industrial Water Intelligence", "link": "../../product-domains/industrial-water-intelligence/start/index.html", "icon": "../../product-domains/industrial-water-intelligence/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "medical care", "apps": [{"name": "Digital Medication Management", "link": "../../product-domains/digital-medication-management/start/index.html", "icon": "../../product-domains/digital-medication-management/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mental Wellbeing Community Platform", "link": "../../product-domains/mental-wellbeing-community-platform/start/index.html", "icon": "../../product-domains/mental-wellbeing-community-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "technical infrastructure", "apps": [{"name": "Public Cloud Services", "link": "../../product-domains/public-cloud-services/start/index.html", "icon": "../../product-domains/public-cloud-services/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Cloud Data and AI Platform", "link": "../../product-domains/cloud-data-and-ai-platform/start/index.html", "icon": "../../product-domains/cloud-data-and-ai-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internet Registry and Routing Trust", "link": "../../product-domains/internet-number-registry-and-routing-trust/start/index.html", "icon": "../../product-domains/internet-number-registry-and-routing-trust/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "employee customers", "apps": [{"name": "Big Enterprise", "link": "../../product-domains/big-enterprise/start/index.html", "icon": "../../product-domains/big-enterprise/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise CRM and Revenue Operations", "link": "../../product-domains/enterprise-crm-and-revenue-operations/start/index.html", "icon": "../../product-domains/enterprise-crm-and-revenue-operations/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internal Developer Platform", "link": "../../product-domains/internal-developer-platform/start/index.html", "icon": "../../product-domains/internal-developer-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "other", "apps": [{"name": "Digital News Publishing Platform", "link": "../../product-domains/digital-news-publishing-platform/start/index.html", "icon": "../../product-domains/digital-news-publishing-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Premium Body Care and Home Fragrance", "link": "../../product-domains/premium-body-care-and-home-fragrance/start/index.html", "icon": "../../product-domains/premium-body-care-and-home-fragrance/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Municipal Public Space Enforcement", "link": "../../product-domains/municipal-public-space-enforcement/start/index.html", "icon": "../../product-domains/municipal-public-space-enforcement/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Audio Streaming Platform", "link": "../../product-domains/audio-streaming-platform/start/index.html", "icon": "../../product-domains/audio-streaming-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise Architecture Management Platform", "link": "../../product-domains/enterprise-architecture-management-platform/start/index.html", "icon": "../../product-domains/enterprise-architecture-management-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Technical Design Collaboration Platform", "link": "../../product-domains/technical-design-collaboration-platform/start/index.html", "icon": "../../product-domains/technical-design-collaboration-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}]}]}.apps;
+    const config = {"config": {"name": "Spec-Driven Product Architectures", "description": "Defining <a target=\"blank\" href=\"https://zeljkoobrenovic.github.io/spec-driven-journals/spec-driven-product-architecture/index.html\">spec-driven, customer-centric product architecture</a> rooted in reality,<br> combining the power of GenAI with <a target=\"_blank\" href=\"https://grounded-architecture.io/\">grounded architecture</a> principles. Available free on on <a target=\"_blank\" href=\"https://github.com/zeljkoobrenovic/spec-driven-product-architecture\">GitHub</a>", "openInNewTab": true, "enableSearch": true}, "apps": [{"tab": "Product Domains", "apps": [{"group": "marketplaces", "apps": [{"name": "Real Estate<br>Marketplace", "link": "../../product-domains/real-estate-marketplace/start/index.html", "icon": "../../product-domains/real-estate-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "General Listings<br>Marketplace", "link": "../../product-domains/general-listings-marketplace/start/index.html", "icon": "../../product-domains/general-listings-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Online Retail<br>Marketplace", "link": "../../product-domains/online-retail-marketplace/start/index.html", "icon": "../../product-domains/online-retail-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Local On-Demand<br>Delivery Marketplace", "link": "../../product-domains/local-on-demand-delivery-marketplace/start/index.html", "icon": "../../product-domains/local-on-demand-delivery-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "accomodation marketplaces", "apps": [{"name": "Travel Accommodations<br>Marketplace", "link": "../../product-domains/travel-accommodations-marketplace/start/index.html", "icon": "../../product-domains/travel-accommodations-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Hosted Stays Marketplace", "link": "../../product-domains/hosted-stays-marketplace/start/index.html", "icon": "../../product-domains/hosted-stays-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "mobility", "apps": [{"name": "Ride Sharing<br>Marketplace", "link": "../../product-domains/ride-sharing-marketplace/start/index.html", "icon": "../../product-domains/ride-sharing-marketplace/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Freight Logistics Orchestration", "link": "../../product-domains/freight-logistics-orchestration/start/index.html", "icon": "../../product-domains/freight-logistics-orchestration/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "eMobility", "link": "../../product-domains/emobility/start/index.html", "icon": "../../product-domains/emobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Bike Mobility", "link": "../../product-domains/bike-mobility/start/index.html", "icon": "../../product-domains/bike-mobility/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mobility-as-a-Service", "link": "../../product-domains/maas/start/index.html", "icon": "../../product-domains/maas/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "travel", "apps": [{"name": "Premium Long-Haul<br>Airline", "link": "../../product-domains/premium-long-haul-airline/start/index.html", "icon": "../../product-domains/premium-long-haul-airline/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "finops", "apps": [{"name": "Travel & Expense Management", "link": "../../product-domains/travel-and-expense-management/start/index.html", "icon": "../../product-domains/travel-and-expense-management/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Payments and Revenue Infrastructure", "link": "../../product-domains/payments-and-revenue-infrastructure/start/index.html", "icon": "../../product-domains/payments-and-revenue-infrastructure/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "bio tech", "apps": [{"name": "Nutrition", "link": "../../product-domains/nutrition/start/index.html", "icon": "../../product-domains/nutrition/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Industrial Water Intelligence", "link": "../../product-domains/industrial-water-intelligence/start/index.html", "icon": "../../product-domains/industrial-water-intelligence/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "medical care", "apps": [{"name": "Digital Medication Management", "link": "../../product-domains/digital-medication-management/start/index.html", "icon": "../../product-domains/digital-medication-management/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Mental Wellbeing Community Platform", "link": "../../product-domains/mental-wellbeing-community-platform/start/index.html", "icon": "../../product-domains/mental-wellbeing-community-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "technical infrastructure", "apps": [{"name": "Public Cloud Services", "link": "../../product-domains/public-cloud-services/start/index.html", "icon": "../../product-domains/public-cloud-services/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Cloud Data and AI Platform", "link": "../../product-domains/cloud-data-and-ai-platform/start/index.html", "icon": "../../product-domains/cloud-data-and-ai-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internet Registry and Routing Trust", "link": "../../product-domains/internet-number-registry-and-routing-trust/start/index.html", "icon": "../../product-domains/internet-number-registry-and-routing-trust/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "employee customers", "apps": [{"name": "Big Enterprise", "link": "../../product-domains/big-enterprise/start/index.html", "icon": "../../product-domains/big-enterprise/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise CRM and Revenue Operations", "link": "../../product-domains/enterprise-crm-and-revenue-operations/start/index.html", "icon": "../../product-domains/enterprise-crm-and-revenue-operations/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Internal Developer Platform", "link": "../../product-domains/internal-developer-platform/start/index.html", "icon": "../../product-domains/internal-developer-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}, {"group": "other", "apps": [{"name": "Digital News Publishing Platform", "link": "../../product-domains/digital-news-publishing-platform/start/index.html", "icon": "../../product-domains/digital-news-publishing-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Premium Body Care and Home Fragrance", "link": "../../product-domains/premium-body-care-and-home-fragrance/start/index.html", "icon": "../../product-domains/premium-body-care-and-home-fragrance/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Municipal Public Space Enforcement", "link": "../../product-domains/municipal-public-space-enforcement/start/index.html", "icon": "../../product-domains/municipal-public-space-enforcement/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Audio Streaming Platform", "link": "../../product-domains/audio-streaming-platform/start/index.html", "icon": "../../product-domains/audio-streaming-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Enterprise Architecture Management Platform", "link": "../../product-domains/enterprise-architecture-management-platform/start/index.html", "icon": "../../product-domains/enterprise-architecture-management-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}, {"name": "Technical Design Collaboration Platform", "link": "../../product-domains/technical-design-collaboration-platform/start/index.html", "icon": "../../product-domains/technical-design-collaboration-platform/start/icons/logo.png", "description": "customers, products, teams, objectives", "source": "configuration file"}]}]}]}.config;
     let tabNavigationHtml = '';
     let tabContentHtml = '';
     apps.forEach(tab => {
-        tabNavigationHtml += '<button id="tab_tab_content_' + tab.tab + '" class="tablinks" onclick="openTab(\'tab_content_' + tab.tab + '\')">' + tab.tab + '</button>';
+        tabNavigationHtml += '<button id="tab_' + tab.tab + '" class="tablinks" onclick="openTab(\'' + tab.tab + '\')">' + tab.tab + '</button>';
 
         tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;">' +
             '<div id="content_' + tab.tab + '"></div>' +
@@ -179,7 +263,14 @@
 
     document.getElementById('tab_navigation').innerHTML = tabNavigationHtml;
     document.getElementById('tab_content').innerHTML = tabContentHtml;
-    initTab();
+
+    // Default to the first tab, but prefer the last opened tab (URL hash wins over both,
+    // resolved inside the shared initTab).
+    const storedStartTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
+    const defaultStartTab = (storedStartTab && document.getElementById('tab_' + storedStartTab))
+        ? storedStartTab
+        : (apps.length ? apps[0].tab : '');
+    initTab(defaultStartTab);
 </script>
 
 <script>

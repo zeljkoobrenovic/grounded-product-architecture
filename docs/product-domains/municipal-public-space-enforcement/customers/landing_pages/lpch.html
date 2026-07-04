@@ -763,6 +763,30 @@
         return (jobIds || []).map(jobId => jobLookup[jobId] || jobId);
     }
 
+    function kpiNamesForLink(link) {
+        // Prefer stable KPI IDs resolved against this customer's KPI pyramid; fall back to legacy display-name kpis.
+        if (link && link.kpiIds && link.kpiIds.length) {
+            const lookup = {};
+            function walk(node) {
+                if (!node) return;
+                if (node.id) {
+                    lookup[node.id] = node.name || node.id;
+                }
+                (node.branches || []).forEach(walk);
+                (node.children || []).forEach(walk);
+            }
+            const pyramids = (customer || {}).kpiPyramids || {};
+            ['customerOutcomes', 'businessOutcomes'].forEach(key => {
+                const pyramid = pyramids[key];
+                if (!pyramid) return;
+                walk(pyramid.top);
+                (pyramid.branches || []).forEach(walk);
+            });
+            return link.kpiIds.map(kpiId => lookup[kpiId] || kpiId);
+        }
+        return (link && link.kpis) || [];
+    }
+
     function addInsights() {
         let html = '';
 
@@ -782,8 +806,9 @@
                     if (insight.link.jobIds && insight.link.jobIds.length) {
                         html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>Jobs:</b> ' + escapeHtml(jobNamesForCustomer(insight.link.jobIds).join(', ')) + '</div>';
                     }
-                    if (insight.link.kpis && insight.link.kpis.length) {
-                        html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>KPIs:</b> ' + escapeHtml(insight.link.kpis.join(', ')) + '</div>';
+                    const kpiNames = kpiNamesForLink(insight.link);
+                    if (kpiNames.length) {
+                        html += '<div style="font-size: 13px; color: #4b5563; margin-bottom: 4px"><b>KPIs:</b> ' + escapeHtml(kpiNames.join(', ')) + '</div>';
                     }
                 }
                 if (insight.tags && insight.tags.length) {
@@ -1161,6 +1186,22 @@
                 html += ' <span style="color:#888; font-style: italic;">(' + escapeHtml(statusLabel) + ')</span>';
             }
             html += '</div>';
+        }
+        if (node && node.target) {
+            html += '<div style="font-size: 80%; color: #047857; margin-top: 2px"><b>Target:</b> ' + escapeHtml(String(node.target)) + '</div>';
+        }
+        if (node && node.guardrailRole) {
+            html += '<div style="font-size: 78%; color: #b91c1c; margin-top: 2px"><b>Guardrail:</b> ' + escapeHtml(String(node.guardrailRole)) + '</div>';
+        }
+        if (node && (node.period || node.calculationMethod || node.valueSource)) {
+            html += '<div style="font-size: 76%; color: #6b7280; margin-top: 3px">';
+            if (node.period) { html += '<div><b>Period:</b> ' + escapeHtml(String(node.period)) + '</div>'; }
+            if (node.calculationMethod) { html += '<div><b>How measured:</b> ' + escapeHtml(String(node.calculationMethod)) + '</div>'; }
+            if (node.valueSource) { html += '<div><b>Value source:</b> ' + escapeHtml(String(node.valueSource)) + '</div>'; }
+            html += '</div>';
+        }
+        if (node && node.guardrail) {
+            html += '<div style="font-size: 76%; color: #7c3aed; margin-top: 3px"><b>Composite guardrail:</b> ' + escapeHtml(String(node.guardrail)) + '</div>';
         }
         if (node && node.link) {
             html += '<div style="font-size: 80%; margin-top: 4px"><a target="_blank" rel="noopener noreferrer" href="' + escapeHtml(node.link) + '">' + escapeHtml(node.linkLabel || 'Open link') + '</a></div>';

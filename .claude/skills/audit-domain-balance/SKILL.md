@@ -58,11 +58,43 @@ and `insight → linkedCustomers (customerId, jobIds) → kpis`.
   fully-connected graph).
 
 ### KPI & strategy coherence
-- KPI pyramids have real branches (avoid one-child chains), measurable leaves with
-  units, and names reused consistently across customers, teams, and insights.
+- **Pyramid shape (P1 when broken): every non-leaf node has ≥2 children.** Flag any
+  node with exactly one child — a `top → 1 branch → 1 child → 1 leaf` line is not a
+  pyramid. Report the count of single-child nodes and where they are; a mature domain
+  targets `top → 2 branches → 2 mid metrics each → 2 leaves each` (4 levels, 15 nodes),
+  with a 3-level `top → 2 branches → 2 leaves` acceptable only when diagnostics are
+  genuinely sparse.
+- Every persona has both a `customerOutcomes` and (where business is modeled) a
+  `businessOutcomes` pyramid — the customer landing page shows "No KPI pyramid defined"
+  unless **both** exist.
+- Measurable leaves with units; no vanity terminals or padding leaves.
+- KPI **ids** unique within a customer; KPI **names** reused consistently across
+  customers, teams, and insights, and every `northStar`/`supporting`/insight `kpis`
+  name resolves to a node in that customer's pyramids.
 - Per-customer and domain strategy horizons (1/3/5-year) are present and distinct,
   not copies.
 - Targets are plausible, not arbitrary precision on unsourced numbers.
+
+Quick shape check (run against the domain's `customers.json`):
+```bash
+python3 - "$DOMAIN" <<'PY'
+import json,sys
+d=json.load(open(f'_config/product-domains/{sys.argv[1]}/customers/customers.json'))
+def walk(n,path,bad):
+    k=len(n.get('children',[]))
+    if k==1: bad.append(' > '.join(path+[n['name']]))
+    for c in n.get('children',[]): walk(c,path+[n['name']],bad)
+bad=[]
+for g in d:
+    for c in g['customers']:
+        for key in ('customerOutcomes','businessOutcomes'):
+            p=c['kpiPyramids'].get(key)
+            if not p: continue
+            if len(p['branches'])<2: bad.append(f"{c['id']}/{key}: top has {len(p['branches'])} branch(es)")
+            for b in p['branches']: walk(b,[f"{c['id']}/{key}"],bad)
+print('single-child / thin nodes:', bad or 'none — pyramids fan out ✓')
+PY
+```
 
 ### Research And Sourcing
 - Competition stats carry official source URLs and reported scope; no invented

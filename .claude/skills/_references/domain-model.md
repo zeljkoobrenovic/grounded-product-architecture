@@ -95,6 +95,24 @@ message-consumer, daemon, stateless-service, stateful-service, service, integrat
 sets exactly, and each module type needs a `color`. Source of truth:
 `_wiring/product-domains/product_bricks_support.py`.
 
+## KPI pyramid model (fixed)
+
+`customers.json` → each persona's `kpiPyramids` holds a `customerOutcomes` and
+(usually) a `businessOutcomes` pyramid. A pyramid is `top` + `branches[]`, each node
+having `children[]`.
+
+- **Shape invariant: every non-leaf node has ≥2 children; a leaf has `children: []`.
+  Never exactly one child, at any level.** A `top → 1 branch → 1 child → 1 leaf` chain
+  is a line, not a pyramid — the most common authoring mistake.
+- **Target: 4 levels** — `top → 2 branches → 2 mid metrics each → 2 leaves each`
+  (1 + 2 + 4 + 8 = 15 nodes). A 3-level `top → 2 branches → 2 leaves` is acceptable only
+  when diagnostics are genuinely sparse. Don't pad with vanity metrics to hit a count.
+- KPI **ids** are unique within a persona (across both pyramids). KPI **names** link by
+  NAME (not id) to `teams.json` metrics, `insights.json` `kpis`, and the persona's
+  `productStrategy` `northStar`/`supporting` — every such name must exist as a node in
+  that persona's pyramids. The customer landing page shows "No KPI pyramid defined"
+  unless BOTH pyramids are present. See `edit-customers` for the full schema.
+
 ## Validate → regenerate loop (run after every edit)
 
 ```bash
