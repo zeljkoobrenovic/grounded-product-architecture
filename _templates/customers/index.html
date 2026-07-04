@@ -145,9 +145,6 @@
             width: 120px;
             height: 120px;
             object-fit: contain;
-            border-radius: 50%;
-            border: 1px solid #d1d5db;
-            box-shadow: rgba(99, 99, 99, 0.2) 0 2px 8px 0;
             margin: 4px auto 10px;
         }
 
@@ -244,6 +241,81 @@
             margin-top: 4px;
         }
 
+        .links-section {
+            padding: 16px;
+        }
+
+        .links-group {
+            margin-bottom: 28px;
+        }
+
+        .links-group-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .links-group-description {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 12px;
+            max-width: 960px;
+            line-height: 1.4;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 14px;
+        }
+
+        .link-card {
+            display: block;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 14px 16px;
+            background-color: white;
+            box-shadow: rgba(0, 0, 0, 0.05) 0 1px 3px;
+            transition: 0.2s;
+        }
+
+        .link-card:hover {
+            border-color: #9ca3af;
+            box-shadow: rgba(0, 0, 0, 0.1) 0 2px 6px;
+        }
+
+        .link-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #315b7c;
+            margin-bottom: 6px;
+        }
+
+        .link-url {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+
+        .link-relevance {
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .link-tag {
+            display: inline-block;
+            margin: 8px 6px 0 0;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: #eef2f7;
+            font-size: 11px;
+            color: #4b5563;
+        }
+
         @media (max-width: 720px) {
             body {
                 margin: 12px;
@@ -282,21 +354,26 @@
 <div class="tab">
     <button class="tablinks active" id="tab_customers" onclick="openTab('customers')">Customers</button>
     <button class="tablinks" id="tab_insights" onclick="openTab('insights')">Insights</button>
+    <button class="tablinks" id="tab_links" onclick="openTab('links')">Links</button>
 </div>
 <div>
     <div id="tab_content_customers" class="tabcontent"></div>
     <div id="tab_content_insights" class="tabcontent"></div>
+    <div id="tab_content_links" class="tabcontent"></div>
 </div>
 
 <script>
     const customers = ${customers};
     const insights = ${insights};
+    const links = ${links};
     const customerCount = customers.reduce((total, group) => total + ((group.customers || []).length), 0);
     const insightCount = (insights.items || []).length;
+    const linkCount = (links.groups || []).reduce((total, group) => total + ((group.links || []).length), 0);
 
     function updateTabLabels() {
         document.getElementById('tab_customers').textContent = 'Customers (' + customerCount + ')';
         document.getElementById('tab_insights').textContent = 'Insights (' + insightCount + ')';
+        document.getElementById('tab_links').textContent = 'Links (' + linkCount + ')';
     }
 
     function topCustomerKpi(customer) {
@@ -338,6 +415,35 @@
             }
         });
         return (jobIds || []).map(jobId => jobLookup[jobId] || jobId);
+    }
+
+    function kpiLookupForCustomer(customer) {
+        const lookup = {};
+        function walk(node) {
+            if (!node) return;
+            if (node.id) {
+                lookup[node.id] = node.name || node.id;
+            }
+            (node.branches || []).forEach(walk);
+            (node.children || []).forEach(walk);
+        }
+        const pyramids = (customer || {}).kpiPyramids || {};
+        ['customerOutcomes', 'businessOutcomes'].forEach(key => {
+            const pyramid = pyramids[key];
+            if (!pyramid) return;
+            walk(pyramid.top);
+            (pyramid.branches || []).forEach(walk);
+        });
+        return lookup;
+    }
+
+    function kpiNamesForCustomer(customer, link) {
+        // Prefer stable KPI IDs; fall back to legacy display-name kpis.
+        if (link && link.kpiIds && link.kpiIds.length) {
+            const lookup = kpiLookupForCustomer(customer);
+            return link.kpiIds.map(kpiId => lookup[kpiId] || kpiId);
+        }
+        return (link && link.kpis) || [];
     }
 
     function renderAttribute(iconFile, label, items) {
@@ -394,9 +500,27 @@
         insights.items.forEach(insight => {
             html += '<div class="insight-card">';
             html += '<div class="insight-title">' + escapeHtml(insight.title) + '</div>';
+            const evType = insight.evidenceType || ((insight.sourceIds && insight.sourceIds.length) || (insight.sources && insight.sources.length) ? 'sourced' : 'assumption');
+            const evStyles = {
+                sourced: 'background:#e3f2e6;color:#1b5e20',
+                assumption: 'background:#fdecea;color:#b71c1c',
+                hypothesis: 'background:#fff4e5;color:#8a4b00',
+                inferred: 'background:#eef2f7;color:#37474f'
+            };
+            const evLabels = { sourced: 'Sourced finding', assumption: 'Assumption', hypothesis: 'Hypothesis', inferred: 'Inferred strategy' };
+            html += '<div style="margin-bottom:8px"><span style="font-size:75%;font-weight:bold;padding:2px 8px;border-radius:10px;' + (evStyles[evType] || evStyles.inferred) + '">' + escapeHtml(evLabels[evType] || evType) + '</span></div>';
             html += '<div class="insight-summary">' + escapeHtml(insight.summary) + '</div>';
             if (insight.implication) {
                 html += '<div style="margin-bottom:12px"><b>Product implication:</b> ' + escapeHtml(insight.implication) + '</div>';
+            }
+            if (insight.validation) {
+                const v = insight.validation;
+                html += '<div style="margin-bottom:12px;padding:8px 10px;border-left:3px solid #8a4b00;background:#fff8ee">';
+                html += '<div style="font-size:80%;font-weight:bold;color:#8a4b00;margin-bottom:4px">Validation path (high-assumption inference)</div>';
+                if (v.researchQuestion) { html += '<div class="insight-source"><b>Open question:</b> ' + escapeHtml(v.researchQuestion) + '</div>'; }
+                if (v.evidenceTarget) { html += '<div class="insight-source"><b>Evidence to gather:</b> ' + escapeHtml(v.evidenceTarget) + '</div>'; }
+                if (v.wouldRaiseConfidenceIf) { html += '<div class="insight-source"><b>Would raise confidence if:</b> ' + escapeHtml(v.wouldRaiseConfidenceIf) + '</div>'; }
+                html += '</div>';
             }
             if (insight.tags && insight.tags.length) {
                 html += '<div style="margin-bottom:10px">';
@@ -418,8 +542,9 @@
                     if (link.jobIds && link.jobIds.length) {
                         html += '<div class="insight-source"><b>Jobs:</b> ' + escapeHtml(jobNamesForCustomer(customer, link.jobIds).join(', ')) + '</div>';
                     }
-                    if (link.kpis && link.kpis.length) {
-                        html += '<div class="insight-source"><b>KPIs:</b> ' + escapeHtml(link.kpis.join(', ')) + '</div>';
+                    const kpiNames = kpiNamesForCustomer(customer, link);
+                    if (kpiNames.length) {
+                        html += '<div class="insight-source"><b>KPIs:</b> ' + escapeHtml(kpiNames.join(', ')) + '</div>';
                     }
                     html += '</div>';
                 });
@@ -439,8 +564,52 @@
         document.getElementById('tab_content_insights').innerHTML = html;
     }
 
+    function renderLinks() {
+        const groups = (links.groups || []).filter(group => (group.links || []).length);
+
+        if (!groups.length) {
+            document.getElementById('tab_content_links').innerHTML = '<div style="padding:16px;color:#6b7280">No external links defined for this domain yet.</div>';
+            return;
+        }
+
+        let html = '<div class="links-section">';
+        groups.forEach(group => {
+            html += '<div class="links-group">';
+            html += '<div class="links-group-label">' + escapeHtml(group.group) + '</div>';
+            if (group.description) {
+                html += '<div class="links-group-description">' + escapeHtml(group.description) + '</div>';
+            }
+            html += '<div class="links-grid">';
+            (group.links || []).forEach(link => {
+                html += '<a class="link-card" target="_blank" rel="noopener" href="' + escapeHtml(link.url) + '">';
+                html += '<div class="link-title">' + escapeHtml(link.title) + '</div>';
+                html += '<div class="link-url">' + escapeHtml(link.url) + '</div>';
+                if (link.relevance) {
+                    html += '<div class="link-relevance">' + escapeHtml(link.relevance) + '</div>';
+                }
+                if (link.tags && link.tags.length) {
+                    html += '<div>';
+                    link.tags.forEach(tag => {
+                        html += '<span class="link-tag">' + escapeHtml(tag) + '</span>';
+                    });
+                    html += '</div>';
+                }
+                if (link.references && link.references.length) {
+                    html += '<div style="margin-top:8px;font-size:72%;color:#6b7280">Grounds: ';
+                    html += link.references.map(r => escapeHtml(r.label || (r.type + ':' + r.id))).join(' · ');
+                    html += '</div>';
+                }
+                html += '</a>';
+            });
+            html += '</div></div>';
+        });
+        html += '</div>';
+        document.getElementById('tab_content_links').innerHTML = html;
+    }
+
     update();
     renderInsights();
+    renderLinks();
     updateTabLabels();
 </script>
 ${breadcrumbs_script}

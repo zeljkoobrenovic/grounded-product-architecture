@@ -1,6 +1,6 @@
 ---
 name: audit-domain-balance
-description: "Review a product domain for realism, completeness, and balance — not just JSON validity. Use to assess whether a domain is high-quality and well-balanced: per-artifact density vs the reference domain, cross-segment coverage, brick-layer balance, team/brick ownership gaps, customer→brick→team traceability, evidence coverage, and sparse vs over-built areas. Produces a prioritized gap report. Run before declaring a domain 'done' or when asked if a domain is mature/realistic/complete."
+description: "Review a product domain for realism, completeness, and balance — not just JSON validity. Use to assess whether a domain is high-quality and well-balanced: per-artifact density vs the reference domain, cross-segment coverage, brick-layer balance, team/brick ownership gaps, customer→brick→team traceability, research/source quality, and sparse vs over-built areas. Produces a prioritized gap report. Run before declaring a domain 'done' or when asked if a domain is mature/realistic/complete."
 ---
 
 # Audit Domain Balance
@@ -64,11 +64,12 @@ and `insight → linkedCustomers (customerId, jobIds) → kpis`.
   not copies.
 - Targets are plausible, not arbitrary precision on unsourced numbers.
 
-### Evidence & sourcing
+### Research And Sourcing
 - Competition stats carry official source URLs and reported scope; no invented
   metrics.
 - Insights link to `sources[]` via `sourceIds` and to customers/jobs/KPIs.
-- Bricks/streams that warrant evidence have entries in `*-evidence.json`.
+- `customers/links.json` has useful link groups, relevance notes, and tags that
+  support the modeled customer, market, product-surface, partner, or trust context.
 
 ### Over-build & redundancy
 Imbalance cuts both ways: flag duplicated personas, near-identical bricks that should

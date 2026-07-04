@@ -1,6 +1,6 @@
 ---
 name: spda-product-domain-review
-description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**` customer, JTBD, journey, value proposition, KPI, strategy, insights, evidence, and competition quality before editing or regenerating domain docs; save the review in the domain root `REVIEW.md`."
+description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**` customer, JTBD, journey, value proposition, KPI, strategy, insights, research evidence, and competition quality before editing or regenerating domain docs; save the review in the domain root `REVIEW.md`."
 ---
 
 # SPDA Product Domain Review
@@ -16,19 +16,20 @@ Read the source model first:
 - `_config/product-domains/<domain>/_domain/DOMAIN.md` when present.
 - `_config/product-domains/<domain>/customers/customers.json`.
 - `_config/product-domains/<domain>/customers/insights.json` when present.
+- `_config/product-domains/<domain>/customers/links.json` when present.
 - `_config/product-domains/<domain>/business/competition.json` when present.
 - `_config/product-domains/<domain>/product-bricks/product-stream.json`.
 - `_config/product-domains/<domain>/product-bricks/product-bricks.json`.
 - `_config/product-domains/<domain>/product-deployments/*.json`.
-- `_config/product-domains/<domain>/objectives/**/{objectives,initiatives,discoveries}.json` when present.
-- `_config/product-domains/<domain>/delivery/releases.json` when present.
 
 Treat generated `docs/**` as reference output only. Do not patch generated files during a review.
+
+Do not review product-brick or stream `*-evidence.json` files in this skill. Research/source evidence inside `customers/insights.json` and curated customer-domain links inside `customers/links.json` are in scope.
 
 ## Workflow
 
 1. Identify the modeled business, primary customers, and strategic thesis from the domain brief and customer model.
-2. Map customer groups to personas, jobs, journeys, KPIs, insights, competition pressures, product streams, and major objectives.
+2. Map customer groups to personas, jobs, journeys, KPIs, insights, competition pressures, product deployments, product streams, and teams.
 3. Check realism, specificity, and balance before checking syntax. A syntactically valid model can still be strategically weak.
 4. Separate findings into defects, gaps, weak assumptions, and improvement opportunities.
 5. Include exact source-file references and enough context for an editor to fix the issue without rediscovering it.
@@ -71,15 +72,23 @@ Treat generated `docs/**` as reference output only. Do not patch generated files
 - Verify KPIs are specific, measurable, and relevant to the customer or business outcome.
 - Challenge invented precision, impossible targets, vanity metrics, and trees with many one-child branches.
 - Check for a healthy mix of north-star, leading, lagging, diagnostic, guardrail, customer, operational, and business metrics.
-- Confirm KPIs connect to jobs, insights, objectives, product streams, and teams where those references exist.
+- Confirm KPIs connect to jobs, insights, strategy horizons, product streams, and teams where those references exist.
 
-### Insights And Evidence
+### Insights And Research Evidence
 
-- Validate that insights are actual implications from evidence, not restated product decisions.
+- Validate that insights are actual implications from research/source material, not restated product decisions.
 - Check every insight source ID resolves to `customers/insights.json.sources`.
 - Distinguish sourced facts from assumptions and inferences.
 - Look for stale dates, missing source coverage, overclaiming from weak sources, and source links that do not support the modeled claim.
 - Prefer official or authoritative sources for public facts; mark uncertain claims as assumptions.
+
+### Customer Links
+
+- Review `customers/links.json` when present as curated research/context links for the domain.
+- Check link groups have clear purpose, descriptions, relevance notes, and tags that help readers understand why each link matters.
+- Confirm links cover the modeled customers, market context, product surfaces, trust/regulatory context, partner ecosystems, or other domain-specific reference areas.
+- Flag stale, broken-looking, duplicate, generic, or weakly relevant links, and important missing link categories that would improve customer/domain grounding.
+- Check consistency with `customers/insights.json` and `business/competition.json` without requiring every link to become an insight source.
 
 ### Competition
 
@@ -91,7 +100,7 @@ Treat generated `docs/**` as reference output only. Do not patch generated files
 ### Cross-Model Coherence
 
 - Trace customer jobs to product streams and product bricks. Flag important jobs with no plausible implementation path.
-- Trace strategy and KPIs to objectives, initiatives, releases, delivery model, and teams where present.
+- Trace strategy and KPIs to product deployments, product streams, product bricks, data assets, and teams where present.
 - Check whether product streams explain customer outcomes rather than just grouping bricks.
 - Identify imbalance: too much architecture with thin customer value, or rich customer strategy with weak implementation grounding.
 

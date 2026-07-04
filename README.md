@@ -30,7 +30,7 @@ There is no frontend framework, build system, or external JavaScript runtime dep
 ## Repository Structure
 
 - `_config/`
-  Source-of-truth data for product domains, customers, delivery models, product bricks, roadmap overlays, data sources, evidence metadata, and supporting documents.
+  Source-of-truth data for product domains, customers, product deployments, product bricks, data assets, teams, evidence metadata, and supporting documents.
 - `_templates/`
   HTML templates used by the generators.
 - `docs/`
@@ -54,16 +54,12 @@ Each domain typically contains:
   Customer groups, personas, JTBDs, KPI pyramids, and strategy horizons (with `insights.json` alongside).
 - `product-deployments/products.json` and `product-deployments/deployment.json`
   Products and the delivery/deployment model.
-- `delivery/releases.json`
-  Release targets and planning overlays.
 - `product-bricks/product-bricks.json`
   The catalog of reusable implementation-facing building blocks.
 - `product-bricks/product-stream.json`
   Product streams composed from product bricks and external systems.
 - `product-bricks/bricks-evidence.json` and `product-bricks/streams-evidence.json`
   Evidence references for bricks and streams.
-- `objectives/{current,next,ktlo,archived}/{objectives,initiatives,discoveries}.json`
-  Objectives model, sliced by time/state.
 - `teams/teams.json`
   Team structure.
 - `business/competition.json`
@@ -97,7 +93,7 @@ Recommended flow:
    - `_config/product-domains/premium-long-haul-airline/`
 6. Refine the generated content until it matches the repository conventions:
    - IDs stay lowercase
-   - terminology stays aligned with customers, objectives, delivery, teams, product bricks, and evidence
+   - terminology stays aligned with customers, product deployments, teams, product bricks, data assets, and evidence
    - JSON structure follows existing domains instead of inventing a new schema
 7. Make sure the new domain contains the expected source files, typically:
    - `_domain/DOMAIN.md`
@@ -105,12 +101,10 @@ Recommended flow:
    - `customers/insights.json`
    - `product-deployments/products.json`
    - `product-deployments/deployment.json`
-   - `delivery/releases.json`
    - `product-bricks/product-bricks.json`
    - `product-bricks/product-stream.json`
    - `product-bricks/bricks-evidence.json`
    - `product-bricks/streams-evidence.json`
-   - `objectives/current|next|ktlo|archived/{objectives,initiatives,discoveries}.json`
    - `teams/teams.json`
    - `business/competition.json`
    - `start/config.json`
@@ -141,7 +135,7 @@ After the new domain exists in `_config/product-domains/<new-domain>/`, generate
 - `_data/data/`
   Source data used by evidence and reporting generators such as AWS, GCP, budget, incidents, history, brands, and Slack.
 - `_data/evidence-db/`
-  Self-contained evidence pipeline. Per-source scripts under `_data/evidence-db/scripts/` (aws, gcp, workday, source-code, domain-objectives) write fragment files into `_data/evidence-db/database/evidence-files/<source>.json`; `database/aggregate-evidence.py` merges them into `database/all-evidence.json`. Run the full chain with `_data/evidence-db/run.sh`.
+  Self-contained evidence pipeline. Per-source scripts under `_data/evidence-db/scripts/` write fragment files into `_data/evidence-db/database/evidence-files/<source>.json`; `database/aggregate-evidence.py` merges them into `database/all-evidence.json`. Run the full chain with `_data/evidence-db/run.sh`.
 
 ### Evidence Explorer
 
@@ -163,8 +157,6 @@ Product-domain generators:
 - `generate-customers-docs.py`
 - `generate-products-docs.py`
 - `generate-product-bricks-docs.py`
-- `generate-delivery-docs.py`
-- `generate-objectives-docs.py`
 - `generate-teams-docs.py`
 - `generate-competition-docs.py`
 
@@ -180,8 +172,6 @@ python3 generate-start-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-customers-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-products-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-product-bricks-docs.py <domain_id> <domain_name> <domain_description>
-python3 generate-delivery-docs.py <domain_id> <domain_name> <domain_description>
-python3 generate-objectives-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-teams-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-competition-docs.py <domain_id> <domain_name> <domain_description>
 ```

@@ -1,13 +1,13 @@
 ---
 name: spda-product-bricks-review
-description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**` product bricks, product streams, data assets, layered modules, dependencies, external systems, evidence, team ownership, and implementation traceability before editing the model; save the review in the domain root `REVIEW.md`."
+description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**` product bricks, product streams, data assets, layered modules, dependencies, external systems, team ownership, and implementation traceability before editing the model; save the review in the domain root `REVIEW.md`."
 ---
 
 # SPDA Product Bricks Review
 
 ## Purpose
 
-Review the implementation-facing product architecture of a Spec-Driven Product Architecture domain. The goal is to find gaps in product bricks, streams, modules, dependencies, data assets, evidence, and ownership in `_config/product-domains/<domain>/REVIEW.md` so a later editing pass can improve `_config/product-domains/<domain>/product-bricks/` and related source files.
+Review the implementation-facing product architecture of a Spec-Driven Product Architecture domain. The goal is to find gaps in product bricks, streams, modules, dependencies, data assets, and ownership in `_config/product-domains/<domain>/REVIEW.md` so a later editing pass can improve `_config/product-domains/<domain>/product-bricks/` and related source files.
 
 ## Source Files
 
@@ -15,15 +15,16 @@ Read these files before reviewing:
 
 - `_config/product-domains/<domain>/product-bricks/product-bricks.json`.
 - `_config/product-domains/<domain>/product-bricks/product-stream.json`.
-- `_config/product-domains/<domain>/product-bricks/bricks-evidence.json` and `streams-evidence.json` when present.
 - `_config/product-domains/<domain>/data/data-assets.json`.
 - `_config/product-domains/<domain>/teams/teams.json`.
 - `_config/product-domains/<domain>/customers/customers.json`.
 - `_config/product-domains/<domain>/customers/insights.json` when present.
+- `_config/product-domains/<domain>/customers/links.json` when present.
 - `_config/product-domains/<domain>/product-deployments/*.json`.
-- `_config/product-domains/<domain>/delivery/releases.json` and objectives files when present.
 
-Run `_skills/product-domains/scripts/validate-domain-model.py <domain>` when useful to catch deterministic reference issues, then continue with qualitative architecture review.
+Run `scripts/validate-domain-model.py <domain>` when useful to catch deterministic reference issues, then continue with qualitative architecture review.
+
+Do not review product-brick or stream `*-evidence.json` files in this skill. Keep traceability review to the source model links among customers, product deployments, product streams, product bricks, data assets, and teams.
 
 ## Workflow
 
@@ -84,12 +85,12 @@ Run `_skills/product-domains/scripts/validate-domain-model.py <domain>` when use
 - Flag sensitive assets without governance, assets without owner/steward, assets not connected to modules, or modules that imply data ownership without data assets.
 - Check derived assets and analytics data do not blur operational system-of-record ownership.
 
-### Evidence And Traceability
+### Traceability
 
-- Review brick and stream evidence for meaningful support, not decorative links.
 - Trace strategic insights and customer jobs to streams and bricks.
+- Use `customers/links.json` as domain context when it helps judge whether streams and bricks reflect real product surfaces, market mechanics, or partner ecosystems.
 - Trace bricks to owning teams and delivery/product-deployment surfaces.
-- Identify architecture claims that need evidence, especially scale, reliability, payment, compliance, safety, marketplace, or AI/ML claims.
+- Identify architecture claims that need clearer modeling, especially scale, reliability, payment, compliance, safety, marketplace, or AI/ML claims.
 
 ### Balance And Pragmatism
 
@@ -105,10 +106,10 @@ Write the review to `_config/product-domains/<domain>/REVIEW.md`:
 1. `Architecture assessment`: 3-6 bullets on brick realism, stream coherence, data quality, and implementation readiness.
 2. `Critical findings`: issues that block reliable editing, generation, or coherent architecture.
 3. `Model-quality findings`: missing, vague, duplicated, overloaded, or poorly related bricks/streams/data assets.
-4. `Traceability findings`: broken or weak links to customers, teams, deployments, objectives, releases, evidence, or data.
+4. `Traceability findings`: broken or weak links to customers, teams, product deployments, streams, or data.
 5. `Edit backlog`: concrete source changes with file paths, IDs, and expected improvement.
 
-For each finding, include severity, evidence path and ID, why it matters, and suggested direction for a later editing pass.
+For each finding, include severity, source path and ID, why it matters, and suggested direction for a later editing pass.
 
 ## Quality Bar
 

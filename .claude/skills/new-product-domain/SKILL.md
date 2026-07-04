@@ -74,11 +74,6 @@ KPI names consistent everywhere.
 4. Run `audit-domain-balance <domain-id>` and resolve P1 findings before calling the
    domain done.
 
-## Scope reminder
-
-Do **not** create `objectives/`, `delivery/releases.json`, `initiatives`, or
-`discoveries` — these are being removed on this branch and have no active generators.
-
 ## Report
 
 Summarize: scope/boundary, counts per artifact vs the mature targets, the integrity

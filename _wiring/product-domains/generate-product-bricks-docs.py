@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 from domain_cli import load_domain_args
-from initiatives_support import load_domain_activity, filter_for_brick
 from product_bricks_support import (
     flatten_product_bricks,
     flatten_product_streams,
@@ -40,6 +39,9 @@ def copy_icons(icons_path, docs_folder):
             src = os.path.join(icons_path, filename)
             dst = os.path.join(docs_folder, 'icons', filename)
             if os.path.isfile(src):
+                print('************')
+                print(src + ' -> ' + dst)
+                print('************')
                 shutil.copy2(src, dst)
 
 
@@ -171,7 +173,10 @@ def build_brick_context(brick, products, customers):
             customer = customer_lookup.get(primary_customer.get('id', ''), {})
             for job in customer.get('jobsToBeDone', []):
                 for step in job.get('steps', []):
-                    for stream in step.get('streamsNeeded', []):
+                    # streamsNeeded references product streams; bricksNeeded carries the
+                    # lower-level brick implementation dependencies. Match against both so a
+                    # brick page surfaces the jobs it supports directly or via a stream.
+                    for stream in step.get('streamsNeeded', []) + step.get('bricksNeeded', []):
                         if stream_matches(stream):
                             append_supported_job(customer, primary_customer, product, job, step, stream, matched_stream)
 
@@ -208,6 +213,65 @@ def build_brick_team_context(brick, teams_payload):
 
     related_teams.sort(key=lambda item: item['teamName'].lower())
     return related_teams
+
+
+def build_team_lookup(teams_payload):
+    """Map teamId -> {teamId, teamName, groupName, teamType} for ownership resolution."""
+    lookup = {}
+    for group, team in _iter_team_groups(teams_payload.get('groups', [])):
+        team_id = str(team.get('id', '')).strip()
+        if not team_id:
+            continue
+        lookup[team_id] = {
+            'teamId': team_id,
+            'teamName': team.get('name', team_id),
+            'teamType': team.get('type', ''),
+            'groupName': group.get('name', ''),
+        }
+    return lookup
+
+
+def flatten_data_assets_with_context(root_groups):
+    """Flatten the recursive data-asset group tree, annotating each asset with its
+    rootGroup / group names so landing pages can show the catalog path."""
+    flat = []
+
+    def walk(groups, root_name, parent_name):
+        for group in groups or []:
+            group_name = group.get('name', '')
+            current_root = root_name or group_name
+            for asset in group.get('assets', []):
+                annotated = dict(asset)
+                annotated['rootGroup'] = current_root
+                annotated['group'] = group_name
+                flat.append(annotated)
+            walk(group.get('subGroups', []), current_root, group_name)
+
+    walk(root_groups, '', '')
+    return flat
+
+
+def build_data_asset_brick_usage(asset_id, bricks):
+    """Mirror the index page's buildDataAssetUsage: split linking bricks into
+    producing (own/write/publish/replicate/delete) and consuming (read/query/...)."""
+    producing = []
+    consuming = []
+    producing_roles = {'own', 'write', 'publish', 'replicate', 'delete'}
+    for brick in bricks:
+        for dep in brick.get('dataDependencies', []):
+            if dep.get('assetId') != asset_id:
+                continue
+            entry = {
+                'id': brick.get('id', ''),
+                'name': brick.get('name', brick.get('id', '')),
+                'role': dep.get('role', ''),
+                'description': dep.get('description', ''),
+            }
+            if str(dep.get('role', '')).lower() in producing_roles:
+                producing.append(entry)
+            else:
+                consuming.append(entry)
+    return producing, consuming
 
 
 def build_evidence(object_id, evidence_items):
@@ -339,7 +403,7 @@ def merge_named_records(items, id_field, list_fields=None):
     return ordered
 
 
-def create_landing_pages(bricks, activity_data, products, customers, evidence_items, teams_payload):
+def create_landing_pages(bricks, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'brick_landing_page.html').read();
     breadcrumbs = open(root_templates + 'brick_landing_page_breadcrumbs.json').read();
 
@@ -372,12 +436,10 @@ def create_landing_pages(bricks, activity_data, products, customers, evidence_it
                             .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${linked_products}', json.dumps(linked_products))
-                            .replace('${supported_jobs}', json.dumps(supported_jobs))
-                            .replace('${initiatives}', json.dumps(filter_for_brick(activity_data['initiatives'], brick['id'])))
-                            .replace('${releases}', json.dumps(filter_for_brick(activity_data['releases'], brick['id']))))
+                            .replace('${supported_jobs}', json.dumps(supported_jobs)))
 
 
-def create_stream_landing_pages(streams, bricks, activity_data, products, customers, evidence_items, teams_payload):
+def create_stream_landing_pages(streams, bricks, products, customers, evidence_items, teams_payload):
     landing_page_template = open(root_templates + 'stream_landing_page.html').read();
     brick_lookup = {brick['id']: brick for brick in bricks}
     breadcrumbs = open(root_templates + 'stream_landing_page_breadcrumbs.json').read();
@@ -387,8 +449,6 @@ def create_stream_landing_pages(streams, bricks, activity_data, products, custom
         linked_products = list(stream.get('supportedProducts', []))
         supported_jobs = list(stream.get('supportedCustomerJobs', []))
         related_teams = list(stream.get('owningTeams', []))
-        initiatives = list(stream.get('relatedInitiatives', []))
-        releases = list(stream.get('relatedReleases', []))
 
         for dep in stream.get('brickDependencies', []):
             brick_id = dep.get('targetBrickId', dep.get('targetobjectId', ''))
@@ -400,15 +460,11 @@ def create_stream_landing_pages(streams, bricks, activity_data, products, custom
             linked_products.extend(brick_linked_products)
             supported_jobs.extend(brick_supported_jobs)
             related_teams.extend(build_brick_team_context(brick, teams_payload))
-            initiatives.extend(filter_for_brick(activity_data['initiatives'], brick_id))
-            releases.extend(filter_for_brick(activity_data['releases'], brick_id))
 
         related_bricks = dedupe_by(related_bricks, lambda item: item.get('id', ''))
         linked_products = merge_named_records(linked_products, 'id')
         supported_jobs = merge_supported_jobs(supported_jobs)
         related_teams = merge_named_records(related_teams, 'teamId')
-        initiatives = dedupe_by(initiatives, lambda item: json.dumps(item, sort_keys=True))
-        releases = dedupe_by(releases, lambda item: json.dumps(item, sort_keys=True))
 
         evidence = build_evidence(stream['id'], evidence_items)
         html_file = docs_folder + 'stream_pages/' + str(stream['id']) + '.html'
@@ -434,9 +490,58 @@ def create_stream_landing_pages(streams, bricks, activity_data, products, custom
                             .replace('${evidence}', json.dumps(evidence))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${related_teams}', json.dumps(related_teams))
-                            .replace('${supported_jobs}', json.dumps(supported_jobs))
-                            .replace('${initiatives}', json.dumps(initiatives))
-                            .replace('${releases}', json.dumps(releases)))
+                            .replace('${supported_jobs}', json.dumps(supported_jobs)))
+
+
+def create_data_asset_landing_pages(data_assets_payload, bricks, teams_payload):
+    template_path = root_templates + 'data_asset_landing_page.html'
+    breadcrumbs_path = root_templates + 'data_asset_landing_page_breadcrumbs.json'
+    if not os.path.exists(template_path):
+        return
+
+    landing_page_template = open(template_path).read()
+    breadcrumbs = open(breadcrumbs_path).read()
+
+    assets = flatten_data_assets_with_context(data_assets_payload.get('rootGroups', []))
+    stores = data_assets_payload.get('stores', [])
+    team_lookup = build_team_lookup(teams_payload)
+
+    # Lightweight catalog for the nav strip on each page (no need to inline everything).
+    nav_assets = [{'id': asset.get('id', ''), 'name': asset.get('name', asset.get('id', ''))} for asset in assets]
+
+    for asset in assets:
+        asset_id = str(asset.get('id', '')).strip()
+        if not asset_id:
+            continue
+
+        producing_bricks, consuming_bricks = build_data_asset_brick_usage(asset_id, bricks)
+        owner_team = team_lookup.get(str(asset.get('ownerTeamId', '')).strip()) if asset.get('ownerTeamId') else None
+        steward_teams = [
+            team_lookup[steward_id]
+            for steward_id in asset.get('stewardTeamIds', [])
+            if str(steward_id).strip() in team_lookup
+        ]
+
+        html_path = docs_folder + 'data_pages/' + asset_id + '.html'
+        with open(html_path, 'w') as html_file:
+            html_file.write(landing_page_template
+                            .replace('${tabs_style}', tabs_style)
+                            .replace('${tabs_script}', tabs_script)
+                            .replace('${config}', json.dumps(site_config))
+                            .replace('${all_bricks}', json.dumps(bricks))
+                            .replace('${all_assets}', json.dumps(nav_assets))
+                            .replace('${asset_data}', json.dumps(asset))
+                            .replace('${all_stores}', json.dumps(stores))
+                            .replace('${producing_bricks}', json.dumps(producing_bricks))
+                            .replace('${consuming_bricks}', json.dumps(consuming_bricks))
+                            .replace('${owner_team}', json.dumps(owner_team))
+                            .replace('${steward_teams}', json.dumps(steward_teams))
+                            .replace('${common_style}', common_style)
+                            .replace('${breadcrumbs_style}', breadcrumbs_style)
+                            .replace('${breadcrumbs_script}', breadcrumbs_script)
+                            .replace('${breadcrumbs}', breadcrumbs)
+                            .replace('${domain_name}', domain['name'])
+                            .replace('${asset_name}', (asset.get('name', asset_id)).replace('&', '&amp;')))
 
 
 domain_id = domain['id']
@@ -455,13 +560,13 @@ if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
 os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
 os.makedirs(os.path.join(docs_folder, 'stream_pages'), exist_ok=True)
+os.makedirs(os.path.join(docs_folder, 'data_pages'), exist_ok=True)
 
 data = load_product_bricks_payload(product_bricks_config_path)
 flat_bricks = flatten_product_bricks(data)
 streams_payload = load_product_streams_payload(product_streams_config_path)
 flat_streams = flatten_product_streams(streams_payload)
 data_assets_payload = load_data_assets_payload(data_assets_config_path)
-activity_data = load_domain_activity(domains_root, domain_id)
 products = load_json_if_exists(domains_root + domain_id + '/product-deployments/products.json', {'portfolio': {'products': []}})
 customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
 teams_payload = load_json_if_exists(domains_root + domain_id + '/teams/teams.json', {'groups': []})
@@ -473,6 +578,16 @@ streams_evidence_items = load_json_from_paths([
     root_domain + 'stream-evidence.json',
     root_domain + 'streams-evidence.json',
 ], [])
+
+print('===========')
+print('===========')
+print('===========')
+print('===========')
+print(root_templates + 'icons')
+print('===========')
+print('===========')
+print('===========')
+print('===========')
 
 copy_icons(root_templates + 'icons', docs_folder)
 copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)
@@ -501,5 +616,6 @@ with open(docs_folder + 'index.html', 'w') as html_file:
     }))
     html_file.write(content)
 
-create_landing_pages(flat_bricks, activity_data, products, customers, bricks_evidence_items, teams_payload)
-create_stream_landing_pages(flat_streams, flat_bricks, activity_data, products, customers, streams_evidence_items, teams_payload)
+create_landing_pages(flat_bricks, products, customers, bricks_evidence_items, teams_payload)
+create_stream_landing_pages(flat_streams, flat_bricks, products, customers, streams_evidence_items, teams_payload)
+create_data_asset_landing_pages(data_assets_payload, flat_bricks, teams_payload)

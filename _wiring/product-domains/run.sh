@@ -9,13 +9,12 @@ scripts=(
   "generate-customers-docs.py"
   "generate-products-docs.py"
   "generate-product-bricks-docs.py"
-  "generate-delivery-docs.py"
-  "generate-objectives-docs.py"
   "generate-teams-docs.py"
   "generate-competition-docs.py"
 )
 
 domains=(
+  "digital-medication-management|Digital Medication Management|The Digital Medication Management domain covers the patient, carer, care-provider, and pharmacy workflows required to run an automated medicine-dispensing and remote medication-management service for home care and supported living — spanning the in-home dispensing device, pharmacy multi-dose pouch logistics, remote adherence monitoring, missed-dose alarm escalation, care-team portals, and the regulated medical-device software platform behind them."
   "cloud-data-and-ai-platform|Cloud Data and AI Platform|Cloud Data and AI Platform covers the managed cloud services, developer experiences, governance controls, and operating workflows required to ingest data, analyze it, train and serve models, build AI applications, and run governed enterprise AI at scale."
   "internet-number-registry-and-routing-trust|Internet Number Registry and Routing Trust|Internet Number Registry and Routing Trust covers the member, registry, routing security, DNS, policy, and measurement services needed to distribute and maintain Internet number resources and help operators keep Internet routing data trustworthy."
   "enterprise-architecture-management-platform|Enterprise Architecture Management Platform|Enterprise Architecture Management Platform covers SaaS products that maintain a living model of enterprise capabilities, applications, technologies, processes, risks, roadmaps, and transformation decisions so business and technology leaders can govern change with shared evidence."

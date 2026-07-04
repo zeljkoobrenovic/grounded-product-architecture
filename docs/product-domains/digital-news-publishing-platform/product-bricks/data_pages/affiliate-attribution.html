@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Affiliate Attribution</title>
+
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #a0a0a0;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;;
+    }
+</style>
+
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .page {
+            margin: 20px;
+        }
+
+        .nav-strip {
+            margin: 2px 20px 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+
+        .nav-link {
+            padding: 2px;
+            font-size: 12px;
+        }
+
+        .tab-image {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+        }
+
+        .tab-image-selected {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+            border-bottom: 4px solid blue;
+        }
+
+        .header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .header-icon {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+        }
+
+        .header-meta {
+            font-size: 90%;
+            color: grey;
+        }
+
+        .header-title {
+            font-size: 50px;
+            line-height: 1.05;
+        }
+
+        .header-copy {
+            font-size: 16px;
+            color: grey;
+            margin-top: 6px;
+            max-width: 950px;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #eef2f6;
+            color: #374151;
+            border: 1px solid #dbe2ea;
+        }
+
+        .badge-critical { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+        .badge-high { background: #ffedd5; color: #9a3412; border-color: #fdba74; }
+        .badge-pii { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+        .badge-restricted { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+        .group {
+            margin-top: 2px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            overflow: hidden;
+            border: 1px solid lightgrey;
+            background: #fff;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: blue;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            background: #fff;
+            color: inherit;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card-icon {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid #dbe2ea;
+            padding: 4px;
+            flex: 0 0 auto;
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #315b7c;
+            line-height: 1.4;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        .card-copy {
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+
+        .list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .list li {
+            margin-bottom: 6px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .meta-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #fbfdff;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            color: #315b7c;
+            font-weight: bold;
+            word-break: break-word;
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 90%;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+
+    <script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+
+</head>
+
+<body>
+
+<div id="breadcrumbs" style="margin-left: 20px"></div>
+
+<script>
+    const config = {"domains": [{"id": "digital-news-publishing-platform", "name": "Digital News Publishing Platform", "description": "Covers the audience, editorial, advertising, subscription, loyalty, partner-bundle, and data capabilities required to run a multi-brand digital news publisher across web, apps, print-linked editions, social, newsletters, and commercial partnerships."}]};
+    const all_bricks = [{"id": "home", "name": "Front Door and Homepage Orchestration", "type": "full-stack", "status": "invest", "description": "Editorial and algorithmic assembly of homepages, section fronts, landing pages, and app front doors.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-front-door-ui", "name": "Front door UI", "type": "web-component", "description": "Consumer-facing web and app entry surfaces.", "dependencies": {"modules": [{"moduleId": "module-homepage-assembly-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-homepage-assembly-service", "name": "Homepage assembly service", "type": "service", "description": "Builds ordered story rails and lead packages for each brand and entry surface."}]}], "dataDependencies": [{"assetId": "story-package", "moduleIds": ["module-homepage-assembly-service"], "role": "read", "description": "Reads story packages to assemble front doors."}, {"assetId": "audience-profile", "moduleIds": ["module-homepage-assembly-service"], "role": "read", "description": "Reads audience profiles for recirculation and layout decisions."}], "brickDependencies": [{"targetBrickId": "pack", "moduleId": "module-package-composer", "sourceModuleId": "module-homepage-assembly-service", "type": "composition", "description": "Uses package-ready stories with headlines, metadata, and placements."}, {"targetBrickId": "pers", "moduleId": "module-recommendation-apis", "sourceModuleId": "module-homepage-assembly-service", "type": "composition", "description": "Uses audience and behavior signals to tailor entry surfaces."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Discovery and habit"}, {"id": "sear", "name": "Search and Archive Retrieval", "type": "full-stack", "status": "sustaining", "description": "Internal and reader-facing retrieval across stories, topics, people, and archive entities.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-search-experience", "name": "Search experience", "type": "web-component", "description": "Reader and internal retrieval experience for current and archived content.", "dependencies": {"modules": [{"moduleId": "module-story-index", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-story-index", "name": "Story index", "type": "service", "description": "Indexes article and package metadata for retrieval and SEO support."}]}], "dataDependencies": [{"assetId": "story-asset", "moduleIds": ["module-story-index"], "role": "read", "description": "Indexes story assets and metadata."}], "brickDependencies": [{"targetBrickId": "cmsw", "moduleId": "module-workflow-engine", "sourceModuleId": "module-story-index", "type": "data", "description": "Depends on published story state and metadata from CMS."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Discovery and habit"}, {"id": "pers", "name": "Personalization and Recirculation", "type": "full-stack", "status": "invest", "description": "Audience-aware ranking, next-story suggestions, and return-journey orchestration across surfaces.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-recommendation-apis", "name": "Recommendation APIs", "type": "api", "description": "Serves personalized suggestions to homepage, article, and newsletter surfaces.", "dependencies": {"modules": [{"moduleId": "module-recirculation-ranking-service", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-recirculation-ranking-service", "name": "Recirculation ranking service", "type": "service", "description": "Produces next-best story and repeat-return recommendations."}]}], "dataDependencies": [{"assetId": "audience-profile", "moduleIds": ["module-recirculation-ranking-service"], "role": "own", "description": "Owns the serving view of audience relevance and recency signals."}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-metrics-semantic-layer", "sourceModuleId": "module-recirculation-ranking-service", "type": "insight", "description": "Uses behavioral and measurement definitions to rank content."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Discovery and habit"}, {"id": "news", "name": "Newsletter Lifecycle Management", "type": "full-stack", "status": "invest", "description": "Newsletter curation, audience targeting, send orchestration, and performance feedback.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-newsletter-editor-tooling", "name": "Newsletter editor tooling", "type": "web-component", "description": "Internal interfaces for briefing, curation, and audience selection.", "dependencies": {"modules": [{"moduleId": "module-send-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-send-orchestration", "name": "Send orchestration", "type": "service", "description": "Schedules, targets, and tracks newsletter sends."}]}], "dataDependencies": [{"assetId": "newsletter-subscription", "moduleIds": ["module-send-orchestration"], "role": "own", "description": "Owns newsletter enrollment and targeting state."}], "brickDependencies": [{"targetBrickId": "pack", "moduleId": "module-package-composer", "sourceModuleId": "module-send-orchestration", "type": "composition", "description": "Uses package-ready content for newsletter modules."}, {"targetBrickId": "regi", "moduleId": "module-registration-orchestration", "sourceModuleId": "module-send-orchestration", "type": "context", "description": "Uses reader identity and lifecycle state to tailor sends."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Discovery and habit"}, {"id": "alrt", "name": "Alerts and Push Messaging", "type": "full-stack", "status": "sustaining", "description": "Breaking alerts, app push notifications, and timely prompts that bring readers back.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-app-push-surface", "name": "App push surface", "type": "mobile-component", "description": "Reader-facing mobile alerts and breaking notifications.", "dependencies": {"modules": [{"moduleId": "module-alert-dispatch", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-alert-dispatch", "name": "Alert dispatch", "type": "service", "description": "Schedules and sends push and breaking alerts by segment and urgency."}]}], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-alert-dispatch"], "role": "read", "description": "Reads reader preferences and device state for notifications."}], "brickDependencies": [{"targetBrickId": "pack", "moduleId": "module-package-composer", "sourceModuleId": "module-alert-dispatch", "type": "composition", "description": "Uses story packaging to turn news into alertable payloads."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Discovery and habit"}, {"id": "arti", "name": "Article and Story Experience", "type": "full-stack", "status": "sustaining", "description": "Core reading experience for articles, galleries, explainers, and premium stories.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-article-ui", "name": "Article UI", "type": "web-component", "description": "Reader-facing story and article surfaces.", "dependencies": {"modules": [{"moduleId": "module-story-rendering-engine", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-story-rendering-engine", "name": "Story rendering engine", "type": "service", "description": "Renders story packages consistently across web and app."}]}], "dataDependencies": [{"assetId": "story-package", "moduleIds": ["module-story-rendering-engine"], "role": "read", "description": "Reads complete story packages for rendering."}], "brickDependencies": [{"targetBrickId": "subs", "moduleId": "module-paywall-rules-engine", "sourceModuleId": "module-story-rendering-engine", "type": "authorization", "description": "Uses paywall and entitlement logic for premium content."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Engagement and premium reading"}, {"id": "vide", "name": "Video and Visual Storytelling", "type": "full-stack", "status": "sustaining", "description": "Short-form and embedded video, visual explainers, and cross-channel media storytelling.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-video-player-and-embeds", "name": "Video player and embeds", "type": "web-component", "description": "Reader-facing playback and embedded video experiences.", "dependencies": {"modules": [{"moduleId": "module-video-publishing-adapter", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-video-publishing-adapter", "name": "Video publishing adapter", "type": "service", "description": "Publishes and packages video assets for owned and external channels."}]}], "dataDependencies": [{"assetId": "story-asset", "moduleIds": ["module-video-publishing-adapter"], "role": "read", "description": "Reads media assets and metadata."}], "brickDependencies": [{"targetBrickId": "asse", "moduleId": "module-asset-rights-service", "sourceModuleId": "module-video-publishing-adapter", "type": "data", "description": "Uses rights-cleared visual assets and metadata."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Engagement and premium reading"}, {"id": "regi", "name": "Registration and Known User Growth", "type": "full-stack", "status": "sustaining", "description": "Registration prompts, account creation flows, and reader-value exchange for becoming known.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-registration-ui", "name": "Registration UI", "type": "web-component", "description": "Reader-facing sign-up and profile-capture experiences.", "dependencies": {"modules": [{"moduleId": "module-registration-orchestration", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-registration-orchestration", "name": "Registration orchestration", "type": "service", "description": "Runs prompts, forms, and lifecycle triggers for account creation."}]}], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-registration-orchestration"], "role": "own", "description": "Owns reader profile capture and lifecycle state."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-account-core", "sourceModuleId": "module-registration-orchestration", "type": "composition", "description": "Uses shared identity and account state."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Engagement and premium reading"}, {"id": "subs", "name": "Subscription and Paywall Experience", "type": "full-stack", "status": "invest", "description": "Paywall decisioning, premium packaging, entitlement checks, and upsell flows.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-paywall-and-premium-ui", "name": "Paywall and premium UI", "type": "web-component", "description": "Reader-facing offer, upgrade, and premium-access surfaces.", "dependencies": {"modules": [{"moduleId": "module-paywall-rules-engine", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-paywall-rules-engine", "name": "Paywall rules engine", "type": "service", "description": "Determines access, offer, and package states by reader and content context."}]}], "dataDependencies": [{"assetId": "paywall-entitlement", "moduleIds": ["module-paywall-rules-engine"], "role": "own", "description": "Owns premium access and entitlement state."}], "brickDependencies": [{"targetBrickId": "bill", "moduleId": "module-subscription-ledger", "sourceModuleId": "module-paywall-rules-engine", "type": "composition", "description": "Uses billing and contract state to decide access."}, {"targetBrickId": "bund", "moduleId": "module-partner-bundle-apis", "sourceModuleId": "module-paywall-rules-engine", "type": "composition", "description": "Uses partner-provided bundle entitlements."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Engagement and premium reading"}, {"id": "puzz", "name": "Puzzles and Utility Engagement", "type": "full-stack", "status": "sustaining", "description": "Recurring utility formats such as puzzles and similar habit-forming experiences.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-puzzle-and-utility-ui", "name": "Puzzle and utility UI", "type": "web-component", "description": "Reader-facing interactive utility surfaces.", "dependencies": {"modules": [{"moduleId": "module-daily-utility-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-daily-utility-service", "name": "Daily utility service", "type": "service", "description": "Publishes recurring interactive utility content and tracks streak-like engagement."}]}], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-daily-utility-service"], "role": "read", "description": "Reads account state for continuity and personalization."}], "brickDependencies": [{"targetBrickId": "loyl", "moduleId": "module-loyalty-rule-service", "sourceModuleId": "module-daily-utility-service", "type": "context", "description": "Uses loyalty and repeat-use state for streaks and promotions."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Engagement and premium reading"}, {"id": "loyl", "name": "Loyalty, Rewards, and Habit Loops", "type": "full-stack", "status": "sustaining", "description": "Loyalty programs, rewards, repeat-use triggers, and streak-like retention mechanics.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-rewards-and-loyalty-ui", "name": "Rewards and loyalty UI", "type": "web-component", "description": "Reader-facing loyalty and rewards surfaces.", "dependencies": {"modules": [{"moduleId": "module-loyalty-rule-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-loyalty-rule-service", "name": "Loyalty rule service", "type": "service", "description": "Applies reward and repeat-use rules across supported experiences."}]}], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-loyalty-rule-service"], "role": "read", "description": "Reads account state to grant and track benefits."}], "brickDependencies": [{"targetBrickId": "regi", "moduleId": "module-registration-orchestration", "sourceModuleId": "module-loyalty-rule-service", "type": "context", "description": "Uses known reader identity for portable loyalty benefits."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Audience Experience", "group": "Engagement and premium reading"}, {"id": "cmsw", "name": "CMS and Workflow Orchestration", "type": "full-stack", "status": "invest", "description": "Authoring, editing, approvals, publish-state control, and newsroom workflow orchestration.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-editorial-workbench", "name": "Editorial workbench", "type": "web-component", "description": "Internal newsroom authoring and workflow interface.", "dependencies": {"modules": [{"moduleId": "module-workflow-engine", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-workflow-engine", "name": "Workflow engine", "type": "service", "description": "Coordinates authoring, approvals, and publish states."}]}], "dataDependencies": [{"assetId": "story-asset", "moduleIds": ["module-workflow-engine"], "role": "own", "description": "Owns canonical story asset state and editorial workflow."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Editorial production"}, {"id": "asse", "name": "Asset Management and Rights", "type": "full-stack", "status": "sustaining", "description": "Media asset storage, metadata, rights handling, and safe reuse controls.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-asset-library-ui", "name": "Asset library UI", "type": "web-component", "description": "Internal media library and rights management interface.", "dependencies": {"modules": [{"moduleId": "module-asset-rights-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-asset-rights-service", "name": "Asset rights service", "type": "service", "description": "Tracks media rights, licensing windows, and usage constraints."}]}], "dataDependencies": [{"assetId": "story-asset", "moduleIds": ["module-asset-rights-service"], "role": "read", "description": "Reads and enriches media assets and metadata."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Editorial production"}, {"id": "live", "name": "Live Coverage and Fast Updates", "type": "full-stack", "status": "invest", "description": "Live blog, rolling updates, and fast-changing story workflows for breaking coverage.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-live-coverage-ui", "name": "Live coverage UI", "type": "web-component", "description": "Internal and reader-facing interfaces for live stories and update streams.", "dependencies": {"modules": [{"moduleId": "module-live-update-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-live-update-service", "name": "Live update service", "type": "service", "description": "Handles rolling updates and live chronology management."}]}], "dataDependencies": [{"assetId": "story-asset", "moduleIds": ["module-live-update-service"], "role": "read", "description": "Reads and updates story assets in fast cycles."}], "brickDependencies": [{"targetBrickId": "cmsw", "moduleId": "module-workflow-engine", "sourceModuleId": "module-live-update-service", "type": "composition", "description": "Uses CMS state and authoring controls."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Editorial production"}, {"id": "pack", "name": "Story Packaging and Merchandising", "type": "full-stack", "status": "invest", "description": "Creation of reusable story packages with headlines, decks, links, metadata, and monetization-ready fields.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-package-editor-ui", "name": "Package editor UI", "type": "web-component", "description": "Internal tools for merchandising and package completion.", "dependencies": {"modules": [{"moduleId": "module-package-composer", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-package-composer", "name": "Package composer", "type": "service", "description": "Builds reusable packages for homepage, newsletters, paywalls, and destination feeds."}]}], "dataDependencies": [{"assetId": "story-package", "moduleIds": ["module-package-composer"], "role": "own", "description": "Owns reusable story package objects."}], "brickDependencies": [{"targetBrickId": "cmsw", "moduleId": "module-workflow-engine", "sourceModuleId": "module-package-composer", "type": "data", "description": "Uses canonical story assets as package source material."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Editorial production"}, {"id": "dist", "name": "Distribution Packaging and Syndication", "type": "full-stack", "status": "invest", "description": "Destination-specific publishing for search, social, app, newsletters, partners, and other external surfaces.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-distribution-control-ui", "name": "Distribution control UI", "type": "web-component", "description": "Internal controls for scheduling and distributing story packages.", "dependencies": {"modules": [{"moduleId": "module-destination-adapter-layer", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-destination-adapter-layer", "name": "Destination adapter layer", "type": "service", "description": "Transforms packages into search-, social-, and channel-specific publication payloads."}]}], "dataDependencies": [{"assetId": "story-package", "moduleIds": ["module-destination-adapter-layer"], "role": "read", "description": "Reads story packages to publish them downstream."}], "brickDependencies": [{"targetBrickId": "pack", "moduleId": "module-package-composer", "sourceModuleId": "module-destination-adapter-layer", "type": "composition", "description": "Uses story packages as the source of truth for distribution."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Editorial production"}, {"id": "adop", "name": "Advertising Operations and Delivery", "type": "full-stack", "status": "invest", "description": "Campaign booking, pacing, delivery, policy controls, and advertiser operational workflows.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-ad-operations-ui", "name": "Ad operations UI", "type": "web-component", "description": "Commercial interfaces for campaign setup and monitoring.", "dependencies": {"modules": [{"moduleId": "module-campaign-delivery-core", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-campaign-delivery-core", "name": "Campaign delivery core", "type": "service", "description": "Manages campaign pacing, placement constraints, and execution state."}]}], "dataDependencies": [{"assetId": "ad-campaign", "moduleIds": ["module-campaign-delivery-core"], "role": "own", "description": "Owns campaign operational state and delivery settings."}], "brickDependencies": [{"targetBrickId": "segm", "moduleId": "module-audience-product-service", "sourceModuleId": "module-campaign-delivery-core", "type": "composition", "description": "Uses audience definitions and pricing products."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Revenue and partnerships"}, {"id": "segm", "name": "Audience Segmentation and Yield", "type": "full-stack", "status": "invest", "description": "Creation of commercial audience products, inventory pricing logic, and yield-aware segment packaging.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-audience-planning-ui", "name": "Audience planning UI", "type": "web-component", "description": "Commercial planning and segment definition tooling.", "dependencies": {"modules": [{"moduleId": "module-audience-product-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-audience-product-service", "name": "Audience product service", "type": "service", "description": "Builds targetable audience cohorts and pricing inputs for direct campaigns."}]}], "dataDependencies": [{"assetId": "audience-profile", "moduleIds": ["module-audience-product-service"], "role": "read", "description": "Reads audience profiles to build commercial audience products."}], "brickDependencies": [{"targetBrickId": "cons", "moduleId": "module-consent-rules-engine", "sourceModuleId": "module-audience-product-service", "type": "policy", "description": "Uses consent-safe activation rules."}, {"targetBrickId": "anal", "moduleId": "module-metrics-semantic-layer", "sourceModuleId": "module-audience-product-service", "type": "insight", "description": "Uses performance and value signals to refine segments and pricing."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Revenue and partnerships"}, {"id": "stud", "name": "Commercial Studio and Sponsored Content", "type": "full-stack", "status": "sustaining", "description": "Sponsored storytelling, branded packages, and commercial creative operations for portfolio advertisers.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-studio-workflow-ui", "name": "Studio workflow UI", "type": "web-component", "description": "Internal workflow for commercial and editorially separated sponsor production.", "dependencies": {"modules": [{"moduleId": "module-sponsor-package-composer", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-sponsor-package-composer", "name": "Sponsor package composer", "type": "service", "description": "Coordinates branded stories, media assets, and sponsorship formats."}]}], "dataDependencies": [{"assetId": "ad-campaign", "moduleIds": ["module-sponsor-package-composer"], "role": "read", "description": "Reads campaign and sponsor package setup."}], "brickDependencies": [{"targetBrickId": "pack", "moduleId": "module-package-composer", "sourceModuleId": "module-sponsor-package-composer", "type": "composition", "description": "Uses story packaging patterns for sponsor-safe presentation."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Revenue and partnerships"}, {"id": "affi", "name": "Affiliate Commerce and eCommerce", "type": "full-stack", "status": "sustaining", "description": "Commerce links, shopping experiences, commission tracking, and editorial-commerce optimization.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-commerce-module-ui", "name": "Commerce module UI", "type": "web-component", "description": "Reader-facing commerce modules and shop surfaces.", "dependencies": {"modules": [{"moduleId": "module-commerce-attribution-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-commerce-attribution-service", "name": "Commerce attribution service", "type": "service", "description": "Tracks attributed commerce events and commission settlement inputs."}]}], "dataDependencies": [{"assetId": "affiliate-attribution", "moduleIds": ["module-commerce-attribution-service"], "role": "own", "description": "Owns commerce attribution and commission state."}], "brickDependencies": [{"targetBrickId": "pack", "moduleId": "module-package-composer", "sourceModuleId": "module-commerce-attribution-service", "type": "composition", "description": "Uses package metadata to insert relevant commerce units."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Revenue and partnerships"}, {"id": "bund", "name": "Partner Bundles and Wholesale Subscriptions", "type": "full-stack", "status": "invest", "description": "Wholesale subscription packaging, partner entitlement sync, and bundle lifecycle management.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-partner-bundle-apis", "name": "Partner bundle APIs", "type": "api", "description": "Partner-facing integration surface for access and lifecycle events.", "dependencies": {"modules": [{"moduleId": "module-partner-entitlement-broker", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-partner-entitlement-broker", "name": "Partner entitlement broker", "type": "integration", "description": "Handles partner activation and access-state synchronization."}]}], "dataDependencies": [{"assetId": "subscription-contract", "moduleIds": ["module-partner-bundle-apis"], "role": "read", "description": "Reads bundle contract and entitlement state."}], "brickDependencies": [{"targetBrickId": "subs", "moduleId": "module-paywall-rules-engine", "sourceModuleId": "module-partner-bundle-apis", "type": "composition", "description": "Uses subscription access logic for bundle users."}, {"targetBrickId": "bill", "moduleId": "module-subscription-ledger", "sourceModuleId": "module-partner-bundle-apis", "type": "composition", "description": "Uses contract and settlement state for wholesale relationships."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Revenue and partnerships"}, {"id": "even", "name": "Events and Experience Extensions", "type": "full-stack", "status": "sustaining", "description": "Event products, subscriber experiences, and premium extensions such as New Scientist Live or related member experiences.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-events-and-experiences-ui", "name": "Events and experiences UI", "type": "web-component", "description": "Reader-facing event discovery and member experience surfaces.", "dependencies": {"modules": [{"moduleId": "module-experience-entitlement-service", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-experience-entitlement-service", "name": "Experience entitlement service", "type": "service", "description": "Links events and member experiences to reader identity and product packaging."}]}], "dataDependencies": [{"assetId": "subscription-contract", "moduleIds": ["module-experience-entitlement-service"], "role": "read", "description": "Reads member and entitlement state for experience access."}], "brickDependencies": [{"targetBrickId": "subs", "moduleId": "module-paywall-rules-engine", "sourceModuleId": "module-experience-entitlement-service", "type": "context", "description": "Uses subscription and member state for eligibility."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Publishing and Monetization", "group": "Revenue and partnerships"}, {"id": "iden", "name": "Identity and Account Platform", "type": "full-stack", "status": "invest", "description": "Account, login, session, and profile infrastructure for readers, subscribers, and partners.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-account-apis", "name": "Account APIs", "type": "api", "description": "Identity services used across reader, subscription, and partner flows.", "dependencies": {"modules": [{"moduleId": "module-account-core", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-account-core", "name": "Account core", "type": "service", "description": "Manages account, session, and profile state."}]}], "dataDependencies": [{"assetId": "customer-profile", "moduleIds": ["module-account-core"], "role": "read", "description": "Reads and updates customer profile state."}, {"assetId": "identity-credential", "moduleIds": ["module-account-core"], "role": "read", "description": "Reads credential state for secure access."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Trust Data and Foundations", "group": "Identity and control plane"}, {"id": "cons", "name": "Consent and Privacy Controls", "type": "full-stack", "status": "sustaining", "description": "Consent capture, policy enforcement, and privacy-safe activation controls across reader and advertiser flows.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-consent-banner-and-controls", "name": "Consent banner and controls", "type": "web-component", "description": "Reader-facing privacy and consent management interfaces.", "dependencies": {"modules": [{"moduleId": "module-consent-rules-engine", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-consent-rules-engine", "name": "Consent rules engine", "type": "service", "description": "Evaluates consent state and activation policy."}]}], "dataDependencies": [{"assetId": "consent-record", "moduleIds": ["module-consent-rules-engine"], "role": "own", "description": "Owns auditable consent and preference history."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Trust Data and Foundations", "group": "Identity and control plane"}, {"id": "anal", "name": "Analytics, Measurement, and Insight", "type": "full-stack", "status": "invest", "description": "Shared KPI definitions, reporting, audience insight, and commercial measurement across the domain.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-insight-dashboards", "name": "Insight dashboards", "type": "web-component", "description": "Internal and selected external reporting surfaces.", "dependencies": {"modules": [{"moduleId": "module-metrics-semantic-layer", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-metrics-semantic-layer", "name": "Metrics semantic layer", "type": "service", "description": "Defines shared customer, subscriber, editorial, and commercial metrics."}]}], "dataDependencies": [{"assetId": "campaign-performance", "moduleIds": ["module-metrics-semantic-layer"], "role": "read", "description": "Reads campaign performance for advertiser measurement."}, {"assetId": "experiment-result", "moduleIds": ["module-metrics-semantic-layer"], "role": "read", "description": "Reads experiment results to guide product decisions."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Trust Data and Foundations", "group": "Identity and control plane"}, {"id": "expt", "name": "Experimentation and Decisioning", "type": "full-stack", "status": "sustaining", "description": "A/B testing, decision flags, and controlled rollout support across reader, commercial, and editorial journeys.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-experiment-console", "name": "Experiment console", "type": "web-component", "description": "Internal interface for configuring, monitoring, and closing experiments.", "dependencies": {"modules": [{"moduleId": "module-experiment-runtime", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-experiment-runtime", "name": "Experiment runtime", "type": "service", "description": "Controls experiment assignment and rollout state."}]}], "dataDependencies": [{"assetId": "experiment-result", "moduleIds": ["module-experiment-runtime"], "role": "own", "description": "Owns experiment definitions, cohorts, and outcomes."}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-metrics-semantic-layer", "sourceModuleId": "module-experiment-runtime", "type": "feedback", "description": "Uses shared metrics to evaluate product and monetization experiments."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Trust Data and Foundations", "group": "Identity and control plane"}, {"id": "bill", "name": "Billing and Revenue Operations", "type": "full-stack", "status": "invest", "description": "Subscription billing, renewals, settlement, and monetization exception handling across direct and partner channels.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-billing-operations-ui", "name": "Billing operations UI", "type": "web-component", "description": "Internal tooling for payment, renewal, and exception management.", "dependencies": {"modules": [{"moduleId": "module-subscription-ledger", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-subscription-ledger", "name": "Subscription ledger", "type": "service", "description": "Tracks contracts, renewals, payment state, and revenue events."}]}], "dataDependencies": [{"assetId": "subscription-contract", "moduleIds": ["module-subscription-ledger"], "role": "own", "description": "Owns subscription contract and revenue state."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "Trust Data and Foundations", "group": "Identity and control plane"}];
+    const allAssets = [{"id": "audience-profile", "name": "Audience Profile"}, {"id": "customer-profile", "name": "Customer Profile"}, {"id": "consent-record", "name": "Consent Record"}, {"id": "identity-credential", "name": "Identity Credential"}, {"id": "experiment-result", "name": "Experiment Result"}, {"id": "subscription-contract", "name": "Subscription Contract"}, {"id": "affiliate-attribution", "name": "Affiliate Attribution"}, {"id": "story-asset", "name": "Story Asset"}, {"id": "story-package", "name": "Story Package"}, {"id": "ad-campaign", "name": "Ad Campaign"}, {"id": "editorial-calendar", "name": "Editorial Calendar"}, {"id": "campaign-performance", "name": "Campaign Performance"}, {"id": "paywall-entitlement", "name": "Paywall Entitlement"}, {"id": "newsletter-subscription", "name": "Newsletter Subscription"}];
+    const currentAsset = {"id": "affiliate-attribution", "name": "Affiliate Attribution", "kind": "logical-object", "description": "Tracked commerce clicks, conversions, commissions, and partner settlement data.", "classification": "internal", "personalDataLevel": "pseudonymous", "dataSubjects": ["customer", "partner"], "legalTags": ["gdpr"], "securityCriticality": "medium", "accessScope": "commerce and finance operations", "businessMeaning": "The basis for commerce revenue and editorial commerce optimization.", "status": "active", "stores": [{"storeId": "affiliate-attribution-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "affiliate-attribution api", "description": "Access interface for Affiliate Attribution."}], "ownerTeamId": "commerce-partnerships", "stewardTeamIds": ["monetization-operations"], "derivedFromAssetIds": ["story-package"], "governance": {"retention": "commercial retention window", "residency": "uk-eu", "sharingPolicy": "controlled internal and approved partner usage"}, "rootGroup": "Commercial and Financial Data", "group": "Core Records"};
+    const allStores = [];
+    const producingBricks = [{"id": "affi", "name": "Affiliate Commerce and eCommerce", "role": "own", "description": "Owns commerce attribution and commission state."}];
+    const consumingBricks = [];
+    const ownerTeam = {"teamId": "commerce-partnerships", "teamName": "Commerce and Partnerships", "teamType": "stream-aligned", "groupName": "Revenue and Partnerships"};
+    const stewardTeams = [{"teamId": "monetization-operations", "teamName": "Monetization Operations", "teamType": "platform", "groupName": "Shared Foundations"}];
+
+    function escapeHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function titleCase(value) {
+        return String(value || '')
+            .split('-')
+            .filter(Boolean)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
+    }
+
+    function storeById(storeId) {
+        return allStores.find(item => item.id === storeId) || { id: storeId, name: storeId };
+    }
+
+    function assetMetaPath(asset) {
+        const parts = [];
+        if (asset.rootGroup) {
+            parts.push(asset.rootGroup);
+        }
+        if (asset.group && asset.group !== asset.rootGroup) {
+            parts.push(asset.group);
+        }
+        if (!parts.length) {
+            parts.push('Data Asset');
+        }
+        return parts.join(' / ');
+    }
+</script>
+
+<div id="Header"></div>
+
+<div class="page" id="MainContent"></div>
+
+<script>
+    let headerHtml = '<div class="nav-strip">';
+    allAssets.forEach(item => {
+        headerHtml += '<a class="nav-link" href="' + escapeHtml(item.id) + '.html" title="' + escapeHtml(item.name || item.id) + '">';
+        headerHtml += '<img src="../icons/data.png" class="' + (item.id === currentAsset.id ? 'tab-image-selected' : 'tab-image') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+        headerHtml += '</a>';
+    });
+    headerHtml += '</div>';
+
+    headerHtml += '<div class="page">';
+    headerHtml += '<div class="header">';
+    headerHtml += '<img class="header-icon" src="../icons/data.png" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+    headerHtml += '<div>';
+    headerHtml += '<div class="header-meta">';
+    headerHtml += '<div class="page-type-badge">Data Asset</div>';
+    headerHtml += escapeHtml(assetMetaPath(currentAsset)) + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentAsset.id || '').toUpperCase()) + '</span></div>';
+    headerHtml += '<div class="header-title">' + escapeHtml(currentAsset.name || currentAsset.id) + '</div>';
+    headerHtml += '<div class="header-copy">' + escapeHtml(currentAsset.description || '') + '</div>';
+
+    headerHtml += '<div class="badge-row">';
+    if (currentAsset.kind) {
+        headerHtml += '<span class="badge">' + escapeHtml(titleCase(currentAsset.kind)) + '</span>';
+    }
+    const classification = String(currentAsset.classification || '').toLowerCase();
+    if (classification) {
+        headerHtml += '<span class="badge ' + (classification === 'restricted' ? 'badge-restricted' : '') + '">' + escapeHtml(titleCase(classification)) + '</span>';
+    }
+    const pii = String(currentAsset.personalDataLevel || 'none').toLowerCase();
+    if (pii && pii !== 'none') {
+        headerHtml += '<span class="badge badge-pii">' + escapeHtml(titleCase(pii)) + ' Data</span>';
+    }
+    const criticality = String(currentAsset.securityCriticality || '').toLowerCase();
+    if (criticality) {
+        const critClass = criticality === 'critical' ? 'badge-critical' : (criticality === 'high' ? 'badge-high' : '');
+        headerHtml += '<span class="badge ' + critClass + '">' + escapeHtml(titleCase(criticality)) + ' Criticality</span>';
+    }
+    (currentAsset.legalTags || []).forEach(tag => {
+        headerHtml += '<span class="badge">' + escapeHtml(String(tag).toUpperCase()) + '</span>';
+    });
+    headerHtml += '</div>';
+
+    headerHtml += '</div></div></div>';
+    document.getElementById('Header').innerHTML = headerHtml;
+
+    function renderMetaItem(label, value) {
+        if (!value) {
+            return '';
+        }
+        return '<div class="meta-item"><div class="meta-label">' + escapeHtml(label) + '</div><div class="meta-value">' + escapeHtml(value) + '</div></div>';
+    }
+
+    function renderBrickPills(items, emptyLabel) {
+        if (!items.length) {
+            return '<div class="muted">' + escapeHtml(emptyLabel) + '</div>';
+        }
+        let html = '<div class="card-grid">';
+        items.forEach(brick => {
+            html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../landing_pages/' + escapeHtml(brick.id) + '.html">';
+            html += '<div class="card-meta">' + escapeHtml(titleCase(brick.role || '') || 'Brick') + '</div>';
+            html += '<div class="card-header">';
+            html += '<img class="card-icon" src="../icons/' + escapeHtml(brick.id) + '.png" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            html += '<div class="card-title">' + escapeHtml(brick.name || brick.id) + '</div>';
+            html += '</div>';
+            if (brick.description) {
+                html += '<div class="card-copy">' + escapeHtml(brick.description) + '</div>';
+            }
+            html += '</a>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderMain() {
+        let html = '';
+
+        // Overview / governance
+        html += '<div class="group"><div class="section-title">Overview & Governance</div>';
+        html += '<div class="meta-grid">';
+        html += renderMetaItem('Kind', titleCase(currentAsset.kind || ''));
+        html += renderMetaItem('Status', titleCase(currentAsset.status || ''));
+        html += renderMetaItem('Classification', titleCase(currentAsset.classification || ''));
+        html += renderMetaItem('Personal Data', titleCase(currentAsset.personalDataLevel || ''));
+        html += renderMetaItem('Security Criticality', titleCase(currentAsset.securityCriticality || ''));
+        html += renderMetaItem('Data Subjects', (currentAsset.dataSubjects || []).map(titleCase).join(', '));
+        html += renderMetaItem('Legal Tags', (currentAsset.legalTags || []).map(tag => String(tag).toUpperCase()).join(', '));
+        html += renderMetaItem('Access Scope', currentAsset.accessScope || '');
+        html += renderMetaItem('System Of Record Brick', currentAsset.systemOfRecordBrickId || '');
+        const gov = currentAsset.governance || {};
+        html += renderMetaItem('Retention', gov.retention || '');
+        html += renderMetaItem('Residency', (gov.residency || '').toUpperCase());
+        html += renderMetaItem('Sharing Policy', gov.sharingPolicy || '');
+        html += '</div>';
+        if (currentAsset.businessMeaning && currentAsset.businessMeaning !== currentAsset.description) {
+            html += '<div class="card-copy" style="margin-top:14px;"><strong>Business meaning:</strong> ' + escapeHtml(currentAsset.businessMeaning) + '</div>';
+        }
+        html += '</div>';
+
+        // Stores
+        html += '<div class="group"><div class="section-title">Stores</div>';
+        const storeLinks = currentAsset.stores || [];
+        if (!storeLinks.length) {
+            html += '<div class="muted">No stores linked to this asset.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            storeLinks.forEach(link => {
+                const store = storeById(link.storeId);
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(titleCase(link.role || 'store')) + '</div>';
+                html += '<div class="card-title">' + escapeHtml(store.name || link.storeId) + '</div>';
+                const storeMeta = [store.kind ? titleCase(store.kind) : '', store.technology || ''].filter(Boolean).join(' | ');
+                if (storeMeta) {
+                    html += '<div class="muted">' + escapeHtml(storeMeta) + '</div>';
+                }
+                if (store.description) {
+                    html += '<div class="card-copy">' + escapeHtml(store.description) + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Producing bricks
+        html += '<div class="group"><div class="section-title">Producing Bricks</div>';
+        html += renderBrickPills(producingBricks, 'No bricks own, write, or publish this asset.');
+        html += '</div>';
+
+        // Consuming bricks
+        html += '<div class="group"><div class="section-title">Consuming Bricks</div>';
+        html += renderBrickPills(consumingBricks, 'No bricks read or query this asset.');
+        html += '</div>';
+
+        // Interfaces
+        html += '<div class="group"><div class="section-title">Interfaces</div>';
+        const interfaces = currentAsset.interfaces || [];
+        if (!interfaces.length) {
+            html += '<div class="muted">No access interfaces listed.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            interfaces.forEach(iface => {
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(titleCase(iface.type || 'interface')) + '</div>';
+                html += '<div class="card-title">' + escapeHtml(iface.name || iface.type || 'Interface') + '</div>';
+                if (iface.description) {
+                    html += '<div class="card-copy">' + escapeHtml(iface.description) + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Ownership
+        html += '<div class="group"><div class="section-title">Ownership</div>';
+        if (!ownerTeam && !stewardTeams.length) {
+            html += '<div class="muted">No owning or steward teams listed for this asset.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            if (ownerTeam) {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHtml(ownerTeam.teamId) + '.html">';
+                html += '<div class="card-meta">Owner Team</div>';
+                html += '<div class="card-title">' + escapeHtml(ownerTeam.teamName || ownerTeam.teamId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(ownerTeam.groupName || '') + '</div>';
+                html += '</a>';
+            }
+            stewardTeams.forEach(team => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHtml(team.teamId) + '.html">';
+                html += '<div class="card-meta">Steward Team</div>';
+                html += '<div class="card-title">' + escapeHtml(team.teamName || team.teamId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(team.groupName || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Lineage
+        const derivedIds = currentAsset.derivedFromAssetIds || [];
+        if (derivedIds.length) {
+            html += '<div class="group"><div class="section-title">Derived From</div>';
+            html += '<div class="card-grid">';
+            derivedIds.forEach(id => {
+                const source = allAssets.find(item => item.id === id) || { id: id, name: id };
+                html += '<a class="card" href="' + escapeHtml(id) + '.html">';
+                html += '<div class="card-meta">Source Asset</div>';
+                html += '<div class="card-title">' + escapeHtml(source.name || id) + '</div>';
+                if (source.description) {
+                    html += '<div class="card-copy">' + escapeHtml(source.description) + '</div>';
+                }
+                html += '</a>';
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+
+        document.getElementById('MainContent').innerHTML = html;
+    }
+
+    renderMain();
+</script>
+
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "Digital News Publishing Platform Home"
+    },
+    {
+      "link": "../index.html#data",
+      "label": "Data Assets"
+    },
+    {
+      "label": "Affiliate Attribution"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 ---
 name: edit-customers
-description: "Create or edit customer data for a product domain: customer groups, personas, jobs-to-be-done (JTBD), customer journey stories, KPI pyramids, per-customer product strategy, and customer insights. Use when adding a customer segment, refining a persona, writing JTBD/journeys, building KPI pyramids, or adding sourced insights in _config/product-domains/<domain>/customers/customers.json and insights.json. Keeps customer IDs consistent across products, teams, and insights."
+description: "Create or edit customer data for a product domain: customer groups, personas, jobs-to-be-done (JTBD), customer journey stories, KPI pyramids, per-customer product strategy, customer insights, and external reference links. Use when adding a customer segment, refining a persona, writing JTBD/journeys, building KPI pyramids, adding sourced insights, or curating external links in _config/product-domains/<domain>/customers/customers.json, insights.json, and links.json. Keeps customer IDs consistent across products, teams, and insights."
 ---
 
 # Edit Customers
@@ -12,6 +12,7 @@ validate→regenerate loop. Read `.claude/skills/_references/domain-model.md` fi
 Target files (per domain):
 - `_config/product-domains/<domain>/customers/customers.json`
 - `_config/product-domains/<domain>/customers/insights.json`
+- `_config/product-domains/<domain>/customers/links.json` (optional — external reference links)
 - icons in `customers/icons/`, media in `customers/media/`
 
 **Always read the existing files and a reference domain
@@ -49,6 +50,14 @@ Target files (per domain):
 ### Insights (evidence)
 - Record sourced facts with `sourceIds`; make inference explicit; don't invent
   metrics. Link each insight to the customers/jobs/KPIs it affects.
+
+### External links (further reading)
+- Optional `links.json` curates external pages for a reader who wants to probe the
+  domain further (product surfaces, industry context, trust/safety, regulators).
+- Organize links into named groups; give each link a one-sentence `relevance` that
+  says *why this matters to this domain* — not a generic site description.
+- Prefer primary/official sources; verify URLs resolve. Omit the file entirely if
+  there is nothing worth linking — the Links tab then shows an empty state.
 
 ## Exact schema
 
@@ -178,6 +187,32 @@ Target files (per domain):
   ]
 }
 ```
+
+### links.json (optional) — external reference links
+
+```json
+{
+  "domainId": "<domain>",
+  "updated": "YYYY-MM-DD",
+  "groups": [
+    {
+      "group": "Product surfaces",
+      "description": "Optional one-line description of the group.",
+      "links": [
+        {
+          "title": "How Uber works — ride options",
+          "url": "https://www.uber.com/us/en/ride/how-uber-works/",
+          "relevance": "Why this page matters to this domain (one sentence).",
+          "tags": ["rider", "product"]          // optional
+        }
+      ]
+    }
+  ]
+}
+```
+> Top level is an **object** with `groups[]` (not a bare array). Rendered as the
+> **Links** tab in `customers/index.html`. `description` and `tags` are optional;
+> `title`, `url`, and `relevance` carry the value. No cross-file ID references.
 
 ## Cross-file rules to keep intact
 

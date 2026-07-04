@@ -24,7 +24,7 @@ dirty worktree before regenerating.
 | Artifact | File(s) | Generator |
 |---|---|---|
 | Start / domain config | `start/config.json` | `generate-start-docs.py` |
-| Customers | `customers/customers.json`, `customers/insights.json` | `generate-customers-docs.py` |
+| Customers | `customers/customers.json`, `customers/insights.json`, `customers/links.json` | `generate-customers-docs.py` |
 | Products & deployment | `product-deployments/products.json`, `deployment.json` | `generate-products-docs.py` |
 | Product bricks | `product-bricks/product-bricks.json` | `generate-product-bricks-docs.py` |
 | Streams | `product-bricks/product-stream.json` | `generate-product-bricks-docs.py` |
@@ -33,12 +33,6 @@ dirty worktree before regenerating.
 | Teams | `teams/teams.json` | `generate-teams-docs.py` |
 | Competition | `business/competition.json` | `generate-competition-docs.py` |
 | Domain brief | `_domain/DOMAIN.md` | (narrative, not generated) |
-
-> **Not live on this branch.** `objectives/{current,next,ktlo,archived}/*.json`,
-> `delivery/releases.json`, and the `initiatives`/`discoveries` docs are being
-> **removed** across all domains (their generators are already gone from `run.sh`).
-> Do not author or restore these unless the user explicitly asks. If you see them
-> referenced in old methodology, treat the reference as stale.
 
 ## ID conventions (enforced by `validate-domain-model.py --strict-ids`)
 
@@ -58,15 +52,14 @@ dirty worktree before regenerating.
 customers.json
   customer.id ─────────────┬─▶ insights.json     linkedCustomers[].customerId
                            ├─▶ products.json      portfolio.products[].primaryCustomers[].id
-                           └─▶ teams.json         ...teams[].primaryCustomers[].customerId
+                           └─▶ teams.json         ...teams[].customerDependencies[].customerId
   jobsToBeDone[].id ───────┬─▶ insights.json     linkedCustomers[].jobIds[]
                            └─▶ customerJourneyStories[].linkedJobIds[]
   jtbd.steps[].streamsNeeded[].id ─▶ product-stream.json  stream id (or brick id)
   kpiPyramids ... names ───▶ teams.json metrics, insights kpis (by NAME, not id)
 
 product-bricks.json
-  brick.id ────────────────┬─▶ products.json      neededBricks[].brickId
-                           ├─▶ deployment.json     ...deployedBricks[].brickId
+  brick.id ────────────────┬─▶ deployment.json     ...deployedBricks[].brickId
                            ├─▶ product-stream.json brickDependencies[].targetBrickId, flows steps deps
                            ├─▶ teams.json          ...brickDependencies[].brickId
                            └─▶ bricks-evidence.json object-id
@@ -76,9 +69,11 @@ product-bricks.json
 product-stream.json
   stream.id ───────────────▶ streams-evidence.json object-id
 
+products.json
+  portfolio.products[].id ─▶ deployment.json ...deployedBricks[].usedInProducts[].productId
+
 deployment.json
-  channels[].channels[].subChannelId ─▶ products.json deploymentChannelRef
-  ...environments[].environmentId ────▶ products.json deploymentEnvironmentRef
+  channels[].channels[].deployedBricks[].brickId ─▶ product-bricks.json brick id
 
 data-assets.json
   asset.ownerTeamId ───────▶ teams.json team id
@@ -121,11 +116,12 @@ python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain descript
 
 ## Reference domain
 
-`ride-sharing-marketplace` is the structural reference (most complete: 4 customer
-groups, ~12 bricks across 3 levels, 17 data assets, 10+ teams, 11 competitors,
-sourced insights). Use it as the shape and density target. `audio-streaming-platform`
-is an example of a **sparse** domain — useful as a "before" for balance audits, not
-as a structural model.
+`maas` is the structural reference for **teams** and **product-deployments**
+(`teams.json`, `products.json`, `deployment.json`) — it carries the canonical schema
+those three files use across the repo. `ride-sharing-marketplace` is the structural
+reference for the rest (customers, bricks, streams, data assets, competition) and a
+good density target. `audio-streaming-platform` is an example of a **sparse** domain —
+useful as a "before" for balance audits, not as a structural model.
 
 ## Working principles (apply to all edits)
 
@@ -134,7 +130,7 @@ as a structural model.
   metrics or source-backed claims. Use official URLs for competition stats.
 - Reuse existing JSON schemas and `${...}` template patterns; don't invent parallel
   structures.
-- Keep domain language: customers, objectives, delivery, product bricks, streams,
-  releases, teams, evidence.
+- Keep domain language: customers, product deployments, product bricks, streams,
+  teams, data assets, competition, and evidence.
 - Every entity must earn its place — a segment/brick/team that doesn't change a
   decision should be merged or dropped.

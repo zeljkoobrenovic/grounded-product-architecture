@@ -1,6 +1,6 @@
 ---
 name: spda-teams-review
-description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**/teams/teams.json` for organizational realism, ownership coverage, topology, staffing, dependencies, charters, AI-agent boundaries, and alignment with product bricks, customers, objectives, and delivery; save the review in the domain root `REVIEW.md`."
+description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**/teams/teams.json` for organizational realism, ownership coverage, topology, headcount, dependencies, AI-agent boundaries, and alignment with product bricks, customers, streams, product deployments, and data assets; save the review in the domain root `REVIEW.md`."
 ---
 
 # SPDA Teams Review
@@ -18,17 +18,19 @@ Read these files before forming conclusions:
 - `_config/product-domains/<domain>/product-bricks/product-stream.json`.
 - `_config/product-domains/<domain>/customers/customers.json`.
 - `_config/product-domains/<domain>/customers/insights.json` when present.
-- `_config/product-domains/<domain>/objectives/**/{objectives,initiatives,discoveries}.json` when present.
-- `_config/product-domains/<domain>/delivery/releases.json` when present.
+- `_config/product-domains/<domain>/customers/links.json` when present.
+- `_config/product-domains/<domain>/product-deployments/*.json` when present.
 - `_config/product-domains/<domain>/data/data-assets.json` when team ownership or stewardship is modeled.
 
-Use `_skills/product-domains/scripts/validate-domain-model.py <domain>` for deterministic reference checks when useful, but do not limit the review to validator output.
+Use `scripts/validate-domain-model.py <domain>` for deterministic reference checks when useful, but do not limit the review to validator output.
+
+Do not review product-brick or stream `*-evidence.json` files in this skill.
 
 ## Workflow
 
-1. Summarize the intended operating model from `orgDesign`, groups, team families, and missions.
+1. Summarize the intended operating model from `orgDesign` (companyProfile, operatingModel, teamTypes), groups, and team descriptions.
 2. Build a quick ownership map from product bricks to primary owning teams, supporting teams, and dependencies.
-3. Cross-check team missions against customer groups, KPIs, streams, objectives, data assets, and release work.
+3. Cross-check team missions against customer groups, KPIs, streams, product deployments, data assets, and strategy priorities.
 4. Review team topology and staffing for realism: a team should be able to own, evolve, and operate its surfaces.
 5. Produce edit-ready feedback without changing source files except `REVIEW.md` unless explicitly asked.
 6. Write the review to `_config/product-domains/<domain>/REVIEW.md` under a `## Teams Review` section.
@@ -66,28 +68,31 @@ Use `_skills/product-domains/scripts/validate-domain-model.py <domain>` for dete
 
 ### Customer, KPI, And Strategy Alignment
 
-- Check `primaryCustomers` and related KPIs against `customers/customers.json`.
-- Verify team charters explain how the team improves customer or business outcomes, not just how it maintains components.
-- Look for strategic objectives or high-priority insights with no accountable team.
+- Check `customerDependencies` and `streamDependencies` against `customers/customers.json` and `product-bricks/product-stream.json`.
+- Verify each team `description` explains how the team improves customer or business outcomes, not just how it maintains components.
+- Use `customers/links.json` as supporting domain context when assessing whether team responsibilities reflect real customer, partner, market, trust, or operational surfaces.
+- Look for strategy horizons or high-priority insights with no accountable team.
 - Check whether teams that own critical customer moments also own the metrics and interfaces needed to improve them.
 
-### Dependencies And Interfaces
+### Dependencies
 
-- Review `dependsOnTeamIds`, `defaultSupportingTeamIds`, charter interfaces, and other dependency fields for concrete operational meaning.
+- Review `otherTeamDependencies` (with `type` ∈ `orgDesign.teamDependencyTypes`),
+  `brickDependencies`, `customerDependencies`, and `streamDependencies` for concrete
+  operational meaning.
 - Flag circular dependencies only when they imply unclear ownership or decision deadlock.
-- Check whether provided and dependent interfaces name product bricks, APIs, data products, support handoffs, release signals, or operating contracts.
+- Check whether team-to-team dependencies reflect real recurring collaboration, x-as-a-service consumption, or facilitation — not vague alignment.
 - Prefer explicit dependencies over hidden assumptions, but avoid dependency lists that include every adjacent team.
 
-### Staffing And Roles
+### Headcount And Sizing
 
-- Validate headcount totals against role counts when present.
-- Review team size against mission complexity, on-call burden, domain expertise, design needs, data needs, quality expectations, and regulatory or operational load.
+- Review `teamHeadcount.headcount` per team and `groupDirectHeadcount` per group for realism.
+- Review team size against mission complexity, on-call burden, domain expertise, design needs, data needs, quality expectations, and regulatory or operational load (typical delivery team 8–11 FTE).
 - Flag teams below minimum viable ownership or above realistic coordination size.
-- Look for copy-pasted staffing that ignores domain-specific needs such as data science, partner operations, risk, support tooling, SRE, compliance, or finance operations.
+- Look for copy-pasted headcounts that ignore domain-specific needs such as data science, partner operations, risk, support tooling, SRE, compliance, or finance operations.
 
 ### AI-Agent Boundaries
 
-- If AI agents are modeled, keep them software-delivery assistants only: backend, frontend, QA automation, code review, release risk, test planning, or developer workflow support.
+- If AI agents are modeled, keep them software-delivery assistants only: backend, frontend, QA automation, code review, change risk, test planning, or developer workflow support.
 - Flag customer-facing, pricing, trust, marketplace, marketing, or operational decision agents inside team org design unless the user has explicitly asked for that modeling and governance.
 - Check that AI-agent use remains bounded by human review, testing, approvals, and production-change controls.
 
@@ -98,10 +103,10 @@ Write the review to `_config/product-domains/<domain>/REVIEW.md`:
 1. `Operating-model assessment`: 3-6 bullets on realism, clarity, and biggest risks.
 2. `Ownership findings`: orphaned, overloaded, duplicated, or poorly matched ownership.
 3. `Topology and staffing findings`: team shape, size, role, and dependency issues.
-4. `Strategy alignment findings`: missing customer, KPI, objective, stream, data, or release accountability.
+4. `Strategy alignment findings`: missing customer, KPI, stream, data, or product-deployment accountability.
 5. `Edit backlog`: concrete changes a later editing pass should make, with source file paths and IDs.
 
-For each finding, include severity, affected team or group ID, evidence path, why it matters, and suggested direction.
+For each finding, include severity, affected team or group ID, source path, why it matters, and suggested direction.
 
 ## Quality Bar
 

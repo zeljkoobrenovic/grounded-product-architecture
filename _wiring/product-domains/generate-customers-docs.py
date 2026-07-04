@@ -3,7 +3,6 @@ import os
 import shutil
 import datetime
 from domain_cli import load_domain_args
-from initiatives_support import load_domain_activity, filter_for_customer
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
@@ -44,6 +43,13 @@ def load_insights(domain_id):
     return insights
 
 
+def load_links(domain_id):
+    links_file_path = domains_root + domain_id + '/customers/links.json'
+    if not os.path.exists(links_file_path):
+        return {"groups": []}
+    return json.load(open(links_file_path))
+
+
 def copy_media(icons_path, docs_folder):
     if os.path.exists(icons_path):
         for filename in os.listdir(icons_path):
@@ -53,7 +59,7 @@ def copy_media(icons_path, docs_folder):
                 shutil.copy2(src, dst)
 
 
-def create_overview_docs(domain, docs_folder, customers, insights):
+def create_overview_docs(domain, docs_folder, customers, insights, links):
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
     os.makedirs(os.path.join(docs_folder, 'media'), exist_ok=True)
@@ -78,10 +84,11 @@ def create_overview_docs(domain, docs_folder, customers, insights):
                         .replace('${domain_name}', domain['name'])
                         .replace('${domain_description}', domain['description'])
                         .replace('${customers}', json.dumps(customers))
-                        .replace('${insights}', json.dumps(insights)))
+                        .replace('${insights}', json.dumps(insights))
+                        .replace('${links}', json.dumps(links)))
 
 
-def create_landing_pages(customers, docs_folder, activity_data, insights):
+def create_landing_pages(customers, docs_folder, insights):
     os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
 
     template = open(templates_root + 'landing_page.html').read()
@@ -132,10 +139,7 @@ def create_landing_pages(customers, docs_folder, activity_data, insights):
                                 .replace('${all_customers}', json.dumps(all_customers))
                                 .replace('${customer_name}', customer['name'])
                                 .replace('${customer}', json.dumps(customer))
-                                .replace('${customer_insights}', json.dumps(customer_insights))
-                                .replace('${discoveries}', json.dumps(filter_for_customer(activity_data['discoveries'], customer['id'])))
-                                .replace('${initiatives}', json.dumps(filter_for_customer(activity_data['initiatives'], customer['id'])))
-                                .replace('${releases}', json.dumps(filter_for_customer(activity_data['releases'], customer['id']))))
+                                .replace('${customer_insights}', json.dumps(customer_insights)))
 
 domain_id = domain['id']
 customers_file_path = domains_root + domain_id + '/customers/customers.json'
@@ -144,8 +148,8 @@ if not os.path.exists(customers_file_path):
 
 customers = json.load(open(customers_file_path))
 insights = load_insights(domain_id)
-activity_data = load_domain_activity(domains_root, domain_id)
+links = load_links(domain_id)
 
 docs_folder = domain_id + '/customers/'
-create_overview_docs(domain, docs_folder, customers, insights)
-create_landing_pages(customers, docs_folder, activity_data, insights)
+create_overview_docs(domain, docs_folder, customers, insights, links)
+create_landing_pages(customers, docs_folder, insights)

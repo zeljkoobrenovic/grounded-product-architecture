@@ -28,7 +28,7 @@ cd _wiring/product-domains
 python3 generate-customers-docs.py ride-sharing-marketplace "Ride Sharing Marketplace" "Description..."
 ```
 
-Generator order matters and is fixed in `run.sh`: `generate-start-docs` → `customers` → `products` → `product-bricks` → `delivery` → `objectives` → `teams` → `competition`. Each generator `chdir`s into `docs/product-domains/` and resolves config/template paths relative to the repo root via `domain_cli.load_domain_args()`.
+Generator order matters and is fixed in `run.sh`: `generate-start-docs` -> `customers` -> `products` -> `product-bricks` -> `teams` -> `competition`. Each generator `chdir`s into `docs/product-domains/` and resolves config/template paths relative to the repo root via `domain_cli.load_domain_args()`.
 
 There is no test suite, linter config, or package manifest. Validation is: run the generator and inspect the produced HTML under `docs/`.
 
@@ -45,13 +45,11 @@ The prompt scaffold for a new domain lives at `_config/_prompts/customers/NEW-DO
 Inside `_config/product-domains/<domain>/`:
 
 - `_domain/DOMAIN.md` — narrative domain brief
-- `customers/customers.json` — customer groups, personas, JTBDs, KPI pyramids, strategy horizons (+ `insights.json`, `icons/`, `media/`)
+- `customers/customers.json` — customer groups, personas, JTBDs, KPI pyramids, strategy horizons (+ `insights.json`, optional `links.json` external reference links, `icons/`, `media/`)
 - `product-deployments/products.json`, `product-deployments/deployment.json` — products and delivery/deployment model
-- `delivery/releases.json` — release targets and planning overlays
 - `product-bricks/product-bricks.json` — catalog of implementation-facing building blocks
 - `product-bricks/product-stream.json` — product streams composed from bricks
 - `product-bricks/bricks-evidence.json`, `streams-evidence.json` — evidence references
-- `objectives/{current,next,ktlo,archived}/{objectives,initiatives,discoveries}.json` — the objectives model is sliced by time/state, one trio of files per slice
 - `teams/teams.json`
 - `business/competition.json` (+ `business/logos/`)
 - `data/data-assets.json`
@@ -63,13 +61,13 @@ Shared Python modules in `_wiring/product-domains/` (import these rather than re
 
 - `domain_cli.py` — arg parsing; every generator calls `load_domain_args()`
 - `product_bricks_support.py` — product-brick layer model (`PRODUCT_BRICK_LAYER_ORDER`: ui → interfaces → worker → stateless-service → service → integration) and labels/descriptions
-- `initiatives_support.py` — loads and filters domain objectives/initiatives/discoveries activity
+- `initiatives_support.py` — shared product-domain lookup helpers used by generators
 
 Templates live in `_templates/<area>/` with shared partials under `_templates/_imports/` (e.g. `tabs/`, `breadcrumbs/`, `common/`). Generators read template HTML and substitute `${key}` placeholders. Output for each area is fully rebuilt: generators `shutil.rmtree` the target docs folder before regenerating, so do not hand-edit files under `docs/product-domains/`.
 
 ## Evidence database & explorer
 
-`_data/evidence-db/` is a separate pipeline from the product domains. Per-source scripts under `_data/evidence-db/scripts/` (aws, gcp, workday, source-code, domain-objectives) write fragment files into `_data/evidence-db/database/evidence-files/<source>.json`, then `database/aggregate-evidence.py` concatenates them into `database/all-evidence.json` (a list of `{group, fragments}` objects; each fragment has `id`, `type`, `icon`, `title`, `description`, `facts`, `links`, `tags`). `_data/evidence-db/run.sh` runs the whole chain.
+`_data/evidence-db/` is a separate pipeline from the product domains. Per-source scripts under `_data/evidence-db/scripts/` write fragment files into `_data/evidence-db/database/evidence-files/<source>.json`, then `database/aggregate-evidence.py` concatenates them into `database/all-evidence.json` (a list of `{group, fragments}` objects; each fragment has `id`, `type`, `icon`, `title`, `description`, `facts`, `links`, `tags`). `_data/evidence-db/run.sh` runs the whole chain.
 
 `_wiring/evidence-explorer/generate-evidence-explorer-docs.py` builds a standalone search UI at `docs/evidence-explorer/index.html` from `_templates/evidence-explorer/index.html`: it inlines `all-evidence.json` into the page (so the page needs no runtime fetch) and copies both the evidence-db icons and the template's own `icons/` into the output. It is wired as the last step of `_data/evidence-db/run.sh`, so editing fragments and re-running `run.sh` refreshes the explorer too. The explorer shows one tab per evidence `type`; in iframe-embed mode (`?embed=1` / `?ids=<glob patterns>`) `?useTabs=false` switches to stacked sections instead of tabs.
 
@@ -77,6 +75,6 @@ Templates live in `_templates/<area>/` with shared partials under `_templates/_i
 
 - All ID values in `_config/**` (`id`, `*Id`, `*Ids`) are **lowercase**.
 - Reuse existing JSON schemas and template `${...}` patterns instead of inventing parallel structures.
-- Keep terminology aligned with the domain language: customers, objectives, delivery, product bricks, streams, releases, teams, evidence.
+- Keep terminology aligned with the domain language: customers, product deployments, product bricks, streams, teams, data assets, evidence.
 - Edit strategy/content in `_config/**`; edit presentation in `_templates/**`; treat `_wiring/**` as generator logic; treat `docs/**` as generated output (patch directly only when explicitly asked).
 - Before regenerating, inspect the worktree if it is dirty — generators wipe and rebuild docs folders.

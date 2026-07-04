@@ -4,39 +4,39 @@
 
 Use this folder-level guide when creating or extending any product domain under `_config/product-domains/<domain-id>/`.
 
-This playbook captures the working pattern used to build the `<domain-id>` domain end to end:
+Product-domain source should stay customer-centered and implementation-aware:
 
 - define the strategic model in `_config/product-domains/<domain-id>/`
-- keep strategy grounded in customers, JTBD, KPIs, delivery, product bricks, and evidence
+- keep strategy grounded in customers, JTBD, KPIs, product deployments, product bricks, data assets, teams, competition, and research/source context
 - generate the matching static documentation in `docs/product-domains/<domain-id>/`
 
-Prefer evolving the existing model and generator conventions over inventing a new schema.
+Prefer evolving the existing model and generator conventions over inventing a parallel schema.
 
 ## Local Modeling Skills
 
 Use this `AGENTS.md` file for always-on repository rules, source-vs-generated policy, folder structure, ID conventions, validation, generator workflow, and completion checks.
 
-For deeper product-domain modeling guidance, use the invocable skills under `.claude/skills/`:
+For deeper review guidance, use the invocable skills under `.codex/skills/`:
 
-- Start with the `product-domain` router skill to orient and pick the right skill.
-- Shared schema, ID conventions, the cross-file reference map, and the validate→regenerate loop live in `.claude/skills/_references/domain-model.md`.
-- Use a per-artifact `edit-*` skill (`edit-customers`, `edit-product-bricks`, `edit-products`, `edit-streams`, `edit-data-assets`, `edit-teams`, `edit-competition`, `edit-evidence`) or `set-domain-strategy` for focused edits.
-- Use `new-product-domain` when creating a complete new domain end to end, and `audit-domain-balance` / `validate-domain` to check coherence and integrity.
+- `spda-product-domain-review` for customers, JTBD, journeys, value propositions, KPIs, strategy, insights, and competition.
+- `spda-product-bricks-review` for product bricks, product streams, data assets, layered modules, dependencies, external systems, team ownership, and implementation traceability.
+- `spda-teams-review` for organization design, ownership coverage, topology, staffing, dependencies, charters, AI-agent boundaries, and alignment with customers, product deployments, product bricks, and data assets.
 
-These are Claude Code skills, discovered automatically via the Skill tool. The validation scripts they call live at `.claude/skills/scripts/`. Keep the detailed modeling guidance in the skills; keep this file focused on operational rules that should apply to every product-domain edit.
+Keep detailed modeling guidance in skills; keep this file focused on operational rules that apply to every product-domain edit.
 
 ## Core Principle
 
 Work in this sequence:
 
-1. Domain context and external evidence
+1. Domain context and source research
 2. Customers and jobs to be done
 3. KPIs and strategy horizons
-4. Products and delivery structure
-5. Product bricks and planning overlays
-6. Delivery execution model
-7. Discoveries, teams, and rituals
-8. Generated documentation
+4. Products and deployment structure
+5. Product streams and product bricks
+6. Data assets and ownership
+7. Teams and operating model
+8. Competition and market context
+9. Generated documentation
 
 Do not start from pages or visuals. Start from the source model.
 
@@ -47,11 +47,32 @@ Do not start from pages or visuals. Start from the source model.
 - Only patch generated docs directly if the user explicitly asks for that.
 - If presentation needs to change for all domains, patch the generators or templates instead of hand-editing generated HTML.
 
+## Current Source Tree
+
+A mature domain normally contains:
+
+- `_domain/DOMAIN.md`
+- `start/config.json`
+- `customers/customers.json`
+- `customers/insights.json`
+- `customers/links.json`
+- `product-deployments/products.json`
+- `product-deployments/deployment.json`
+- `product-bricks/product-bricks.json`
+- `product-bricks/product-stream.json`
+- `product-bricks/bricks-evidence.json`
+- `product-bricks/streams-evidence.json`
+- `data/data-assets.json`
+- `teams/teams.json`
+- `business/competition.json`
+
+Optional media and icon folders may live beside the JSON sources they support.
+
 ## Recommended Domain Build Sequence
 
 When creating a new domain, use this order unless there is a strong reason not to.
 
-### 1. Gather domain context
+### 1. Gather Domain Context
 
 Start with:
 
@@ -65,37 +86,35 @@ Capture enough context to define:
 - JTBD
 - KPI pyramids
 - product lines
+- deployment channels
 - enabling product bricks
-- delivery motions
-- operating model assumptions
+- data assets
+- team ownership assumptions
+- competition and substitutes
 
-### 2. Register the domain
+### 2. Register The Domain
 
-Update:
+Update the domain list used by `_wiring/product-domains/run.sh` before generating docs. Keep the domain id lowercase and aligned with folder names.
 
-- `config.json`
-
-Add the new domain entry before generating any docs. Keep the naming aligned with existing domains.
-
-### 3. Create the base source tree
+### 3. Create The Base Source Tree
 
 Create the minimum source package under `_config/product-domains/<domain-id>/`:
 
 - `start/config.json`
 - `customers/customers.json`
-- `products/products.json`
-- `product/delivery.json`
+- `customers/insights.json`
+- `customers/links.json`
+- `product-deployments/products.json`
+- `product-deployments/deployment.json`
 - `product-bricks/product-bricks.json`
 - `product-bricks/product-stream.json`
-- `product-bricks/targets.json`
-- `product-bricks/documents.json`
-- `product-bricks/roadmap/roadmap.json`
+- `data/data-assets.json`
+- `teams/teams.json`
+- `business/competition.json`
 
-Treat both `products/products.json` and `product/delivery.json` as canonical source files for a complete domain unless the current generator implementation clearly expects something else.
+If a generator expects a specific file shape, inspect that generator first and match the current implementation.
 
-If the repository conventions for a specific generator differ, inspect the generator first and match what it expects.
-
-### 4. Define customers deeply
+### 4. Define Customers Deeply
 
 `customers/customers.json` should be substantive, not skeletal.
 
@@ -110,7 +129,7 @@ For each customer group, define:
 
 `productStrategy` should be treated as expected, not optional, for a mature domain model.
 
-Preferred shape:
+Preferred horizon shape:
 
 - `vision`
 - `timeHorizons`
@@ -134,16 +153,16 @@ Prefer specific KPI leaves such as:
 - `Order completeness rate`
 - `Incident recovery time`
 
-Avoid vague KPI branch labels as the terminal metrics.
+Avoid vague KPI branch labels as terminal metrics.
 
-### 5. Define products and delivery
+### 5. Define Products And Deployment
 
 Model both:
 
-- `products/products.json`
-- `product/delivery.json`
+- `product-deployments/products.json`
+- `product-deployments/deployment.json`
 
-Use products to express the market-facing offer and delivery to express:
+Use products to express the market-facing offer and deployment to express:
 
 - channels
 - user journeys or touchpoints
@@ -153,9 +172,18 @@ Use products to express the market-facing offer and delivery to express:
 - stream mappings
 - ownership assumptions where supported
 
-The delivery model should make it obvious how the strategy turns into operating software and operations.
+The deployment model should make it obvious how strategy turns into operating software and operations.
 
-### 6. Define product bricks
+### 6. Define Product Streams And Bricks
+
+`product-bricks/product-stream.json` should contain outcome-based product streams.
+
+Product streams should:
+
+- express the strategic "what" rather than the implementation "how"
+- connect a valuable outcome to one or more product bricks
+- include required external systems when the stream depends on them
+- remain durable and higher-level than the underlying brick catalog
 
 `product-bricks/product-bricks.json` should contain the implementation-facing building blocks needed to ship the domain.
 
@@ -163,131 +191,51 @@ Product bricks should bridge:
 
 - customer needs
 - business outcomes
-- roadmap investment
+- product deployment surfaces
 - concrete systems, services, APIs, workflows, and data capabilities
+- team ownership
 
 Do not define bricks as vague aspirations. They should be buildable and ownable.
 
-`product-bricks/product-stream.json` should contain the outcome-based product streams that those bricks enable.
+### 7. Define Data Assets
 
-Product streams should:
+`data/data-assets.json` should capture the domain data model needed by the product architecture.
 
-- express the strategic "what" rather than the implementation "how"
-- connect a valuable outcome to one or more product bricks
-- optionally include required external systems when the stream depends on them
-- remain durable and higher-level than the underlying brick catalog
+For important assets, define:
 
-### 7. Add planning overlays
+- business meaning
+- classification and personal-data level
+- system-of-record ownership
+- producing and consuming product bricks
+- owner and steward teams where the schema supports it
+- stores and interfaces where relevant
 
-Complete:
-
-- `product-bricks/targets.json`
-- `product-bricks/documents.json`
-- `product-bricks/roadmap/roadmap.json`
-
-These should connect the static stream model to:
-
-- target states
-- planning priorities
-- evidence and references
-- sequencing and effort
-
-### 8. Generate goals, then refine manually
-
-Use:
-
-- `generate-goals-datasets.py`
-
-This can create a usable starting point, but it is not the final answer.
-
-After generation, manually refine:
-
-- `goals/current.json`
-- `goals/next.json`
-- `goals/archive.json`
-
-Quality bar for goals:
-
-- use concrete KPI leaves, not generic category labels
-- make narratives sound like operating priorities, not template filler
-- tie goals to real customer outcomes and operating constraints
-
-### 9. Add delivery execution objects
-
-Define:
-
-- `delivery/initiatives.json`
-- `delivery/releases.json`
-
-These should describe concrete execution threads, not abstract themes.
-
-Each initiative or release should have:
-
-- a clear problem or outcome statement
-- links to customer impact
-- links to product bricks or delivery streams
-- timing and sequencing context where the schema supports it
-
-### 10. Add discoveries
-
-Define:
-
-- `discoveries/ongoing.json`
-- `discoveries/archived.json`
-
-Use discoveries to document:
-
-- hypotheses
-- decision-driving research
-- unresolved constraints
-- problem framing behind initiatives
-
-Where possible, wire initiatives to discoveries so delivery is traceable back to evidence.
-
-### 11. Add teams
+### 8. Add Teams
 
 Define:
 
 - `teams/teams.json`
 
-For a mature domain, teams should reflect a realistic operating model. The `<domain-id>` pattern used a domain-oriented layout with shared platform and control functions.
+For a mature domain, teams should reflect a realistic operating model:
 
-For a company around 250 people, think in terms of:
-
-- market or value-stream teams
-- platform and shared services
+- stream-aligned customer or value-flow teams
+- platform and shared-service teams
 - data and reliability functions
-- compliance, finance, or operational control functions where domain-relevant
+- trust, compliance, finance, or operational-control functions where domain-relevant
 
-Any team referenced by initiatives, delivery, or discoveries must exist in `teams.json`.
+Any team referenced by product bricks, data assets, or deployment surfaces must exist in `teams.json`.
 
-### 12. Add rituals
+### 9. Add Competition
 
-If the domain needs operating cadence beyond the default rituals, add:
+Define:
 
-- `rituals/meetings.json`
+- `business/competition.json`
 
-Use rituals for recurring cross-functional mechanisms such as:
+Include scope, inclusion logic, caveats, direct competitors, substitutes, adjacent platforms, official source links, and comparable business statistics where useful.
 
-- product triad
-- delivery standup
-- KPI review
-- launch readiness
-- operations sync
-- claims or finance review
-- roadmap review
-- release readiness
-- incident review
-- quarterly planning
+### 10. Add Icons When Needed
 
-The rituals generator supports an optional per-domain ritual file. If absent, the default ritual set is used.
-
-### 13. Add icons when needed
-
-If the domain uses custom icon names, add matching assets under:
-
-- `customers/icons/`
-- `products/icons/`
+If the domain uses custom icon names, add matching assets under the relevant local `icons/` folder.
 
 Do not assume the generators will repair bad filenames automatically. Keep icon names normalized and consistent.
 
@@ -302,13 +250,11 @@ Before generating docs, check these invariants:
 - customer ids referenced elsewhere exist
 - product ids referenced elsewhere exist
 - team ids referenced elsewhere exist
-- initiative-to-discovery links point to real discovery items
-- goals link to real initiatives or releases when those connections are modeled
-- product-brick references such as `brickId`, `coreStreamIds`, `adjacentStreamIds`, and target stream links point to real streams
-- delivery and discovery team references point to real teams
+- product-brick references such as `brickId`, `coreStreamIds`, `adjacentStreamIds`, stream dependencies, and data dependencies point to real modeled objects
+- data asset owner and steward references point to real teams
 - customer objects include explicit product strategy horizons, not only KPIs and JTBD
 - KPI leaves are measurable and specific
-- terminology is consistent across customers, products, bricks, and delivery
+- terminology is consistent across customers, products, deployments, streams, bricks, data assets, teams, and competition
 
 Prefer concrete domain language over generic product-framework wording.
 
@@ -320,16 +266,11 @@ Use short, human-meaningful ids consistently across the source model.
 - Keep ids unique within each file.
 - Derive the four letters from the item name, title, or label as directly as possible.
 - Example: `Search Engine` can become `sren`.
-- Reuse the same four-letter id everywhere that item is referenced across customers, products, delivery, product bricks, targets, and teams.
+- Reuse the same four-letter id everywhere that item is referenced across customers, products, deployments, product bricks, data assets, and teams.
 
-This convention is intended for local domain objects such as streams, products, customers, teams, targets, and similar modeled entities.
+This convention is intended for local domain objects such as streams, products, customers, teams, data assets, and similar modeled entities.
 
-Do not force this convention onto ids that already rely on a longer structured format for traceability, such as:
-
-- `initiativeId`
-- `discoveryId`
-- release or event ids generated from dates
-- domain ids like `<domain-id>`
+Do not force this convention onto ids that already rely on a longer structured format for traceability, such as domain ids like `<domain-id>`.
 
 ## JSON Validation
 
@@ -347,7 +288,7 @@ When the domain includes linked objects across files, also validate cross-file r
 
 ## Scoped Generation Workflow
 
-Generators typically iterate all domains in `config.json`. Do not blindly regenerate everything in a dirty worktree if the task is only about one domain.
+Generators typically iterate the domain list in `_wiring/product-domains/run.sh`. Do not blindly regenerate everything in a dirty worktree if the task is only about one domain.
 
 Creating or extending source data under `_config/product-domains/<domain-id>/` does not by itself imply regenerating `docs/`. Regenerate documentation only when the user asks for it or when the task explicitly requires generated output verification.
 
@@ -358,9 +299,7 @@ Use a scoped workflow:
 3. Run the needed generator scripts
 4. Restore the original config in a `finally` block
 
-This was the safest pattern used for `<domain-id>`.
-
-### Generators commonly used
+## Generators Commonly Used
 
 From `_wiring/product-domains/`:
 
@@ -368,17 +307,8 @@ From `_wiring/product-domains/`:
 - `python3 generate-customers-docs.py`
 - `python3 generate-products-docs.py`
 - `python3 generate-product-bricks-docs.py`
-- `python3 generate-goals-docs.py`
-- `python3 generate-delivery-docs.py`
 - `python3 generate-teams-docs.py`
-
-From `_wiring/standards/`:
-
-- `python3 generate-rituals-docs.py`
-
-From `_config/product-domains/`:
-
-- `python3 generate-goals-datasets.py`
+- `python3 generate-competition-docs.py`
 
 Run only the generators relevant to the files you changed.
 
@@ -388,10 +318,10 @@ Patch generators instead of domain data when the issue is structural, cross-doma
 
 Examples:
 
-- shared rituals owned under standards
 - icon filename normalization
 - broken cross-link generation
 - shared navigation defects
+- missing rendering support for an existing source-model field
 
 When patching a generator:
 
@@ -406,23 +336,20 @@ A domain is usually complete enough for review when all of the following exist:
 - `start`
 - `customers`
 - `customers` includes `productStrategy` horizons for each substantive customer
-- `products`
-- `product`
+- `product-deployments`
 - `product-bricks`
-- `goals`
-- `delivery`
-- `discoveries`
+- `data`
 - `teams`
-- links to shared `standards/rituals`
+- `business`
 
 And all key references resolve across:
 
 - customers
 - products
+- product deployments
+- product streams
 - product bricks
-- goals
-- initiatives and releases
-- discoveries
+- data assets
 - teams
 
 And the generated docs exist under:
@@ -431,12 +358,8 @@ And the generated docs exist under:
 - `docs/product-domains/<domain-id>/customers/`
 - `docs/product-domains/<domain-id>/product-deployments/`
 - `docs/product-domains/<domain-id>/product-bricks/`
-- `docs/product-domains/<domain-id>/objectives/`
-- `docs/product-domains/<domain-id>/initiatives/`
-- `docs/product-domains/<domain-id>/releases/`
-- `docs/product-domains/<domain-id>/discoveries/`
 - `docs/product-domains/<domain-id>/teams/`
-- `docs/standards/rituals/`
+- `docs/product-domains/<domain-id>/business/`
 
 ## Biases To Keep
 
@@ -449,7 +372,6 @@ And the generated docs exist under:
 ## Biases To Avoid
 
 - do not treat generated HTML as the primary artifact
-- do not stop at customer and product definitions without execution objects
-- do not leave goals as auto-generated boilerplate
-- do not create teams, discoveries, initiatives, and releases that do not connect to each other
+- do not stop at customer and product definitions without implementation and ownership grounding
+- do not create teams or data assets that do not connect to product bricks and customer outcomes
 - do not regenerate unrelated domains unless the user asked for it

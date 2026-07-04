@@ -41,7 +41,7 @@ Load only the skill you need for the current phase; do the phase, validate, cont
 ## Requirements
 
 - Start by inspecting existing domains to determine canonical folder structure and required files.
-- Reuse the repository's established modeling language: customers, product strategy, delivery, objectives, teams, product bricks, product deployments, start, evidence, documents, and roadmap.
+- Reuse the repository's established modeling language: customers, product strategy, product deployments, teams, product bricks, streams, data assets, start, evidence, and competition.
 - Do not invent a new schema if an existing one already fits.
 - Treat `_config/**` as the source of truth. Only create or modify generated `docs/**` when generation is explicitly requested.
 - If different domains use slightly different structures, identify the most current and internally consistent pattern before creating the new one.
@@ -72,7 +72,7 @@ Load only the skill you need for the current phase; do the phase, validate, cont
 - Define product strategy horizons for substantive customer groups: 1-year, 3-year, and 5-year focus, product theme, customer KPI, business KPI, and milestones.
 - KPIs should be specific, measurable, and relevant to the domain, with realistic target values based on public information or explicit assumptions. Use a proper tree and minimize one-child branches.
 
-### Product Capabilities, Bricks, Delivery, And Planning
+### Product Capabilities, Bricks, And Deployment
 
 - Create a three-level product-brick structure: domain/root group, group/subgroup, and brick.
 - Use 20+ product bricks for a mature domain unless the scope is intentionally smaller and justified.
@@ -83,15 +83,15 @@ Load only the skill you need for the current phase; do the phase, validate, cont
 - Model product-brick `dataDependencies` with `moduleIds` listing the modules that use or own the data asset; do not use `storeIds` there.
 - In product-brick metadata, use `brickTypes`, `brickStatuses`, and `modulesConfig`; include a `color` on each `modulesConfig.moduleTypes` item and do not use legacy `types` or `statuses`.
 - Define product capabilities as strategic outcomes, not implementation components, and map them to product bricks and external systems where relevant.
-- Model delivery through channels, interfaces, APIs, events, operational workflows, MVP scope, releases, and capability mappings.
-- Add objectives, initiatives, releases, roadmap, targets, documents, discoveries, and data assets where the current domain pattern supports them.
+- Model deployment through channels, interfaces, APIs, events, operational workflows, MVP scope, and capability mappings.
+- Add data assets where the current domain pattern supports them.
 
 ### Teams And Operating Model
 
 - Define a realistic operating model in `teams/teams.json`.
 - Use value-stream, platform, enabling, data, reliability, compliance, finance, trust, or operational-control teams where domain-relevant.
 - Ensure every product brick has a primary owning team.
-- Keep team references from initiatives, delivery, releases, and discoveries resolvable.
+- Keep team references from product bricks, deployment surfaces, and data assets resolvable.
 - Keep team sizes and group leadership aligned with the current repository convention unless the user asks for a different staffing model.
 
 ## Validation Gates

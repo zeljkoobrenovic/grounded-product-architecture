@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alarm Event</title>
+
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #a0a0a0;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;;
+    }
+</style>
+
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .page {
+            margin: 20px;
+        }
+
+        .nav-strip {
+            margin: 2px 20px 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+
+        .nav-link {
+            padding: 2px;
+            font-size: 12px;
+        }
+
+        .tab-image {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+        }
+
+        .tab-image-selected {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+            border-bottom: 4px solid blue;
+        }
+
+        .header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .header-icon {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+        }
+
+        .header-meta {
+            font-size: 90%;
+            color: grey;
+        }
+
+        .header-title {
+            font-size: 50px;
+            line-height: 1.05;
+        }
+
+        .header-copy {
+            font-size: 16px;
+            color: grey;
+            margin-top: 6px;
+            max-width: 950px;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #eef2f6;
+            color: #374151;
+            border: 1px solid #dbe2ea;
+        }
+
+        .badge-critical { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+        .badge-high { background: #ffedd5; color: #9a3412; border-color: #fdba74; }
+        .badge-pii { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+        .badge-restricted { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+        .group {
+            margin-top: 2px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            overflow: hidden;
+            border: 1px solid lightgrey;
+            background: #fff;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: blue;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            background: #fff;
+            color: inherit;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card-icon {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid #dbe2ea;
+            padding: 4px;
+            flex: 0 0 auto;
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #315b7c;
+            line-height: 1.4;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        .card-copy {
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+
+        .list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .list li {
+            margin-bottom: 6px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .meta-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #fbfdff;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            color: #315b7c;
+            font-weight: bold;
+            word-break: break-word;
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 90%;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+
+    <script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+
+</head>
+
+<body>
+
+<div id="breadcrumbs" style="margin-left: 20px"></div>
+
+<script>
+    const config = {"domains": [{"id": "industrial-water-intelligence", "name": "Industrial Water Intelligence", "description": "The Industrial Water Intelligence domain covers connected water treatment, plant-system monitoring, enterprise water analytics, wastewater compliance, and reuse workflows used by water-intensive industrial operators to improve uptime, conserve water, reduce energy and chemistry waste, and prove financial impact."}]};
+    const all_bricks = [{"id": "sens", "name": "Sensor and Edge Telemetry", "type": "service", "status": "invest", "description": "Collects online water-quality, flow, and equipment-state data from plant systems and edge devices.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-telemetry-ingestion-api", "name": "Telemetry Ingestion API", "type": "api", "description": "Ingestion interface for plant and edge telemetry.", "dependencies": {"modules": [{"moduleId": "module-edge-data-collection-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-edge-data-collection-layer", "name": "Edge Data Collection Layer", "type": "service", "description": "Normalizes and buffers plant telemetry from controllers, probes, and gateways."}]}], "dataDependencies": [{"assetId": "sensor-stream", "moduleIds": ["module-edge-data-collection-layer"], "role": "own", "description": "Acts as the primary owning brick for Sensor Stream."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "site_data_and_connectivity", "group": "sensing_and_edge_capture"}, {"id": "conn", "name": "Secure Connectivity and Device Management", "type": "integration", "status": "sustaining", "description": "Manages secure gateway connectivity, remote access policy, and device lifecycle across customer sites.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-device-provisioning-workflow", "name": "Device Provisioning Workflow", "type": "api", "description": "Workflow for onboarding gateways, sensors, and field devices.", "dependencies": {"modules": [{"moduleId": "module-gateway-and-certificate-control", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-gateway-and-certificate-control", "name": "Gateway and Certificate Control", "type": "service", "description": "Registers, authenticates, and governs field gateways and remote data paths."}]}], "dataDependencies": [{"assetId": "integration-mapping", "moduleIds": ["module-gateway-and-certificate-control"], "role": "own", "description": "Owns device and connectivity mappings by site."}], "brickDependencies": [{"targetBrickId": "sens", "moduleId": "module-telemetry-ingestion-api", "sourceModuleId": "module-device-provisioning-workflow", "type": "integration", "description": "Provides the secure path that lets site telemetry reach the digital platform."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "site_data_and_connectivity", "group": "sensing_and_edge_capture"}, {"id": "flow", "name": "Water Flow and Leak Intelligence", "type": "full-stack", "status": "sustaining", "description": "Calculates water balances, abnormal flow patterns, and leak signals at enterprise, site, and asset levels.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-leak-and-flow-dashboard", "name": "Leak and Flow Dashboard", "type": "web-component", "description": "Visualizes abnormal consumption and leak alerts.", "dependencies": {"modules": [{"moduleId": "module-water-balance-engine", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-water-balance-engine", "name": "Water Balance Engine", "type": "service", "description": "Builds site and asset-level flow models and loss estimates."}]}], "dataDependencies": [{"assetId": "water-flow-record", "moduleIds": ["module-water-balance-engine"], "role": "own", "description": "Owns flow, balance, and leak-detection records."}], "brickDependencies": [{"targetBrickId": "sens", "moduleId": "module-telemetry-ingestion-api", "sourceModuleId": "module-water-balance-engine", "type": "data", "description": "Uses live telemetry to calculate the site water balance."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "site_data_and_connectivity", "group": "sensing_and_edge_capture"}, {"id": "asst", "name": "Asset Registry and System Twin", "type": "service", "status": "invest", "description": "Stores the plant loop, equipment, site, and system topology used to interpret telemetry and work context correctly.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-asset-and-loop-api", "name": "Asset and Loop API", "type": "api", "description": "API for querying plant assets, loops, and system relationships.", "dependencies": {"modules": [{"moduleId": "module-site-and-loop-model", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-site-and-loop-model", "name": "Site and Loop Model", "type": "service", "description": "Defines sites, loops, assets, and operating boundaries."}]}], "dataDependencies": [{"assetId": "water-asset-register", "moduleIds": ["module-site-and-loop-model"], "role": "own", "description": "Owns the plant loop and equipment registry."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "site_data_and_connectivity", "group": "sensing_and_edge_capture"}, {"id": "labi", "name": "Lab and Field Test Integration", "type": "integration", "status": "sustaining", "description": "Combines lab results, handheld test data, and field observations with online telemetry for better operating decisions.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-lab-result-import-api", "name": "Lab Result Import API", "type": "api", "description": "Accepts lab and handheld measurements and ties them to the right asset context.", "dependencies": {"modules": [{"moduleId": "module-sample-and-test-capture", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-sample-and-test-capture", "name": "Sample and Test Capture", "type": "service", "description": "Captures lab and handheld measurements by site and loop."}]}], "dataDependencies": [{"assetId": "chemistry-reading", "moduleIds": ["module-sample-and-test-capture"], "role": "own", "description": "Owns lab and field chemistry readings."}], "brickDependencies": [{"targetBrickId": "asst", "moduleId": "module-asset-and-loop-api", "sourceModuleId": "module-lab-result-import-api", "type": "data", "description": "Uses the system twin to associate samples and test results with the correct equipment and loop."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "site_data_and_connectivity", "group": "site_testing_and_quality_context"}, {"id": "hist", "name": "Historian and Data Quality Reconciliation", "type": "integration", "status": "sustaining", "description": "Reconciles historian, SCADA, and digital-platform data so plant operating views stay trusted despite timestamp drift, gaps, or source mismatch.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-data-quality-reconciliation-api", "name": "Data Quality Reconciliation API", "type": "api", "description": "API for checking signal quality, backfilling gaps, and reconciling timestamps.", "dependencies": {"modules": [{"moduleId": "module-historian-sync-and-reconciliation-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-historian-sync-and-reconciliation-layer", "name": "Historian Sync and Reconciliation Layer", "type": "integration", "description": "Matches platform telemetry with historian and control-system records."}]}], "dataDependencies": [{"assetId": "chemistry-reading", "moduleIds": ["module-data-quality-reconciliation-api"], "role": "read", "description": "Reads Chemistry Reading to support domain workflows."}, {"assetId": "savings-project", "moduleIds": ["module-data-quality-reconciliation-api"], "role": "read", "description": "Reads Savings Project to support domain workflows."}], "brickDependencies": [{"targetBrickId": "sens", "moduleId": "module-telemetry-ingestion-api", "sourceModuleId": "module-data-quality-reconciliation-api", "type": "data", "description": "Uses live telemetry as the digital comparison baseline."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "site_data_and_connectivity", "group": "site_testing_and_quality_context"}, {"id": "chem", "name": "Treatment Chemistry Recommendation Engine", "type": "service", "status": "sustaining", "description": "Generates operating recommendations and treatment-risk insights from telemetry, lab results, and program standards.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-recommendation-api", "name": "Recommendation API", "type": "api", "description": "API for retrieving site-specific operating recommendations and risk scores.", "dependencies": {"modules": [{"moduleId": "module-recommendation-rules-and-models", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-recommendation-rules-and-models", "name": "Recommendation Rules and Models", "type": "service", "description": "Produces chemistry, control, and operating recommendations by loop type."}]}], "dataDependencies": [{"assetId": "treatment-program", "moduleIds": ["module-recommendation-rules-and-models"], "role": "own", "description": "Owns digital treatment program definitions and recommendation logic."}], "brickDependencies": [{"targetBrickId": "sens", "moduleId": "module-telemetry-ingestion-api", "sourceModuleId": "module-recommendation-api", "type": "data", "description": "Uses live operating data to create recommendations."}, {"targetBrickId": "labi", "moduleId": "module-lab-result-import-api", "sourceModuleId": "module-recommendation-api", "type": "data", "description": "Uses field and lab context to improve recommendation quality."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "decisioning_and_control_foundation"}, {"id": "dose", "name": "Automated Dosing and Feed Control", "type": "integration", "status": "sustaining", "description": "Executes or assists chemistry feed and dosing adjustments through connected control workflows.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-control-action-workflow", "name": "Control Action Workflow", "type": "api", "description": "Workflow for automated or guided dosing and feed changes.", "dependencies": {"modules": [{"moduleId": "module-control-command-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-control-command-layer", "name": "Control Command Layer", "type": "service", "description": "Issues, confirms, and tracks dosing and control commands."}]}], "dataDependencies": [{"assetId": "control-command", "moduleIds": ["module-control-command-layer"], "role": "own", "description": "Owns dosing and feed control actions."}], "brickDependencies": [{"targetBrickId": "chem", "moduleId": "module-recommendation-api", "sourceModuleId": "module-control-action-workflow", "type": "automation", "description": "Uses treatment recommendations to generate actionable control changes."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "decisioning_and_control_foundation"}, {"id": "prog", "name": "Digital Treatment Program Templates", "type": "service", "status": "sustaining", "description": "Defines reusable treatment-program templates, operating envelopes, and rollout defaults by loop type, industry, and risk profile.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-program-template-api", "name": "Program Template API", "type": "api", "description": "API for selecting and applying standard program templates.", "dependencies": {"modules": [{"moduleId": "module-program-template-library", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-program-template-library", "name": "Program Template Library", "type": "service", "description": "Stores reusable water-program templates and operating defaults."}]}], "dataDependencies": [{"assetId": "treatment-program", "moduleIds": ["module-program-template-library"], "role": "read", "description": "Reads Treatment Program to support domain workflows."}, {"assetId": "site-profile", "moduleIds": ["module-program-template-library"], "role": "read", "description": "Reads Site Profile to support domain workflows."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "decisioning_and_control_foundation"}, {"id": "corr", "name": "Corrosion Fouling and Biofilm Risk Model", "type": "service", "status": "sustaining", "description": "Models the leading indicators of corrosion, scale, fouling, and microbiological stress across industrial water systems.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-asset-risk-api", "name": "Asset Risk API", "type": "api", "description": "API for retrieving current and projected water-system risk by asset and loop.", "dependencies": {"modules": [{"moduleId": "module-asset-risk-model", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-asset-risk-model", "name": "Asset Risk Model", "type": "service", "description": "Scores the likelihood and severity of corrosion, fouling, and biological stress."}]}], "dataDependencies": [{"assetId": "water-asset-register", "moduleIds": ["module-asset-risk-model"], "role": "read", "description": "Reads Water Asset Register to support domain workflows."}, {"assetId": "water-flow-record", "moduleIds": ["module-asset-risk-model"], "role": "read", "description": "Reads Water Flow Record to support domain workflows."}], "brickDependencies": [{"targetBrickId": "sens", "moduleId": "module-telemetry-ingestion-api", "sourceModuleId": "module-asset-risk-api", "type": "data", "description": "Uses live operating data to model asset risk."}, {"targetBrickId": "labi", "moduleId": "module-lab-result-import-api", "sourceModuleId": "module-asset-risk-api", "type": "data", "description": "Uses lab and sample context to sharpen risk scores."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "decisioning_and_control_foundation"}, {"id": "ener", "name": "Water and Energy Efficiency Optimizer", "type": "service", "status": "sustaining", "description": "Optimizes the tradeoff between water savings, heat-transfer performance, steam efficiency, and total operating cost.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-efficiency-optimization-api", "name": "Efficiency Optimization API", "type": "api", "description": "API for retrieving water-energy optimization recommendations.", "dependencies": {"modules": [{"moduleId": "module-efficiency-tradeoff-engine", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-efficiency-tradeoff-engine", "name": "Efficiency Tradeoff Engine", "type": "service", "description": "Calculates the operating point that balances water, energy, and chemistry use."}]}], "dataDependencies": [{"assetId": "savings-project", "moduleIds": ["module-efficiency-tradeoff-engine"], "role": "read", "description": "Reads Savings Project to support domain workflows."}, {"assetId": "water-asset-register", "moduleIds": ["module-efficiency-tradeoff-engine"], "role": "read", "description": "Reads Water Asset Register to support domain workflows."}], "brickDependencies": [{"targetBrickId": "chem", "moduleId": "module-recommendation-api", "sourceModuleId": "module-efficiency-optimization-api", "type": "analytics", "description": "Uses treatment recommendations as one input to total efficiency optimization."}, {"targetBrickId": "flow", "moduleId": "module-leak-and-flow-dashboard", "sourceModuleId": "module-efficiency-tradeoff-engine", "type": "data", "description": "Uses water-balance data to understand efficiency impact."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "decisioning_and_control_foundation"}, {"id": "alrm", "name": "Alerting and Incident Orchestration", "type": "service", "status": "invest", "description": "Prioritizes plant water issues, routes alerts, and preserves incident lifecycle and response status.", "links": [], "layers": [{"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-incident-event-stream", "name": "Incident Event Stream", "type": "message-consumer", "description": "Events for alarms, escalations, acknowledgements, and closures.", "dependencies": {"modules": [{"moduleId": "module-alert-policy-layer", "type": "processes", "description": "Asynchronous module invokes the backing service logic for event processing."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-alert-policy-layer", "name": "Alert Policy Layer", "type": "service", "description": "Defines severity, escalation, and route-to-role rules."}]}], "dataDependencies": [{"assetId": "alarm-event", "moduleIds": ["module-alert-policy-layer"], "role": "own", "description": "Owns alarm and incident-lifecycle records."}], "brickDependencies": [{"targetBrickId": "chem", "moduleId": "module-recommendation-api", "sourceModuleId": "module-alert-policy-layer", "type": "analytics", "description": "Uses risk and recommendation context to prioritize alarms."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "decisioning_and_control_foundation"}, {"id": "cool", "name": "Cooling Water Optimization", "type": "full-stack", "status": "invest", "description": "Applies connected monitoring, chemistry, and control logic to cooling towers, chillers, and heat-rejection loops.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-cooling-loop-dashboard", "name": "Cooling Loop Dashboard", "type": "web-component", "description": "Operating view for cooling performance and risk.", "dependencies": {"modules": [{"moduleId": "module-cooling-performance-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-cooling-performance-model", "name": "Cooling Performance Model", "type": "service", "description": "Balances water, chemistry, and asset-protection targets for cooling systems."}]}], "dataDependencies": [{"assetId": "control-command", "moduleIds": ["module-cooling-performance-model"], "role": "query", "description": "Queries Control Command to support search, analytics, or decision flows."}, {"assetId": "water-asset-register", "moduleIds": ["module-cooling-performance-model"], "role": "read", "description": "Reads Water Asset Register to support domain workflows."}], "brickDependencies": [{"targetBrickId": "prog", "moduleId": "module-program-template-api", "sourceModuleId": "module-cooling-performance-model", "type": "composition", "description": "Uses standard cooling-program templates and guardrails."}, {"targetBrickId": "chem", "moduleId": "module-recommendation-api", "sourceModuleId": "module-cooling-performance-model", "type": "composition", "description": "Uses the chemistry engine to drive cooling-specific recommendations."}, {"targetBrickId": "corr", "moduleId": "module-asset-risk-api", "sourceModuleId": "module-cooling-performance-model", "type": "composition", "description": "Uses corrosion, fouling, and biofilm risk signals in cooling optimization."}, {"targetBrickId": "dose", "moduleId": "module-control-action-workflow", "sourceModuleId": "module-cooling-performance-model", "type": "composition", "description": "Uses dosing control to hold cooling targets."}, {"targetBrickId": "ener", "moduleId": "module-efficiency-optimization-api", "sourceModuleId": "module-cooling-performance-model", "type": "composition", "description": "Uses water-energy optimization to select better cooling operating points."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "loop_specific_performance_programs"}, {"id": "boil", "name": "Boiler Water Optimization", "type": "full-stack", "status": "invest", "description": "Optimizes boiler-water chemistry, blowdown discipline, and steam-side reliability through connected operating control.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-boiler-performance-dashboard", "name": "Boiler Performance Dashboard", "type": "web-component", "description": "Operating view for boiler-water stability and steam-support reliability.", "dependencies": {"modules": [{"moduleId": "module-boiler-reliability-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-boiler-reliability-model", "name": "Boiler Reliability Model", "type": "service", "description": "Tracks boiler health, chemistry, and steam-efficiency tradeoffs."}]}], "dataDependencies": [{"assetId": "control-command", "moduleIds": ["module-boiler-reliability-model"], "role": "query", "description": "Queries Control Command to support search, analytics, or decision flows."}, {"assetId": "water-asset-register", "moduleIds": ["module-boiler-reliability-model"], "role": "read", "description": "Reads Water Asset Register to support domain workflows."}], "brickDependencies": [{"targetBrickId": "prog", "moduleId": "module-program-template-api", "sourceModuleId": "module-boiler-reliability-model", "type": "composition", "description": "Uses standard boiler-program templates and guardrails."}, {"targetBrickId": "chem", "moduleId": "module-recommendation-api", "sourceModuleId": "module-boiler-reliability-model", "type": "composition", "description": "Uses the chemistry engine to drive boiler-specific guidance."}, {"targetBrickId": "corr", "moduleId": "module-asset-risk-api", "sourceModuleId": "module-boiler-reliability-model", "type": "composition", "description": "Uses scale and corrosion risk in boiler optimization."}, {"targetBrickId": "dose", "moduleId": "module-control-action-workflow", "sourceModuleId": "module-boiler-reliability-model", "type": "composition", "description": "Uses dosing control to hold boiler targets."}, {"targetBrickId": "ener", "moduleId": "module-efficiency-optimization-api", "sourceModuleId": "module-boiler-reliability-model", "type": "composition", "description": "Uses steam and blowdown efficiency insights in boiler operating choices."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "loop_specific_performance_programs"}, {"id": "proc", "name": "Process Water and Pretreatment Control", "type": "full-stack", "status": "sustaining", "description": "Manages connected performance and treatment control for pretreatment, filtration, and process-water quality loops.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-pretreatment-operations-workspace", "name": "Pretreatment Operations Workspace", "type": "web-component", "description": "Workspace for process-water and pretreatment performance management.", "dependencies": {"modules": [{"moduleId": "module-pretreatment-program-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-pretreatment-program-model", "name": "Pretreatment Program Model", "type": "service", "description": "Defines operating and water-quality targets for pretreatment and process loops."}]}], "dataDependencies": [{"assetId": "control-command", "moduleIds": ["module-pretreatment-program-model"], "role": "query", "description": "Queries Control Command to support search, analytics, or decision flows."}, {"assetId": "treatment-program", "moduleIds": ["module-pretreatment-program-model"], "role": "read", "description": "Reads Treatment Program to support domain workflows."}], "brickDependencies": [{"targetBrickId": "prog", "moduleId": "module-program-template-api", "sourceModuleId": "module-pretreatment-program-model", "type": "composition", "description": "Uses standard pretreatment and process-water program defaults."}, {"targetBrickId": "chem", "moduleId": "module-recommendation-api", "sourceModuleId": "module-pretreatment-program-model", "type": "composition", "description": "Uses the chemistry engine for pretreatment and process-water optimization."}, {"targetBrickId": "hist", "moduleId": "module-data-quality-reconciliation-api", "sourceModuleId": "module-pretreatment-program-model", "type": "composition", "description": "Uses historian reconciliation to stabilize process-water interpretations."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "loop_specific_performance_programs"}, {"id": "effl", "name": "Effluent Treatment Optimization", "type": "full-stack", "status": "invest", "description": "Provides wastewater-treatment performance monitoring, process-risk detection, and issue guidance for discharge control.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-wastewater-control-dashboard", "name": "Wastewater Control Dashboard", "type": "web-component", "description": "Operational view of wastewater performance and discharge risk.", "dependencies": {"modules": [{"moduleId": "module-effluent-process-risk-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-effluent-process-risk-model", "name": "Effluent Process Risk Model", "type": "service", "description": "Estimates treatment stress and compliance risk from live process signals."}]}], "dataDependencies": [{"assetId": "compliance-record", "moduleIds": ["module-effluent-process-risk-model"], "role": "write", "description": "Writes wastewater operating evidence and compliance context."}], "brickDependencies": [{"targetBrickId": "prog", "moduleId": "module-program-template-api", "sourceModuleId": "module-effluent-process-risk-model", "type": "composition", "description": "Uses standard wastewater operating templates and thresholds."}, {"targetBrickId": "sens", "moduleId": "module-telemetry-ingestion-api", "sourceModuleId": "module-effluent-process-risk-model", "type": "data", "description": "Uses live wastewater process signals."}, {"targetBrickId": "labi", "moduleId": "module-lab-result-import-api", "sourceModuleId": "module-effluent-process-risk-model", "type": "data", "description": "Uses sample and lab context to interpret wastewater risk."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "loop_specific_performance_programs"}, {"id": "reus", "name": "Water Reuse and Circularity Control", "type": "service", "status": "invest", "description": "Tracks treated-water quality, reuse readiness, and circular-water operating rules for approved reuse flows.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-reuse-opportunity-dashboard", "name": "Reuse Opportunity Dashboard", "type": "web-component", "description": "View of reuse readiness, quality checks, and recovered-water value.", "dependencies": {"modules": [{"moduleId": "module-reuse-readiness-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-reuse-readiness-model", "name": "Reuse Readiness Model", "type": "service", "description": "Scores treated-water streams for candidate reuse paths."}]}], "dataDependencies": [{"assetId": "water-flow-record", "moduleIds": ["module-reuse-readiness-model"], "role": "read", "description": "Reads Water Flow Record to support domain workflows."}, {"assetId": "control-command", "moduleIds": ["module-reuse-readiness-model"], "role": "query", "description": "Queries Control Command to support search, analytics, or decision flows."}], "brickDependencies": [{"targetBrickId": "effl", "moduleId": "module-wastewater-control-dashboard", "sourceModuleId": "module-reuse-opportunity-dashboard", "type": "composition", "description": "Builds on stable wastewater control and quality evidence."}, {"targetBrickId": "flow", "moduleId": "module-leak-and-flow-dashboard", "sourceModuleId": "module-reuse-opportunity-dashboard", "type": "composition", "description": "Uses freshwater demand and treated-water availability to find reuse opportunities."}, {"targetBrickId": "ener", "moduleId": "module-efficiency-optimization-api", "sourceModuleId": "module-reuse-readiness-model", "type": "composition", "description": "Uses water-energy tradeoff insights when prioritizing reuse paths."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "treatment_automation_and_optimization", "group": "loop_specific_performance_programs"}, {"id": "anal", "name": "Water Analytics and Benchmarking", "type": "full-stack", "status": "invest", "description": "Provides enterprise, site, and asset-level benchmark views for water, uptime, chemistry, and response performance.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-enterprise-water-dashboard", "name": "Enterprise Water Dashboard", "type": "web-component", "description": "Dashboard for benchmarking sites and identifying outliers.", "dependencies": {"modules": [{"moduleId": "module-benchmarking-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-benchmarking-model", "name": "Benchmarking Model", "type": "service", "description": "Normalizes performance across sites, loops, and customer portfolios."}]}], "dataDependencies": [{"assetId": "water-asset-register", "moduleIds": ["module-benchmarking-model"], "role": "read", "description": "Reads Water Asset Register to support domain workflows."}, {"assetId": "site-profile", "moduleIds": ["module-benchmarking-model"], "role": "read", "description": "Reads Site Profile to support domain workflows."}], "brickDependencies": [{"targetBrickId": "flow", "moduleId": "module-leak-and-flow-dashboard", "sourceModuleId": "module-enterprise-water-dashboard", "type": "data", "description": "Uses water-balance outcomes in benchmarking."}, {"targetBrickId": "alrm", "moduleId": "module-incident-event-stream", "sourceModuleId": "module-benchmarking-model", "type": "data", "description": "Uses alarm and response data for operating comparisons."}, {"targetBrickId": "hist", "moduleId": "module-data-quality-reconciliation-api", "sourceModuleId": "module-benchmarking-model", "type": "data", "description": "Uses reconciled plant history to improve benchmark trust."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "analytics_and_governance"}, {"id": "eroi", "name": "Verified Savings and Project ROI Tracker", "type": "service", "status": "invest", "description": "Tracks value projects, baselines, assumptions, and verified customer outcomes for expansion and renewal decisions.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-value-review-workspace", "name": "Value Review Workspace", "type": "web-component", "description": "Workspace for project ROI, savings proof, and customer-value reviews.", "dependencies": {"modules": [{"moduleId": "module-value-baseline-and-proof-model", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-value-baseline-and-proof-model", "name": "Value Baseline and Proof Model", "type": "service", "description": "Stores and validates project baselines, assumptions, and verified outcomes."}]}], "dataDependencies": [{"assetId": "savings-project", "moduleIds": ["module-value-baseline-and-proof-model"], "role": "own", "description": "Owns value projects and verified savings records."}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-enterprise-water-dashboard", "sourceModuleId": "module-value-review-workspace", "type": "data", "description": "Uses site and enterprise performance data to verify project value."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "analytics_and_governance"}, {"id": "comp", "name": "Compliance Evidence and Reporting", "type": "service", "status": "invest", "description": "Builds the audit-ready evidence pack for wastewater, treatment, alarms, and corrective action histories.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-compliance-reporting-api", "name": "Compliance Reporting API", "type": "api", "description": "API and export surface for compliance reporting and evidence retrieval.", "dependencies": {"modules": [{"moduleId": "module-compliance-record-builder", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-compliance-record-builder", "name": "Compliance Record Builder", "type": "service", "description": "Packages operating evidence, samples, and action history for reporting and inspection."}]}], "dataDependencies": [{"assetId": "compliance-record", "moduleIds": ["module-compliance-record-builder"], "role": "own", "description": "Owns the compliance evidence record."}], "brickDependencies": [{"targetBrickId": "effl", "moduleId": "module-wastewater-control-dashboard", "sourceModuleId": "module-compliance-record-builder", "type": "data", "description": "Uses wastewater performance and issue records."}, {"targetBrickId": "work", "moduleId": "module-work-order-workflow", "sourceModuleId": "module-compliance-record-builder", "type": "data", "description": "Uses corrective action and service closure data."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "analytics_and_governance"}, {"id": "samp", "name": "Sampling Schedule and Chain of Custody", "type": "service", "status": "sustaining", "description": "Plans, tracks, and documents sampling schedules, collection events, and custody records for wastewater and treated-water workflows.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-sampling-workflow", "name": "Sampling Workflow", "type": "api", "description": "Workflow for scheduling, collecting, and confirming samples.", "dependencies": {"modules": [{"moduleId": "module-sampling-calendar-and-custody-tracker", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-sampling-calendar-and-custody-tracker", "name": "Sampling Calendar and Custody Tracker", "type": "service", "description": "Manages sample schedules, collection events, and custody handoffs."}]}], "dataDependencies": [{"assetId": "water-flow-record", "moduleIds": ["module-sampling-calendar-and-custody-tracker"], "role": "read", "description": "Reads Water Flow Record to support domain workflows."}, {"assetId": "work-order", "moduleIds": ["module-sampling-calendar-and-custody-tracker"], "role": "read", "description": "Reads Work Order to support domain workflows."}], "brickDependencies": [{"targetBrickId": "labi", "moduleId": "module-lab-result-import-api", "sourceModuleId": "module-sampling-workflow", "type": "data", "description": "Uses sample results and collection context."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "analytics_and_governance"}, {"id": "perm", "name": "Permit Calendar and Obligation Tracking", "type": "service", "status": "sustaining", "description": "Tracks permit thresholds, recurring obligations, reporting deadlines, and site-specific compliance calendars.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-permit-obligation-api", "name": "Permit Obligation API", "type": "api", "description": "API for retrieving permit and reporting obligations by site.", "dependencies": {"modules": [{"moduleId": "module-permit-obligation-registry", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-permit-obligation-registry", "name": "Permit Obligation Registry", "type": "service", "description": "Stores permit clauses, reporting duties, and deadline logic by site."}]}], "dataDependencies": [{"assetId": "site-profile", "moduleIds": ["module-permit-obligation-registry"], "role": "read", "description": "Reads Site Profile to support domain workflows."}, {"assetId": "compliance-record", "moduleIds": ["module-permit-obligation-registry"], "role": "read", "description": "Reads Compliance Record to support domain workflows."}], "brickDependencies": [{"targetBrickId": "comp", "moduleId": "module-compliance-reporting-api", "sourceModuleId": "module-permit-obligation-api", "type": "composition", "description": "Uses compliance evidence to satisfy reporting and obligation workflows."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "analytics_and_governance"}, {"id": "case", "name": "Expert Recommendation and Case Workbench", "type": "full-stack", "status": "sustaining", "description": "Coordinates remote expert cases, recommendations, action notes, and customer-facing issue workflows.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-case-workspace", "name": "Case Workspace", "type": "web-component", "description": "Shared workspace for issue review, recommendation tracking, and collaboration.", "dependencies": {"modules": [{"moduleId": "module-case-collaboration-layer", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-case-collaboration-layer", "name": "Case Collaboration Layer", "type": "service", "description": "Supports expert issue review, recommendation authoring, and shared issue context."}]}], "dataDependencies": [{"assetId": "service-case-record", "moduleIds": ["module-case-collaboration-layer"], "role": "own", "description": "Owns expert case and recommendation records."}], "brickDependencies": [{"targetBrickId": "alrm", "moduleId": "module-incident-event-stream", "sourceModuleId": "module-case-collaboration-layer", "type": "event", "description": "Turns important alarms into coordinated issue workflows."}, {"targetBrickId": "asst", "moduleId": "module-asset-and-loop-api", "sourceModuleId": "module-case-collaboration-layer", "type": "data", "description": "Uses site and asset context to keep the case grounded in the right operating system."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}, {"id": "work", "name": "Field Service Work Management", "type": "service", "status": "sustaining", "description": "Plans, assigns, tracks, and closes field work and on-site intervention related to treatment, monitoring, and corrective action.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-work-order-workflow", "name": "Work Order Workflow", "type": "api", "description": "Workflow for field work planning, execution, and closure.", "dependencies": {"modules": [{"moduleId": "module-visit-and-work-order-scheduler", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-visit-and-work-order-scheduler", "name": "Visit and Work Order Scheduler", "type": "service", "description": "Creates and manages service work orders and field execution plans."}]}], "dataDependencies": [{"assetId": "work-order", "moduleIds": ["module-visit-and-work-order-scheduler"], "role": "own", "description": "Owns work-order and field-visit records."}], "brickDependencies": [{"targetBrickId": "case", "moduleId": "module-case-workspace", "sourceModuleId": "module-visit-and-work-order-scheduler", "type": "workflow", "description": "Turns case recommendations into accountable work."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}, {"id": "ntfy", "name": "Customer Notification and Escalation Hub", "type": "service", "status": "sustaining", "description": "Manages outbound notifications, escalation messages, and audience-specific communication around alerts, visits, and compliance events.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-notification-delivery-api", "name": "Notification Delivery API", "type": "api", "description": "API for sending alert, visit, and reporting notifications.", "dependencies": {"modules": [{"moduleId": "module-notification-policy-layer", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-notification-policy-layer", "name": "Notification Policy Layer", "type": "service", "description": "Determines who gets notified, when, and through which channel."}]}], "dataDependencies": [{"assetId": "alarm-event", "moduleIds": ["module-notification-policy-layer"], "role": "query", "description": "Queries Alarm Event to support search, analytics, or decision flows."}, {"assetId": "compliance-record", "moduleIds": ["module-notification-policy-layer"], "role": "read", "description": "Reads Compliance Record to support domain workflows."}], "brickDependencies": [{"targetBrickId": "alrm", "moduleId": "module-incident-event-stream", "sourceModuleId": "module-notification-policy-layer", "type": "event", "description": "Uses alarm and incident events to trigger communications."}, {"targetBrickId": "work", "moduleId": "module-work-order-workflow", "sourceModuleId": "module-notification-policy-layer", "type": "workflow", "description": "Uses work-order state to notify customers about visit status and closure."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}, {"id": "inte", "name": "Plant and Enterprise Integration Hub", "type": "integration", "status": "invest", "description": "Connects the water platform to plant historians, CMMS, ERP, sustainability reporting, and customer enterprise systems.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-integration-connector-api", "name": "Integration Connector API", "type": "api", "description": "API for enterprise integration setup and data exchange.", "dependencies": {"modules": [{"moduleId": "module-enterprise-connector-framework", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-enterprise-connector-framework", "name": "Enterprise Connector Framework", "type": "integration", "description": "Standard connector framework for inbound and outbound enterprise integrations."}]}], "dataDependencies": [{"assetId": "integration-mapping", "moduleIds": ["module-integration-connector-api"], "role": "write", "description": "Maintains integration configuration and endpoint mappings."}], "brickDependencies": [], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}, {"id": "port", "name": "Customer Operations Portal", "type": "full-stack", "status": "invest", "description": "Provides the shared customer-facing operating surface for enterprise, plant, compliance, and value views.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-portal-ui", "name": "Portal UI", "type": "web-component", "description": "Browser experience for customer operations, value, and compliance workflows."}, {"id": "module-customer-experience-layer", "name": "Customer Experience Layer", "type": "web-component", "description": "Presents dashboards, reports, cases, and value reviews to customer users."}]}], "dataDependencies": [{"assetId": "site-profile", "moduleIds": ["module-portal-ui", "module-customer-experience-layer"], "role": "own", "description": "Owns the customer site profile surfaced in the portal."}], "brickDependencies": [{"targetBrickId": "anal", "moduleId": "module-enterprise-water-dashboard", "sourceModuleId": "module-portal-ui", "type": "composition", "description": "Uses analytics and benchmarking to populate operating views."}, {"targetBrickId": "case", "moduleId": "module-case-workspace", "sourceModuleId": "module-portal-ui", "type": "composition", "description": "Uses case context to expose current issues and recommendations."}, {"targetBrickId": "eroi", "moduleId": "module-value-review-workspace", "sourceModuleId": "module-portal-ui", "type": "composition", "description": "Uses verified value records in executive and account reviews."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}, {"id": "mobi", "name": "Mobile Operator and Service App", "type": "full-stack", "status": "invest", "description": "Provides the mobile surface for on-site operators and field specialists to review alarms, record actions, and confirm work completion.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-mobile-app", "name": "Mobile App", "type": "mobile-component", "description": "Mobile interface for operators and service specialists."}, {"id": "module-mobile-response-layer", "name": "Mobile Response Layer", "type": "mobile-component", "description": "Delivers on-site alarm review, work capture, and action confirmation workflows."}]}], "dataDependencies": [{"assetId": "service-case-record", "moduleIds": ["module-mobile-app", "module-mobile-response-layer"], "role": "read", "description": "Reads Service Case Record to support domain workflows."}, {"assetId": "site-profile", "moduleIds": ["module-mobile-app", "module-mobile-response-layer"], "role": "read", "description": "Reads Site Profile to support domain workflows."}], "brickDependencies": [{"targetBrickId": "alrm", "moduleId": "module-incident-event-stream", "sourceModuleId": "module-mobile-app", "type": "composition", "description": "Uses alarms and issue status in the field workflow."}, {"targetBrickId": "work", "moduleId": "module-work-order-workflow", "sourceModuleId": "module-mobile-app", "type": "composition", "description": "Uses work-order context for field execution."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}, {"id": "know", "name": "Operating Knowledge and Playbook Library", "type": "development", "status": "sustaining", "description": "Stores operating playbooks, issue-response guidance, and reusable expert knowledge by loop type and risk pattern.", "links": [], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-playbook-search-and-retrieval-api", "name": "Playbook Search and Retrieval API", "type": "api", "description": "API for retrieving the right operating playbook in workflow context.", "dependencies": {"modules": [{"moduleId": "module-playbook-and-pattern-library", "type": "delegates", "description": "Interface module delegates request handling to the backing service layer."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-playbook-and-pattern-library", "name": "Playbook and Pattern Library", "type": "service", "description": "Stores reusable response playbooks and operating guidance."}]}], "dataDependencies": [{"assetId": "chemistry-reading", "moduleIds": ["module-playbook-and-pattern-library"], "role": "read", "description": "Reads Chemistry Reading to support domain workflows."}, {"assetId": "savings-project", "moduleIds": ["module-playbook-and-pattern-library"], "role": "read", "description": "Reads Savings Project to support domain workflows."}], "brickDependencies": [{"targetBrickId": "case", "moduleId": "module-case-workspace", "sourceModuleId": "module-playbook-and-pattern-library", "type": "workflow", "description": "Uses resolved case history to improve playbooks over time."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}, {"id": "roll", "name": "Enterprise Rollout and Opportunity Planning", "type": "service", "status": "sustaining", "description": "Plans the next wave of sites, modules, and value opportunities across enterprise water accounts.", "links": [], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-rollout-planning-workspace", "name": "Rollout Planning Workspace", "type": "web-component", "description": "Workspace for expansion planning, site readiness, and opportunity tracking.", "dependencies": {"modules": [{"moduleId": "module-rollout-wave-planner", "type": "uses", "description": "UI module calls the brick API or backing service for this experience."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-rollout-wave-planner", "name": "Rollout Wave Planner", "type": "service", "description": "Builds the prioritized expansion and rollout plan by account and site."}]}], "dataDependencies": [{"assetId": "site-profile", "moduleIds": ["module-rollout-wave-planner"], "role": "read", "description": "Reads Site Profile to support domain workflows."}, {"assetId": "water-asset-register", "moduleIds": ["module-rollout-wave-planner"], "role": "read", "description": "Reads Water Asset Register to support domain workflows."}], "brickDependencies": [{"targetBrickId": "eroi", "moduleId": "module-value-review-workspace", "sourceModuleId": "module-rollout-planning-workspace", "type": "data", "description": "Uses verified value records to prioritize the next wave."}, {"targetBrickId": "anal", "moduleId": "module-enterprise-water-dashboard", "sourceModuleId": "module-rollout-planning-workspace", "type": "data", "description": "Uses benchmark and outlier data to identify rollout opportunities."}], "externalSystemsThisBrickDependsOn": [], "externalSystemsDependingOnThisBrick": [], "domain": "enterprise_workflows_and_value_management", "group": "customer_and_service_workflows"}];
+    const allAssets = [{"id": "site-profile", "name": "Site Profile"}, {"id": "savings-project", "name": "Savings Project"}, {"id": "work-order", "name": "Work Order"}, {"id": "service-case-record", "name": "Service Case Record"}, {"id": "alarm-event", "name": "Alarm Event"}, {"id": "sensor-stream", "name": "Sensor Stream"}, {"id": "compliance-record", "name": "Compliance Record"}, {"id": "control-command", "name": "Control Command"}, {"id": "treatment-program", "name": "Treatment Program"}, {"id": "water-asset-register", "name": "Water Asset Register"}, {"id": "integration-mapping", "name": "Integration Mapping"}, {"id": "water-flow-record", "name": "Water Flow Record"}, {"id": "chemistry-reading", "name": "Chemistry Reading"}];
+    const currentAsset = {"id": "alarm-event", "name": "Alarm Event", "kind": "event", "description": "Alarm, severity, acknowledgement, escalation, and closure record for plant water issues.", "classification": "internal", "personalDataLevel": "none", "dataSubjects": [], "legalTags": [], "securityCriticality": "critical", "status": "active", "systemOfRecordBrickId": "alrm", "ownerTeamId": "iwi-service-operations", "stewardTeamIds": [], "derivedFromAssetIds": ["sensor-stream", "chemistry-reading"], "stores": [{"storeId": "alarm-event-stream", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "alarm-event api", "description": "Access interface for Alarm Event."}], "governance": {"retention": "active lifecycle plus audit window", "residency": "regional", "sharingPolicy": "internal and approved customer users only"}, "rootGroup": "Operational Workflow and Event Data", "group": "Events and Logs"};
+    const allStores = [{"id": "site-profile-db", "name": "Site Profile DB", "kind": "operational-database", "description": "Primary operational database for Site Profile.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "asset-registry-db", "name": "Asset Registry DB", "kind": "operational-database", "description": "Primary operational database for Water Asset Register.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "sensor-stream-bus", "name": "Sensor Stream Bus", "kind": "event-topic", "description": "Primary event topic for Sensor Stream.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "water-flow-lake", "name": "Water Flow Lake", "kind": "data-lake", "description": "Primary analytical store for Water Flow Record.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "chemistry-reading-db", "name": "Chemistry Reading DB", "kind": "operational-database", "description": "Primary operational database for Chemistry Reading.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "treatment-program-db", "name": "Treatment Program DB", "kind": "operational-database", "description": "Primary operational database for Treatment Program.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "control-command-log", "name": "Control Command Log", "kind": "event-topic", "description": "Primary event log for Control Command.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "alarm-event-stream", "name": "Alarm Event Stream", "kind": "event-topic", "description": "Primary event topic for Alarm Event.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "service-case-db", "name": "Service Case DB", "kind": "operational-database", "description": "Primary operational database for Service Case Record.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "work-order-db", "name": "Work Order DB", "kind": "operational-database", "description": "Primary operational database for Work Order.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "savings-project-db", "name": "Savings Project DB", "kind": "operational-database", "description": "Primary operational database for Savings Project.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "compliance-record-db", "name": "Compliance Record DB", "kind": "operational-database", "description": "Primary operational database for Compliance Record.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "integration-mapping-db", "name": "Integration Mapping DB", "kind": "operational-database", "description": "Primary operational database for Integration Mapping.", "technology": "generated-starter", "status": "active", "classification": "internal"}];
+    const producingBricks = [{"id": "alrm", "name": "Alerting and Incident Orchestration", "role": "own", "description": "Owns alarm and incident-lifecycle records."}];
+    const consumingBricks = [{"id": "ntfy", "name": "Customer Notification and Escalation Hub", "role": "query", "description": "Queries Alarm Event to support search, analytics, or decision flows."}];
+    const ownerTeam = {"teamId": "iwi-service-operations", "teamName": "Service Operations", "teamType": "platform", "groupName": "Customer Value and Service Operations"};
+    const stewardTeams = [];
+
+    function escapeHtml(value) {
+        return (value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function titleCase(value) {
+        return String(value || '')
+            .split('-')
+            .filter(Boolean)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
+    }
+
+    function storeById(storeId) {
+        return allStores.find(item => item.id === storeId) || { id: storeId, name: storeId };
+    }
+
+    function assetMetaPath(asset) {
+        const parts = [];
+        if (asset.rootGroup) {
+            parts.push(asset.rootGroup);
+        }
+        if (asset.group && asset.group !== asset.rootGroup) {
+            parts.push(asset.group);
+        }
+        if (!parts.length) {
+            parts.push('Data Asset');
+        }
+        return parts.join(' / ');
+    }
+</script>
+
+<div id="Header"></div>
+
+<div class="page" id="MainContent"></div>
+
+<script>
+    let headerHtml = '<div class="nav-strip">';
+    allAssets.forEach(item => {
+        headerHtml += '<a class="nav-link" href="' + escapeHtml(item.id) + '.html" title="' + escapeHtml(item.name || item.id) + '">';
+        headerHtml += '<img src="../icons/data.png" class="' + (item.id === currentAsset.id ? 'tab-image-selected' : 'tab-image') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+        headerHtml += '</a>';
+    });
+    headerHtml += '</div>';
+
+    headerHtml += '<div class="page">';
+    headerHtml += '<div class="header">';
+    headerHtml += '<img class="header-icon" src="../icons/data.png" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+    headerHtml += '<div>';
+    headerHtml += '<div class="header-meta">';
+    headerHtml += '<div class="page-type-badge">Data Asset</div>';
+    headerHtml += escapeHtml(assetMetaPath(currentAsset)) + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentAsset.id || '').toUpperCase()) + '</span></div>';
+    headerHtml += '<div class="header-title">' + escapeHtml(currentAsset.name || currentAsset.id) + '</div>';
+    headerHtml += '<div class="header-copy">' + escapeHtml(currentAsset.description || '') + '</div>';
+
+    headerHtml += '<div class="badge-row">';
+    if (currentAsset.kind) {
+        headerHtml += '<span class="badge">' + escapeHtml(titleCase(currentAsset.kind)) + '</span>';
+    }
+    const classification = String(currentAsset.classification || '').toLowerCase();
+    if (classification) {
+        headerHtml += '<span class="badge ' + (classification === 'restricted' ? 'badge-restricted' : '') + '">' + escapeHtml(titleCase(classification)) + '</span>';
+    }
+    const pii = String(currentAsset.personalDataLevel || 'none').toLowerCase();
+    if (pii && pii !== 'none') {
+        headerHtml += '<span class="badge badge-pii">' + escapeHtml(titleCase(pii)) + ' Data</span>';
+    }
+    const criticality = String(currentAsset.securityCriticality || '').toLowerCase();
+    if (criticality) {
+        const critClass = criticality === 'critical' ? 'badge-critical' : (criticality === 'high' ? 'badge-high' : '');
+        headerHtml += '<span class="badge ' + critClass + '">' + escapeHtml(titleCase(criticality)) + ' Criticality</span>';
+    }
+    (currentAsset.legalTags || []).forEach(tag => {
+        headerHtml += '<span class="badge">' + escapeHtml(String(tag).toUpperCase()) + '</span>';
+    });
+    headerHtml += '</div>';
+
+    headerHtml += '</div></div></div>';
+    document.getElementById('Header').innerHTML = headerHtml;
+
+    function renderMetaItem(label, value) {
+        if (!value) {
+            return '';
+        }
+        return '<div class="meta-item"><div class="meta-label">' + escapeHtml(label) + '</div><div class="meta-value">' + escapeHtml(value) + '</div></div>';
+    }
+
+    function renderBrickPills(items, emptyLabel) {
+        if (!items.length) {
+            return '<div class="muted">' + escapeHtml(emptyLabel) + '</div>';
+        }
+        let html = '<div class="card-grid">';
+        items.forEach(brick => {
+            html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../landing_pages/' + escapeHtml(brick.id) + '.html">';
+            html += '<div class="card-meta">' + escapeHtml(titleCase(brick.role || '') || 'Brick') + '</div>';
+            html += '<div class="card-header">';
+            html += '<img class="card-icon" src="../icons/' + escapeHtml(brick.id) + '.png" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+            html += '<div class="card-title">' + escapeHtml(brick.name || brick.id) + '</div>';
+            html += '</div>';
+            if (brick.description) {
+                html += '<div class="card-copy">' + escapeHtml(brick.description) + '</div>';
+            }
+            html += '</a>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderMain() {
+        let html = '';
+
+        // Overview / governance
+        html += '<div class="group"><div class="section-title">Overview & Governance</div>';
+        html += '<div class="meta-grid">';
+        html += renderMetaItem('Kind', titleCase(currentAsset.kind || ''));
+        html += renderMetaItem('Status', titleCase(currentAsset.status || ''));
+        html += renderMetaItem('Classification', titleCase(currentAsset.classification || ''));
+        html += renderMetaItem('Personal Data', titleCase(currentAsset.personalDataLevel || ''));
+        html += renderMetaItem('Security Criticality', titleCase(currentAsset.securityCriticality || ''));
+        html += renderMetaItem('Data Subjects', (currentAsset.dataSubjects || []).map(titleCase).join(', '));
+        html += renderMetaItem('Legal Tags', (currentAsset.legalTags || []).map(tag => String(tag).toUpperCase()).join(', '));
+        html += renderMetaItem('Access Scope', currentAsset.accessScope || '');
+        html += renderMetaItem('System Of Record Brick', currentAsset.systemOfRecordBrickId || '');
+        const gov = currentAsset.governance || {};
+        html += renderMetaItem('Retention', gov.retention || '');
+        html += renderMetaItem('Residency', (gov.residency || '').toUpperCase());
+        html += renderMetaItem('Sharing Policy', gov.sharingPolicy || '');
+        html += '</div>';
+        if (currentAsset.businessMeaning && currentAsset.businessMeaning !== currentAsset.description) {
+            html += '<div class="card-copy" style="margin-top:14px;"><strong>Business meaning:</strong> ' + escapeHtml(currentAsset.businessMeaning) + '</div>';
+        }
+        html += '</div>';
+
+        // Stores
+        html += '<div class="group"><div class="section-title">Stores</div>';
+        const storeLinks = currentAsset.stores || [];
+        if (!storeLinks.length) {
+            html += '<div class="muted">No stores linked to this asset.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            storeLinks.forEach(link => {
+                const store = storeById(link.storeId);
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(titleCase(link.role || 'store')) + '</div>';
+                html += '<div class="card-title">' + escapeHtml(store.name || link.storeId) + '</div>';
+                const storeMeta = [store.kind ? titleCase(store.kind) : '', store.technology || ''].filter(Boolean).join(' | ');
+                if (storeMeta) {
+                    html += '<div class="muted">' + escapeHtml(storeMeta) + '</div>';
+                }
+                if (store.description) {
+                    html += '<div class="card-copy">' + escapeHtml(store.description) + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Producing bricks
+        html += '<div class="group"><div class="section-title">Producing Bricks</div>';
+        html += renderBrickPills(producingBricks, 'No bricks own, write, or publish this asset.');
+        html += '</div>';
+
+        // Consuming bricks
+        html += '<div class="group"><div class="section-title">Consuming Bricks</div>';
+        html += renderBrickPills(consumingBricks, 'No bricks read or query this asset.');
+        html += '</div>';
+
+        // Interfaces
+        html += '<div class="group"><div class="section-title">Interfaces</div>';
+        const interfaces = currentAsset.interfaces || [];
+        if (!interfaces.length) {
+            html += '<div class="muted">No access interfaces listed.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            interfaces.forEach(iface => {
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(titleCase(iface.type || 'interface')) + '</div>';
+                html += '<div class="card-title">' + escapeHtml(iface.name || iface.type || 'Interface') + '</div>';
+                if (iface.description) {
+                    html += '<div class="card-copy">' + escapeHtml(iface.description) + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Ownership
+        html += '<div class="group"><div class="section-title">Ownership</div>';
+        if (!ownerTeam && !stewardTeams.length) {
+            html += '<div class="muted">No owning or steward teams listed for this asset.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            if (ownerTeam) {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHtml(ownerTeam.teamId) + '.html">';
+                html += '<div class="card-meta">Owner Team</div>';
+                html += '<div class="card-title">' + escapeHtml(ownerTeam.teamName || ownerTeam.teamId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(ownerTeam.groupName || '') + '</div>';
+                html += '</a>';
+            }
+            stewardTeams.forEach(team => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHtml(team.teamId) + '.html">';
+                html += '<div class="card-meta">Steward Team</div>';
+                html += '<div class="card-title">' + escapeHtml(team.teamName || team.teamId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(team.groupName || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        // Lineage
+        const derivedIds = currentAsset.derivedFromAssetIds || [];
+        if (derivedIds.length) {
+            html += '<div class="group"><div class="section-title">Derived From</div>';
+            html += '<div class="card-grid">';
+            derivedIds.forEach(id => {
+                const source = allAssets.find(item => item.id === id) || { id: id, name: id };
+                html += '<a class="card" href="' + escapeHtml(id) + '.html">';
+                html += '<div class="card-meta">Source Asset</div>';
+                html += '<div class="card-title">' + escapeHtml(source.name || id) + '</div>';
+                if (source.description) {
+                    html += '<div class="card-copy">' + escapeHtml(source.description) + '</div>';
+                }
+                html += '</a>';
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+
+        document.getElementById('MainContent').innerHTML = html;
+    }
+
+    renderMain();
+</script>
+
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "Industrial Water Intelligence Home"
+    },
+    {
+      "link": "../index.html#data",
+      "label": "Data Assets"
+    },
+    {
+      "label": "Alarm Event"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+
+</body>
+</html>

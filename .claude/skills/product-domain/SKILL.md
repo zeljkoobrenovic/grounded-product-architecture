@@ -50,6 +50,4 @@ site under `docs/`. No framework, no build system. Edit JSON in `_config/**`; tr
 ## Scope note
 
 The live artifact set is: start, customers (+insights), products/deployment,
-product-bricks (+streams, +evidence), data-assets, teams, competition. The
-`objectives/`, `delivery/releases`, `initiatives`, and `discoveries` artifacts are
-being removed on this branch — do not author them unless explicitly asked.
+product-bricks (+streams, +evidence), data-assets, teams, and competition.

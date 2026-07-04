@@ -31,7 +31,7 @@ All generated HTML files are intended to be self-contained and easy to publish a
 ## Repository Structure
 
 - `_config/`
-  - Source-of-truth data for product domains, product bricks, customers, delivery/product definitions, targets, documents, and roadmap data.
+  - Source-of-truth data for product domains, product bricks, customers, product deployments, teams, data assets, evidence metadata, and supporting documents.
 - `_templates/`
   - HTML templates used to generate the static site.
 - `_wiring/`
@@ -59,16 +59,12 @@ Each domain typically contains:
   - Customer groups, personas, JTBD, KPI pyramids, and product strategy horizons (with `insights.json` alongside).
 - `product-deployments/products.json` and `product-deployments/deployment.json`
   - Products and the delivery/deployment model.
-- `delivery/releases.json`
-  - Release targets and planning overlays.
 - `product-bricks/product-bricks.json`
   - The catalog of product bricks, the reusable implementation-facing building blocks.
 - `product-bricks/product-stream.json`
   - Product streams composed from one or more product bricks and/or external systems.
 - `product-bricks/bricks-evidence.json` and `product-bricks/streams-evidence.json`
   - Evidence references for bricks and streams.
-- `objectives/{current,next,ktlo,archived}/{objectives,initiatives,discoveries}.json`
-  - Objectives model, sliced by time/state.
 - `teams/teams.json`
   - Team structure.
 - `business/competition.json`
@@ -95,8 +91,6 @@ Generation scripts live under `_wiring/product-domains/` and run in this order (
 - `generate-customers-docs.py`
 - `generate-products-docs.py`
 - `generate-product-bricks-docs.py`
-- `generate-delivery-docs.py`
-- `generate-objectives-docs.py`
 - `generate-teams-docs.py`
 - `generate-competition-docs.py`
 
@@ -106,7 +100,7 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 
 `_data/evidence-db/` is a self-contained pipeline, separate from the product-domain generators:
 
-- Per-source scripts under `_data/evidence-db/scripts/` (aws, gcp, workday, source-code, domain-objectives) write `_data/evidence-db/database/evidence-files/<source>.json`.
+- Per-source scripts under `_data/evidence-db/scripts/` write `_data/evidence-db/database/evidence-files/<source>.json`.
 - `database/aggregate-evidence.py` merges those into `database/all-evidence.json` — a list of `{group, fragments}` objects; each fragment has `id`, `type`, `icon`, `title`, `description`, `facts`, `links`, `tags`.
 - `_data/evidence-db/run.sh` runs the per-source scripts, then aggregation, then the explorer generator.
 
@@ -129,7 +123,7 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 - If the user asks to change presentation or navigation, start in `_templates/**`.
 - If the user asks to regenerate the website, run the relevant Python generators from `_wiring/**`.
 - Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first. Generators `shutil.rmtree` their target docs folder before rebuilding, so never hand-edit files under `docs/product-domains/`.
-- Before regenerating, verify the current generator expects the same source file names present in the domain folder; the per-domain layout has evolved (e.g. `product-deployments/`, `delivery/releases.json`, `product-bricks/product-stream.json`) and older domains may lag.
+- Before regenerating, verify the current generator expects the same source file names present in the domain folder; the per-domain layout has evolved (e.g. `product-deployments/`, `product-bricks/product-stream.json`) and older domains may lag.
 
 ## Practical Mental Model
 

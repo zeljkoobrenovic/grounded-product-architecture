@@ -17,7 +17,7 @@ the reference domain `ride-sharing-marketplace` before editing.**
   work on it, repositories that implement it, cloud resources that run it.
 - An `evidence-id` either matches an evidence fragment id **exactly**, or — with
   `"useRegex": true` on the group — matches a **pattern**. IDs are namespaced by
-  source: `workday/…`, `aws / …`, `gcp / …`, `source-code/…`, `domain-objectives/…`.
+  source: `workday/…`, `aws / …`, `gcp / …`, `source-code/…`.
 - Don't fabricate evidence ids; use patterns that plausibly resolve against the
   evidence database. An empty/placeholder group is better than an invented exact id.
 
@@ -33,7 +33,7 @@ the reference domain `ride-sharing-marketplace` before editing.**
         "evidence-groups": [
           {
             "group-name": "Contact Persons", // seen: Contact Persons, Source Code,
-            "description": "",                //        AWS Production, GCP Production, Initiatives
+            "description": "",                //        AWS Production, GCP Production
             "useRegex": true,                 // when true, ids in this group are regex patterns
             "evidence-ids": [
               { "id": "workday/Employee 000[0-9]+", "note": "early employees" }
@@ -61,7 +61,7 @@ the reference domain `ride-sharing-marketplace` before editing.**
 ## Evidence sources (from `_data/evidence-db/`)
 
 `workday` (people), `source-code` (repos), `aws-accounts`/`aws` (AWS resources),
-`gcp-projects`/`gcp` (GCP resources), `domain-objectives`. The database is built by
+`gcp-projects`/`gcp` (GCP resources). The database is built by
 `_data/evidence-db/run.sh`, which also refreshes the evidence explorer.
 
 ## Cross-file rules to keep intact
