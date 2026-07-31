@@ -59,7 +59,7 @@ Target files (per domain):
   every metric a `unit` and avoid vanity terminals.
 - KPI **ids** must be unique within a customer (across both pyramids). Reuse KPI
   **names** consistently across customers, teams, and insights (they link by name, not
-  id) — every `northStar`/`supporting`/insight `kpis` name must exist as a node in that
+  id) — every `northStar`/`supporting` name must exist as a node in that
   customer's pyramids.
 
 ### Insights (evidence)
@@ -221,7 +221,7 @@ Every non-leaf node below has ≥2 children — mirror this fan-out (top → 2 b
       "sourceIds": ["uber-q4-2025"],        // → sources[].id
       "linkedCustomers": [
         { "customerId": "ridu", "jobIds": ["book"],
-          "kpis": ["Reliable on-time trip completion"] }  // kpis by NAME
+          "kpiIds": ["rrel"] }  // KPI pyramid node ids (never the legacy name-based `kpis`)
       ]
     }
   ]
@@ -263,7 +263,7 @@ When you add/rename a **persona id**, update references in:
 
 When you add/rename a **JTBD id**, update `linkedJobIds` in the same persona's
 journeys and `jobIds` in insights. When you change a **KPI name**, update teams'
-metrics, insights' `kpis`, and the persona's `productStrategy` northStar/supporting
+metrics and the persona's `productStrategy` northStar/supporting (insights link by `kpiIds`)
 (these link by name). When a JTBD step needs a stream that doesn't exist yet, either
 add the stream (`edit-streams`) or point at an existing brick id.
 
@@ -287,7 +287,7 @@ add the stream (`edit-streams`) or point at an existing brick id.
   child (`top → 1 branch → 1 child → 1 leaf`). Every non-leaf node needs ≥2 children.
 - Vanity terminal metrics, arbitrary precise targets, or padding leaves just to reach
   a node count.
-- `northStar`/`supporting`/insight `kpis` names that don't exist as a node in the
+- `northStar`/`supporting` names (or insight `kpiIds`) that don't exist as a node in the
   customer's pyramids; duplicate KPI ids within a customer.
 - Inventing business metrics or sources; copying identical strategy horizons across
   personas.

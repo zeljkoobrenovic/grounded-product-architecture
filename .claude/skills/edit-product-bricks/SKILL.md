@@ -57,7 +57,10 @@ right or generation/validation fails.
   }
 }
 ```
-> Use `brickTypes`/`brickStatuses` (NOT legacy `types`/`statuses`).
+> `brickTypes`/`brickStatuses`/`modulesConfig` normally come from the shared model
+> `_config/_shared/product-brick-model.json` — OMIT them in domain files unless the
+> domain genuinely diverges (a local value overrides the shared one). Never use
+> legacy `types`/`statuses`.
 > `modulesConfig.layerTypes` must cover exactly the six layers and `moduleTypes` the
 > twelve module types below, each `moduleType` with a `color`. The validator rejects
 > mismatched sets or missing colors.

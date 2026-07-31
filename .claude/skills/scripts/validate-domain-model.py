@@ -308,7 +308,14 @@ def validate_team_model(domain_dir, bricks, errors):
     if payload is None:
         return
 
-    org_design = payload.get('orgDesign', {}) if isinstance(payload, dict) else {}
+    org_design = dict(payload.get('orgDesign', {})) if isinstance(payload, dict) else {}
+    # shared enum fallback: domains may omit teamTypes/teamDependencyTypes and
+    # inherit them from _config/_shared/team-model.json
+    shared_team_model_path = domain_dir.parent.parent / '_shared' / 'team-model.json'
+    if shared_team_model_path.exists():
+        shared_team_model = json.loads(shared_team_model_path.read_text())
+        for key in ('teamTypes', 'teamDependencyTypes'):
+            org_design.setdefault(key, shared_team_model.get(key, []))
     groups = payload.get('groups', []) if isinstance(payload, dict) else []
     team_pairs = list(iter_team_groups(groups))
     teams = [team for _, team in team_pairs]
@@ -373,19 +380,23 @@ def _report_duplicates(domain_dir, label, ids, errors):
         seen.add(value)
 
 
-def _kpi_node_names(node, out):
+def _kpi_node_names(node, out, ids_out=None):
     if not isinstance(node, dict):
         return
     name = str(node.get('name', '')).strip()
     if name:
         out.add(name)
+    if ids_out is not None:
+        node_id = str(node.get('id', '')).strip()
+        if node_id:
+            ids_out.add(node_id)
     for key in ('top', 'branches', 'children'):
         child = node.get(key)
         if isinstance(child, dict):
-            _kpi_node_names(child, out)
+            _kpi_node_names(child, out, ids_out)
         elif isinstance(child, list):
             for item in child:
-                _kpi_node_names(item, out)
+                _kpi_node_names(item, out, ids_out)
 
 
 def validate_cross_references(domain_dir, bricks, errors):
@@ -454,6 +465,7 @@ def validate_cross_references(domain_dir, bricks, errors):
     customer_ids = set()
     customer_job_ids = {}
     customer_kpi_names = {}
+    customer_kpi_ids = {}
     customers_path = domain_dir / 'customers' / 'customers.json'
     if customers_path.exists():
         payload = load_json(customers_path, errors)
@@ -484,11 +496,13 @@ def validate_cross_references(domain_dir, bricks, errors):
                                     errors.append(f'{domain_dir.name}: customer {customer_id} job {job.get("id", "?")} {needed_key} references missing stream/brick {needed_id}')
                 customer_job_ids[customer_id] = job_ids
                 kpi_names = set()
+                kpi_ids = set()
                 pyramids = customer.get('kpiPyramids', {})
                 if isinstance(pyramids, dict):
                     for pyramid in pyramids.values():
-                        _kpi_node_names(pyramid, kpi_names)
+                        _kpi_node_names(pyramid, kpi_names, kpi_ids)
                 customer_kpi_names[customer_id] = kpi_names
+                customer_kpi_ids[customer_id] = kpi_ids
 
     # --- insights linkedCustomers -> customer / job / KPI-name joins ---
     insights_path = domain_dir / 'customers' / 'insights.json'
@@ -509,6 +523,10 @@ def validate_cross_references(domain_dir, bricks, errors):
                     for job_id in linked.get('jobIds', []) or []:
                         if job_id and job_id not in customer_job_ids.get(linked_id, set()):
                             errors.append(f'{domain_dir.name}: insight {item_id} references missing job {job_id} for customer {linked_id}')
+                    for kpi_id in linked.get('kpiIds', []) or []:
+                        if kpi_id and kpi_id not in customer_kpi_ids.get(linked_id, set()):
+                            errors.append(f'{domain_dir.name}: insight {item_id} references missing KPI id in {linked_id} pyramids: {kpi_id}')
+                    # legacy name-based joins (migrated repo-wide to kpiIds; kept as a guard)
                     for kpi_name in linked.get('kpis', []) or []:
                         if kpi_name and kpi_name not in customer_kpi_names.get(linked_id, set()):
                             errors.append(f'{domain_dir.name}: insight {item_id} references KPI name not in {linked_id} pyramids: {kpi_name}')

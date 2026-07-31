@@ -56,7 +56,8 @@ customers.json
   jobsToBeDone[].id ───────┬─▶ insights.json     linkedCustomers[].jobIds[]
                            └─▶ customerJourneyStories[].linkedJobIds[]
   jtbd.steps[].streamsNeeded[].id ─▶ product-stream.json  stream id (or brick id)
-  kpiPyramids ... names ───▶ teams.json metrics, insights kpis (by NAME, not id)
+  kpiPyramids ... node ids ─▶ insights.json linkedCustomers[].kpiIds[] (by ID)
+  kpiPyramids ... names ───▶ teams.json metrics, productStrategy northStar/supporting (by NAME — legacy)
 
 product-bricks.json
   brick.id ────────────────┬─▶ deployment.json     ...deployedBricks[].brickId
@@ -92,7 +93,11 @@ Module `type` must be one of:
 message-consumer, daemon, stateless-service, stateful-service, service, integration`.
 
 `metadata.modulesConfig.layerTypes` / `moduleTypes` (when present) must match these
-sets exactly, and each module type needs a `color`. Source of truth:
+sets exactly, and each module type needs a `color`. The shared defaults live in
+`_config/_shared/product-brick-model.json` (same for `brickTypes`/`brickStatuses`,
+and `teamTypes`/`teamDependencyTypes` in `team-model.json`, stream `definitions` in
+`product-stream-model.json`) — domain files only declare these blocks to override
+the shared model. Source of truth for the fixed sets:
 `_wiring/product-domains/product_bricks_support.py`.
 
 ## KPI pyramid model (fixed)
@@ -107,11 +112,14 @@ having `children[]`.
 - **Target: 4 levels** — `top → 2 branches → 2 mid metrics each → 2 leaves each`
   (1 + 2 + 4 + 8 = 15 nodes). A 3-level `top → 2 branches → 2 leaves` is acceptable only
   when diagnostics are genuinely sparse. Don't pad with vanity metrics to hit a count.
-- KPI **ids** are unique within a persona (across both pyramids). KPI **names** link by
-  NAME (not id) to `teams.json` metrics, `insights.json` `kpis`, and the persona's
-  `productStrategy` `northStar`/`supporting` — every such name must exist as a node in
-  that persona's pyramids. The customer landing page shows "No KPI pyramid defined"
-  unless BOTH pyramids are present. See `edit-customers` for the full schema.
+- KPI **ids** are unique within a persona (across both pyramids). `insights.json`
+  links KPIs by **id** (`linkedCustomers[].kpiIds[]` — the validator checks these
+  resolve; never use the legacy name-based `kpis` field in new content). `teams.json`
+  metrics and the persona's `productStrategy` `northStar`/`supporting` still link by
+  NAME — every such name must exist as a node in that persona's pyramids
+  (`check-kpi-pyramids.py` reports violations). The customer landing page shows
+  "No KPI pyramid defined" unless BOTH pyramids are present. See `edit-customers`
+  for the full schema.
 
 ## Validate → regenerate loop (run after every edit)
 

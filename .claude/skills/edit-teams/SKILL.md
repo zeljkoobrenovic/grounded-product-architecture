@@ -94,7 +94,9 @@ plus the reference domain `maas` (5 groups, 25+ teams) before editing.**
 - `streamDependencies[].streamId` → stream ids in `product-bricks/product-stream.json`.
 - `otherTeamDependencies[].teamId` → real team ids (no dangling refs);
   `otherTeamDependencies[].type` → an id in `orgDesign.teamDependencyTypes`.
-- `type` → an id in `orgDesign.teamTypes`.
+- `type` → an id in `orgDesign.teamTypes`. `teamTypes`/`teamDependencyTypes` normally
+  come from the shared model `_config/_shared/team-model.json` — omit them in domain
+  files unless the domain genuinely diverges (a local value overrides the shared one).
 - `data/data-assets.json` `ownerTeamId`/`stewardTeamIds` should point back at real
   team ids — wiring ownership both ways improves traceability.
 

@@ -81,7 +81,7 @@ Load only the skill you need for the current phase; do the phase, validate, cont
 - Use only these module types: `web-component`, `mobile-component`, `bff`, `api`, `backoffice-interface`, `message-queue`, `message-consumer`, `daemon`, `stateless-service`, `stateful-service`, `service`, and `integration`.
 - Model `brickDependencies` through `sourceModuleId` and target `moduleId`; do not use the legacy dependency `interface` field.
 - Model product-brick `dataDependencies` with `moduleIds` listing the modules that use or own the data asset; do not use `storeIds` there.
-- In product-brick metadata, use `brickTypes`, `brickStatuses`, and `modulesConfig`; include a `color` on each `modulesConfig.moduleTypes` item and do not use legacy `types` or `statuses`.
+- Product-brick metadata inherits `brickTypes`, `brickStatuses`, and `modulesConfig` from `_config/_shared/product-brick-model.json`; omit them unless the domain diverges.
 - Define product capabilities as strategic outcomes, not implementation components, and map them to product bricks and external systems where relevant.
 - Model deployment through channels, interfaces, APIs, events, operational workflows, MVP scope, and capability mappings.
 - Add data assets where the current domain pattern supports them.

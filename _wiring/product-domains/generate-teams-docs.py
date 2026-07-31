@@ -13,6 +13,7 @@ from generator_common import (
     today_string,
 )
 from product_bricks_support import (
+    apply_shared_defaults,
     build_bricks_lookup,
     flatten_product_streams,
     load_product_bricks_payload,
@@ -233,7 +234,7 @@ if not os.path.exists(teams_path):
     raise SystemExit(f"Missing teams config for domain '{domain_id}'")
 
 teams_payload = json.load(open(teams_path))
-org_design = teams_payload.get('orgDesign', {})
+org_design = apply_shared_defaults(teams_payload.setdefault('orgDesign', {}), 'team-model.json', ('teamTypes', 'teamDependencyTypes'))
 
 customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
 bricks = load_product_bricks_payload(domains_root + domain_id + '/product-bricks/product-bricks.json')
