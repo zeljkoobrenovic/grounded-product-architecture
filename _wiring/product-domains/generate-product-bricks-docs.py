@@ -37,6 +37,7 @@ evidence_style = open(root_templates + '../_imports/evidence/style.html').read()
 evidence_script = open(root_templates + '../_imports/evidence/script.html').read()
 
 tabs_style = open(root_templates + '../_imports/tabs/style.html').read()
+tokens_style = open(root_templates + '../_imports/tokens/style.html').read()
 tabs_script = open(root_templates + '../_imports/tabs/script.html').read()
 
 
@@ -393,6 +394,7 @@ def create_landing_pages(bricks, products, customers, evidence_items, teams_payl
         with open(htmlFile, 'w') as html_file:
             html_file.write(landing_page_template
                             .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${date}', date_string)
                             .replace('${config}', json.dumps(site_config))
@@ -447,6 +449,7 @@ def create_stream_landing_pages(streams, bricks, products, customers, evidence_i
         with open(html_file, 'w') as html_file:
             html_file.write(landing_page_template
                             .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
@@ -502,6 +505,7 @@ def create_data_asset_landing_pages(data_assets_payload, bricks, teams_payload):
         with open(html_path, 'w') as html_file:
             html_file.write(landing_page_template
                             .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${config}', json.dumps(site_config))
                             .replace('${all_bricks}', json.dumps(bricks))
@@ -570,6 +574,7 @@ with open(docs_folder + 'index.html', 'w') as html_file:
     content = content.replace('${bricks}', json.dumps(data)) \
         .replace('${data_assets}', json.dumps(data_assets_payload)) \
         .replace('${tabs_style}', tabs_style) \
+        .replace('${tokens_style}', tokens_style) \
         .replace('${tabs_script}', tabs_script) \
         .replace('${breadcrumbs_style}', breadcrumbs_style) \
         .replace('${breadcrumbs_script}', breadcrumbs_script) \

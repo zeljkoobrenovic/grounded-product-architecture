@@ -29,6 +29,7 @@ domain, _ = load_domain_args()
 
 common_style = open(templates_root + '../_imports/common/style.html').read()
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tokens_style = open(templates_root + '../_imports/tokens/style.html').read()
 tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
 breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
@@ -190,6 +191,7 @@ def create_overview_docs(domain, docs_folder, teams_payload):
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         html_file.write(template
                         .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                         .replace('${tabs_script}', tabs_script)
                         .replace('${breadcrumbs_style}', breadcrumbs_style)
                         .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -211,6 +213,7 @@ def create_landing_pages(domain, docs_folder, teams_payload):
             html_file.write(template
                             .replace('${common_style}', common_style)
                             .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)

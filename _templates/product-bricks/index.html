@@ -7,6 +7,7 @@
     <title>Product Bricks (${domain_name})</title>
 
     ${breadcrumbs_style}
+    ${tokens_style}
     ${tabs_style}
 
     <style>
@@ -2804,6 +2805,48 @@
             renderActiveDependencyGraph();
         }
 
+        // ---- URL state: ?q=, ?modules=1, ?status=1, ?statuses=a,b keep the
+        // bricks view shareable; the tab itself stays in the #hash. ----
+        let brickUrlStateRestored = false;
+
+        function restoreBricksStateFromUrl() {
+            if (brickUrlStateRestored) return;
+            brickUrlStateRestored = true;
+            const params = new URLSearchParams(window.location.search);
+            const query = params.get('q');
+            const searchInput = document.getElementById('BrickSearch');
+            if (query && searchInput) searchInput.value = query;
+            const structureToggle = document.getElementById('brickStructureToggle');
+            if (structureToggle && params.get('modules') === '1') structureToggle.checked = true;
+            const statusToggle = document.getElementById('brickStatusToggle');
+            if (statusToggle && params.get('status') === '1') statusToggle.checked = true;
+            const statuses = params.get('statuses');
+            if (statuses !== null) {
+                const wanted = new Set(statuses.split(',').filter(Boolean));
+                document.querySelectorAll('.brick-status-filter-input').forEach(input => {
+                    input.checked = wanted.has(input.value);
+                });
+            }
+        }
+
+        function syncBricksUrl() {
+            if (!brickUrlStateRestored || !window.history || !window.history.replaceState) return;
+            const params = new URLSearchParams(window.location.search);
+            const query = brickSearchQuery();
+            if (query) params.set('q', query); else params.delete('q');
+            if (shouldShowBrickStructure()) params.set('modules', '1'); else params.delete('modules');
+            if (shouldShowBrickStatus()) params.set('status', '1'); else params.delete('status');
+            const checkboxes = Array.from(document.querySelectorAll('.brick-status-filter-input'));
+            const checked = checkboxes.filter(input => input.checked).map(input => input.value);
+            if (checkboxes.length && checked.length !== checkboxes.length) {
+                params.set('statuses', checked.join(','));
+            } else {
+                params.delete('statuses');
+            }
+            const qs = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        }
+
         function countBricks(groups, predicate) {
             let total = 0;
             (groups || []).forEach(group => {
@@ -2826,9 +2869,11 @@
 
         function updateBricksView() {
             ensureBrickStatusControls();
+            restoreBricksStateFromUrl();
             document.getElementById('Current').innerHTML = renderMap(rootGroups);
             document.getElementById('Legend').innerHTML = renderLegend();
             renderBrickSearchSummary();
+            syncBricksUrl();
         }
 
         function getMatrixCatalog() {

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
     <title>Product Deployments (${domain_name})</title>
+    ${tokens_style}
     ${tabs_style}
     ${breadcrumbs_style}
     <style>
@@ -1774,9 +1775,33 @@ ${tabs_script}
         document.getElementById('pdg_controls').innerHTML = html;
     }
 
+    // ---- URL state: ?view=mermaid and ?gq=<node search> keep the dependency
+    // graph view shareable (node selections are too large for a URL). ----
+    let pdgUrlRestored = false;
+
+    function restorePdgStateFromUrl() {
+        if (pdgUrlRestored) return;
+        pdgUrlRestored = true;
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('view');
+        if (view === 'mermaid' || view === 'force') pdgView = view;
+        const graphQuery = params.get('gq');
+        if (graphQuery) pdgNodeSearch = graphQuery;
+    }
+
+    function syncPdgUrl() {
+        if (!pdgUrlRestored || !window.history || !window.history.replaceState) return;
+        const params = new URLSearchParams(window.location.search);
+        if (pdgView === 'mermaid') params.set('view', 'mermaid'); else params.delete('view');
+        if (pdgNodeSearch.trim()) params.set('gq', pdgNodeSearch.trim()); else params.delete('gq');
+        const qs = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+    }
+
     function onPdgSearch(value) {
         pdgNodeSearch = value || '';
         renderPdgControls(buildProductDependencyGraph().nodes);
+        syncPdgUrl();
     }
 
     function togglePdgNode(nodeId, checked) {
@@ -1835,12 +1860,17 @@ ${tabs_script}
     }
 
     function renderProductDependencyGraph() {
+        restorePdgStateFromUrl();
         const graph = buildProductDependencyGraph();
         pdgEnsureSelectionState(graph.nodes);
         if (!pdgInitialized) {
             renderPdgControls(graph.nodes);
             pdgInitialized = true;
         }
+        document.querySelectorAll('.pdg-view-btn').forEach(button => {
+            button.classList.toggle('active', button.getAttribute('data-pdgview') === pdgView);
+        });
+        syncPdgUrl();
         const nodes = graph.nodes.filter(node => pdgIsNodeSelected(node.id));
         const visibleIds = new Set(nodes.map(node => node.id));
         const edges = graph.edges.filter(edge => visibleIds.has(edge.source) && visibleIds.has(edge.target));

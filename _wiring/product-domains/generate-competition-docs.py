@@ -15,6 +15,7 @@ domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/competition/'
 
 tabs_style = open(os.path.join(templates_root, '../_imports/tabs/style.html')).read()
+tokens_style = open(os.path.join(templates_root, '../_imports/tokens/style.html')).read()
 tabs_script = open(os.path.join(templates_root, '../_imports/tabs/script.html')).read()
 common_style = open(os.path.join(templates_root, '../_imports/common/style.html')).read()
 breadcrumbs_style = open(os.path.join(templates_root, '../_imports/breadcrumbs/style.html')).read()
@@ -99,6 +100,7 @@ def create_overview_docs(domain_config, competition_payload, players):
         html_file.write(
             template
             .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
             .replace('${tabs_script}', tabs_script)
             .replace('${breadcrumbs_style}', breadcrumbs_style)
             .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -124,6 +126,7 @@ def create_landing_pages(domain_config, docs_folder, competition_scope, players)
                 template
                 .replace('${common_style}', common_style)
                 .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                 .replace('${tabs_script}', tabs_script)
                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                 .replace('${breadcrumbs_script}', breadcrumbs_script)

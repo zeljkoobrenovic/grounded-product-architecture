@@ -16,6 +16,7 @@ templates_root = '../../_templates/start/'
 domain, _ = load_domain_args()
 
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tokens_style = open(templates_root + '../_imports/tokens/style.html').read()
 tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 
 
@@ -32,6 +33,7 @@ def create_docs(domain, docs_folder):
         print(domain['description'])
         html_file.write(template
                         .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                         .replace('${tabs_script}', tabs_script)
                         .replace('${date}', date_string)
                         .replace('${apps}', json.dumps(apps))

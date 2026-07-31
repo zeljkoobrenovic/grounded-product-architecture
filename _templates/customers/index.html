@@ -7,6 +7,7 @@
     <title>Customers (${domain_name})</title>
 
     ${breadcrumbs_style}
+    ${tokens_style}
     ${tabs_style}
 
     <style>
@@ -533,9 +534,22 @@
         return haystack.includes(query);
     }
 
+    let customerUrlStateRestored = false;
+
     function renderCustomers() {
         const searchInput = document.getElementById('CustomerSearch');
+        if (!customerUrlStateRestored) {
+            customerUrlStateRestored = true;
+            const initialQuery = new URLSearchParams(window.location.search).get('q');
+            if (initialQuery && searchInput) searchInput.value = initialQuery;
+        }
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        if (window.history && window.history.replaceState) {
+            const params = new URLSearchParams(window.location.search);
+            if (query) params.set('q', query); else params.delete('q');
+            const qs = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        }
         let visible = 0;
         let total = 0;
         let html = '<div style="padding: 12px">';

@@ -19,6 +19,7 @@ templates_root = '../../_templates/customers/'
 domain, site_config = load_domain_args()
 
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tokens_style = open(templates_root + '../_imports/tokens/style.html').read()
 tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 common_style = open(templates_root + '../_imports/common/style.html').read()
 breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
@@ -100,6 +101,7 @@ def create_overview_docs(domain, docs_folder, customers, insights, links):
         template = open(templates_root + 'index.html').read()
         html_file.write(template
                         .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                         .replace('${tabs_script}', tabs_script)
                         .replace('${breadcrumbs_style}', breadcrumbs_style)
                         .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -107,6 +109,7 @@ def create_overview_docs(domain, docs_folder, customers, insights, links):
                             'domain_name': domain['name']
                         }))
                         .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                         .replace('${tabs_script}', tabs_script)
                         .replace('${date}', date_string)
                         .replace('${domain_name}', domain['name'])
@@ -155,6 +158,7 @@ def create_landing_pages(customers, docs_folder, insights):
                 html_file.write(template
                                 .replace('${common_style}', common_style)
                                 .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                                 .replace('${tabs_script}', tabs_script)
                                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                                 .replace('${breadcrumbs_script}', breadcrumbs_script)
