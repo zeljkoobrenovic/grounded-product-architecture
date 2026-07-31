@@ -1,6 +1,6 @@
 ---
 name: edit-streams
-description: "Create or edit product streams for a product domain: outcome-based streams, their outcomes, brick dependencies, and end-to-end flows with steps, key facts, pain points, and step-level dependencies in _config/product-domains/<domain>/product-bricks/product-stream.json. Use when adding a stream, modeling a customer/operator journey as a flow, or wiring stream and step dependencies to product bricks. Keeps stream IDs consistent with JTBD streamsNeeded and streams-evidence."
+description: "Create or edit product streams for a product domain: outcome-based streams, their outcomes, brick dependencies, and end-to-end flows with steps, key facts, pain points, and step-level dependencies in _config/product-domains/<domain>/product-bricks/product-stream.json. Use when adding a stream, modeling a customer/operator journey as a flow, or wiring stream and step dependencies to product bricks. Keeps stream IDs consistent with JTBD streamsNeeded."
 ---
 
 # Edit Streams
@@ -47,6 +47,7 @@ the reference domain `ride-sharing-marketplace` before editing.**
   "description": "…",
   "outcomes": ["Higher trip conversion", "Better repeat rider retention"],
   "brickDependencies": [ { "targetBrickId": "etar", "type": "composition" } ],
+  "links": [ { "label": "…", "url": "…", "note": "…" } ],   // optional; rendered in the Links tab alongside the Evidence Explorer entry
   "flows": [
     {
       "id": "…", "title": "…", "description": "…",
