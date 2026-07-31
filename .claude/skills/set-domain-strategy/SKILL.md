@@ -56,7 +56,7 @@ domains plus the reference `ride-sharing-marketplace`.
 
 ## Registering the domain
 
-Add a `domain_id|Domain Name|Domain description` line to the `domains_ALL=(...)` array
+Add a `domain_id|Domain Name|Domain description` line to the `domains=(...)` array
 in `_wiring/product-domains/run.sh`, and set `domains=(...)` to the domain you're
 generating. Keep the name/description identical to `start/config.json`.
 

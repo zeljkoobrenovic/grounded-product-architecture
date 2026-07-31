@@ -47,7 +47,7 @@ date_string = datetime.date.today().strftime('%Y-%m-%d')
 domains_root = '../../_config/product-domains/'
 root_templates = '../../_templates/product-bricks/'
 domain, site_config = load_domain_args()
-evidence_fragments_cache = load_json_if_exists('../../_data/evidence-db/database/all-evidence.json', [])
+evidence_fragments_cache = load_json_if_exists('../../_evidence/database/all-evidence.json', [])
 
 common_style = open(root_templates + '../_imports/common/style.html').read()
 
@@ -553,12 +553,8 @@ if not os.path.exists(product_bricks_config_path):
 
 print(root_domain)
 
-if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
-os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
-os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
-os.makedirs(os.path.join(docs_folder, 'stream_pages'), exist_ok=True)
-os.makedirs(os.path.join(docs_folder, 'data_pages'), exist_ok=True)
-
+# Parse every input BEFORE wiping the output folder, so a config error
+# leaves the previously generated docs intact instead of destroying them.
 data = load_product_bricks_payload(product_bricks_config_path)
 flat_bricks = flatten_product_bricks(data)
 streams_payload = load_product_streams_payload(product_streams_config_path)
@@ -576,9 +572,15 @@ streams_evidence_items = load_json_from_paths([
     root_domain + 'streams-evidence.json',
 ], [])
 
+if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
+os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
+os.makedirs(os.path.join(docs_folder, 'landing_pages'), exist_ok=True)
+os.makedirs(os.path.join(docs_folder, 'stream_pages'), exist_ok=True)
+os.makedirs(os.path.join(docs_folder, 'data_pages'), exist_ok=True)
+
 copy_icons(root_templates + 'icons', docs_folder)
 copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)
-copy_icons('../../_data/evidence-db/icons', docs_folder)
+copy_icons('../../_evidence/icons', docs_folder)
 
 with open(docs_folder + 'index.html', 'w') as html_file:
     template = open(root_templates + 'index.html').read()

@@ -88,6 +88,12 @@ def enrich_products_with_customers(products, customers_lookup):
 
 
 def create_overview_docs(domain, docs_folder):
+    # Parse inputs before wiping the output folder, so a config error leaves
+    # the previously generated docs intact.
+    template = open(templates_root + 'index.html').read()
+    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
+    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 
@@ -95,9 +101,6 @@ def create_overview_docs(domain, docs_folder):
     copy_icons(domains_root + domain['id'] + '/product-deployments/icons', docs_folder)
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
-        template = open(templates_root + 'index.html').read()
-        deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
-        deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
         html_file.write(template
                         .replace('${tabs_style}', tabs_style)
                         .replace('${tabs_script}', tabs_script)
@@ -141,6 +144,7 @@ def create_landing_pages(products, docs_folder):
                                 .replace('${all_products}', json.dumps(products['portfolio']['products']))
                                 .replace('${deployment}', json.dumps(deployment))
                                 .replace('${product_name}', product['name'])
+                                .replace('${domain_name}', domain['name'])
                                 .replace('${product}', json.dumps(product)))
 
 
@@ -171,9 +175,11 @@ def create_deployment_landing_pages(domain, products, docs_folder):
                                 .replace('${breadcrumbs_script}', breadcrumbs_script)
                                 .replace('${breadcrumbs}', render_breadcrumbs('deployment_landing_page_breadcrumbs.json', {
                                     'domain_name': domain['name'],
-                                    'channel_name': channel.get('name', channel_id)
+                                    'channel_name': channel.get('subChannelName', channel.get('name', channel_id))
                                 }))
                                 .replace('${date}', date_string)
+                                .replace('${domain_name}', domain['name'])
+                                .replace('${sub_channel_name}', channel.get('subChannelName', channel.get('name', channel_id)))
                                 .replace('${domain_description}', domain['description'])
                                 .replace('${products}', json.dumps(products))
                                 .replace('${deployment}', json.dumps(deployment))

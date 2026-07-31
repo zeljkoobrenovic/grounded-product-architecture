@@ -1,0 +1,148 @@
+# Repository Review — Structure & UX
+
+> Living review document. Last updated: 2026-07-31 (branch `add-evidence-explorer`).
+> Scope: repo structure, generation pipeline, data model, and UX of the generated site.
+> Method: full-tree surveys of `_config/**`, `_wiring/**`, `_templates/**`, `_evidence/**`, `docs/**` plus hand-verification of every defect listed in Part 1.
+
+## TL;DR
+
+The **concept and content layer are strong**: a clean one-directional pipeline (`_config` → `_wiring` → `docs`), a genuinely documented domain model (`.claude/skills/_references/domain-model.md` is the best artifact in the repo), 29 modeled domains, and zero HTML in Python — all rendering lives in templates.
+
+The **execution layer has three systemic problems**:
+
+1. **Nothing is enforced.** No JSON Schema, no CI, no tests; the validator is an out-of-band skill nobody's build calls. Result: **403 dangling cross-references** exist right now, one domain (`emobility`) has an empty brick catalog with 348 references pointing into it, and the evidence pipeline is fully broken on this branch without any build reporting failure.
+2. **Reuse is aspirational.** ~35–40% of generator code and ~26% of template CSS/JS is copy-paste that has drifted into divergent (sometimes buggy) variants — 12 copies of `escapeHtml`, 5 incompatible `copy_icons`, three "almost black" body colors, two tab systems.
+3. **The generated site is a collection of pages, not a product.** No global navigation, no viewport meta on 3,490 of 3,491 pages (unusable on mobile — and the mobile CSS that exists is dead code without it), no favicon or footer on any page, no search on the densest pages, no shareable filter state, customer landing pages that link to nothing, and a 1 MB evidence-explorer app with **zero inbound links from anywhere**. Output is ~2.2 GB (709 MB HTML + 1.5 GB images, 2.2× the GitHub Pages 1 GB soft limit) because every deep page inlines the entire domain dataset and ~54% of icon files are byte-identical duplicates.
+
+---
+
+## Part 1 — Broken right now (fix before anything else)
+
+> **Status 2026-07-31 (evening):** items 1, 2, 3, 5, and 7 are FIXED; item 6 is mostly fixed; item 4 (data-assets generator not in run.sh) is still open. Details inline.
+
+Verified defects, not opinions:
+
+1. **✅ FIXED — Evidence pipeline dead in three independent places.** All three paths corrected (`generate-evidence-explorer-docs.py`, `generate-product-bricks-docs.py:50,581`, `_evidence/run.sh` — which now also `cd`s to its own dir and skips example source scripts whose external inputs are absent). CLAUDE.md, README.md, and `edit-evidence/SKILL.md` updated to the `_evidence/` location. Verified end-to-end: `run.sh` rebuilds the explorer (2,202 fragments) and regenerated digital-medication-management brick pages now carry populated evidence tabs (previously 0 across the whole site). The evidence DB moved from `_data/evidence-db/` to `_evidence/`, but:
+   - `_wiring/evidence-explorer/generate-evidence-explorer-docs.py:8-9` still hardcodes `_data/evidence-db/` → crashes with `FileNotFoundError`.
+   - `_wiring/product-domains/generate-product-bricks-docs.py:50` and `:581` read the same dead path via `load_json_if_exists(..., [])` → **every brick and stream page silently renders with zero evidence** while the build reports success.
+   - `_evidence/run.sh` calls `scripts/...` (the folder is `_example_scripts/`) and its final step uses `../../_wiring/...`, which resolves *above* the repo root.
+   - `CLAUDE.md:70-72` and `README.md:137-181` still document the old location, so any agent following the docs will re-break it.
+   - Note: the explorer still has **zero inbound links, zero iframes, zero `?embed=1` usages** from domain pages — that integration is the Phase 2 "embed explorer" item, still open. Only domains with populated `bricks-evidence.json` will show evidence tabs (currently digital-medication-management).
+2. **✅ FIXED — `emobility` was structurally broken.** `product-bricks.json` had been accidentally emptied to `[]` by commit `a82e73c50` ("README updates"). Restored the last good 276 KB version from commit `1d3a67d7c`: 25 bricks, all 24 deployment brick refs and 20 stream refs resolve, validator passes, all six doc generators re-run (25 brick landing pages now exist).
+3. **✅ FIXED — All dangling references resolved (was 403 → 0).** `validate-domain-model.py` was extended with the five missing reference-check classes (deployment→brick, brick→asset, stream→brick, JTBD→stream|brick, insight→customer/job/KPI-name) plus duplicate-id detection for streams, assets, customers, and products, plus product→primaryCustomer checks. Running it surfaced **64** live breaks, all fixed: 25 freight data assets **authored** (full schema — governance, stores, interfaces, owners from freight's real teams — placed in matching root groups plus a new "Analytics, Intelligence, and Sustainability" group); freight's `cg1-p1` pyramid gained a "Network efficiency" branch for the three network/carbon KPIs its insights referenced; 8 wrong-customer KPI links moved to the owning customer; 8 near-synonym KPI names aligned to the pyramid node; emobility's 13 `cap_*` JTBD refs and enterprise-crm's 2 remapped to real bricks. `--all` now passes clean on all 30 domains.
+4. **`generate-data-assets.py` (653 lines) is not in `run.sh`** — and it *mutates `_config`* (back-fills `dataDependencies` into `product-bricks.json`), so docs may or may not reflect its enrichment depending on manual runs.
+5. **✅ FIXED — Documented registration procedure was wrong.** `domains_ALL` → `domains` corrected in all six skill files. `run-one.sh` rewritten: it now takes a domain id as an argument and reads the name/description from that domain's `start/config.json`, so the hardcoded-wrong-name failure class is gone.
+6. **Mostly fixed — Stale/misplaced artifacts.** Cleaned (48 items): `docs/product-domains/mambu/` orphan deleted; all 21 dead `brick-evidence.json` (singular, verified `[]` everywhere) deleted; `_temp.json` and the two byte-identical 399-line `prompt.txt` files deleted; 18 `.DS_Store` and 4 committed `__pycache__` dirs removed; `bike-mobility/DOMAIN.md` moved to `_domain/DOMAIN.md`; "accomodation" typo fixed in `_config/start-packages/overview/apps.json` and the overview page regenerated. **Still open:** `real-estate-marketplace/customers/products.json` (it *differs* from the canonical `product-deployments/products.json`, so it needs a human decision, not deletion); the 13 broken `../../../` links in `docs/start-packages/uber/index.html` (source lives in `_config/start-packages/uber/`); 7 domains missing DOMAIN.md (content authoring); the stale `bricksMetadata` description naming the old "nutrition" domain.
+7. **✅ FIXED — A build failure destroyed output.** The two generators that `rmtree`d docs folders *before* parsing inputs (`generate-product-bricks-docs.py`, `generate-products-docs.py`) now parse every input first and only then wipe/rebuild, so a JSON typo can no longer destroy previously generated docs. (Per-domain failure isolation in `run.sh` remains a Phase 3 item.)
+
+---
+
+## Part 2 — Structure: pipeline, data model, repo weight
+
+### 2.1 Enforcement: make the implicit schema an explicit contract
+
+The schema exists only as prose (SKILL.md files, `domain-model.md`) plus 419 lines of imperative validation covering bricks/modules/teams and silent on customers, assets, streams, products, insights, competition. Consequent drift: `customers.json` has 203 non-universal field paths across domains; `competition.json` has 216 (free-form `links` keys like `annual_report` vs `annual_reports` vs `q4_2024_results`); single domains have quietly forked the model (`online-retail-marketplace`'s better `insights.json` with `kpiIds`; `public-cloud-services`' `theme` vs everyone else's `productTheme`; 3-level vs mandated 4-level KPI pyramids). Fields used in 19–25 domains (`guardrail`, `systemOfRecordBrickId`, `authenticationMaterial`) appear in zero skill docs.
+
+**Proposals (ordered):**
+1. Extend `validate-domain-model.py` with the five missing reference checks (~15 lines each; all prototyped, all found real breaks) plus duplicate-id detection for bricks/customers/streams/assets/products (only modules and teams are checked today).
+2. Publish JSON Schema (draft 2020-12) for the ~13 artifacts under `_config/_schema/`. Start with `additionalProperties: false` on `competition.json` `players[].links` — collapses the 216-path explosion immediately.
+3. Add CI (`.github/workflows/ci.yml`): validator on all domains, `check-kpi-pyramids.py`, a full `run.sh`, link check over `docs/`.
+4. Wire validation into the build; make generation-time `lookup.get(id, {})` fallbacks log warnings instead of silently emitting links to 404 pages (`generate-teams-docs.py:110-149` et al.).
+
+### 2.2 Data model normalization
+
+- **Replace name-based KPI joins with ids.** `domain-model.md:59` mandates joining insights/team metrics/north-star to KPI nodes by string equality on `name` — source of all 15 KPI breaks. Adopt `online-retail-marketplace`'s `kpiIds` model repo-wide; update the doc.
+- **Hoist fixed enumerations out of the 28 domain files.** `metadata.brickTypes`, `brickStatuses`, `modulesConfig.layerTypes/moduleTypes` (incl. colors — presentation config in content files), stream definition prose, team-type definitions are re-declared identically per domain yet validated against a fixed global set in `product_bricks_support.py`. Move to `_config/_shared/`; generators merge.
+- **Drop denormalized display names.** `deployment.json`: 3,861 `brickName`, 318 `subChannelName`, 126 `groupName` copies — currently 100% consistent, which is exactly the moment to delete them. Same for `products.json` `primaryCustomers[].name` and the hand-maintained bidirectional `externalSystems*` edges (inverse edge already rotting: 22/29 vs 16/29 coverage).
+- **One casing convention** (camelCase). Today camelCase, snake_case, and kebab-case coexist — sometimes in one object (`what_it_is` beside `jobsToBeDone`). Rename `timeHorizons.1_year` (leading-digit keys).
+- **Decide the evidence subsystem's fate in config.** `bricks-evidence.json`/`streams-evidence.json` are `[]` in 28/29 domains; `brick-evidence.json` (singular) is `[]` everywhere and referenced by nothing — dead schema. Invest (this branch) or remove from the canonical set.
+- **Machine-generated padding tell:** two domains have exactly 88 bricks × exactly 6 modules; 13 domains have exactly 34 data assets sharing an identical boilerplate spine; 26/29 domains have 24–26 teams regardless of size. Undercuts the realism goal; run `audit-domain-balance` per domain.
+
+### 2.3 Generator architecture
+
+Generators are small (2,110 lines across six) but ~35–40% duplicated, with copies diverged: 5 `copy_icons` variants (3 incompatible destination conventions), 4 identical `render_breadcrumbs`, 3 `normalize_icon_name` (one buggy — missing `.strip()`), 2 `slugify`, 3 team-tree walkers, 173 hand-chained `.replace('${…')` calls with actual duplicate keys, near-zero HTML escaping (a `<` or `"` in any config name breaks a page). `product_bricks_support.py` (1,456 lines) silently auto-repairs bad data — substring-based type guessing, token-overlap dependency scoring with magic weights (+50/+20/+8), even accepts the typo key `'renderding'` — so bad data produces plausible-looking but wrong output, with zero test coverage.
+
+**Proposals:**
+1. Extract `generator_common.py` (icon copy, breadcrumbs, JSON loading, strict `render()`, `html.escape`, parse-then-rmtree). ~350 lines removed; fold vestigial `initiatives_support.py` in.
+2. Atomic + isolated builds: parse all inputs first, write to temp dir, swap; collect per-domain failures, fail at the end.
+3. Single-source domain registry: delete the 30-line `domains=(...)` array; derive from `_config/product-domains/*/start/config.json`; garbage-collect orphaned docs dirs (`mambu`).
+4. Kill `os.chdir`-on-import in six generators (makes them untestable); drive all 6×29 from one `build.py` process (~170 interpreter starts saved).
+5. Consider Jinja2 (build-time only; output stays framework-free) or at minimum the strict dict-driven `render()` the evidence-explorer generator already uses — fixes escaping, `${`-in-JSON collisions, and silent typo'd keys.
+6. Pytest coverage for `product_bricks_support.py`; convert silent guesses to warn-and-guess.
+7. Relocate strays: `generate-data-assets.py` + migration scripts → `_wiring/tools/`; the two generator scripts inside `_config/product-domains/` out of the content tree. Add `pyproject.toml` + `ruff` (no dependency manifest exists despite a committed `venv/`).
+
+### 2.4 Repo weight
+
+`_config` 1.5 GB + `docs` 2.2 GB ≈ 4 GB for ~19 MB of JSON. `docs/` is fully committed (9,788 tracked files) and is **2.2× the GitHub Pages 1 GB soft limit**. Measured causes:
+
+- **Inlined datasets dominate HTML weight (709 MB of HTML).** Each brick landing page embeds the whole domain dataset: on a measured 614 KB page, `all_bricks` is 409 KB (**66%**), streams+assets another 15%, and the actual subject brick **6.8 KB (1%)**. Multiplied out: 78 MB of duplicated JSON in `big-enterprise/product-bricks/landing_pages/` alone; sibling pages differ by ~1% of their bytes. The counter-example proving the fix: `teams/landing_pages/*.html` are ~20 KB because they inline nothing bulky. Emit one `data/bricks.json` per domain + `fetch()` (still framework-free): ~614 KB → ~25 KB per page, site HTML from 709 MB toward ~50 MB.
+- **Images: 1.5 GB, heavily duplicated and oversized.** 6,143 PNGs vs **1 webp**; 4,644 icon files of which only **2,138 are unique by md5** (~54% byte-identical copies per domain — hoist to a shared `docs/_assets/icons/`); icons up to 1.3 MB and 400–512 px rendered at 140 px with `grayscale()` applied at runtime instead of baked in; JTBD media at 1536×1024 / ~1.8 MB each. A resize/WebP/dedup pass takes 1.5 GB → est. <150 MB. Every image also exists twice (source in `_config`, copy in `docs`).
+- **Render-blocking third-party font on 3,490 pages** (`fonts.googleapis.com` — also a GDPR consideration on a site with no consent mechanism). Self-host or drop it; note Vollkorn, the declared first-choice serif, is never loaded anyway.
+
+If history size becomes painful: gitignore `docs/` and build in CI to a `gh-pages` branch — every regeneration currently rewrites ~700 MB of near-identical HTML into history and produces unreviewable diffs (589 modified docs files sit in the worktree right now, mid-regeneration, with page mtimes spanning 07-04 to 07-31 and no build timestamp anywhere to tell a visitor which pages are fresh).
+
+---
+
+## Part 3 — UX of the generated site
+
+### 3.1 Information architecture: pages without a spine
+
+- Root `docs/index.html` is a 141-byte meta-refresh to `start-packages/overview/index.html` — blank flash, no `<title>`, no `<noscript>`, and `/` never stays in the address bar so the true home can't be bookmarked. A second, alternate landing page (`start-packages/uber/`) overlaps it, and the two never link to each other.
+- Click *depth* is fine (any persona/brick/team/competitor is 2 clicks from a domain start page). Lateral movement is the problem, and it is badly asymmetric: brick pages are the best-connected in the site (out-links to teams, customers, deployments, streams), but **customer landing pages are dead ends — zero links to bricks, teams, or products** (`grep -c "product-bricks/landing_pages"` = 0). The customer page is where a product manager starts, and it's the one page you can't navigate onward from; the customer→product→brick→team traceability chain the model exists to express is broken at its first hop.
+- Only navigation between areas is breadcrumb → Home → card. No persistent header/area switcher. Four of seven landing-page types have no sibling nav at all. Start-page tiles and index links open in `target="_blank"`, so browsing a domain sprays tabs and defeats the Back button.
+- The breadcrumb — the sole global nav element — renders at 80% size in `#a0a0a0` (~2.5:1 contrast, fails WCAG AA), with inconsistent labels ("Bricks & Streams" / "Bricks Index" / "Streams Index" all naming the same page).
+- The evidence explorer is an orphan: no breadcrumb, **zero inbound links from 3,491 pages**, it links nowhere — and although its `?embed=1` mode exists specifically for iframing, not a single iframe exists in `docs/`.
+- Site chrome is missing wholesale: **0 of 3,491 pages have a favicon**, **0 have a footer** (no build timestamp, version, or repo link — unjudgeable freshness), and three title schemes coexist (`Customers (<Domain>)` vs bare `Product Bricks` vs bare entity names on deep pages, indistinguishable in browser history across 30 domains).
+
+**Proposal:** one `_imports/globalnav/` partial (Domain home · Customers · Products · Bricks & Streams · Teams · Competition · Evidence) on all 15 templates; serve the overview content directly at the root instead of the meta-refresh; make customer landing pages link out the way brick pages already do; drop `target="_blank"` for in-site links; reconcile breadcrumb labels; sibling nav on the four missing page types; one title scheme (`<Entity> — <Area> (<Domain>)`), a favicon, and a footer with domain + build timestamp; embed the evidence explorer (`?embed=1&ids=…`) into brick/stream landing pages and add an Evidence tile to each domain start page — giving the `add-evidence-explorer` branch its payoff.
+
+### 3.2 Mobile: currently a non-site
+
+Only the evidence explorer has `<meta name="viewport">` — 1 of 3,491 generated pages; everything else renders at desktop width on phones. Worse, the `@media (max-width: 720px)` rules already written into those pages are **dead code that can never trigger** without it, so this is a one-line template change that activates responsive CSS that already exists. Four index templates + two landing pages also use `<table>` for the hero (cannot reflow); the media queries that do exist sit at five different breakpoints. **Fix:** viewport meta ×14 (highest impact-per-line change available), grid hero (competition already does it), one shared breakpoint partial.
+
+### 3.3 Findability
+
+Search exists on 4 of 15 templates, each a different implementation — absent from the two densest pages (`product-bricks/index.html`, up to 1.19 MB generated; `customers/index.html`). The three existing search scopes (start-page tile filter, per-page filters, evidence explorer) don't overlap and none can find a persona, brick, team, or data asset across domains. **Fix:** lift the `teams/index.html` search pattern into `_imports/` and apply to bricks + customers; generate a compact `search-index.json` (id, name, type, domain, url) at build time and surface one global search box in shared chrome — the difference between a browsable archive and a usable reference.
+
+### 3.4 State & deep-linking
+
+Hash tab deep-linking works on 13 templates and is well implemented (validates the hash against real DOM ids, falls back to the first tab) — `#insights` / `#streams` / `#data` links are shareable and survive reload. But filter/toggle state is never in the URL: brick-index status filters + three dependency sub-tabs, the deployment force-graph filters, and the start-page tile search all evaporate on reload. The explorer inverts it: the only page reading query params (embed only), the only tabbed page with *no* hash state — `history.pushState`/`replaceState`/`location.hash` count is literally **0** in a 1 MB search app, so a user who finds a result across the whole evidence corpus cannot share or bookmark it. **Fix:** serialize filter state to query params on the two heavy indexes; give the explorer `?q=&type=` state via the existing `resolveHashTabName()` pattern.
+
+### 3.5 Visual consistency & accessibility: promote the explorer to house standard
+
+`_templates/evidence-explorer/index.html` is the best front-end file in the repo — the only one with a design-token `:root` (15 tokens), viewport meta, ARIA, semantic elements, fluid grid, an empty state, `noopener`. The other 14 share almost nothing: 134 distinct hex colors (824 literals), three "almost black" text colors, three hero designs at three type scales, two tab visual languages, Vollkorn declared first in 13 font stacks but never loaded, `margin-rigth` typo zeroing the right margin on the largest page. Accessibility: one `aria-label` total; tab bars without tab roles; JS-generated `<img>` strips (incl. an entire sibling-nav strip) with no alt; `<h1>` in exactly one template.
+
+**Fix:** extract `_imports/tokens/style.html` from the explorer's `:root`; shared `hero`, `escapeHtml` (fixes the 8-copy numeric bug — `(value || '')` throws on numbers, renders `0` as empty), stat-tile/dependency-panel partials; ARIA + arrow keys in `_imports/tabs/` once (fixes 13 templates); breadcrumb contrast + its unescaped `innerHTML` interpolation (`_imports/breadcrumbs/script.html:20`); delete ~110 lines of dead `.section-nav` CSS shipped into every index page. ~25–30% of template CSS/JS is extractable with no behavior change.
+
+---
+
+## Part 4 — Sequencing
+
+| Phase | Scope | Effort | Payoff |
+|---|---|---|---|
+| **0. Repair** | Evidence paths (3 fixes) + CLAUDE.md/README; `emobility` bricks; `run-one.sh`; `mambu` orphan; misc strays | ~1 day | Branch works; docs match reality |
+| **1. Enforce** | Validator +5 ref checks, dup-id checks; fix the 403 refs; CI; generator warnings; atomic builds | 2–3 days | Drift can't be reintroduced silently |
+| **2. UX quick wins** | Viewport ×14; global nav partial; favicon + footer + one title scheme; customer-page out-links; breadcrumb contrast/labels; `escapeHtml` unification; real root landing page; Evidence tile + embed explorer in brick pages; fix uber-package links | 2–3 days | Site feels like one product; mobile works |
+| **3. Consolidate** | `generator_common.py`; single-source registry; tokens/hero/tab partials; ARIA; search on bricks+customers; URL filter state | ~1 week | Maintenance drops; future templates inherit fixes |
+| **4. Data model** | JSON Schemas; KPI id-joins; hoist enums to `_config/_shared/`; drop denormalized names; one casing convention | ~1 week (mechanical migrations) | The "spec" becomes machine-checkable |
+| **5. Weight** | Image resize/WebP; per-domain `data.json` instead of per-page inlining; optionally build docs in CI | 3–5 days | Repo ~4 GB → well under 1 GB; fast pages |
+
+**Highest leverage-per-hour:** evidence path fix (~1 h, unbreaks the branch) · viewport meta (15 lines, unlocks mobile) · five validator checks (~75 lines, surfaces 403 real defects) · global nav partial (one component, changes how the whole site feels).
+
+---
+
+## Change log
+
+- **2026-07-31** — Initial review: full-tree surveys (config schemas, wiring, templates) + hand-verified defect list.
+- **2026-07-31 (later)** — Folded in generated-site walkthrough: evidence explorer confirmed fully orphaned (0 inbound links; 100% of brick evidence tabs empty); inlined-dataset quantification (66% of each brick page is `all_bricks`; 78 MB duplicated JSON in one folder); customer landing pages confirmed dead ends; site chrome gaps (0 favicons, 0 footers, 3 title schemes); image dedup numbers (54% byte-identical icons); 13 broken links in `start-packages/uber`; GitHub Pages 1 GB limit exceeded 2.2×.
+- **2026-07-31 (Phase 0 executed)** — Evidence pipeline repaired end-to-end and verified (explorer rebuilt, 2,202 fragments; DMM brick pages show evidence); `emobility` brick catalog restored from git (`1d3a67d7c`) and fully regenerated; `run-one.sh` rewritten to derive name/description from `start/config.json`; `domains_ALL` → `domains` in 6 skill files; 48 stale artifacts cleaned (mambu orphan, 21 dead `brick-evidence.json`, prompt.txt ×2, `_temp.json`, `.DS_Store` ×18, `__pycache__` ×4, DOMAIN.md relocation, "accomodation" typo); CLAUDE.md/README/edit-evidence updated to `_evidence/`; all 30 domains pass the validator. Remaining dangling refs: ~42 (freight assets 25, insight KPI names 15, enterprise-crm JTBD 2).
+- **2026-07-31 (Phase 1 + Phase 2 quick wins executed)** —
+  - **Validator extended** (`validate-domain-model.py`): five cross-reference classes + duplicate-id detection for streams/assets/customers/products + product→customer checks. Surfaced 64 live breaks; **all fixed** (see Part 1 item 3): 25 freight data assets authored per user decision; freight `cg1-p1` pyramid gained a "Network efficiency" branch; 8 KPI links moved to their owning customers; 8 KPI names aligned; 15 JTBD refs remapped to real bricks. `--all` passes on all 30 domains.
+  - **`check-kpi-pyramids.py` crash-fixed** (list-form `timeHorizons`; nodes missing `id` now reported, not fatal). Repo-wide it reports ~500 pre-existing KPI-name mismatches in 13 domains + 101 missing-node-id problems in technical-design-collaboration-platform — this is the Phase 4 name-join debt, now measurable.
+  - **CI added** (`.github/workflows/ci.yml`): validator `--all` (blocking), KPI checker (report-only until name-join debt is paid), evidence pipeline build, and a generator smoke-run on the reference domain via `run-one.sh`.
+  - **Atomic builds**: bricks and products generators now parse all inputs before wiping output.
+  - **Template quick wins across all 15 page templates**: `viewport` meta added (mobile CSS that was dead code now active — verified 109/109 pages in the reference domain), inline-SVG favicon added, `escapeHtml` numeric bug fixed in the 10 affected copies (`(value || '')` → `String(value ?? '')`), breadcrumb contrast `#a0a0a0` → `#5b6472` + stray `;;` removed, `margin-rigth` typo fixed, and **one title scheme** (`<Entity> — <Area> (<Domain>)`) with the missing `${domain_name}`/`${sub_channel_name}` substitutions added to the competition and deployment generators (the deployment breadcrumb also now shows the channel *name* instead of its raw id). Full-site regeneration run to propagate.
+  - **Evidence Explorer de-orphaned**: an "Evidence Explorer" tile added to the shared start-page config (`_config/product-domains/start/apps.json`) — every domain start page now links to it — and the explorer gained an "All Product Domains › Evidence Explorer" breadcrumb back to the site overview. All start pages and the explorer regenerated.
+  - **Root page**: `docs/index.html` replaced with a titled, viewport-equipped redirect page with a canonical link and a visible fallback link (was a 141-byte bare meta-refresh).
+  - Full-site regeneration completed: viewport on 3,536/3,536 pages, favicon everywhere, zero leaked `${...}` placeholders in titles (two more missing generator substitutions found and fixed along the way: product landing pages and competition landing pages lacked `${domain_name}`).
+  - Still open from this round: `generate-data-assets.py` not in `run.sh` (Part 1 item 4); uber-package broken links (they point at `standards/`, `controls/`, `data-explorers/` trees that don't exist in this repo — needs a decision to remove those tabs or restore the content); explorer URL state (`?q=&type=`); global nav partial; customer-page out-links; `real-estate-marketplace/customers/products.json` divergence.

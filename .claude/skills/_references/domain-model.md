@@ -130,7 +130,7 @@ python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain descript
 > The `domains=(...)` array in `run.sh` usually holds a single active domain.
 > To regenerate a different domain without editing run.sh, call the relevant
 > generator(s) directly with the three positional args (id, name, description) —
-> the canonical name/description live in the `domains_ALL=(...)` array in run.sh.
+> the canonical name/description live in the `domains=(...)` array in run.sh.
 
 ## Reference domain
 

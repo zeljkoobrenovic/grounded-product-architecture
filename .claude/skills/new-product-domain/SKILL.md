@@ -29,7 +29,7 @@ Author top-to-bottom; later artifacts reference earlier IDs, so this order keeps
 references resolvable.
 
 1. **Frame & register** → `set-domain-strategy`
-   - `_domain/DOMAIN.md`, `start/config.json`, add to `run.sh` (`domains_ALL` +
+   - `_domain/DOMAIN.md`, `start/config.json`, add to `run.sh` (`domains` +
      `domains`). Decide scope, value exchange, vision, 1/3/5-year horizons.
 2. **Customers** → `edit-customers`
    - Groups, personas, JTBD, journeys, KPI pyramids, per-customer productStrategy,

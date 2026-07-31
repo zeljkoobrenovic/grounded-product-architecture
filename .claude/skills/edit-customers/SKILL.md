@@ -274,7 +274,7 @@ add the stream (`edit-streams`) or point at an existing brick id.
    files above, or run `audit-domain-balance`).
 2. Regenerate: from `_wiring/product-domains/`,
    `python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"`
-   (name/description from `run.sh` `domains_ALL`). Generator wipes the customers docs
+   (name/description from `run.sh` `domains`). Generator wipes the customers docs
    folder — ensure that area's worktree is clean first.
 3. Report personas/insights added or changed and which referencing files you updated.
 

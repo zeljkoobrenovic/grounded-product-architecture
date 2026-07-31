@@ -351,6 +351,186 @@ def validate_team_model(domain_dir, bricks, errors):
                 errors.append(f'{domain_dir.name}: team {team_id} links missing brick {ref_id}')
 
 
+def _walk_collect(node, list_key, out):
+    """Collect entries of every `list_key` array across a nested group tree."""
+    if isinstance(node, dict):
+        for item in node.get(list_key, []) or []:
+            if isinstance(item, dict):
+                out.append(item)
+        for key in ('rootGroups', 'subGroups', 'groups', 'channels'):
+            for child in node.get(key, []) or []:
+                _walk_collect(child, list_key, out)
+    elif isinstance(node, list):
+        for child in node:
+            _walk_collect(child, list_key, out)
+
+
+def _report_duplicates(domain_dir, label, ids, errors):
+    seen = set()
+    for value in ids:
+        if value in seen:
+            errors.append(f'{domain_dir.name}: duplicate {label} id: {value}')
+        seen.add(value)
+
+
+def _kpi_node_names(node, out):
+    if not isinstance(node, dict):
+        return
+    name = str(node.get('name', '')).strip()
+    if name:
+        out.add(name)
+    for key in ('top', 'branches', 'children'):
+        child = node.get(key)
+        if isinstance(child, dict):
+            _kpi_node_names(child, out)
+        elif isinstance(child, list):
+            for item in child:
+                _kpi_node_names(item, out)
+
+
+def validate_cross_references(domain_dir, bricks, errors):
+    """Cross-file reference checks: deployment→brick, brick→asset,
+    stream→brick, jtbd→stream|brick, insight→customer/job/KPI-name."""
+    brick_ids = set(bricks)
+
+    # --- streams ---
+    stream_ids = set()
+    stream_path = domain_dir / 'product-bricks' / 'product-stream.json'
+    if stream_path.exists():
+        payload = load_json(stream_path, errors)
+        if payload is not None:
+            streams = []
+            _walk_collect(payload, 'streams', streams)
+            _report_duplicates(domain_dir, 'stream', [s.get('id') for s in streams if s.get('id')], errors)
+            stream_ids = {str(s.get('id', '')).strip() for s in streams if s.get('id')}
+            if brick_ids:
+                for stream in streams:
+                    stream_id = stream.get('id', '<missing-id>')
+                    for dependency in stream.get('brickDependencies', []) or []:
+                        if not isinstance(dependency, dict):
+                            continue
+                        target = str(dependency.get('targetBrickId', '')).strip()
+                        if target and target not in brick_ids:
+                            errors.append(f'{domain_dir.name}: stream {stream_id} references missing brick {target}')
+
+    # --- data assets ---
+    asset_ids = set()
+    assets_path = domain_dir / 'data' / 'data-assets.json'
+    if assets_path.exists():
+        payload = load_json(assets_path, errors)
+        if payload is not None:
+            assets = []
+            _walk_collect(payload, 'assets', assets)
+            _report_duplicates(domain_dir, 'data asset', [a.get('id') for a in assets if a.get('id')], errors)
+            asset_ids = {str(a.get('id', '')).strip() for a in assets if a.get('id')}
+
+    # --- brick dataDependencies -> assets ---
+    bricks_path = domain_dir / 'product-bricks' / 'product-bricks.json'
+    if asset_ids and bricks_path.exists():
+        payload = load_json(bricks_path, errors)
+        if payload is not None:
+            for brick in iter_product_bricks(payload):
+                brick_id = brick.get('id', '<missing-id>')
+                for data_dependency in brick.get('dataDependencies', []) or []:
+                    if not isinstance(data_dependency, dict):
+                        continue
+                    asset_id = str(data_dependency.get('assetId', '')).strip()
+                    if asset_id and asset_id not in asset_ids:
+                        errors.append(f'{domain_dir.name}: brick {brick_id} data dependency references missing asset {asset_id}')
+
+    # --- deployment deployedBricks -> bricks ---
+    deployment_path = domain_dir / 'product-deployments' / 'deployment.json'
+    if brick_ids and deployment_path.exists():
+        payload = load_json(deployment_path, errors)
+        if payload is not None:
+            deployed = []
+            _walk_collect(payload, 'deployedBricks', deployed)
+            for entry in deployed:
+                target = str(entry.get('brickId', '')).strip()
+                if target and target not in brick_ids:
+                    errors.append(f'{domain_dir.name}: deployment references missing brick {target}')
+
+    # --- customers: duplicate ids, jtbd streamsNeeded, KPI names for insights ---
+    customer_ids = set()
+    customer_job_ids = {}
+    customer_kpi_names = {}
+    customers_path = domain_dir / 'customers' / 'customers.json'
+    if customers_path.exists():
+        payload = load_json(customers_path, errors)
+        if payload is not None:
+            customers = []
+            _walk_collect(payload, 'customers', customers)
+            _report_duplicates(domain_dir, 'customer', [c.get('id') for c in customers if c.get('id')], errors)
+            stream_or_brick = stream_ids | brick_ids
+            for customer in customers:
+                customer_id = str(customer.get('id', '')).strip()
+                if customer_id:
+                    customer_ids.add(customer_id)
+                job_ids = set()
+                for job in customer.get('jobsToBeDone', []) or []:
+                    if not isinstance(job, dict):
+                        continue
+                    if job.get('id'):
+                        job_ids.add(str(job.get('id')).strip())
+                    if not stream_or_brick:
+                        continue
+                    for step in job.get('steps', []) or []:
+                        if not isinstance(step, dict):
+                            continue
+                        for needed_key in ('streamsNeeded', 'bricksNeeded'):
+                            for needed in step.get(needed_key, []) or []:
+                                needed_id = str((needed or {}).get('id', '')).strip() if isinstance(needed, dict) else str(needed or '').strip()
+                                if needed_id and needed_id not in stream_or_brick:
+                                    errors.append(f'{domain_dir.name}: customer {customer_id} job {job.get("id", "?")} {needed_key} references missing stream/brick {needed_id}')
+                customer_job_ids[customer_id] = job_ids
+                kpi_names = set()
+                pyramids = customer.get('kpiPyramids', {})
+                if isinstance(pyramids, dict):
+                    for pyramid in pyramids.values():
+                        _kpi_node_names(pyramid, kpi_names)
+                customer_kpi_names[customer_id] = kpi_names
+
+    # --- insights linkedCustomers -> customer / job / KPI-name joins ---
+    insights_path = domain_dir / 'customers' / 'insights.json'
+    if customer_ids and insights_path.exists():
+        payload = load_json(insights_path, errors)
+        if payload is not None:
+            for item in payload.get('items', []) or []:
+                if not isinstance(item, dict):
+                    continue
+                item_id = item.get('id', '<missing-id>')
+                for linked in item.get('linkedCustomers', []) or []:
+                    if not isinstance(linked, dict):
+                        continue
+                    linked_id = str(linked.get('customerId', '')).strip()
+                    if linked_id and linked_id not in customer_ids:
+                        errors.append(f'{domain_dir.name}: insight {item_id} references missing customer {linked_id}')
+                        continue
+                    for job_id in linked.get('jobIds', []) or []:
+                        if job_id and job_id not in customer_job_ids.get(linked_id, set()):
+                            errors.append(f'{domain_dir.name}: insight {item_id} references missing job {job_id} for customer {linked_id}')
+                    for kpi_name in linked.get('kpis', []) or []:
+                        if kpi_name and kpi_name not in customer_kpi_names.get(linked_id, set()):
+                            errors.append(f'{domain_dir.name}: insight {item_id} references KPI name not in {linked_id} pyramids: {kpi_name}')
+
+    # --- products: duplicate ids + primaryCustomers -> customers ---
+    products_path = domain_dir / 'product-deployments' / 'products.json'
+    if products_path.exists():
+        payload = load_json(products_path, errors)
+        if payload is not None:
+            portfolio = payload.get('portfolio', {}) if isinstance(payload, dict) else {}
+            products = portfolio.get('products', []) or []
+            _report_duplicates(domain_dir, 'product', [p.get('id') for p in products if isinstance(p, dict) and p.get('id')], errors)
+            if customer_ids:
+                for product in products:
+                    if not isinstance(product, dict):
+                        continue
+                    for primary in product.get('primaryCustomers', []) or []:
+                        primary_id = str((primary or {}).get('id', '')).strip() if isinstance(primary, dict) else str(primary or '').strip()
+                        if primary_id and primary_id not in customer_ids:
+                            errors.append(f'{domain_dir.name}: product {product.get("id", "?")} references missing customer {primary_id}')
+
+
 def validate_domain(domain_dir, strict_ids=False):
     errors = []
     json_payloads = []
@@ -374,6 +554,7 @@ def validate_domain(domain_dir, strict_ids=False):
                 errors.append(f'{domain_dir.name}: duplicate product brick id: {brick_id}')
 
     validate_team_model(domain_dir, bricks, errors)
+    validate_cross_references(domain_dir, bricks, errors)
     return errors, len(json_payloads), len(bricks)
 
 

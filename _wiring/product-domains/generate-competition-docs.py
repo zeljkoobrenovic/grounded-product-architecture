@@ -139,6 +139,7 @@ def create_landing_pages(domain_config, docs_folder, competition_scope, players)
                     'player_name': player['name']
                 }))
                 .replace('${player_name}', player['name'])
+                .replace('${domain_name}', domain_config['name'])
                 .replace('${player}', json.dumps(player))
                 .replace('${scope}', json.dumps(competition_scope or {}))
             )

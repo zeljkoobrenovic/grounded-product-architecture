@@ -132,14 +132,12 @@ After the new domain exists in `_config/product-domains/<new-domain>/`, generate
 
 ### Data And Evidence
 
-- `_data/data/`
-  Source data used by evidence and reporting generators such as AWS, GCP, budget, incidents, history, brands, and Slack.
-- `_data/evidence-db/`
-  Self-contained evidence pipeline. Per-source scripts under `_data/evidence-db/scripts/` write fragment files into `_data/evidence-db/database/evidence-files/<source>.json`; `database/aggregate-evidence.py` merges them into `database/all-evidence.json`. Run the full chain with `_data/evidence-db/run.sh`.
+- `_evidence/`
+  Self-contained evidence pipeline. Example per-source scripts under `_evidence/_example_scripts/` (source-code, gcp, aws, workday) write fragment files into `_evidence/database/evidence-files/<source>.json`; `database/aggregate-evidence.py` merges them into `database/all-evidence.json`. Run the full chain with `_evidence/run.sh` (example scripts are skipped when their external input data is absent).
 
 ### Evidence Explorer
 
-`_wiring/evidence-explorer/generate-evidence-explorer-docs.py` renders `_templates/evidence-explorer/index.html` into a standalone search UI at `docs/evidence-explorer/index.html`, inlining `all-evidence.json` into the page (no runtime fetch) and copying the evidence and template icons. It is wired as the last step of `_data/evidence-db/run.sh`, so editing fragments and re-running `run.sh` refreshes the explorer.
+`_wiring/evidence-explorer/generate-evidence-explorer-docs.py` renders `_templates/evidence-explorer/index.html` into a standalone search UI at `docs/evidence-explorer/index.html`, inlining `all-evidence.json` into the page (no runtime fetch) and copying the evidence and template icons. It is wired as the last step of `_evidence/run.sh`, so editing fragments and re-running `run.sh` refreshes the explorer.
 
 The explorer shows one tab per evidence type with central search. It also has an iframe-embed mode: `?embed=1` drops the page chrome, `?ids=<comma/newline-separated glob patterns>` restricts and pre-filters by fragment id (supports `*` and `?`), and `?useTabs=false` renders stacked sections instead of tabs.
 
@@ -178,7 +176,7 @@ python3 generate-competition-docs.py <domain_id> <domain_name> <domain_descripti
 
 Other generators live under:
 
-- `_wiring/evidence-explorer/generate-evidence-explorer-docs.py` (run via `_data/evidence-db/run.sh`)
+- `_wiring/evidence-explorer/generate-evidence-explorer-docs.py` (run via `_evidence/run.sh`)
 - `_wiring/generate-start-apps-docs.py`
 
 ## Editing Guidance

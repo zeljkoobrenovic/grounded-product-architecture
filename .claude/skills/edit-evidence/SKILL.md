@@ -58,11 +58,11 @@ the reference domain `ride-sharing-marketplace` before editing.**
 > regex/path/spacing). Keep the source prefix and the surrounding format consistent
 > with existing entries (note the spaced `aws / …`, `gcp / …` style this repo uses).
 
-## Evidence sources (from `_data/evidence-db/`)
+## Evidence sources (from `_evidence/`)
 
 `workday` (people), `source-code` (repos), `aws-accounts`/`aws` (AWS resources),
 `gcp-projects`/`gcp` (GCP resources). The database is built by
-`_data/evidence-db/run.sh`, which also refreshes the evidence explorer.
+`_evidence/run.sh`, which also refreshes the evidence explorer.
 
 ## Cross-file rules to keep intact
 
@@ -76,7 +76,7 @@ the reference domain `ride-sharing-marketplace` before editing.**
    (JSON validity; `--strict-ids` deliberately skips `evidence-ids`).
 2. Regenerate the domain docs: from `_wiring/product-domains/`,
    `python3 generate-product-bricks-docs.py <domain-id> "<Domain Name>" "<Domain description>"`.
-   To refresh the standalone evidence explorer too, run `_data/evidence-db/run.sh`.
+   To refresh the standalone evidence explorer too, run `_evidence/run.sh`.
 3. Report which bricks/streams gained evidence and which groups/patterns you added.
 
 ## Avoid

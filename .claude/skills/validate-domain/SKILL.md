@@ -55,7 +55,7 @@ the worktree is clean for that area first.
 ```bash
 cd _wiring/product-domains
 # Run only the generator(s) for the artifact you changed, with the three positional
-# args (id, name, description). Canonical name/description are in run.sh `domains_ALL`.
+# args (id, name, description). Canonical name/description are in run.sh `domains`.
 python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"
 ```
 

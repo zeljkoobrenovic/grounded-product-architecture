@@ -5,8 +5,8 @@ import shutil
 # Resolve repo root relative to this script (_wiring/evidence-explorer/).
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-EVIDENCE_JSON = os.path.join(REPO_ROOT, '_data', 'evidence-db', 'database', 'all-evidence.json')
-EVIDENCE_ICONS = os.path.join(REPO_ROOT, '_data', 'evidence-db', 'icons')
+EVIDENCE_JSON = os.path.join(REPO_ROOT, '_evidence', 'database', 'all-evidence.json')
+EVIDENCE_ICONS = os.path.join(REPO_ROOT, '_evidence', 'icons')
 TEMPLATE = os.path.join(REPO_ROOT, '_templates', 'evidence-explorer', 'index.html')
 TEMPLATE_ICONS = os.path.join(REPO_ROOT, '_templates', 'evidence-explorer', 'icons')
 OUTPUT_DIR = os.path.join(REPO_ROOT, 'docs', 'evidence-explorer')
