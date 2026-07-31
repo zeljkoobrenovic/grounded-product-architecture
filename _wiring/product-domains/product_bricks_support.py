@@ -840,6 +840,26 @@ def normalize_product_brick_root_groups(root_groups):
     return normalize_brick_dependencies(normalized_root_groups)
 
 
+_SHARED_CONFIG_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '_config', '_shared')
+_shared_model_cache = {}
+
+
+def _shared_model(filename):
+    """Shared enum/definition defaults hoisted out of the per-domain files.
+    Domain files may still declare these keys to override the shared model."""
+    if filename not in _shared_model_cache:
+        shared_path = os.path.join(_SHARED_CONFIG_ROOT, filename)
+        _shared_model_cache[filename] = json.load(open(shared_path)) if os.path.exists(shared_path) else {}
+    return _shared_model_cache[filename]
+
+
+def apply_shared_defaults(target, filename, keys):
+    for key in keys:
+        if key not in target and key in _shared_model(filename):
+            target[key] = _shared_model(filename)[key]
+    return target
+
+
 def load_product_bricks_payload(path, default_title='Product Bricks', default_description=''):
     if not os.path.exists(path):
         return {
@@ -862,6 +882,7 @@ def load_product_bricks_payload(path, default_title='Product Bricks', default_de
         metadata['title'] = default_title
     if 'description' not in metadata:
         metadata['description'] = default_description
+    apply_shared_defaults(metadata, 'product-brick-model.json', ('brickTypes', 'brickStatuses', 'modulesConfig'))
 
     return {
         'metadata': metadata,
@@ -890,6 +911,7 @@ def load_product_streams_payload(path, default_title='Product Streams', default_
         metadata['title'] = default_title
     if 'description' not in metadata:
         metadata['description'] = default_description
+    apply_shared_defaults(metadata, 'product-stream-model.json', ('definitions',))
 
     return {
         'metadata': metadata,

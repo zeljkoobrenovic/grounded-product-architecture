@@ -31,6 +31,8 @@ What the validator checks:
   duplicate brick/module IDs; brick/module/data dependencies resolve; no legacy
   fields (`interfaces`/`internalModules` top-level, `storeIds`, `interface`).
 - `modulesConfig.layerTypes`/`moduleTypes` match the supported sets and carry colors.
+- Every artifact matches its JSON Schema in `_config/_schema/` (required fields,
+  types, fixed enums, retired-field bans) via the dependency-free `schema_check.py`.
 - Teams: valid team `type` and dependency types vs `orgDesign`; `otherTeamDependencies`
   resolve to real teams; `brickDependencies` resolve to real bricks; non-negative
   integer headcount; no duplicate team IDs.
@@ -55,7 +57,7 @@ the worktree is clean for that area first.
 ```bash
 cd _wiring/product-domains
 # Run only the generator(s) for the artifact you changed, with the three positional
-# args (id, name, description). Canonical name/description are in run.sh `domains_ALL`.
+# args (id, name, description). Canonical name/description are in the domain's start/config.json.
 python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"
 ```
 
@@ -71,7 +73,7 @@ Generator ↔ artifact map:
 | business/competition.json | generate-competition-docs.py |
 
 To rebuild everything for the active domain, run `./run.sh` (regenerates the
-domain(s) listed in its `domains=(...)` array, in fixed generator order).
+every domain that has a `start/config.json`, in fixed generator order; use `run-one.sh <domain-id>` for one domain).
 
 ## 4. Report
 

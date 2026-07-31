@@ -35,8 +35,8 @@ JTBD images via OpenAI Images API:
 ```bash
 export OPENAI_API_KEY=...
 python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --dry-run
-python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --domain nutrition --limit 4
-python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --domain nutrition --overwrite
+python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --domain food-and-nutrition-product-platform --limit 4
+python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --domain food-and-nutrition-product-platform --overwrite
 ```
 
 JTBD images via Gemini Nano Banana API:
@@ -44,8 +44,8 @@ JTBD images via Gemini Nano Banana API:
 ```bash
 export GEMINI_API_KEY=...
 python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --dry-run
-python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain nutrition --limit 4
-python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain nutrition --overwrite
+python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --limit 4
+python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --overwrite
 ```
 
 Customer journey images via Gemini Nano Banana API:
@@ -54,8 +54,8 @@ Customer journey images via Gemini Nano Banana API:
 export GEMINI_API_KEY=...
 python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --dry-run
 python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain bike-mobility --json-only
-python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain nutrition --limit 4
-python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain nutrition --overwrite
+python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --limit 4
+python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --overwrite
 ```
 
 Useful flags:

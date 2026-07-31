@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
     <title>Competition (Technical Design Collaboration Platform)</title>
     <style>
     .breadcrumbs-container {
@@ -11,7 +13,7 @@
         margin: 0;
         padding: 6px 4px;
         font-size: 80%;
-        color: #a0a0a0;
+        color: #5b6472;
     }
 
     .breadcrumb {
@@ -19,9 +21,49 @@
 
     .breadcrumb a {
         text-decoration: none;
-        color: #343434;;
+        color: #343434;
     }
 </style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
     <style>
     .tab {
         display: flex;
@@ -466,8 +508,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -483,6 +556,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -491,7 +565,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -502,6 +578,29 @@
 
 </head>
 <body onload="initTab('PlayersTab')" onhashchange="initTab()">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../start/index.html">Home</a><a href="../customers/index.html">Customers</a><a href="../product-deployments/index.html">Products</a><a href="../product-bricks/index.html">Bricks &amp; Streams</a><a href="../teams/index.html">Teams</a><a href="../competition/index.html" class="active">Competition</a></nav>
 <div id="breadcrumbs"></div>
 
 <div class="hero" id="overview">
@@ -588,7 +687,7 @@
 
 
 <script>
-    const competitionData = {"generated_on": "2026-04-18", "domain": "technical-design-collaboration-platform", "title": "Technical Design Collaboration Platform Competitive Landscape", "scope": {"description": "Technical design and collaborative product-development platforms relevant to a domain modeled on engineering diagrams, docs, visual collaboration, and code-connected design workflows.", "inclusion_logic": ["platforms used to design, document, or coordinate technical systems and digital products", "leaders in visual collaboration or product-design workflows with strong engineering relevance", "products that compete for design-system, architecture, or collaborative planning budgets"], "notes": ["Business stats are included only when they were found on official investor relations pages, official company about pages, or official press/news pages.", "Some players are broader collaboration platforms rather than pure technical-design specialists. Those metrics are preserved as reported and used because they compete for the same team workflows and budgets."]}, "players": [{"id": "figma", "name": "Figma", "hq": "San Francisco, United States", "category": "category_leader", "primary_regions": ["global"], "description": "Figma is the strongest product-design and collaborative interface-design benchmark, increasingly expanding into broader product development, prototyping, and AI-assisted creation workflows.", "business_stats": [{"metric": "revenue", "value": "$749.0m", "period": "FY2024", "scope": "company", "source_title": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "source_url": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}, {"metric": "paid_customers_over_10000_arr", "value": "13,861", "period": "as of 2025-12-31", "scope": "customer_base", "source_title": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "source_url": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}, {"metric": "paid_customers_over_100000_arr", "value": "1,405", "period": "as of 2025-12-31", "scope": "enterprise", "source_title": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "source_url": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}, {"metric": "net_dollar_retention", "value": "136%", "period": "as of 2025-12-31", "scope": "customer_expansion", "source_title": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "source_url": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}], "links": {"website": "https://www.figma.com/", "investor_relations": "https://investor.figma.com/", "newsroom": "https://www.figma.com/newsroom/", "blog": "https://www.figma.com/blog/", "developer_docs": "https://www.figma.com/developers/api", "linkedin": "https://www.linkedin.com/company/figma/"}, "logo_path": null}, {"id": "miro", "name": "Miro", "hq": "San Francisco and Amsterdam", "category": "visual_collaboration_leader", "primary_regions": ["global"], "description": "Miro is the strongest visual whiteboarding and innovation-workspace challenger, with deep penetration in distributed product, design, and systems-planning teams.", "business_stats": [{"metric": "users", "value": "100m+", "period": "accessed 2026-04-18", "scope": "platform", "source_title": "About Miro", "source_url": "https://miro.com/about/"}, {"metric": "organizations", "value": "250,000", "period": "accessed 2026-04-18", "scope": "customer_base", "source_title": "About Miro", "source_url": "https://miro.com/about/"}, {"metric": "fortune_100_deployment", "value": "99 of the Fortune 100", "period": "accessed 2026-04-18", "scope": "enterprise", "source_title": "About Miro", "source_url": "https://miro.com/about/"}, {"metric": "country_reach", "value": "customers in 250,000 organizations globally", "period": "accessed 2026-04-18", "scope": "platform", "source_title": "About Miro", "source_url": "https://miro.com/about/"}], "links": {"website": "https://miro.com/", "about": "https://miro.com/about/", "blog": "https://miro.com/blog/", "product_page": "https://miro.com/product/", "linkedin": "https://www.linkedin.com/company/mirohq/"}, "logo_path": null}, {"id": "lucid", "name": "Lucid Software", "hq": "South Jordan, United States", "category": "diagramming_and_whiteboarding_platform", "primary_regions": ["global"], "description": "Lucid is a leading diagramming and visual collaboration platform, especially relevant where architecture diagrams, process maps, and transformation planning overlap with product and engineering workflows.", "business_stats": [{"metric": "users", "value": "100m+", "period": "accessed 2026-04-18", "scope": "platform", "source_title": "About | Lucid", "source_url": "https://lucid.co/about"}, {"metric": "fortune_500_penetration", "value": "99%", "period": "accessed 2026-04-18", "scope": "enterprise", "source_title": "About | Lucid", "source_url": "https://lucid.co/about"}, {"metric": "countries", "value": "180+", "period": "accessed 2026-04-18", "scope": "platform", "source_title": "About | Lucid", "source_url": "https://lucid.co/about"}, {"metric": "okta_rank", "value": "#12 most used app on Okta", "period": "accessed 2026-04-18", "scope": "usage_signal", "source_title": "About | Lucid", "source_url": "https://lucid.co/about"}], "links": {"website": "https://lucid.co/", "about": "https://lucid.co/about", "customers": "https://lucid.co/resources/case-studies", "blog": "https://lucid.co/blog", "linkedin": "https://www.linkedin.com/company/lucidsoftware/"}, "logo_path": null}, {"id": "atlassian", "name": "Atlassian", "hq": "Sydney, Australia", "category": "workflow_platform_competitor", "primary_regions": ["global"], "description": "Atlassian competes through its software-development and collaboration system of work, especially where technical design, documentation, tickets, and delivery execution converge across engineering teams.", "business_stats": [{"metric": "revenue", "value": "$4.36bn", "period": "FY2024", "scope": "company", "source_title": "Atlassian 2024 Annual Report", "source_url": "https://investors.atlassian.com/files/doc_downloads/agm/2024/Oct/TEAM-2024-Annual-Report.pdf"}, {"metric": "customers", "value": "350k+", "period": "accessed 2026-04-18", "scope": "customer_base", "source_title": "Atlassian Investor Relations", "source_url": "https://investors.atlassian.com/"}, {"metric": "fortune_500_penetration", "value": "85%+", "period": "as of 2025-12-31", "scope": "enterprise", "source_title": "Atlassian Investor Relations", "source_url": "https://investors.atlassian.com/"}, {"metric": "trailing_twelve_month_revenue", "value": "$5.8bn", "period": "accessed 2026-04-18", "scope": "company", "source_title": "Atlassian Investor Relations", "source_url": "https://investors.atlassian.com/"}], "links": {"website": "https://www.atlassian.com/", "investor_relations": "https://investors.atlassian.com/", "annual_report": "https://investors.atlassian.com/files/doc_downloads/agm/2024/Oct/TEAM-2024-Annual-Report.pdf", "blog": "https://www.atlassian.com/blog", "developer": "https://developer.atlassian.com/", "linkedin": "https://www.linkedin.com/company/atlassian/"}, "logo_path": null}]};
+    const competitionData = {"generatedOn": "2026-04-18", "domain": "technical-design-collaboration-platform", "title": "Technical Design Collaboration Platform Competitive Landscape", "scope": {"description": "Technical design and collaborative product-development platforms relevant to a domain modeled on engineering diagrams, docs, visual collaboration, and code-connected design workflows.", "inclusionLogic": ["platforms used to design, document, or coordinate technical systems and digital products", "leaders in visual collaboration or product-design workflows with strong engineering relevance", "products that compete for design-system, architecture, or collaborative planning budgets"], "notes": ["Business stats are included only when they were found on official investor relations pages, official company about pages, or official press/news pages.", "Some players are broader collaboration platforms rather than pure technical-design specialists. Those metrics are preserved as reported and used because they compete for the same team workflows and budgets."]}, "players": [{"id": "figma", "name": "Figma", "hq": "San Francisco, United States", "category": "category_leader", "primaryRegions": ["global"], "description": "Figma is the strongest product-design and collaborative interface-design benchmark, increasingly expanding into broader product development, prototyping, and AI-assisted creation workflows.", "businessStats": [{"metric": "revenue", "value": "$749.0m", "period": "FY2024", "scope": "company", "sourceTitle": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "sourceUrl": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}, {"metric": "paid_customers_over_10000_arr", "value": "13,861", "period": "as of 2025-12-31", "scope": "customer_base", "sourceTitle": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "sourceUrl": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}, {"metric": "paid_customers_over_100000_arr", "value": "1,405", "period": "as of 2025-12-31", "scope": "enterprise", "sourceTitle": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "sourceUrl": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}, {"metric": "net_dollar_retention", "value": "136%", "period": "as of 2025-12-31", "scope": "customer_expansion", "sourceTitle": "Figma Announces Fourth Quarter and Fiscal Year 2025 Financial Results", "sourceUrl": "https://investor.figma.com/news-events/news/news-details/2026/Figma-Announces-Fourth-Quarter-and-Fiscal-Year-2025-Financial-Results/default.aspx"}], "links": {"website": "https://www.figma.com/", "investor_relations": "https://investor.figma.com/", "newsroom": "https://www.figma.com/newsroom/", "blog": "https://www.figma.com/blog/", "developer_docs": "https://www.figma.com/developers/api", "linkedin": "https://www.linkedin.com/company/figma/"}, "logo_path": null}, {"id": "miro", "name": "Miro", "hq": "San Francisco and Amsterdam", "category": "visual_collaboration_leader", "primaryRegions": ["global"], "description": "Miro is the strongest visual whiteboarding and innovation-workspace challenger, with deep penetration in distributed product, design, and systems-planning teams.", "businessStats": [{"metric": "users", "value": "100m+", "period": "accessed 2026-04-18", "scope": "platform", "sourceTitle": "About Miro", "sourceUrl": "https://miro.com/about/"}, {"metric": "organizations", "value": "250,000", "period": "accessed 2026-04-18", "scope": "customer_base", "sourceTitle": "About Miro", "sourceUrl": "https://miro.com/about/"}, {"metric": "fortune_100_deployment", "value": "99 of the Fortune 100", "period": "accessed 2026-04-18", "scope": "enterprise", "sourceTitle": "About Miro", "sourceUrl": "https://miro.com/about/"}, {"metric": "country_reach", "value": "customers in 250,000 organizations globally", "period": "accessed 2026-04-18", "scope": "platform", "sourceTitle": "About Miro", "sourceUrl": "https://miro.com/about/"}], "links": {"website": "https://miro.com/", "about": "https://miro.com/about/", "blog": "https://miro.com/blog/", "product_page": "https://miro.com/product/", "linkedin": "https://www.linkedin.com/company/mirohq/"}, "logo_path": null}, {"id": "lucid", "name": "Lucid Software", "hq": "South Jordan, United States", "category": "diagramming_and_whiteboarding_platform", "primaryRegions": ["global"], "description": "Lucid is a leading diagramming and visual collaboration platform, especially relevant where architecture diagrams, process maps, and transformation planning overlap with product and engineering workflows.", "businessStats": [{"metric": "users", "value": "100m+", "period": "accessed 2026-04-18", "scope": "platform", "sourceTitle": "About | Lucid", "sourceUrl": "https://lucid.co/about"}, {"metric": "fortune_500_penetration", "value": "99%", "period": "accessed 2026-04-18", "scope": "enterprise", "sourceTitle": "About | Lucid", "sourceUrl": "https://lucid.co/about"}, {"metric": "countries", "value": "180+", "period": "accessed 2026-04-18", "scope": "platform", "sourceTitle": "About | Lucid", "sourceUrl": "https://lucid.co/about"}, {"metric": "okta_rank", "value": "#12 most used app on Okta", "period": "accessed 2026-04-18", "scope": "usage_signal", "sourceTitle": "About | Lucid", "sourceUrl": "https://lucid.co/about"}], "links": {"website": "https://lucid.co/", "about": "https://lucid.co/about", "customers": "https://lucid.co/resources/case-studies", "blog": "https://lucid.co/blog", "linkedin": "https://www.linkedin.com/company/lucidsoftware/"}, "logo_path": null}, {"id": "atlassian", "name": "Atlassian", "hq": "Sydney, Australia", "category": "workflow_platform_competitor", "primaryRegions": ["global"], "description": "Atlassian competes through its software-development and collaboration system of work, especially where technical design, documentation, tickets, and delivery execution converge across engineering teams.", "businessStats": [{"metric": "revenue", "value": "$4.36bn", "period": "FY2024", "scope": "company", "sourceTitle": "Atlassian 2024 Annual Report", "sourceUrl": "https://investors.atlassian.com/files/doc_downloads/agm/2024/Oct/TEAM-2024-Annual-Report.pdf"}, {"metric": "customers", "value": "350k+", "period": "accessed 2026-04-18", "scope": "customer_base", "sourceTitle": "Atlassian Investor Relations", "sourceUrl": "https://investors.atlassian.com/"}, {"metric": "fortune_500_penetration", "value": "85%+", "period": "as of 2025-12-31", "scope": "enterprise", "sourceTitle": "Atlassian Investor Relations", "sourceUrl": "https://investors.atlassian.com/"}, {"metric": "trailing_twelve_month_revenue", "value": "$5.8bn", "period": "accessed 2026-04-18", "scope": "company", "sourceTitle": "Atlassian Investor Relations", "sourceUrl": "https://investors.atlassian.com/"}], "links": {"website": "https://www.atlassian.com/", "investor_relations": "https://investors.atlassian.com/", "annual_report": "https://investors.atlassian.com/files/doc_downloads/agm/2024/Oct/TEAM-2024-Annual-Report.pdf", "blog": "https://www.atlassian.com/blog", "developer": "https://developer.atlassian.com/", "linkedin": "https://www.linkedin.com/company/atlassian/"}, "logo_path": null}]};
     let showDetails = false;
 
     function escapeHtml(value) {
@@ -630,7 +729,7 @@
         const players = competitionData.players || [];
         document.getElementById('heroSubtitle').innerHTML = escapeHtml(competitionData.scope && competitionData.scope.description || '');
         document.getElementById('heroMeta').innerHTML = ''
-            + '<div class="meta-chip">Updated ' + escapeHtml(competitionData.generated_on || '') + '</div>';
+            + '<div class="meta-chip">Updated ' + escapeHtml(competitionData.generatedOn || '') + '</div>';
     }
 
     function renderScope() {
@@ -644,7 +743,7 @@
         const logoHtml = renderPlayerLogo(player);
         const detailUrl = 'landing_pages/' + encodeURIComponent(player.id) + '.html';
 
-        const stats = (player.business_stats || []).slice(0, 3).map(stat => ''
+        const stats = (player.businessStats || []).slice(0, 3).map(stat => ''
             + '<div class="stat-item">'
             + '<div class="stat-metric">' + escapeHtml(titleCase(stat.metric)) + '</div>'
             + '<div class="stat-value">' + escapeHtml(stat.value || '') + '</div>'
@@ -659,7 +758,7 @@
             + '</a>'
         ).join('');
 
-        const regions = (player.primary_regions || []).map(region => '<div class="pill">' + escapeHtml(titleCase(region)) + '</div>').join('');
+        const regions = (player.primaryRegions || []).map(region => '<div class="pill">' + escapeHtml(titleCase(region)) + '</div>').join('');
 
         return ''
             + '<div class="player-card" data-detail-url="' + escapeHtml(detailUrl) + '">'

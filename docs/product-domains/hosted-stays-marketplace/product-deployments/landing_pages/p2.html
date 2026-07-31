@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Host Setup and Listing Studio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Host Setup and Listing Studio — Product (Hosted Stays Marketplace)</title>
 
     <style>
     .page-type-badge {
@@ -16,6 +18,46 @@
         font-size: 11px;
     }
 </style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
     <style>
     .tab {
         display: flex;
@@ -102,7 +144,7 @@
         margin: 0;
         padding: 6px 4px;
         font-size: 80%;
-        color: #a0a0a0;
+        color: #5b6472;
     }
 
     .breadcrumb {
@@ -110,7 +152,7 @@
 
     .breadcrumb a {
         text-decoration: none;
-        color: #343434;;
+        color: #343434;
     }
 </style>
     <style>
@@ -831,6 +873,29 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
 <body onload="initTab('ChannelsTab')" onhashchange="initTab('ChannelsTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html" class="active">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a></nav>
 <div id="breadcrumbs" style="margin-left: 20px"></div>
 <script>
     function resolveHashTabName() {
@@ -858,8 +923,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -875,6 +971,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -883,7 +980,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -894,7 +993,7 @@
 
 
 <script>
-    const config = {"domains": [{"id": "hosted-stays-marketplace", "name": "Hosted Stays Marketplace", "description": "The Hosted Stays Marketplace domain covers the guest, host, co-host, trust, payment, and compliance workflows required to run a global marketplace for homes, rooms, and professionally managed short-term rental stays."}]};
+    const config = {"domains": [{"id": "hosted-stays-marketplace", "name": "Hosted Stays Marketplace", "description": "Covers the guest, host, co-host, trust, payment, and marketplace-control workflows required to run a global hosted-stays marketplace centered on homes, rooms, and short-term rental inventory."}]};
     const all_products = [{"id": "p1", "name": "Guest Discovery and Booking Experience", "icon": "", "type": "B2C", "primaryCustomers": [{"id": "cg1-p1", "name": "Guest Stay Booker", "icon": "guest.png"}]}, {"id": "p2", "name": "Host Setup and Listing Studio", "icon": "", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Everyday Home Host", "icon": "host.png"}]}, {"id": "p3", "name": "Professional Host and Co-host Operations", "icon": "", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Professional Host / Co-host Operator", "icon": "operator.png"}]}];
     const product = {"id": "p2", "name": "Host Setup and Listing Studio", "icon": "", "type": "B2B2C", "primaryCustomers": [{"id": "cg2-p1", "name": "Everyday Home Host", "icon": "host.png"}]};
     const deployment = {"metadata": {"title": "Hosted Stays Marketplace Deployment and Operating Surfaces", "description": "Primary deployment, distribution, support, and integration channels used to deliver and operate the Hosted Stays Marketplace domain.", "modelVersion": "3.0"}, "channels": [{"groupId": "runtime-cloud", "groupName": "Cloud Runtime Environments", "groupType": "runtime", "description": "Live runtimes for booking, messaging, pricing, trust, payout, and support services.", "channels": [{"subChannelId": "core-cloud-runtime", "subChannelName": "Core Marketplace Runtime", "channelType": "public-cloud", "description": "Primary runtime for marketplace services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-01", "subChannelName": "Cloud 01", "channelType": "public-cloud", "description": "Cloud 01 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-02", "subChannelName": "Cloud 02", "channelType": "public-cloud", "description": "Cloud 02 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-03", "subChannelName": "Cloud 03", "channelType": "public-cloud", "description": "Cloud 03 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-04", "subChannelName": "Cloud 04", "channelType": "public-cloud", "description": "Cloud 04 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-05", "subChannelName": "Cloud 05", "channelType": "public-cloud", "description": "Cloud 05 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-06", "subChannelName": "Cloud 06", "channelType": "public-cloud", "description": "Cloud 06 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-07", "subChannelName": "Cloud 07", "channelType": "public-cloud", "description": "Cloud 07 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-08", "subChannelName": "Cloud 08", "channelType": "public-cloud", "description": "Cloud 08 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-09", "subChannelName": "Cloud 09", "channelType": "public-cloud", "description": "Cloud 09 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}, {"subChannelId": "cloud-10", "subChannelName": "Cloud 10", "channelType": "public-cloud", "description": "Cloud 10 runtime channel for deployable domain services.", "deployedBricks": [{"brickId": "srch", "brickName": "Search, Ranking & Map Browse", "deploymentRole": "Search, ranking, and browse services", "usedInProducts": [{"productId": "p1", "description": "Provides the core guest search and shortlist journey."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation and checkout services", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Messaging and trip state services", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payment, tax, and payout services", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Risk, protection, and trust services", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Case-management and support services", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}]}]}, {"groupId": "web-edge-delivery", "groupName": "Web and Edge Delivery", "groupType": "distribution", "description": "Primary web delivery surfaces for guest, host, and operator browser workflows.", "channels": [{"subChannelId": "web-cdn-edge", "subChannelName": "CDN and Edge Hosting", "channelType": "edge-platform", "description": "Primary production web delivery layer.", "deployedBricks": [{"brickId": "insp", "brickName": "Inspiration & Category Discovery", "deploymentRole": "Guest entry and browse pages", "usedInProducts": [{"productId": "p1", "description": "Provides guest entry points from broad travel intent into stay discovery."}]}, {"brickId": "list", "brickName": "Listing Detail & Review Trust", "deploymentRole": "Listing pages and review presentation", "usedInProducts": [{"productId": "p1", "description": "Helps guests judge whether a stay is worth trusting before they book."}]}, {"brickId": "lista", "brickName": "Listing Authoring & Content", "deploymentRole": "Host listing setup and content editing", "usedInProducts": [{"productId": "p2", "description": "Captures listing content, policies, and photo-rich merchandising."}]}, {"brickId": "host", "brickName": "Host Performance & Earnings", "deploymentRole": "Host and operator dashboards", "usedInProducts": [{"productId": "p2", "description": "Makes earnings and listing quality actionable for hosts."}, {"productId": "p3", "description": "Shows portfolio performance and reconciliation at scale."}]}, {"brickId": "coho", "brickName": "Co-host Network & Permissions", "deploymentRole": "Co-host and portfolio management surfaces", "usedInProducts": [{"productId": "p3", "description": "Supports delegated operations and role-based access."}]}]}]}, {"groupId": "mobile-distribution", "groupName": "Mobile Distribution", "groupType": "distribution", "description": "App-store channels for guest and host mobile experiences.", "channels": [{"subChannelId": "ios-app-store", "subChannelName": "Apple App Store", "channelType": "app-store", "description": "iOS distribution surface.", "deployedBricks": [{"brickId": "insp", "brickName": "Inspiration & Category Discovery", "deploymentRole": "Guest iOS browsing experience", "usedInProducts": [{"productId": "p1", "description": "Provides guest entry points from broad travel intent into stay discovery."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Guest iOS booking flows", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Guest and host messaging on iOS", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "cala", "brickName": "Calendar & Availability", "deploymentRole": "Host iOS calendar controls", "usedInProducts": [{"productId": "p2", "description": "Controls bookable dates, rules, and booking windows."}]}]}, {"subChannelId": "android-play-store", "subChannelName": "Google Play", "channelType": "app-store", "description": "Android distribution surface.", "deployedBricks": [{"brickId": "insp", "brickName": "Inspiration & Category Discovery", "deploymentRole": "Guest Android browsing experience", "usedInProducts": [{"productId": "p1", "description": "Provides guest entry points from broad travel intent into stay discovery."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Guest Android booking flows", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "trip", "brickName": "Trip Messaging & Itinerary", "deploymentRole": "Guest and host messaging on Android", "usedInProducts": [{"productId": "p1", "description": "Provides communication and itinerary support before and during the stay."}]}, {"brickId": "cala", "brickName": "Calendar & Availability", "deploymentRole": "Host Android calendar controls", "usedInProducts": [{"productId": "p2", "description": "Controls bookable dates, rules, and booking windows."}]}]}]}, {"groupId": "api-and-integration", "groupName": "API and Integration Surfaces", "groupType": "integration", "description": "Partner and ecosystem API surfaces for portfolio sync, exports, and operational connectivity.", "channels": [{"subChannelId": "partner-api-gateway", "subChannelName": "Partner API Gateway", "channelType": "api-platform", "description": "Primary API exposure surface for internal and external connectivity patterns.", "deployedBricks": [{"brickId": "apix", "brickName": "Partner APIs & Channel Connectivity", "deploymentRole": "Portfolio sync, exports, and partner integration APIs", "usedInProducts": [{"productId": "p3", "description": "Supports external sync and export patterns used by professional operators."}]}, {"brickId": "book", "brickName": "Booking & Checkout", "deploymentRole": "Reservation-state APIs", "usedInProducts": [{"productId": "p1", "description": "Converts guest intent into a confirmed booking."}]}, {"brickId": "host", "brickName": "Host Performance & Earnings", "deploymentRole": "Operator reporting and export APIs", "usedInProducts": [{"productId": "p2", "description": "Makes earnings and listing quality actionable for hosts."}, {"productId": "p3", "description": "Shows portfolio performance and reconciliation at scale."}]}]}]}, {"groupId": "operations-and-support", "groupName": "Operations and Support Surfaces", "groupType": "operations", "description": "Internal surfaces used by support, trust, compliance, and payout teams.", "channels": [{"subChannelId": "internal-ops-console", "subChannelName": "Internal Operations Console", "channelType": "internal-tooling", "description": "Internal trust, support, payout, and compliance operations tooling.", "deployedBricks": [{"brickId": "trst", "brickName": "Trust, Safety & AirCover", "deploymentRole": "Trust review and incident tooling", "usedInProducts": [{"productId": "p1", "description": "Supports safe booking and issue recovery expectations."}]}, {"brickId": "reso", "brickName": "Resolutions & Support", "deploymentRole": "Support case handling and resolution workflows", "usedInProducts": [{"productId": "p3", "description": "Supports issue management and case resolution across the portfolio."}]}, {"brickId": "paym", "brickName": "Payments, Taxes & Payouts", "deploymentRole": "Payout, refund, and finance operations", "usedInProducts": [{"productId": "p2", "description": "Supports payouts, taxes, and fee visibility."}]}, {"brickId": "comp", "brickName": "Local Compliance & Policy Controls", "deploymentRole": "Market-rule and policy enforcement controls", "usedInProducts": []}]}]}]};
@@ -1109,7 +1208,7 @@
     }
 
     function escapeHtml(value) {
-        return (value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')

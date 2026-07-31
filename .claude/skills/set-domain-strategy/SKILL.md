@@ -56,8 +56,8 @@ domains plus the reference `ride-sharing-marketplace`.
 
 ## Registering the domain
 
-Add a `domain_id|Domain Name|Domain description` line to the `domains_ALL=(...)` array
-in `_wiring/product-domains/run.sh`, and set `domains=(...)` to the domain you're
+Registration is automatic: `run.sh` discovers every domain that has a
+`start/config.json` with `id`/`name`/`description`. Create that file and you're
 generating. Keep the name/description identical to `start/config.json`.
 
 ## Working the strategy across artifacts

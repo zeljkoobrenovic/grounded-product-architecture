@@ -3,14 +3,19 @@ import os
 import shutil
 
 from domain_cli import load_domain_args
+from generator_common import (
+    copy_files_into,
+    enter_docs_root,
+    render_breadcrumbs as render_breadcrumbs_from,
+)
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/competition/'
 
 tabs_style = open(os.path.join(templates_root, '../_imports/tabs/style.html')).read()
+tokens_style = open(os.path.join(templates_root, '../_imports/tokens/style.html')).read()
 tabs_script = open(os.path.join(templates_root, '../_imports/tabs/script.html')).read()
 common_style = open(os.path.join(templates_root, '../_imports/common/style.html')).read()
 breadcrumbs_style = open(os.path.join(templates_root, '../_imports/breadcrumbs/style.html')).read()
@@ -20,21 +25,10 @@ domain, _ = load_domain_args()
 
 
 def render_breadcrumbs(template_name, replacements):
-    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
-    for key, value in replacements.items():
-        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
-    return breadcrumbs
+    return render_breadcrumbs_from(templates_root, template_name, replacements)
 
 
-def copy_folder_files(src_folder, dst_folder):
-    if not os.path.exists(src_folder):
-        return
-    os.makedirs(dst_folder, exist_ok=True)
-    for filename in os.listdir(src_folder):
-        src = os.path.join(src_folder, filename)
-        dst = os.path.join(dst_folder, filename)
-        if os.path.isfile(src):
-            shutil.copy2(src, dst)
+copy_folder_files = copy_files_into
 
 
 def build_available_logos(logos_root):
@@ -106,6 +100,7 @@ def create_overview_docs(domain_config, competition_payload, players):
         html_file.write(
             template
             .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
             .replace('${tabs_script}', tabs_script)
             .replace('${breadcrumbs_style}', breadcrumbs_style)
             .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -131,6 +126,7 @@ def create_landing_pages(domain_config, docs_folder, competition_scope, players)
                 template
                 .replace('${common_style}', common_style)
                 .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                 .replace('${tabs_script}', tabs_script)
                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                 .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -139,6 +135,7 @@ def create_landing_pages(domain_config, docs_folder, competition_scope, players)
                     'player_name': player['name']
                 }))
                 .replace('${player_name}', player['name'])
+                .replace('${domain_name}', domain_config['name'])
                 .replace('${player}', json.dumps(player))
                 .replace('${scope}', json.dumps(competition_scope or {}))
             )

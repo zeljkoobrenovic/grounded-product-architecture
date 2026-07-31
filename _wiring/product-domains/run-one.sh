@@ -1,8 +1,23 @@
 #!/bin/zsh
 set -euo pipefail
 
+# Regenerate all docs for a single domain: ./run-one.sh <domain-id>
+# Name and description are read from the domain's start/config.json, so they
+# can never drift from the registered domain data.
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
+
+domain_id="${1:?Usage: ./run-one.sh <domain-id>}"
+config="../../_config/product-domains/${domain_id}/start/config.json"
+
+if [[ ! -f "$config" ]]; then
+  echo "No such domain config: $config" >&2
+  exit 1
+fi
+
+domain_name="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['name'])" "$config")"
+domain_description="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['description'])" "$config")"
 
 scripts=(
   "generate-start-docs.py"
@@ -13,13 +28,6 @@ scripts=(
   "generate-competition-docs.py"
 )
 
-domains=(
-"digital-medication-management|Online Retail Marketplace|The Online Retail Marketplace domain covers the shopper, Prime, seller, fulfillment, retail-media, trust, and shared-commerce workflows required to run a scaled digital retail marketplace across first-party retail, third-party"
-)
-
 for script in "${scripts[@]}"; do
-  for domain in "${domains[@]}"; do
-    IFS='|' read -r domain_id domain_name domain_description <<< "$domain"
-    python3 "$script" "$domain_id" "$domain_name" "$domain_description"
-  done
+  python3 "$script" "$domain_id" "$domain_name" "$domain_description"
 done

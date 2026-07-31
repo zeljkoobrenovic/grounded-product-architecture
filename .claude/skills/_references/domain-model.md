@@ -29,7 +29,6 @@ dirty worktree before regenerating.
 | Product bricks | `product-bricks/product-bricks.json` | `generate-product-bricks-docs.py` |
 | Streams | `product-bricks/product-stream.json` | `generate-product-bricks-docs.py` |
 | Data assets | `data/data-assets.json` | `generate-product-bricks-docs.py` |
-| Evidence | `product-bricks/bricks-evidence.json`, `streams-evidence.json` | `generate-product-bricks-docs.py` |
 | Teams | `teams/teams.json` | `generate-teams-docs.py` |
 | Competition | `business/competition.json` | `generate-competition-docs.py` |
 | Domain brief | `_domain/DOMAIN.md` | (narrative, not generated) |
@@ -56,18 +55,15 @@ customers.json
   jobsToBeDone[].id ───────┬─▶ insights.json     linkedCustomers[].jobIds[]
                            └─▶ customerJourneyStories[].linkedJobIds[]
   jtbd.steps[].streamsNeeded[].id ─▶ product-stream.json  stream id (or brick id)
-  kpiPyramids ... names ───▶ teams.json metrics, insights kpis (by NAME, not id)
+  kpiPyramids ... node ids ─▶ insights.json linkedCustomers[].kpiIds[] (by ID)
+  kpiPyramids ... names ───▶ teams.json metrics, productStrategy northStar/supporting (by NAME — legacy)
 
 product-bricks.json
   brick.id ────────────────┬─▶ deployment.json     ...deployedBricks[].brickId
                            ├─▶ product-stream.json brickDependencies[].targetBrickId, flows steps deps
-                           ├─▶ teams.json          ...brickDependencies[].brickId
-                           └─▶ bricks-evidence.json object-id
+                           └─▶ teams.json          ...brickDependencies[].brickId
   brick.dataDependencies[].assetId ─▶ data-assets.json  asset.id
   brick.layers[].modules[].id (module-*) ─▶ referenced by brickDependencies[].moduleId
-
-product-stream.json
-  stream.id ───────────────▶ streams-evidence.json object-id
 
 products.json
   portfolio.products[].id ─▶ deployment.json ...deployedBricks[].usedInProducts[].productId
@@ -92,7 +88,11 @@ Module `type` must be one of:
 message-consumer, daemon, stateless-service, stateful-service, service, integration`.
 
 `metadata.modulesConfig.layerTypes` / `moduleTypes` (when present) must match these
-sets exactly, and each module type needs a `color`. Source of truth:
+sets exactly, and each module type needs a `color`. The shared defaults live in
+`_config/_shared/product-brick-model.json` (same for `brickTypes`/`brickStatuses`,
+and `teamTypes`/`teamDependencyTypes` in `team-model.json`, stream `definitions` in
+`product-stream-model.json`) — domain files only declare these blocks to override
+the shared model. Source of truth for the fixed sets:
 `_wiring/product-domains/product_bricks_support.py`.
 
 ## KPI pyramid model (fixed)
@@ -107,30 +107,35 @@ having `children[]`.
 - **Target: 4 levels** — `top → 2 branches → 2 mid metrics each → 2 leaves each`
   (1 + 2 + 4 + 8 = 15 nodes). A 3-level `top → 2 branches → 2 leaves` is acceptable only
   when diagnostics are genuinely sparse. Don't pad with vanity metrics to hit a count.
-- KPI **ids** are unique within a persona (across both pyramids). KPI **names** link by
-  NAME (not id) to `teams.json` metrics, `insights.json` `kpis`, and the persona's
-  `productStrategy` `northStar`/`supporting` — every such name must exist as a node in
-  that persona's pyramids. The customer landing page shows "No KPI pyramid defined"
-  unless BOTH pyramids are present. See `edit-customers` for the full schema.
+- KPI **ids** are unique within a persona (across both pyramids). `insights.json`
+  links KPIs by **id** (`linkedCustomers[].kpiIds[]` — the validator checks these
+  resolve; never use the legacy name-based `kpis` field in new content). `teams.json`
+  metrics and the persona's `productStrategy` `northStar`/`supporting` still link by
+  NAME — every such name must exist as a node in that persona's pyramids
+  (`check-kpi-pyramids.py` reports violations). The customer landing page shows
+  "No KPI pyramid defined" unless BOTH pyramids are present. See `edit-customers`
+  for the full schema.
 
 ## Validate → regenerate loop (run after every edit)
 
 ```bash
-# 1. Validate JSON + cross-file references for the domain you touched
+# 1. Validate JSON + schemas + cross-file references for the domain you touched
+#    (structural contracts live in _config/_schema/*.schema.json, enforced by a
+#    dependency-free checker — see scripts/schema_check.py)
 python3 .claude/skills/scripts/validate-domain-model.py <domain-id>
 #    add --strict-ids for a lowercase/ID-format pass
 
 # 2. Regenerate that domain's docs (from _wiring/product-domains/)
 cd _wiring/product-domains
-#    temporarily ensure <domain-id> is the active entry in run.sh `domains=(...)`,
+#    run ./run-one.sh <domain-id> (name/description come from start/config.json),
 #    or run a single generator directly:
 python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"
 ```
 
-> The `domains=(...)` array in `run.sh` usually holds a single active domain.
+> `run.sh` regenerates every domain discovered from the config tree; use `run-one.sh <domain-id>` for one domain.
 > To regenerate a different domain without editing run.sh, call the relevant
 > generator(s) directly with the three positional args (id, name, description) —
-> the canonical name/description live in the `domains_ALL=(...)` array in run.sh.
+> the canonical name/description live in the domain's `start/config.json`.
 
 ## Reference domain
 

@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Prime Delivery and Post-Purchase Experience</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Prime Delivery and Post-Purchase Experience — Product (Online Retail Marketplace)</title>
 
     <style>
     .page-type-badge {
@@ -16,6 +18,46 @@
         font-size: 11px;
     }
 </style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
     <style>
     .tab {
         display: flex;
@@ -102,7 +144,7 @@
         margin: 0;
         padding: 6px 4px;
         font-size: 80%;
-        color: #a0a0a0;
+        color: #5b6472;
     }
 
     .breadcrumb {
@@ -110,7 +152,7 @@
 
     .breadcrumb a {
         text-decoration: none;
-        color: #343434;;
+        color: #343434;
     }
 </style>
     <style>
@@ -831,6 +873,29 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 </head>
 <body onload="initTab('ChannelsTab')" onhashchange="initTab('ChannelsTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html" class="active">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a></nav>
 <div id="breadcrumbs" style="margin-left: 20px"></div>
 <script>
     function resolveHashTabName() {
@@ -858,8 +923,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -875,6 +971,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -883,7 +980,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -894,7 +993,7 @@
 
 
 <script>
-    const config = {"domains": [{"id": "online-retail-marketplace", "name": "Online Retail Marketplace", "description": "The Online Retail Marketplace domain covers the shopper, Prime, seller, fulfillment, retail-media, trust, and shared-commerce workflows required to run a scaled digital retail marketplace across first-party retail, third-party supply, subscriptions, and advertising."}]};
+    const config = {"domains": [{"id": "online-retail-marketplace", "name": "Online Retail Marketplace", "description": "Covers the shopper, Prime fulfillment, third-party seller, retail media, and marketplace trust workflows required to run a scaled online retail marketplace like Amazon."}]};
     const all_products = [{"id": "p1", "name": "Amazon Shopping Experience", "icon": "", "type": "B2C", "description": "Consumer storefront that turns shopping intent into confident orders: search/browse, product detail, reviews, recommendations, deals, cart, Alexa for Shopping, checkout, and Prime benefits (sear, home, pdet, revi, reco, deal, cart, rufu, chec, prim). Scope is pre-purchase discovery and order placement; it does not own post-purchase delivery/returns (p2). Shared dependencies: identity/entitlements (iden, owned by trust-and-identity) for sign-in and eligibility, and payment processors behind chec.", "primaryCustomers": [{"id": "cg1-p1", "name": "Prime Household Shopper", "icon": "shopper.png"}]}, {"id": "p2", "name": "Prime Delivery and Post-Purchase Experience", "icon": "", "type": "B2C", "description": "Post-purchase experience that protects Prime retention: order state and tracking, delivery-promise and last-mile visibility, returns/refunds/exchanges, customer care and resolution, and Prime benefits (orde, deli, retu, care, prim). Scope begins at order placement and ends at resolved outcome; it does not own storefront discovery/checkout (p1). Shared dependencies: carrier and reverse-logistics partners behind deli/retu, and it exposes retu/supp recovery runtimes that p6 operator consoles consume.", "primaryCustomers": [{"id": "cg1-p1", "name": "Prime Household Shopper", "icon": "shopper.png"}]}, {"id": "p3", "name": "Seller Central and Catalog Growth", "icon": "", "type": "B2B2C", "description": "Seller onboarding and catalog-growth surface: seller identity/onboarding, catalog authoring, pricing and offer health, brand protection/registry, payouts and ledgers, and seller-facing retail analytics/reporting (sell, list, price, bran, payo, repr). Scope is commercial control and catalog quality; it does not own physical fulfillment (p4) or the ad-buying surface (p5). Shared dependencies: identity/entitlements (iden) for seller access, business-registry/KYC and brand-rights partners behind sell/bran, banking/tax rails behind payo, and reporting (repr, owned by measurement-insights).", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}]}, {"id": "p4", "name": "Fulfillment by Amazon and Merchant Operations", "icon": "", "type": "B2B", "description": "Fulfillment and operations surface for sellers: FBA inbound and warehouse operations, inventory planning and availability, seller-fulfilled operations, payouts/fee reconciliation, and the commerce APIs/external-integration layer partners build on (fbao, invn, supp, payo, apii). Scope is physical and financial fulfillment operations; it does not own catalog/commercial control (p3). Shared dependencies: freight/carrier/customs and shipping-carrier partners behind fbao/supp, banking/tax rails behind payo, seller ERP/repricer integrators behind apii, and it exposes fbao/invn/supp runtimes that p6 operator consoles consume.", "primaryCustomers": [{"id": "cg2-p1", "name": "Marketplace Seller / Brand Operator", "icon": "seller.png"}]}, {"id": "p5", "name": "Amazon Ads and Retail Media", "icon": "", "type": "B2B", "description": "Retail-media surface for advertisers: sponsored ads and retail media, DSP audiences/programmatic media, and commerce measurement/experimentation (spon, dspm, anal). Scope is demand generation and attribution; it does not own the underlying catalog/offer health (p3) or fulfillment (p4) whose signals it measures. Shared dependencies: ad-verification, programmatic-supply, and clean-room/analytics partners behind spon/dspm/anal; measurement (anal) and reporting (repr) are owned by measurement-insights and feed operator evidence (repr/anal) consumed by p6.", "primaryCustomers": [{"id": "cg3-p1", "name": "Performance Brand Marketer", "icon": "advertiser.png"}]}, {"id": "p6", "name": "Marketplace Trust & Operations Consoles", "icon": "", "type": "Internal Operations", "description": "Operator console surface for the trust/compliance and fulfillment/resolution operators. p6 is intentionally scoped to trust, enforcement, identity, promise-recovery, and case-resolution workflows (orde, deli, risk, auth, care, iden). It does NOT own the returns, FBA, inventory, seller-fulfilled, analytics, or reporting runtimes \u2014 operators consume those capabilities through p2 (Prime & post-purchase), p4 (FBA & merchant operations), and p5 (Ads & retail media) rather than a duplicate runtime in p6.", "primaryCustomers": [{"id": "cg4-p1", "name": "Marketplace Trust & Compliance Operator", "icon": "trust-operator.png"}, {"id": "cg4-p2", "name": "Fulfillment & Customer Resolution Operator", "icon": "resolution-operator.png"}], "consumesProductsForOperations": [{"productId": "p2", "description": "Operators consume Prime returns (retu) and support (supp) runtimes for post-purchase recovery and refund-leakage control."}, {"productId": "p4", "description": "Operators consume FBA (fbao), inventory availability (invn), and seller-fulfilled (supp) runtimes to re-plan and recover at-risk promises."}, {"productId": "p5", "description": "Operators consume commerce analytics (anal) and retail reporting (repr) for defect feedback, enforcement measurement, and regulator evidence."}]}];
     const product = {"id": "p2", "name": "Prime Delivery and Post-Purchase Experience", "icon": "", "type": "B2C", "description": "Post-purchase experience that protects Prime retention: order state and tracking, delivery-promise and last-mile visibility, returns/refunds/exchanges, customer care and resolution, and Prime benefits (orde, deli, retu, care, prim). Scope begins at order placement and ends at resolved outcome; it does not own storefront discovery/checkout (p1). Shared dependencies: carrier and reverse-logistics partners behind deli/retu, and it exposes retu/supp recovery runtimes that p6 operator consoles consume.", "primaryCustomers": [{"id": "cg1-p1", "name": "Prime Household Shopper", "icon": "shopper.png"}]};
     const deployment = {"metadata": {"title": "Online Retail Marketplace Deployment and Operating Surfaces", "description": "Primary deployment, distribution, support, and integration channels used to deliver and operate the Online Retail Marketplace domain.", "modelVersion": "3.0", "productScopeNotes": ["p6 (Marketplace Trust & Operations Consoles) is scoped to trust, enforcement, identity, promise-recovery, and case-resolution bricks (orde, deli, risk, auth, care, iden). It does not own the returns (retu), FBA (fbao), inventory (invn), seller-fulfilled (supp), analytics (anal), or reporting (repr) runtimes.", "Operators consume those capabilities through p2, p4, and p5 rather than a duplicate p6 runtime; see products.json p6.consumesProductsForOperations."]}, "channels": [{"groupId": "commerce-runtime", "groupName": "Commerce Runtime Environments", "groupType": "runtime", "description": "Core runtimes for shopping, seller, fulfillment, trust, and advertising services.", "channels": [{"subChannelId": "core-commerce-runtime", "subChannelName": "Core Commerce Runtime", "channelType": "public-cloud", "description": "Primary production runtime for the marketplace core.", "deployedBricks": [{"brickId": "sear", "brickName": "Search, Browse & Facets", "deploymentRole": "Search and browse services", "usedInProducts": [{"productId": "p1", "description": "Resolves shopping intent into a confident shortlist."}]}, {"brickId": "chec", "brickName": "Checkout & Payments", "deploymentRole": "Checkout, payment, and order placement services", "usedInProducts": [{"productId": "p1", "description": "Completes payment and delivery selection."}]}, {"brickId": "orde", "brickName": "Order Management & Tracking", "deploymentRole": "Order state and tracking services", "usedInProducts": [{"productId": "p2", "description": "Shows order state and exceptions clearly after purchase."}, {"productId": "p6", "description": "Order and shipment state used in trust and resolution investigations."}]}, {"brickId": "sell", "brickName": "Seller Identity & Onboarding", "deploymentRole": "Seller-account and compliance services", "usedInProducts": [{"productId": "p3", "description": "Sets up merchant identity, compliance, and account state."}]}, {"brickId": "spon", "brickName": "Sponsored Ads & Retail Media", "deploymentRole": "Sponsored-ad campaign serving and optimization", "usedInProducts": [{"productId": "p5", "description": "Captures high-intent demand near purchase."}]}, {"brickId": "risk", "brickName": "Fraud, Abuse & Policy Controls", "deploymentRole": "Trust enforcement, abuse detection, and policy services", "usedInProducts": [{"productId": "p6", "description": "Powers trust investigation, enforcement decisions, and claims-abuse scoring for operator consoles."}]}, {"brickId": "reco", "brickName": "Personalization & Recommendations", "deploymentRole": "Personalized merchandising and replenishment services", "usedInProducts": [{"productId": "p1", "description": "Personalizes entry, evaluation, and replenishment across shopper surfaces."}]}, {"brickId": "deli", "brickName": "Delivery Promise & Last Mile", "deploymentRole": "Promise calculation, risk monitoring, and last-mile eventing", "usedInProducts": [{"productId": "p2", "description": "Calculates delivery promises and keeps them trustworthy through re-planning."}, {"productId": "p6", "description": "Promise-risk detection and recovery tooling for resolution operators."}]}, {"brickId": "price", "brickName": "Pricing & Offer Health", "deploymentRole": "Offer health and buyability monitoring services", "usedInProducts": [{"productId": "p3", "description": "Keeps seller offers competitive, buyable, and launch-ready."}]}, {"brickId": "payo", "brickName": "Payouts, Fees & Ledgers", "deploymentRole": "Seller settlement, fee, and ledger services", "usedInProducts": [{"productId": "p3", "description": "Explains payouts, fees, reserves, and adjustments to sellers."}, {"productId": "p4", "description": "Settles fulfillment-related fees and adjustments for merchant operations."}]}, {"brickId": "fbao", "brickName": "FBA Inbound & Operations", "deploymentRole": "Inbound orchestration and fulfillment-network event processing", "usedInProducts": [{"productId": "p4", "description": "Runs inbound receiving, placement, and fulfillment operations."}]}, {"brickId": "invn", "brickName": "Inventory Planning & Availability", "deploymentRole": "Forecasting, replenishment, and availability services", "usedInProducts": [{"productId": "p4", "description": "Keeps priority ASINs in stock without excess inventory risk."}]}, {"brickId": "supp", "brickName": "Seller-Fulfilled Operations", "deploymentRole": "Merchant-managed shipping workflow services", "usedInProducts": [{"productId": "p4", "description": "Supports hybrid and seller-managed fulfillment paths."}]}, {"brickId": "dspm", "brickName": "DSP Audiences & Programmatic Media", "deploymentRole": "Audience management and programmatic campaign services", "usedInProducts": [{"productId": "p5", "description": "Extends advertiser reach and retargeting beyond sponsored placements."}]}, {"brickId": "auth", "brickName": "Authenticity & Listing Trust", "deploymentRole": "Authenticity decisioning and listing-trust scanning", "usedInProducts": [{"productId": "p6", "description": "Authenticity and listing-integrity decisions for trust operators."}]}, {"brickId": "care", "brickName": "Customer Care & Resolution", "deploymentRole": "Case orchestration and resolution services", "usedInProducts": [{"productId": "p2", "description": "Resolves post-purchase issues that self-service cannot close."}, {"productId": "p6", "description": "Case handling and recovery workflows for resolution operators."}]}]}]}, {"groupId": "web-edge", "groupName": "Web and Edge Delivery", "groupType": "distribution", "description": "Primary web surfaces for shopper, seller, and advertiser workflows.", "channels": [{"subChannelId": "web-cdn-edge", "subChannelName": "CDN and Edge Hosting", "channelType": "edge-platform", "description": "Primary production web delivery layer.", "deployedBricks": [{"brickId": "home", "brickName": "Shopping Home & Entry", "deploymentRole": "Web shopping home and merchandising", "usedInProducts": [{"productId": "p1", "description": "Entry surface that routes shopping missions into search, deals, and replenishment."}]}, {"brickId": "pdet", "brickName": "Product Detail Experience", "deploymentRole": "Product detail pages and comparison views", "usedInProducts": [{"productId": "p1", "description": "Supports product decision making through richer product and offer context."}]}, {"brickId": "repr", "brickName": "Retail Analytics & Reporting", "deploymentRole": "Seller and advertiser reporting surfaces", "usedInProducts": [{"productId": "p3", "description": "Shows sales, traffic, and economics clearly enough to guide action."}]}, {"brickId": "bran", "brickName": "Brand Protection & Registry", "deploymentRole": "Brand Registry operational workflows", "usedInProducts": [{"productId": "p3", "description": "Brand Registry workflows that protect listings and support counterfeit takedowns."}]}, {"brickId": "revi", "brickName": "Reviews, Ratings & Q&A", "deploymentRole": "Review and Q&A surfaces on discovery and detail pages", "usedInProducts": [{"productId": "p1", "description": "Adds decision confidence before purchase."}]}, {"brickId": "deal", "brickName": "Deals, Promotions & Merchandising", "deploymentRole": "Deal, badge, and promotion surfaces", "usedInProducts": [{"productId": "p1", "description": "Creates urgency and value framing across shopping missions."}]}, {"brickId": "prim", "brickName": "Prime Membership & Benefits", "deploymentRole": "Prime membership state and benefit surfaces", "usedInProducts": [{"productId": "p1", "description": "Frames Prime value during discovery and checkout."}, {"productId": "p2", "description": "Shows benefit state and delivery promise expectations after purchase."}]}, {"brickId": "list", "brickName": "Catalog Authoring & Content", "deploymentRole": "Listing management and content-quality workflows", "usedInProducts": [{"productId": "p3", "description": "Gets products live, searchable, and conversion-ready."}]}]}]}, {"groupId": "mobile-distribution", "groupName": "Mobile Distribution", "groupType": "distribution", "description": "App distribution for consumer shopping experiences.", "channels": [{"subChannelId": "ios-app-store", "subChannelName": "Apple App Store", "channelType": "app-store", "description": "iOS distribution surface.", "deployedBricks": [{"brickId": "home", "brickName": "Shopping Home & Entry", "deploymentRole": "Shopper iOS discovery surface", "usedInProducts": [{"productId": "p1", "description": "Entry surface that routes shopping missions into search, deals, and replenishment."}]}, {"brickId": "cart", "brickName": "Cart & Save-for-Later", "deploymentRole": "Shopper iOS pre-checkout state management", "usedInProducts": [{"productId": "p1", "description": "Handles purchase staging and low-friction conversion."}]}, {"brickId": "orde", "brickName": "Order Management & Tracking", "deploymentRole": "Shopper iOS order and tracking experience", "usedInProducts": [{"productId": "p2", "description": "Shows order state and exceptions clearly after purchase."}]}]}, {"subChannelId": "android-play-store", "subChannelName": "Google Play", "channelType": "app-store", "description": "Android distribution surface.", "deployedBricks": [{"brickId": "home", "brickName": "Shopping Home & Entry", "deploymentRole": "Shopper Android discovery surface", "usedInProducts": [{"productId": "p1", "description": "Entry surface that routes shopping missions into search, deals, and replenishment."}]}, {"brickId": "rufu", "brickName": "Alexa for Shopping", "deploymentRole": "Conversational shopping assistant experience", "usedInProducts": [{"productId": "p1", "description": "Conversational discovery that turns vague intent into confident shortlists."}]}, {"brickId": "retu", "brickName": "Returns, Refunds & Exchanges", "deploymentRole": "Shopper Android return workflows", "usedInProducts": [{"productId": "p2", "description": "Handles reverse logistics and issue recovery."}]}]}]}, {"groupId": "api-and-integration", "groupName": "API and Integration Surfaces", "groupType": "integration", "description": "Partner and ecosystem APIs for commerce, reporting, and measurement.", "channels": [{"subChannelId": "partner-api-gateway", "subChannelName": "Partner API Gateway", "channelType": "api-platform", "description": "Primary API surface for internal and ecosystem integrations.", "deployedBricks": [{"brickId": "apii", "brickName": "Commerce APIs & External Integrations", "deploymentRole": "Commerce and workflow integration APIs", "usedInProducts": [{"productId": "p4", "description": "Merchant-facing integrations for inventory, orders, and fulfillment operations."}]}, {"brickId": "anal", "brickName": "Commerce Measurement & Experimentation", "deploymentRole": "Measurement and reporting APIs", "usedInProducts": [{"productId": "p5", "description": "Links media activity to retail performance and budget allocation."}]}, {"brickId": "iden", "brickName": "Identity, Accounts & Entitlements", "deploymentRole": "Authenticated account and entitlement APIs", "usedInProducts": [{"productId": "p1", "description": "Authenticated shopper account and entitlement state across surfaces."}, {"productId": "p3", "description": "Seller account identity, verification state, and entitlements."}, {"productId": "p6", "description": "Verification and disclosure records used by trust and compliance operators."}]}]}]}]};
@@ -1109,7 +1208,7 @@
     }
 
     function escapeHtml(value) {
-        return (value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')

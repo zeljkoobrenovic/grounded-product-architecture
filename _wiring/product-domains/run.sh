@@ -1,5 +1,15 @@
 #!/bin/zsh
-set -euo pipefail
+set -uo pipefail
+
+# Regenerate docs for every registered product domain.
+#
+# The domain registry is the config tree itself: every
+# _config/product-domains/<id>/start/config.json (with id/name/description)
+# is a registered domain. To add a domain, create its config folder — there
+# is no separate list to maintain here.
+#
+# Failures are isolated per domain+generator: the run continues and reports
+# every failure at the end, exiting non-zero if any occurred.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -13,41 +23,30 @@ scripts=(
   "generate-competition-docs.py"
 )
 
-domains=(
-  "digital-medication-management|Digital Medication Management|The Digital Medication Management domain covers the patient, carer, care-provider, and pharmacy workflows required to run an automated medicine-dispensing and remote medication-management service for home care and supported living — spanning the in-home dispensing device, pharmacy multi-dose pouch logistics, remote adherence monitoring, missed-dose alarm escalation, care-team portals, and the regulated medical-device software platform behind them."
-  "cloud-data-and-ai-platform|Cloud Data and AI Platform|Cloud Data and AI Platform covers the managed cloud services, developer experiences, governance controls, and operating workflows required to ingest data, analyze it, train and serve models, build AI applications, and run governed enterprise AI at scale."
-  "internet-number-registry-and-routing-trust|Internet Number Registry and Routing Trust|Internet Number Registry and Routing Trust covers the member, registry, routing security, DNS, policy, and measurement services needed to distribute and maintain Internet number resources and help operators keep Internet routing data trustworthy."
-  "enterprise-architecture-management-platform|Enterprise Architecture Management Platform|Enterprise Architecture Management Platform covers SaaS products that maintain a living model of enterprise capabilities, applications, technologies, processes, risks, roadmaps, and transformation decisions so business and technology leaders can govern change with shared evidence."
-  "premium-body-care-and-home-fragrance|Premium Body Care and Home Fragrance|Covers the customer, store, ecommerce, loyalty, gifting, refill, assortment, and fulfillment workflows required to run an omnichannel premium body care, bath, home fragrance, and wellbeing retail business."
-  "freight-logistics-orchestration|Freight Logistics Orchestration|Covers the shipper, carrier, broker, managed transportation, TMS, contract logistics, visibility, rating, tendering, settlement, and operations workflows required to plan, procure, execute, and optimize freight across truckload, LTL, intermodal, cross-border, and warehousing networks."
-  "local-on-demand-delivery-marketplace|Local On-Demand Delivery Marketplace|Covers the consumer, merchant, courier, grocery, retail, advertising, payment, dispatch, and trust workflows required to operate a multi-sided local delivery marketplace for restaurant meals, groceries, convenience, and everyday retail."
-  "public-cloud-services|Public Cloud Services|Public Cloud Services provides on-demand, API-first, globally distributed infrastructure, platform, data, AI, security, and operational services that let customers build, run, secure, and scale digital workloads without owning most underlying physical infrastructure."
-  "ride-sharing-marketplace|Ride Sharing Marketplace|The Ride Sharing Marketplace domain covers the rider, driver, fleet, business-travel, and marketplace-operations workflows required to run an on-demand and scheduled rides platform with dynamic pricing, dispatch, trust, and multimodal extensions."
-  "enterprise-crm-and-revenue-operations|Enterprise CRM and Revenue Operations|The Enterprise CRM and Revenue Operations domain covers lead-to-cash execution, customer service operations, customer data unification, workflow automation, and platform governance for large B2B and B2C organizations."
-  "digital-news-publishing-platform|Digital News Publishing Platform|Covers the audience, editorial, advertising, subscription, loyalty, partner-bundle, and data capabilities required to run a multi-brand digital news publisher across web, apps, print-linked editions, social, newsletters, and commercial partnerships."
-  "technical-design-collaboration-platform|Technical Design Collaboration Platform|Product-led B2B SaaS company serving engineering organizations with AI-assisted technical design and collaboration workflows."
-  "mental-wellbeing-community-platform|Mental Wellbeing Community Platform|Covers the member, employer, contributor, and trust workflows required to operate a digital mental wellbeing platform built around community support, live programming, on-demand content, and employer-sponsored access."
-  "big-enterprise|Big Enterprise|The Big Enterprise domain covers the tools, workflows, and enabling capabilities used by internal teams and enterprise employees across revenue and growth, service, operations, finance, control, workplace, and internal productivity."
-  "emobility|eMobility|The eMobility domain covers the platforms, operations, and customer journeys required to run charging networks, roaming services, driver experiences, and fleet electrification at scale."
-  "nutrition|Nutrition|The Nutrition domain covers the products, capabilities, and stakeholders needed to design, produce, govern, and improve nutrition solutions with strong compliance, quality, and sustainability outcomes."
-  "real-estate-marketplace|Real Estate Marketplace|The Real Estate Marketplace domain covers the customer journeys, commercial workflows, and platform capabilities required to connect property seekers, owners, intermediaries, and partners."
-  "general-listings-marketplace|General Listings Marketplace|Covers the customer journeys, trust mechanisms, commercial workflows, and platform streams required to run a broad local classifieds marketplace across goods, vehicles, services, jobs, and professional storefront supply."
-  "maas|Mobility-as-a-Service (MaaS)|The products, workflows, and platform capabilities required to run parking, curbside, public transport payments, fleet mobility, city-planning intelligence, and partner ecosystems at global urban-mobility scale."
-  "internal-developer-platform|Internal Developer Platform|The Internal Developer Platform domain covers the developer portal, golden paths, runtime foundations, delivery guardrails, reliability workflows, and platform insights used by product and technology teams to ship software faster, safer, and with lower cognitive load."
-  "payments-and-revenue-infrastructure|Payments and Revenue Infrastructure|The Payments and Revenue Infrastructure domain covers the merchant, platform, finance, and risk workflows required to accept payments globally, automate recurring revenue, orchestrate multi-party funds flows, and operate internet-scale commerce with compliance and financial control."
-  "bike-mobility|Bike Mobility|The Bike Mobility domain covers the products, workflows, and platform capabilities required to launch and scale employer-backed bike leasing, rider services, dealer ecosystems, pooled bike fleets, and lifecycle services across European markets."
-  "premium-long-haul-airline|Premium Long-Haul Airline|The Premium Long-Haul Airline domain covers the products, workflows, and platform capabilities required to retail, operate, service, recover, and grow a premium airline across long-haul passenger travel, holidays, loyalty, partner connectivity, and cargo."
-  "travel-accommodations-marketplace|Travel Accommodations Marketplace|The Travel Accommodations Marketplace domain covers the traveler journeys, partner workflows, trust controls, merchandising systems, and platform capabilities required to run a global accommodations marketplace across hotels, homes, apartments, hostels, and managed travel stays."
-  "hosted-stays-marketplace|Hosted Stays Marketplace|The Hosted Stays Marketplace domain covers the guest, host, co-host, trust, payment, and compliance workflows required to run a global marketplace for homes, rooms, and professionally managed short-term rental stays."
-  "audio-streaming-platform|Audio Streaming Platform|The Audio Streaming Platform domain covers the listener, creator, rights-holder, and advertiser workflows required to run a global audio platform spanning music, podcasts, video podcasts, audiobooks, subscriptions, creator growth, and advertising monetization."
-  "online-retail-marketplace|Online Retail Marketplace|The Online Retail Marketplace domain covers the shopper, Prime, seller, fulfillment, retail-media, trust, and shared-commerce workflows required to run a scaled digital retail marketplace across first-party retail, third-party supply, subscriptions, and advertising."
-  "municipal-public-space-enforcement|Municipal Public Space Enforcement|The devices, workflows, legal procedures, and analytics that help local authorities detect public-space offences, build enforceable cases, coordinate field action, and demonstrate visible resident impact without intrusive surveillance."
-  "travel-and-expense-management|Travel and Expense Management|Expense management, travel expense flows, mileage, per diem, approvals, policy, card reconciliation, and finance integrations"
-)
+domains_root="../../_config/product-domains"
+failures=()
 
-for script in "${scripts[@]}"; do
-  for domain in "${domains[@]}"; do
-    IFS='|' read -r domain_id domain_name domain_description <<< "$domain"
-    python3 "$script" "$domain_id" "$domain_name" "$domain_description"
+for config in "$domains_root"/*/start/config.json; do
+  [ -f "$config" ] || continue
+  domain_id="$(basename "$(dirname "$(dirname "$config")")")"
+  domain_name="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['name'])" "$config")"
+  domain_description="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['description'])" "$config")"
+
+  for script in "${scripts[@]}"; do
+    if ! python3 "$script" "$domain_id" "$domain_name" "$domain_description" > /dev/null; then
+      failures+=("$domain_id/$script")
+      echo "FAILED: $domain_id $script" >&2
+    fi
   done
 done
+
+if (( ${#failures[@]} > 0 )); then
+  echo ""
+  echo "Generation finished with ${#failures[@]} failure(s):" >&2
+  for failure in "${failures[@]}"; do
+    echo "  - $failure" >&2
+  done
+  exit 1
+fi
+
+echo "All domains generated successfully."

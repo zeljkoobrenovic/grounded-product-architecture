@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
     <title>Competition (Digital Medication Management)</title>
     <style>
     .breadcrumbs-container {
@@ -11,7 +13,7 @@
         margin: 0;
         padding: 6px 4px;
         font-size: 80%;
-        color: #a0a0a0;
+        color: #5b6472;
     }
 
     .breadcrumb {
@@ -19,9 +21,49 @@
 
     .breadcrumb a {
         text-decoration: none;
-        color: #343434;;
+        color: #343434;
     }
 </style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
     <style>
     .tab {
         display: flex;
@@ -466,8 +508,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -483,6 +556,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -491,7 +565,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -502,6 +578,29 @@
 
 </head>
 <body onload="initTab('PlayersTab')" onhashchange="initTab()">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../start/index.html">Home</a><a href="../customers/index.html">Customers</a><a href="../product-deployments/index.html">Products</a><a href="../product-bricks/index.html">Bricks &amp; Streams</a><a href="../teams/index.html">Teams</a><a href="../competition/index.html" class="active">Competition</a></nav>
 <div id="breadcrumbs"></div>
 
 <div class="hero" id="overview">
@@ -588,7 +687,7 @@
 
 
 <script>
-    const competitionData = {"generated_on": "2026-07-04", "domain": "digital-medication-management", "title": "Digital Medication Management Competitive Landscape", "scope": {"description": "Players competing to automate medication dispensing and adherence for home care and supported living, plus adjacent pharmacy-automation and software-only adherence substitutes.", "inclusion_logic": ["in-home automated dispensing services (pouch/sachet or loose-pill) sold to care organizations, municipalities, or caregivers", "adjacent upstream pharmacy multi-dose packaging automation that produces the sachets in-home robots dispense", "indirect software-only adherence apps and smart pillboxes that compete on price rather than the assisted-care value proposition"], "notes": ["Every business stat carries an official source and reported scope.", "Third-party-aggregator figures (e.g. estimated revenue or total funding on Crunchbase/PitchBook-type profiles) are deliberately omitted to avoid unverified precision.", "Market-size estimates vary widely by definition and are not attributed to any single player here."]}, "players": [{"id": "evondos", "logo": "logos/evondos_group_logo.jpeg", "name": "Evondos Group", "hq": "Salo and Helsinki, Finland", "category": "market_leader", "primary_regions": ["nordics", "netherlands", "united_kingdom"], "description": "The reference company: a locked in-home robot that dispenses pharmacy-prepared multi-dose sachets on schedule, reminds the patient, locks away and escalates missed doses, and is monitored remotely by care staff \u2014 sold as a full managed service to municipalities and home-care organizations. Market leader in the Nordics; acquired Dutch leader Medido in 2023 and Vitacam vitals-monitoring in 2024, and entered the UK in 2025. Majority-owned by Verdane.", "business_stats": [{"metric": "revenue", "value": "\u20ac23.31M", "period": "FY2023", "scope": "Evondos Oy standalone (Finnish company registry); group revenue including Medido is higher", "source_title": "Evondos Oy company registry (Finder.fi)", "source_url": "https://www.finder.fi/Terveydenhuollon+laitteet+ja+tarvikkeet/Evondos+Oy/Salo/yhteystiedot/1898263"}, {"metric": "employees", "value": "~300", "period": "2024", "scope": "Evondos Group across the Nordics and Netherlands (company-reported)", "source_title": "Evondos \u2014 About Us", "source_url": "https://www.evondos.com/about-us"}, {"metric": "debt_facility", "value": "\u20ac42M", "period": "2022", "scope": "growth financing from BlackRock Private Credit", "source_title": "Evondos secures \u20ac42M loan for global expansion plans", "source_url": "https://www.evondos.com/news/press-releases/evondos-secures-e2-82-ac42m-loan-for-global-expansion-plans.html"}, {"metric": "doses_dispensed", "value": ">100 million", "period": "2025", "scope": "cumulative medicine doses dispensed (company-reported)", "source_title": "Evondos appoints Frans Cromme as CEO", "source_url": "https://www.evondos.com/news/evondos-appoints-frans-cromme-as-ceo-to-lead-next-phase-of-international-growth-and-portfolio-expansion"}], "links": {"website": "https://www.evondos.com/", "investor_relations": "", "newsroom": "https://www.evondos.com/news", "blog": "https://www.evondos.com/news/blogs", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/evondos/"}, "logo_path": "logos/evondos_group_logo.jpeg"}, {"id": "medido", "logo": "logos/medido_logo.jpeg", "name": "Medido (Evondos Group)", "hq": "Zoetermeer, Netherlands", "category": "market_leader", "primary_regions": ["netherlands"], "description": "The #1 in-home automated sachet dispenser in the Netherlands: a wall/counter device that cuts and dispenses roll-packed multi-dose sachets on schedule with remote monitoring. Acquired by Evondos in February 2023, forming Evondos Group. Now a product line rather than an independent competitor, but a distinct market presence in the Netherlands.", "business_stats": [{"metric": "adherence_rate", "value": "49% to 97% after 6 months", "period": "peer-reviewed study", "scope": "adherence before vs after automated home dispensing (Medido / AHMD)", "source_title": "Automated home medication dispensers (JBI / Leiden)", "source_url": "https://jbi.global/news/article/automated-home-medication-dispensers"}], "links": {"website": "https://medido.com/en/", "investor_relations": "", "newsroom": "https://medido.com/en/blog/", "blog": "https://medido.com/en/blog/", "engineering_blog": "", "linkedin": ""}, "logo_path": "logos/medido_logo.jpeg"}, {"id": "izafe-dosell", "logo": "logos/izafegroup_logo.jpeg", "name": "iZafe Group (Dosell)", "hq": "Stockholm, Sweden", "category": "direct_competitor", "primary_regions": ["nordics", "germany", "italy"], "description": "Evondos's closest listed Nordic competitor. Dosell dispenses dose-packed sachets on schedule, reminds patients, and alerts care staff on missed doses, sold to municipalities and home care and increasingly direct-to-consumer. iZafe also owns Pilloxa (a smart pillbox and adherence-software platform). Listed on Nasdaq First North Growth Market.", "business_stats": [{"metric": "net_sales", "value": "SEK 679k (+250% YoY)", "period": "Q4 2023", "scope": "iZafe Group year-end report Oct\u2013Dec 2023 (small early-stage base)", "source_title": "iZafe Group year-end report October\u2013December 2023", "source_url": "https://www.placera.se/placera/pressmeddelanden/2024/02/09/izafe-group-izafe-groups-year-end-report-october-december-2023.html"}, {"metric": "units_delivered", "value": "450 latest-generation Dosell units", "period": "2025", "scope": "produced and delivered to partners (company-reported)", "source_title": "450 of the latest Dosell produced and delivered to partners", "source_url": "https://izafe.se/en/mfn_news/450-of-the-latest-dosell-produced-and-delivered-to-partners/"}], "links": {"website": "https://izafe.se/en/", "investor_relations": "https://izafe.se/en/investors/", "newsroom": "https://izafe.se/en/press-releases/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/izafe-group-ab/"}, "logo_path": "logos/izafegroup_logo.jpeg"}, {"id": "spencer", "logo": "logos/spencerhealth_logo.jpeg", "name": "Spencer Health Solutions", "hq": "Morrisville, North Carolina, United States", "category": "direct_competitor", "primary_regions": ["north_america", "europe"], "description": "An in-home connected medication hub (\"spencer\") shipped with pre-packaged medications that dispenses on schedule, captures biometrics, and runs telehealth and ePRO questionnaires, with pharmacist monitoring. Rooted in Parata Systems (pharmacy dispensing robots); strong pivot toward clinical-trial and pharma programs.", "business_stats": [{"metric": "funding_raised", "value": "$43M", "period": "reported round", "scope": "capital raised (Business North Carolina)", "source_title": "RTP-based Spencer Health Solutions raises $43 million", "source_url": "https://businessnc.com/rtp-based-spencer-health-solutions-raises-43-million/"}, {"metric": "adherence_rate", "value": "97% daily", "period": "program-reported", "scope": "daily adherence across the spencer program (company-reported)", "source_title": "Spencer Health Solutions", "source_url": "https://spencerhealthsolutions.com/"}], "links": {"website": "https://spencerhealthsolutions.com/", "investor_relations": "", "newsroom": "https://spencerhealthsolutions.com/news/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/spencer-health-solutions/"}, "logo_path": "logos/spencerhealth_logo.jpeg"}, {"id": "hero", "logo": "logos/hero_health_uk_logo.jpeg", "name": "Hero Health", "hq": "New York, United States", "category": "direct_competitor", "primary_regions": ["north_america"], "description": "A consumer/caregiver-focused countertop smart pill dispenser that sorts and dispenses loose pills (not sachets), gives reminders, automates refills, and provides caregivers real-time adherence data, sold on a subscription model.", "business_stats": [{"metric": "series_a", "value": "$12M", "period": "October 2018", "scope": "Series A financing round", "source_title": "Hero raises $12 million Series A", "source_url": "https://pulse2.com/hero-12-million-series-a/"}], "links": {"website": "https://herohealth.com/", "investor_relations": "", "newsroom": "https://herohealth.com/blog/", "blog": "https://herohealth.com/blog/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/herohealth/"}, "logo_path": "logos/hero_health_uk_logo.jpeg"}, {"id": "medminder", "logo": "logos/medminder_systems_inc_logo.jpeg", "name": "MedMinder", "hq": "Norwood, Massachusetts, United States", "category": "direct_competitor", "primary_regions": ["north_america"], "description": "A cellular-connected automatic pill dispenser combined with an integrated mail-order pharmacy: a locking dispenser pre-filled with pharmacy-sorted medications that lights and alerts on schedule, notifies caregivers on missed doses, and auto-refills, aimed at seniors aging in place.", "business_stats": [], "links": {"website": "https://www.medminder.com/", "investor_relations": "", "newsroom": "https://www.medminder.com/blog/", "blog": "https://www.medminder.com/blog/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/medminder-systems-inc-/"}, "logo_path": "logos/medminder_systems_inc_logo.jpeg"}, {"id": "dignio-karie", "logo": "logos/dignio_logo.jpeg", "name": "Dignio (AceAge / Karie)", "hq": "Oslo, Norway (Karie: Ontario, Canada)", "category": "direct_competitor", "primary_regions": ["nordics", "north_america", "united_kingdom"], "description": "Karie is a one-button in-home automated pill dispenser (pharmacy-loaded, caregiver-connected) developed by AceAge, now operating under Norwegian remote-care company Dignio \u2014 giving a loose-pill dispenser a European remote-care footprint that overlaps Evondos's markets.", "business_stats": [], "links": {"website": "https://dignio.com/", "investor_relations": "", "newsroom": "https://dignio.com/en/news/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/dignio/"}, "logo_path": "logos/dignio_logo.jpeg"}, {"id": "pilloxa", "logo": "logos/pilloxa_logo.jpeg", "name": "Pilloxa (iZafe Group)", "hq": "Stockholm, Sweden", "category": "indirect", "primary_regions": ["nordics"], "description": "A connected smart pillbox plus white-label medication-adherence software platform \u2014 lower-touch than a full dispensing robot. Pharma-partnered (Bayer, Sandoz Nordics) and used in clinical trials. Owned by iZafe Group; competes on price and lightweight adherence rather than the assisted-care robot value.", "business_stats": [], "links": {"website": "https://pilloxa.com/", "investor_relations": "", "newsroom": "https://pilloxa.com/news/", "blog": "https://pilloxa.com/news/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/pilloxa/"}, "logo_path": "logos/pilloxa_logo.jpeg"}, {"id": "medisafe", "logo": "logos/medisafe_project_logo.jpeg", "name": "Medisafe", "hq": "Boston, United States", "category": "indirect", "primary_regions": ["north_america", "europe"], "description": "A software-only medication-adherence app and pharma patient-engagement platform. No hardware or dispensing; competes as a low-cost substitute for adherence reminders rather than assisted dispensing, but relevant as the software floor of the adherence market.", "business_stats": [{"metric": "series_c", "value": "$30M", "period": "reported round", "scope": "Series C led by Sanofi Ventures and Alive Israel", "source_title": "Medisafe raises $30 million", "source_url": "https://venturebeat.com/business/medisafe-raises-30-million-to-promote-medication-adherence-using-ai-and-big-data"}], "links": {"website": "https://medisafe.com/", "investor_relations": "", "newsroom": "https://medisafe.com/news/", "blog": "https://medisafe.com/blog/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/medisafe/"}, "logo_path": "logos/medisafe_project_logo.jpeg"}, {"id": "omnicell", "logo": "logos/omnicell_logo.jpeg", "name": "Omnicell", "hq": "Fort Worth, Texas, United States", "category": "adjacent", "primary_regions": ["north_america", "europe"], "description": "A pharmacy and medication-management automation vendor (dispensing cabinets, and multi-dose pouch/blister automation via JVM) that sits upstream: it helps produce the multi-dose packaging that in-home dispensing robots consume, rather than competing for the in-home care contract directly.", "business_stats": [], "links": {"website": "https://www.omnicell.com/", "investor_relations": "https://ir.omnicell.com/", "newsroom": "https://www.omnicell.com/about/news/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/omnicell/"}, "logo_path": "logos/omnicell_logo.jpeg"}]};
+    const competitionData = {"generatedOn": "2026-07-04", "domain": "digital-medication-management", "title": "Digital Medication Management Competitive Landscape", "scope": {"description": "Players competing to automate medication dispensing and adherence for home care and supported living, plus adjacent pharmacy-automation and software-only adherence substitutes.", "inclusionLogic": ["in-home automated dispensing services (pouch/sachet or loose-pill) sold to care organizations, municipalities, or caregivers", "adjacent upstream pharmacy multi-dose packaging automation that produces the sachets in-home robots dispense", "indirect software-only adherence apps and smart pillboxes that compete on price rather than the assisted-care value proposition"], "notes": ["Every business stat carries an official source and reported scope.", "Third-party-aggregator figures (e.g. estimated revenue or total funding on Crunchbase/PitchBook-type profiles) are deliberately omitted to avoid unverified precision.", "Market-size estimates vary widely by definition and are not attributed to any single player here."]}, "players": [{"id": "evondos", "logo": "logos/evondos_group_logo.jpeg", "name": "Evondos Group", "hq": "Salo and Helsinki, Finland", "category": "market_leader", "primaryRegions": ["nordics", "netherlands", "united_kingdom"], "description": "The reference company: a locked in-home robot that dispenses pharmacy-prepared multi-dose sachets on schedule, reminds the patient, locks away and escalates missed doses, and is monitored remotely by care staff \u2014 sold as a full managed service to municipalities and home-care organizations. Market leader in the Nordics; acquired Dutch leader Medido in 2023 and Vitacam vitals-monitoring in 2024, and entered the UK in 2025. Majority-owned by Verdane.", "businessStats": [{"metric": "revenue", "value": "\u20ac23.31M", "period": "FY2023", "scope": "Evondos Oy standalone (Finnish company registry); group revenue including Medido is higher", "sourceTitle": "Evondos Oy company registry (Finder.fi)", "sourceUrl": "https://www.finder.fi/Terveydenhuollon+laitteet+ja+tarvikkeet/Evondos+Oy/Salo/yhteystiedot/1898263"}, {"metric": "employees", "value": "~300", "period": "2024", "scope": "Evondos Group across the Nordics and Netherlands (company-reported)", "sourceTitle": "Evondos \u2014 About Us", "sourceUrl": "https://www.evondos.com/about-us"}, {"metric": "debt_facility", "value": "\u20ac42M", "period": "2022", "scope": "growth financing from BlackRock Private Credit", "sourceTitle": "Evondos secures \u20ac42M loan for global expansion plans", "sourceUrl": "https://www.evondos.com/news/press-releases/evondos-secures-e2-82-ac42m-loan-for-global-expansion-plans.html"}, {"metric": "doses_dispensed", "value": ">100 million", "period": "2025", "scope": "cumulative medicine doses dispensed (company-reported)", "sourceTitle": "Evondos appoints Frans Cromme as CEO", "sourceUrl": "https://www.evondos.com/news/evondos-appoints-frans-cromme-as-ceo-to-lead-next-phase-of-international-growth-and-portfolio-expansion"}], "links": {"website": "https://www.evondos.com/", "investor_relations": "", "newsroom": "https://www.evondos.com/news", "blog": "https://www.evondos.com/news/blogs", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/evondos/"}, "logo_path": "logos/evondos_group_logo.jpeg"}, {"id": "medido", "logo": "logos/medido_logo.jpeg", "name": "Medido (Evondos Group)", "hq": "Zoetermeer, Netherlands", "category": "market_leader", "primaryRegions": ["netherlands"], "description": "The #1 in-home automated sachet dispenser in the Netherlands: a wall/counter device that cuts and dispenses roll-packed multi-dose sachets on schedule with remote monitoring. Acquired by Evondos in February 2023, forming Evondos Group. Now a product line rather than an independent competitor, but a distinct market presence in the Netherlands.", "businessStats": [{"metric": "adherence_rate", "value": "49% to 97% after 6 months", "period": "peer-reviewed study", "scope": "adherence before vs after automated home dispensing (Medido / AHMD)", "sourceTitle": "Automated home medication dispensers (JBI / Leiden)", "sourceUrl": "https://jbi.global/news/article/automated-home-medication-dispensers"}], "links": {"website": "https://medido.com/en/", "investor_relations": "", "newsroom": "https://medido.com/en/blog/", "blog": "https://medido.com/en/blog/", "engineering_blog": "", "linkedin": ""}, "logo_path": "logos/medido_logo.jpeg"}, {"id": "izafe-dosell", "logo": "logos/izafegroup_logo.jpeg", "name": "iZafe Group (Dosell)", "hq": "Stockholm, Sweden", "category": "direct_competitor", "primaryRegions": ["nordics", "germany", "italy"], "description": "Evondos's closest listed Nordic competitor. Dosell dispenses dose-packed sachets on schedule, reminds patients, and alerts care staff on missed doses, sold to municipalities and home care and increasingly direct-to-consumer. iZafe also owns Pilloxa (a smart pillbox and adherence-software platform). Listed on Nasdaq First North Growth Market.", "businessStats": [{"metric": "net_sales", "value": "SEK 679k (+250% YoY)", "period": "Q4 2023", "scope": "iZafe Group year-end report Oct\u2013Dec 2023 (small early-stage base)", "sourceTitle": "iZafe Group year-end report October\u2013December 2023", "sourceUrl": "https://www.placera.se/placera/pressmeddelanden/2024/02/09/izafe-group-izafe-groups-year-end-report-october-december-2023.html"}, {"metric": "units_delivered", "value": "450 latest-generation Dosell units", "period": "2025", "scope": "produced and delivered to partners (company-reported)", "sourceTitle": "450 of the latest Dosell produced and delivered to partners", "sourceUrl": "https://izafe.se/en/mfn_news/450-of-the-latest-dosell-produced-and-delivered-to-partners/"}], "links": {"website": "https://izafe.se/en/", "investor_relations": "https://izafe.se/en/investors/", "newsroom": "https://izafe.se/en/press-releases/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/izafe-group-ab/"}, "logo_path": "logos/izafegroup_logo.jpeg"}, {"id": "spencer", "logo": "logos/spencerhealth_logo.jpeg", "name": "Spencer Health Solutions", "hq": "Morrisville, North Carolina, United States", "category": "direct_competitor", "primaryRegions": ["north_america", "europe"], "description": "An in-home connected medication hub (\"spencer\") shipped with pre-packaged medications that dispenses on schedule, captures biometrics, and runs telehealth and ePRO questionnaires, with pharmacist monitoring. Rooted in Parata Systems (pharmacy dispensing robots); strong pivot toward clinical-trial and pharma programs.", "businessStats": [{"metric": "funding_raised", "value": "$43M", "period": "reported round", "scope": "capital raised (Business North Carolina)", "sourceTitle": "RTP-based Spencer Health Solutions raises $43 million", "sourceUrl": "https://businessnc.com/rtp-based-spencer-health-solutions-raises-43-million/"}, {"metric": "adherence_rate", "value": "97% daily", "period": "program-reported", "scope": "daily adherence across the spencer program (company-reported)", "sourceTitle": "Spencer Health Solutions", "sourceUrl": "https://spencerhealthsolutions.com/"}], "links": {"website": "https://spencerhealthsolutions.com/", "investor_relations": "", "newsroom": "https://spencerhealthsolutions.com/news/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/spencer-health-solutions/"}, "logo_path": "logos/spencerhealth_logo.jpeg"}, {"id": "hero", "logo": "logos/hero_health_uk_logo.jpeg", "name": "Hero Health", "hq": "New York, United States", "category": "direct_competitor", "primaryRegions": ["north_america"], "description": "A consumer/caregiver-focused countertop smart pill dispenser that sorts and dispenses loose pills (not sachets), gives reminders, automates refills, and provides caregivers real-time adherence data, sold on a subscription model.", "businessStats": [{"metric": "series_a", "value": "$12M", "period": "October 2018", "scope": "Series A financing round", "sourceTitle": "Hero raises $12 million Series A", "sourceUrl": "https://pulse2.com/hero-12-million-series-a/"}], "links": {"website": "https://herohealth.com/", "investor_relations": "", "newsroom": "https://herohealth.com/blog/", "blog": "https://herohealth.com/blog/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/herohealth/"}, "logo_path": "logos/hero_health_uk_logo.jpeg"}, {"id": "medminder", "logo": "logos/medminder_systems_inc_logo.jpeg", "name": "MedMinder", "hq": "Norwood, Massachusetts, United States", "category": "direct_competitor", "primaryRegions": ["north_america"], "description": "A cellular-connected automatic pill dispenser combined with an integrated mail-order pharmacy: a locking dispenser pre-filled with pharmacy-sorted medications that lights and alerts on schedule, notifies caregivers on missed doses, and auto-refills, aimed at seniors aging in place.", "businessStats": [], "links": {"website": "https://www.medminder.com/", "investor_relations": "", "newsroom": "https://www.medminder.com/blog/", "blog": "https://www.medminder.com/blog/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/medminder-systems-inc-/"}, "logo_path": "logos/medminder_systems_inc_logo.jpeg"}, {"id": "dignio-karie", "logo": "logos/dignio_logo.jpeg", "name": "Dignio (AceAge / Karie)", "hq": "Oslo, Norway (Karie: Ontario, Canada)", "category": "direct_competitor", "primaryRegions": ["nordics", "north_america", "united_kingdom"], "description": "Karie is a one-button in-home automated pill dispenser (pharmacy-loaded, caregiver-connected) developed by AceAge, now operating under Norwegian remote-care company Dignio \u2014 giving a loose-pill dispenser a European remote-care footprint that overlaps Evondos's markets.", "businessStats": [], "links": {"website": "https://dignio.com/", "investor_relations": "", "newsroom": "https://dignio.com/en/news/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/dignio/"}, "logo_path": "logos/dignio_logo.jpeg"}, {"id": "pilloxa", "logo": "logos/pilloxa_logo.jpeg", "name": "Pilloxa (iZafe Group)", "hq": "Stockholm, Sweden", "category": "indirect", "primaryRegions": ["nordics"], "description": "A connected smart pillbox plus white-label medication-adherence software platform \u2014 lower-touch than a full dispensing robot. Pharma-partnered (Bayer, Sandoz Nordics) and used in clinical trials. Owned by iZafe Group; competes on price and lightweight adherence rather than the assisted-care robot value.", "businessStats": [], "links": {"website": "https://pilloxa.com/", "investor_relations": "", "newsroom": "https://pilloxa.com/news/", "blog": "https://pilloxa.com/news/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/pilloxa/"}, "logo_path": "logos/pilloxa_logo.jpeg"}, {"id": "medisafe", "logo": "logos/medisafe_project_logo.jpeg", "name": "Medisafe", "hq": "Boston, United States", "category": "indirect", "primaryRegions": ["north_america", "europe"], "description": "A software-only medication-adherence app and pharma patient-engagement platform. No hardware or dispensing; competes as a low-cost substitute for adherence reminders rather than assisted dispensing, but relevant as the software floor of the adherence market.", "businessStats": [{"metric": "series_c", "value": "$30M", "period": "reported round", "scope": "Series C led by Sanofi Ventures and Alive Israel", "sourceTitle": "Medisafe raises $30 million", "sourceUrl": "https://venturebeat.com/business/medisafe-raises-30-million-to-promote-medication-adherence-using-ai-and-big-data"}], "links": {"website": "https://medisafe.com/", "investor_relations": "", "newsroom": "https://medisafe.com/news/", "blog": "https://medisafe.com/blog/", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/medisafe/"}, "logo_path": "logos/medisafe_project_logo.jpeg"}, {"id": "omnicell", "logo": "logos/omnicell_logo.jpeg", "name": "Omnicell", "hq": "Fort Worth, Texas, United States", "category": "adjacent", "primaryRegions": ["north_america", "europe"], "description": "A pharmacy and medication-management automation vendor (dispensing cabinets, and multi-dose pouch/blister automation via JVM) that sits upstream: it helps produce the multi-dose packaging that in-home dispensing robots consume, rather than competing for the in-home care contract directly.", "businessStats": [], "links": {"website": "https://www.omnicell.com/", "investor_relations": "https://ir.omnicell.com/", "newsroom": "https://www.omnicell.com/about/news/", "blog": "", "engineering_blog": "", "linkedin": "https://www.linkedin.com/company/omnicell/"}, "logo_path": "logos/omnicell_logo.jpeg"}]};
     let showDetails = false;
 
     function escapeHtml(value) {
@@ -630,7 +729,7 @@
         const players = competitionData.players || [];
         document.getElementById('heroSubtitle').innerHTML = escapeHtml(competitionData.scope && competitionData.scope.description || '');
         document.getElementById('heroMeta').innerHTML = ''
-            + '<div class="meta-chip">Updated ' + escapeHtml(competitionData.generated_on || '') + '</div>';
+            + '<div class="meta-chip">Updated ' + escapeHtml(competitionData.generatedOn || '') + '</div>';
     }
 
     function renderScope() {
@@ -644,7 +743,7 @@
         const logoHtml = renderPlayerLogo(player);
         const detailUrl = 'landing_pages/' + encodeURIComponent(player.id) + '.html';
 
-        const stats = (player.business_stats || []).slice(0, 3).map(stat => ''
+        const stats = (player.businessStats || []).slice(0, 3).map(stat => ''
             + '<div class="stat-item">'
             + '<div class="stat-metric">' + escapeHtml(titleCase(stat.metric)) + '</div>'
             + '<div class="stat-value">' + escapeHtml(stat.value || '') + '</div>'
@@ -659,7 +758,7 @@
             + '</a>'
         ).join('');
 
-        const regions = (player.primary_regions || []).map(region => '<div class="pill">' + escapeHtml(titleCase(region)) + '</div>').join('');
+        const regions = (player.primaryRegions || []).map(region => '<div class="pill">' + escapeHtml(titleCase(region)) + '</div>').join('');
 
         return ''
             + '<div class="player-card" data-detail-url="' + escapeHtml(detailUrl) + '">'

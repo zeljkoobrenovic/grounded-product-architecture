@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OLX Group</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>OLX Group — Competition (General Listings Marketplace)</title>
     <style>
     .page-type-badge {
         display: inline-block;
@@ -15,6 +17,46 @@
         font-size: 11px;
     }
 </style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
     <style>
     .tab {
         display: flex;
@@ -119,8 +161,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -136,6 +209,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -144,7 +218,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -161,7 +237,7 @@
         margin: 0;
         padding: 6px 4px;
         font-size: 80%;
-        color: #a0a0a0;
+        color: #5b6472;
     }
 
     .breadcrumb {
@@ -169,7 +245,7 @@
 
     .breadcrumb a {
         text-decoration: none;
-        color: #343434;;
+        color: #343434;
     }
 </style>
     <script>
@@ -594,6 +670,29 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
 </head>
 <body onload="initTab('HomeTab')" onhashchange="initTab('HomeTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html" class="active">Competition</a></nav>
 <div id="breadcrumbs"></div>
 
 <div class="hero">
@@ -730,8 +829,8 @@
 
 
 <script>
-    const player = {"id": "olx_group", "name": "OLX Group", "hq": "Amsterdam, Netherlands", "category": "global_classifieds_leader", "role": "direct", "regionRelevance": "EU primary", "categoryRelevance": "Horizontal classifieds", "primary_regions": ["europe", "emerging_markets"], "description": "OLX is one of the strongest global benchmarks for horizontal listings, especially where trust, local liquidity, and cross-category marketplace operations matter.", "business_stats": [{"metric": "revenue", "value": "$777m", "period": "FY2025", "scope": "company", "source_title": "OLX Group reports strong FY 2025 results with 18% revenue growth and 61% profit uplift year-on-year", "source_url": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/"}, {"metric": "active_listings_daily", "value": "64m", "period": "FY2025", "scope": "platform", "source_title": "OLX Group reports strong FY 2025 results with 18% revenue growth and 61% profit uplift year-on-year", "source_url": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/"}, {"metric": "monthly_app_users", "value": "29m", "period": "FY2025", "scope": "platform", "source_title": "OLX Group reports strong FY 2025 results with 18% revenue growth and 61% profit uplift year-on-year", "source_url": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/"}], "links": {"website": "https://www.olxgroup.com/", "about": "https://www.olxgroup.com/about-us/", "results": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/", "linkedin": "https://www.linkedin.com/company/olx-group/"}, "logo_path": null};
-    const competitionScope = {"description": "Competitive landscape for a horizontal general-listings marketplace (modeled on OLX/Adevinta/eBay, EU-centric). Spans horizontal classifieds leaders, social and local listing substitutes, consumer-to-consumer recommerce apps, category verticals (motors, real estate, jobs), and merchant feed/marketplace-integration platforms that compete for the same supply, demand, trust, and seller-monetization jobs.", "inclusion_logic": ["horizontal classifieds and local listing marketplaces with broad category coverage and local network effects", "social and local substitutes where buyers and sellers transact peer-to-peer outside dedicated classifieds apps", "consumer-to-consumer recommerce and resale apps that pull second-hand supply and casual sellers", "category verticals (motors, real estate, jobs) that fragment high-value listing categories away from horizontal players", "merchant feed and marketplace-integration platforms that route professional-seller inventory across marketplaces", "operators with meaningful seller monetization, trust and safety investment, and large audience scale"], "notes": ["Business stats are included only when they were found on official investor, newsroom, annual report, or official company pages, with the reported period and scope preserved.", "Some substitutes and verticals are private companies, owned by a parent group, or do not publish standalone marketplace metrics (for example Facebook Marketplace inside Meta, Craigslist, OfferUp, Vinted, Mercari, Wallapop, Auto Trader UK, Indeed, and merchant-integration vendors). For those, business_stats is intentionally left empty rather than estimated, so cross-player comparability is limited.", "Players span pure local classifieds, social/peer substitutes, dedicated recommerce, category verticals, and B2B integration tooling. They are included where the operating model overlaps the horizontal-listings jobs even when the business model differs.", "Real-estate vertical stats (Zillow, Rightmove) are reused from official sources already verified within this repository's real-estate-marketplace landscape."]};
+    const player = {"id": "olx_group", "name": "OLX Group", "hq": "Amsterdam, Netherlands", "category": "global_classifieds_leader", "role": "direct", "regionRelevance": "EU primary", "categoryRelevance": "Horizontal classifieds", "primaryRegions": ["europe", "emerging_markets"], "description": "OLX is one of the strongest global benchmarks for horizontal listings, especially where trust, local liquidity, and cross-category marketplace operations matter.", "businessStats": [{"metric": "revenue", "value": "$777m", "period": "FY2025", "scope": "company", "sourceTitle": "OLX Group reports strong FY 2025 results with 18% revenue growth and 61% profit uplift year-on-year", "sourceUrl": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/"}, {"metric": "active_listings_daily", "value": "64m", "period": "FY2025", "scope": "platform", "sourceTitle": "OLX Group reports strong FY 2025 results with 18% revenue growth and 61% profit uplift year-on-year", "sourceUrl": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/"}, {"metric": "monthly_app_users", "value": "29m", "period": "FY2025", "scope": "platform", "sourceTitle": "OLX Group reports strong FY 2025 results with 18% revenue growth and 61% profit uplift year-on-year", "sourceUrl": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/"}], "links": {"website": "https://www.olxgroup.com/", "about": "https://www.olxgroup.com/about-us/", "results": "https://www.olxgroup.com/news/olx-group-reports-strong-fy-2025-results-with-18-revenue-growth-and-61-profit-uplift-year-on-year/", "linkedin": "https://www.linkedin.com/company/olx-group/"}, "logo_path": null};
+    const competitionScope = {"description": "Competitive landscape for a horizontal general-listings marketplace (modeled on OLX/Adevinta/eBay, EU-centric). Spans horizontal classifieds leaders, social and local listing substitutes, consumer-to-consumer recommerce apps, category verticals (motors, real estate, jobs), and merchant feed/marketplace-integration platforms that compete for the same supply, demand, trust, and seller-monetization jobs.", "inclusionLogic": ["horizontal classifieds and local listing marketplaces with broad category coverage and local network effects", "social and local substitutes where buyers and sellers transact peer-to-peer outside dedicated classifieds apps", "consumer-to-consumer recommerce and resale apps that pull second-hand supply and casual sellers", "category verticals (motors, real estate, jobs) that fragment high-value listing categories away from horizontal players", "merchant feed and marketplace-integration platforms that route professional-seller inventory across marketplaces", "operators with meaningful seller monetization, trust and safety investment, and large audience scale"], "notes": ["Business stats are included only when they were found on official investor, newsroom, annual report, or official company pages, with the reported period and scope preserved.", "Some substitutes and verticals are private companies, owned by a parent group, or do not publish standalone marketplace metrics (for example Facebook Marketplace inside Meta, Craigslist, OfferUp, Vinted, Mercari, Wallapop, Auto Trader UK, Indeed, and merchant-integration vendors). For those, businessStats is intentionally left empty rather than estimated, so cross-player comparability is limited.", "Players span pure local classifieds, social/peer substitutes, dedicated recommerce, category verticals, and B2B integration tooling. They are included where the operating model overlaps the horizontal-listings jobs even when the business model differs.", "Real-estate vertical stats (Zillow, Rightmove) are reused from official sources already verified within this repository's real-estate-marketplace landscape."]};
 
     const regionMeta = {
         north_america: {label: 'North America', copy: 'United States and Canada oriented footprint.'},
@@ -824,13 +923,13 @@
 
     function renderSummary() {
         const linksCount = Object.keys(player.links || {}).length;
-        const uniqueScopes = new Set((player.business_stats || []).map(item => item.scope).filter(Boolean));
-        const uniqueSources = new Set((player.business_stats || []).map(item => item.source_url).filter(Boolean));
+        const uniqueScopes = new Set((player.businessStats || []).map(item => item.scope).filter(Boolean));
+        const uniqueSources = new Set((player.businessStats || []).map(item => item.sourceUrl).filter(Boolean));
     }
 
     function renderOverview() {
         document.getElementById('overviewCopy').textContent = player.description || '';
-        document.getElementById('regionsRow').innerHTML = (player.primary_regions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
+        document.getElementById('regionsRow').innerHTML = (player.primaryRegions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
     }
 
     function renderLinks() {
@@ -843,22 +942,22 @@
     }
 
     function renderStats() {
-        document.getElementById('statsTableBody').innerHTML = (player.business_stats || []).map(stat => ''
+        document.getElementById('statsTableBody').innerHTML = (player.businessStats || []).map(stat => ''
             + '<tr>'
             + '<td><strong>' + escapeHtml(titleCase(stat.metric || '')) + '</strong></td>'
             + '<td>' + escapeHtml(stat.value || '') + '</td>'
             + '<td>' + escapeHtml(stat.period || '') + '</td>'
             + '<td>' + escapeHtml(titleCase(stat.scope || '')) + '</td>'
-            + '<td><div>' + escapeHtml(stat.source_title || '') + '</div><div class="stat-source"><a href="' + escapeHtml(stat.source_url || '#') + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(stat.source_url || '') + '</a></div></td>'
+            + '<td><div>' + escapeHtml(stat.sourceTitle || '') + '</div><div class="stat-source"><a href="' + escapeHtml(stat.sourceUrl || '#') + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(stat.sourceUrl || '') + '</a></div></td>'
             + '</tr>'
         ).join('');
     }
 
     function renderSources() {
         const seen = {};
-        (player.business_stats || []).forEach(stat => {
-            if (stat.source_url && !seen[stat.source_url]) {
-                seen[stat.source_url] = stat.source_title || stat.source_url;
+        (player.businessStats || []).forEach(stat => {
+            if (stat.sourceUrl && !seen[stat.sourceUrl]) {
+                seen[stat.sourceUrl] = stat.sourceTitle || stat.sourceUrl;
             }
         });
         document.getElementById('sourcesGrid').innerHTML = Object.entries(seen).map(([url, title]) => ''
@@ -870,11 +969,11 @@
 
     function renderGeography() {
         const hq = parseHq(player.hq);
-        const hqRegionId = inferHqRegion(hq.country, player.primary_regions || []);
+        const hqRegionId = inferHqRegion(hq.country, player.primaryRegions || []);
         document.getElementById('hqCity').textContent = hq.city || 'Unknown';
         document.getElementById('hqCountry').textContent = hq.country || 'Unknown';
         document.getElementById('hqRegion').textContent = (regionMeta[hqRegionId] && regionMeta[hqRegionId].label) || titleCase(hqRegionId) || 'Unknown';
-        document.getElementById('geographyRegions').innerHTML = (player.primary_regions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
+        document.getElementById('geographyRegions').innerHTML = (player.primaryRegions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
         document.getElementById('geographyCopy').textContent = (competitionScope.notes || [])[1] || 'Region labels reflect the operating footprint captured in the competition dataset.';
 
         const orderedRegions = [
@@ -884,7 +983,7 @@
             'spain', 'cis', 'indonesia',
             'singapore', 'north_africa', 'pakistan'
         ];
-        const activeRegions = new Set(player.primary_regions || []);
+        const activeRegions = new Set(player.primaryRegions || []);
         document.getElementById('regionMap').innerHTML = orderedRegions.map(regionId => {
             const meta = regionMeta[regionId] || {label: titleCase(regionId), copy: ''};
             const classes = ['region-tile'];

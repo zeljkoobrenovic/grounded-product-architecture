@@ -16,6 +16,7 @@ DOCS_ROOT = REPO_ROOT / 'docs'
 DOCS_PACKAGES_ROOT = DOCS_ROOT / 'start-packages'
 
 TABS_STYLE = (IMPORTS_ROOT / 'tabs' / 'style.html').read_text(encoding='utf-8')
+TOKENS_STYLE = (IMPORTS_ROOT / 'tokens' / 'style.html').read_text(encoding='utf-8')
 TABS_SCRIPT = (IMPORTS_ROOT / 'tabs' / 'script.html').read_text(encoding='utf-8')
 
 
@@ -117,6 +118,7 @@ def render_package(package_folder, template):
         html_file.write(
             template
             .replace('${tabs_style}', TABS_STYLE)
+            .replace('${tokens_style}', TOKENS_STYLE)
             .replace('${tabs_script}', TABS_SCRIPT)
             .replace('${date}', DATE_STRING)
             .replace('${apps}', json.dumps(rendered_apps))

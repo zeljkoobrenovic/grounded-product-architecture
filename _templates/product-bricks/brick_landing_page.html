@@ -2,14 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>${brick_name}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>${brick_name} — Product Brick (${domain_name})</title>
 
     ${common_style}
+    ${tokens_style}
     ${tabs_style}
-    ${evidence_style}
     ${breadcrumbs_style}
 
     <style>
+
+        .links-group {
+            margin-bottom: 20px;
+            padding: 16px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .links-group-title {
+            font-size: 12px;
+            color: #1d4ed8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+
+        .links-group-description {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .link-entry { margin-bottom: 16px; }
+        .link-entry:last-child { margin-bottom: 0; }
+
+        .link-entry-title {
+            color: #1d4ed8;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .link-entry-title:hover { text-decoration: underline; }
+
+        .link-entry-copy {
+            color: #4b5563;
+            font-size: 13px;
+            margin: 4px 0 8px;
+            line-height: 1.45;
+        }
+
+        .link-embed {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            margin-top: 4px;
+        }
+
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
         }
@@ -644,16 +695,40 @@
 
 </head>
 <body onload="updateBrickTabLabels(); initTab('overview')" onhashchange="initTab('overview')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html" class="active">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a></nav>
 
 <div id="breadcrumbs" style="margin-left: 24px;"></div>
 
+<script src="../shared_data.js"></script>
 <script>
     const config = ${config};
-    const all_bricks = ${all_bricks};
-    const allStreams = ${all_streams};
-    const bricksMetadata = ${bricks_metadata};
+    const all_bricks = window.SHARED_DOMAIN_DATA.allBricks;
+    const allStreams = window.SHARED_DOMAIN_DATA.allStreams;
+    const bricksMetadata = window.SHARED_DOMAIN_DATA.bricksMetadata;
     const modulesConfig = bricksMetadata.modulesConfig || {};
-    const dataAssetsPayload = ${data_assets};
+    const dataAssetsPayload = window.SHARED_DOMAIN_DATA.dataAssetsPayload;
     const brick = ${brick_data};
     const relatedTeams = ${related_teams};
     const linkedProducts = ${linked_products};
@@ -717,7 +792,7 @@
             + findIncomingBrickDependencies().length
             + (brick.externalSystemsThisBrickDependsOn || brick.externalSystemDependencies || []).length
             + (brick.externalSystemsDependingOnThisBrick || []).length;
-        const linksCount = (brick.links || []).length;
+        const linksCount = (brick.links || []).reduce((sum, group) => sum + (group.links || []).length, 0);
         const modulesTab = document.getElementById('tab_modules');
         const dataTab = document.getElementById('tab_data');
         const dependenciesTab = document.getElementById('tab_dependencies');
@@ -762,7 +837,6 @@
     <div id="tab_content_dependencies" class="tabcontent" style="padding: 10px">
         <div id="Dependencies"></div>
     </div>
-    <div id="tab_content_evidence"></div>
 </div>
 
 <script>
@@ -863,7 +937,7 @@
     html = '';
 
     function escapeHomeHtml(value) {
-        return (value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')
@@ -971,25 +1045,38 @@
     }
 
     function renderReferenceLinks() {
-        const links = brick.links || [];
+        // Grouped links from config: [{group, description, links: [{label, link,
+        // description, embedLink?, embedHeight?}]}]. embedLink renders an iframe
+        // (default height 400px) while the label still opens `link` directly.
+        const groups = brick.links || [];
         let sectionHtml = '<div class="home-section">';
-        if (!links.length) {
-            sectionHtml += '<div class="activity-muted">No links are listed for this product brick.</div>';
+        if (!groups.length) {
+            sectionHtml += '<div class="activity-muted">No links are configured for this product brick.</div>';
             sectionHtml += '</div>';
             return sectionHtml;
         }
-
-        links.forEach(link => {
-            sectionHtml += '<a class="link-card" target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(link.url || '#') + '">';
-            sectionHtml += '<div class="home-link-head">';
-            sectionHtml += '<div><div class="home-link-title">' + escapeHomeHtml(link.label || link.url || 'Reference') + '<img src="../icons/new-window.png" style="height: 14px; margin-left: 4px; padding-top: 6px; opacity: 0.6"></div></div>';
-            sectionHtml += '</div>';
-            if (link.note) {
-                sectionHtml += '<div class="home-link-copy">' + escapeHomeHtml(link.note) + '</div>';
+        groups.forEach(group => {
+            sectionHtml += '<div class="links-group">';
+            sectionHtml += '<div class="links-group-title">' + escapeHomeHtml(group.group || 'Links') + '</div>';
+            if (group.description) {
+                sectionHtml += '<div class="links-group-description">' + escapeHomeHtml(group.description) + '</div>';
             }
-            sectionHtml += '</a>';
+            (group.links || []).forEach(link => {
+                sectionHtml += '<div class="link-entry">';
+                sectionHtml += '<a class="link-entry-title" target="_blank" rel="noopener noreferrer" href="' + escapeHomeHtml(link.link || '#') + '">'
+                    + escapeHomeHtml(link.label || link.link || 'Reference') + ' &#8599;</a>';
+                if (link.description) {
+                    sectionHtml += '<div class="link-entry-copy">' + escapeHomeHtml(link.description) + '</div>';
+                }
+                if (link.embedLink) {
+                    const embedHeight = Number(link.embedHeight) || 400;
+                    sectionHtml += '<iframe class="link-embed" loading="lazy" src="' + escapeHomeHtml(link.embedLink)
+                        + '" style="height: ' + embedHeight + 'px" title="' + escapeHomeHtml(link.label || 'Embedded link') + '"></iframe>';
+                }
+                sectionHtml += '</div>';
+            });
+            sectionHtml += '</div>';
         });
-
         sectionHtml += '</div>';
         return sectionHtml;
     }
@@ -2031,7 +2118,6 @@
 </script>
 
 
-${evidence_script}
 ${breadcrumbs_script}
 
 

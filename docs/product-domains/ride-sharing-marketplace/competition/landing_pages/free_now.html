@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FREE NOW</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>FREE NOW — Competition (Ride Sharing Marketplace)</title>
     <style>
     .page-type-badge {
         display: inline-block;
@@ -15,6 +17,46 @@
         font-size: 11px;
     }
 </style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
     <style>
     .tab {
         display: flex;
@@ -119,8 +161,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -136,6 +209,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -144,7 +218,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -161,7 +237,7 @@
         margin: 0;
         padding: 6px 4px;
         font-size: 80%;
-        color: #a0a0a0;
+        color: #5b6472;
     }
 
     .breadcrumb {
@@ -169,7 +245,7 @@
 
     .breadcrumb a {
         text-decoration: none;
-        color: #343434;;
+        color: #343434;
     }
 </style>
     <script>
@@ -594,6 +670,29 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
 </head>
 <body onload="initTab('HomeTab')" onhashchange="initTab('HomeTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html" class="active">Competition</a></nav>
 <div id="breadcrumbs"></div>
 
 <div class="hero">
@@ -730,8 +829,8 @@
 
 
 <script>
-    const player = {"id": "free_now", "logo": "logos/free_now.png", "name": "FREE NOW", "hq": "Hamburg, Germany", "category": "taxi_first_marketplace", "primary_regions": ["europe"], "description": "FREE NOW is Europe's leading taxi-first marketplace and a meaningful competitor wherever regulated taxi supply, airport pickup, and city-center demand shape the mobility mix more than peer-to-peer rideshare does.", "business_stats": [{"metric": "markets", "value": "9 European markets", "period": "accessed 2026-04-18", "scope": "platform", "source_title": "About Us | Freenow", "source_url": "https://www.free-now.com/fr-en/about-us/"}, {"metric": "cities", "value": "180+", "period": "accessed 2026-04-18", "scope": "platform", "source_title": "About Us | Freenow", "source_url": "https://www.free-now.com/fr-en/about-us/"}, {"metric": "cities", "value": "150+", "period": "accessed 2026-04-18", "scope": "rider_marketing_page", "source_title": "Mobility that sets you free | Freenow", "source_url": "https://www.free-now.com/pl-en/ride/"}, {"metric": "airports", "value": "50", "period": "accessed 2026-04-18", "scope": "rider_marketing_page", "source_title": "Mobility that sets you free | Freenow", "source_url": "https://www.free-now.com/pl-en/ride/"}, {"metric": "users", "value": "millions of passengers", "period": "accessed 2026-04-18", "scope": "platform", "source_title": "About Us | Freenow", "source_url": "https://www.free-now.com/fr-en/about-us/"}], "links": {"website": "https://www.free-now.com/", "about": "https://www.free-now.com/fr-en/about-us/", "press": "https://www.free-now.com/press/", "rider_page": "https://www.free-now.com/pl-en/ride/", "linkedin": "https://www.linkedin.com/company/free-now/"}, "logo_path": "logos/free_now.png"};
-    const competitionScope = {"description": "Global and regionally dominant ride-hailing marketplaces relevant to a product domain modeled on Uber's core mobility business.", "inclusion_logic": ["scaled global leaders", "regional category leaders with material marketplace share", "super-app or taxi-first platforms where ride-hailing remains a core demand and supply marketplace"], "notes": ["Business stats are only included when they were found in official investor relations pages, official company about pages, official press pages, or official engineering/blog properties.", "Some companies report platform-wide or on-demand metrics rather than ride-only metrics. Those metrics are preserved as reported and labeled with their scope."]};
+    const player = {"id": "free_now", "logo": "logos/free_now.png", "name": "FREE NOW", "hq": "Hamburg, Germany", "category": "taxi_first_marketplace", "primaryRegions": ["europe"], "description": "FREE NOW is Europe's leading taxi-first marketplace and a meaningful competitor wherever regulated taxi supply, airport pickup, and city-center demand shape the mobility mix more than peer-to-peer rideshare does.", "businessStats": [{"metric": "markets", "value": "9 European markets", "period": "accessed 2026-04-18", "scope": "platform", "sourceTitle": "About Us | Freenow", "sourceUrl": "https://www.free-now.com/fr-en/about-us/"}, {"metric": "cities", "value": "180+", "period": "accessed 2026-04-18", "scope": "platform", "sourceTitle": "About Us | Freenow", "sourceUrl": "https://www.free-now.com/fr-en/about-us/"}, {"metric": "cities", "value": "150+", "period": "accessed 2026-04-18", "scope": "rider_marketing_page", "sourceTitle": "Mobility that sets you free | Freenow", "sourceUrl": "https://www.free-now.com/pl-en/ride/"}, {"metric": "airports", "value": "50", "period": "accessed 2026-04-18", "scope": "rider_marketing_page", "sourceTitle": "Mobility that sets you free | Freenow", "sourceUrl": "https://www.free-now.com/pl-en/ride/"}, {"metric": "users", "value": "millions of passengers", "period": "accessed 2026-04-18", "scope": "platform", "sourceTitle": "About Us | Freenow", "sourceUrl": "https://www.free-now.com/fr-en/about-us/"}], "links": {"website": "https://www.free-now.com/", "about": "https://www.free-now.com/fr-en/about-us/", "press": "https://www.free-now.com/press/", "rider_page": "https://www.free-now.com/pl-en/ride/", "linkedin": "https://www.linkedin.com/company/free-now/"}, "logo_path": "logos/free_now.png"};
+    const competitionScope = {"description": "Global and regionally dominant ride-hailing marketplaces relevant to a product domain modeled on Uber's core mobility business.", "inclusionLogic": ["scaled global leaders", "regional category leaders with material marketplace share", "super-app or taxi-first platforms where ride-hailing remains a core demand and supply marketplace"], "notes": ["Business stats are only included when they were found in official investor relations pages, official company about pages, official press pages, or official engineering/blog properties.", "Some companies report platform-wide or on-demand metrics rather than ride-only metrics. Those metrics are preserved as reported and labeled with their scope."]};
 
     const regionMeta = {
         north_america: {label: 'North America', copy: 'United States and Canada oriented footprint.'},
@@ -824,13 +923,13 @@
 
     function renderSummary() {
         const linksCount = Object.keys(player.links || {}).length;
-        const uniqueScopes = new Set((player.business_stats || []).map(item => item.scope).filter(Boolean));
-        const uniqueSources = new Set((player.business_stats || []).map(item => item.source_url).filter(Boolean));
+        const uniqueScopes = new Set((player.businessStats || []).map(item => item.scope).filter(Boolean));
+        const uniqueSources = new Set((player.businessStats || []).map(item => item.sourceUrl).filter(Boolean));
     }
 
     function renderOverview() {
         document.getElementById('overviewCopy').textContent = player.description || '';
-        document.getElementById('regionsRow').innerHTML = (player.primary_regions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
+        document.getElementById('regionsRow').innerHTML = (player.primaryRegions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
     }
 
     function renderLinks() {
@@ -843,22 +942,22 @@
     }
 
     function renderStats() {
-        document.getElementById('statsTableBody').innerHTML = (player.business_stats || []).map(stat => ''
+        document.getElementById('statsTableBody').innerHTML = (player.businessStats || []).map(stat => ''
             + '<tr>'
             + '<td><strong>' + escapeHtml(titleCase(stat.metric || '')) + '</strong></td>'
             + '<td>' + escapeHtml(stat.value || '') + '</td>'
             + '<td>' + escapeHtml(stat.period || '') + '</td>'
             + '<td>' + escapeHtml(titleCase(stat.scope || '')) + '</td>'
-            + '<td><div>' + escapeHtml(stat.source_title || '') + '</div><div class="stat-source"><a href="' + escapeHtml(stat.source_url || '#') + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(stat.source_url || '') + '</a></div></td>'
+            + '<td><div>' + escapeHtml(stat.sourceTitle || '') + '</div><div class="stat-source"><a href="' + escapeHtml(stat.sourceUrl || '#') + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(stat.sourceUrl || '') + '</a></div></td>'
             + '</tr>'
         ).join('');
     }
 
     function renderSources() {
         const seen = {};
-        (player.business_stats || []).forEach(stat => {
-            if (stat.source_url && !seen[stat.source_url]) {
-                seen[stat.source_url] = stat.source_title || stat.source_url;
+        (player.businessStats || []).forEach(stat => {
+            if (stat.sourceUrl && !seen[stat.sourceUrl]) {
+                seen[stat.sourceUrl] = stat.sourceTitle || stat.sourceUrl;
             }
         });
         document.getElementById('sourcesGrid').innerHTML = Object.entries(seen).map(([url, title]) => ''
@@ -870,11 +969,11 @@
 
     function renderGeography() {
         const hq = parseHq(player.hq);
-        const hqRegionId = inferHqRegion(hq.country, player.primary_regions || []);
+        const hqRegionId = inferHqRegion(hq.country, player.primaryRegions || []);
         document.getElementById('hqCity').textContent = hq.city || 'Unknown';
         document.getElementById('hqCountry').textContent = hq.country || 'Unknown';
         document.getElementById('hqRegion').textContent = (regionMeta[hqRegionId] && regionMeta[hqRegionId].label) || titleCase(hqRegionId) || 'Unknown';
-        document.getElementById('geographyRegions').innerHTML = (player.primary_regions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
+        document.getElementById('geographyRegions').innerHTML = (player.primaryRegions || []).map(region => '<div class="pill">' + escapeHtml((regionMeta[region] && regionMeta[region].label) || titleCase(region)) + '</div>').join('');
         document.getElementById('geographyCopy').textContent = (competitionScope.notes || [])[1] || 'Region labels reflect the operating footprint captured in the competition dataset.';
 
         const orderedRegions = [
@@ -884,7 +983,7 @@
             'spain', 'cis', 'indonesia',
             'singapore', 'north_africa', 'pakistan'
         ];
-        const activeRegions = new Set(player.primary_regions || []);
+        const activeRegions = new Set(player.primaryRegions || []);
         document.getElementById('regionMap').innerHTML = orderedRegions.map(regionId => {
             const meta = regionMeta[regionId] || {label: titleCase(regionId), copy: ''};
             const classes = ['region-tile'];

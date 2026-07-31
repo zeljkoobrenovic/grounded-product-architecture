@@ -1,13 +1,13 @@
 import json
 import os
 import shutil
-import datetime
+
 from domain_cli import load_domain_args
+from generator_common import copy_icons, enter_docs_root, today_string
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
-date_string = datetime.date.today().strftime('%Y-%m-%d')
+date_string = today_string()
 
 apps = json.load(open('../../_config/product-domains/start/apps.json'))
 
@@ -16,16 +16,10 @@ templates_root = '../../_templates/start/'
 domain, _ = load_domain_args()
 
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tokens_style = open(templates_root + '../_imports/tokens/style.html').read()
 tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 
 
-def copy_icons(icons_path, docs_folder):
-    if os.path.exists(icons_path):
-        for filename in os.listdir(icons_path):
-            src = os.path.join(icons_path, filename)
-            dst = os.path.join(docs_folder, 'icons', filename)
-            if os.path.isfile(src):
-                shutil.copy2(src, dst)
 def create_docs(domain, docs_folder):
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
@@ -39,6 +33,7 @@ def create_docs(domain, docs_folder):
         print(domain['description'])
         html_file.write(template
                         .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                         .replace('${tabs_script}', tabs_script)
                         .replace('${date}', date_string)
                         .replace('${apps}', json.dumps(apps))

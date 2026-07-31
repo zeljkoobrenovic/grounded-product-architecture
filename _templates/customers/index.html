@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
     <title>Customers (${domain_name})</title>
 
     ${breadcrumbs_style}
+    ${tokens_style}
     ${tabs_style}
 
     <style>
@@ -112,6 +115,34 @@
             padding: 2px;
         }
 
+        .customer-search-bar {
+            padding: 12px 12px 0 12px;
+        }
+
+        .customer-search {
+            width: 100%;
+            max-width: 520px;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            color: #202124;
+        }
+
+        .customer-search-summary {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 6px;
+            min-height: 16px;
+        }
+
+        .customer-search-empty {
+            padding: 24px 12px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
         .customer-group {
             display: inline-block;
             vertical-align: top;
@@ -149,11 +180,13 @@
         }
 
         .customer-card-name {
-            font-size: 17px;
+            font-size: 19px;
             font-weight: bold;
-            color: #315b7c;
+            color: #1d4ed8;
             text-align: center;
             margin-bottom: 10px;
+            padding-bottom: 10px;
+            height: 2em;
         }
 
         .customer-attribute {
@@ -192,7 +225,7 @@
 
         .insight-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 16px;
             padding: 16px;
         }
@@ -207,7 +240,7 @@
 
         .insight-title {
             font-size: 25px;
-            color: #315b7c;
+            color: #1d4ed8;
             margin-bottom: 8px;
             font-weight: bold;
         }
@@ -292,7 +325,7 @@
         .link-title {
             font-size: 17px;
             font-weight: bold;
-            color: #315b7c;
+            color: #1d4ed8;
             margin-bottom: 6px;
         }
 
@@ -339,6 +372,29 @@
 
 </head>
 <body onload="initTab('customers')" onhashchange="initTab()">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../start/index.html">Home</a><a href="../customers/index.html" class="active">Customers</a><a href="../product-deployments/index.html">Products</a><a href="../product-bricks/index.html">Bricks &amp; Streams</a><a href="../teams/index.html">Teams</a><a href="../competition/index.html">Competition</a></nav>
 <div id="breadcrumbs"></div>
 <div class="hero">
     <table class="hero-table">
@@ -360,7 +416,15 @@
     <button class="tablinks" id="tab_links" onclick="openTab('links')">Links</button>
 </div>
 <div>
-    <div id="tab_content_customers" class="tabcontent"></div>
+    <div id="tab_content_customers" class="tabcontent">
+        <div class="customer-search-bar">
+            <input type="search" id="CustomerSearch" class="customer-search"
+                   placeholder="Search customers by name, group, or what they care about&hellip;"
+                   autocomplete="off" oninput="renderCustomers()">
+            <div id="CustomerSearchSummary" class="customer-search-summary"></div>
+        </div>
+        <div id="CustomerCards"></div>
+    </div>
     <div id="tab_content_insights" class="tabcontent"></div>
     <div id="tab_content_links" class="tabcontent"></div>
 </div>
@@ -391,7 +455,7 @@
     }
 
     function escapeHtml(value) {
-        return (value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')
@@ -462,13 +526,42 @@
         return html;
     }
 
-    function update() {
+    function customerMatchesSearch(customer, groupName, query) {
+        if (!query) return true;
+        const haystack = [customer.id, customer.name, customer.description, groupName]
+            .concat(customer.careAbout || [], customer.winsThem || [], customer.theirFear || [])
+            .filter(Boolean).join(' ').toLowerCase();
+        return haystack.includes(query);
+    }
+
+    let customerUrlStateRestored = false;
+
+    function renderCustomers() {
+        const searchInput = document.getElementById('CustomerSearch');
+        if (!customerUrlStateRestored) {
+            customerUrlStateRestored = true;
+            const initialQuery = new URLSearchParams(window.location.search).get('q');
+            if (initialQuery && searchInput) searchInput.value = initialQuery;
+        }
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        if (window.history && window.history.replaceState) {
+            const params = new URLSearchParams(window.location.search);
+            if (query) params.set('q', query); else params.delete('q');
+            const qs = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        }
+        let visible = 0;
+        let total = 0;
         let html = '<div style="padding: 12px">';
 
         customers.forEach(group => {
+            total += group.customers.length;
+            const matching = group.customers.filter(customer => customerMatchesSearch(customer, group.group, query));
+            visible += matching.length;
+            if (!matching.length) return;
             html += '<div class="customer-group">';
             html += '<div class="customer-group-label">' + escapeHtml(group.group) + '</div>';
-            group.customers.forEach(customer => {
+            matching.forEach(customer => {
                 html += '<a target="_blank" href="landing_pages/' + escapeHtml(customer.id) + '.html">';
                 html += '<div class="customer-card">';
                 html += '<img class="customer-card-photo" src="icons/' + escapeHtml(customer.icon) + '" onerror="this.onerror=null;this.src=\'icons/customer.png\'">';
@@ -488,7 +581,18 @@
         });
 
         html += '</div>';
-        document.getElementById('tab_content_customers').innerHTML = html;
+        if (!visible) {
+            html = '<div class="customer-search-empty">No customers match the current search.</div>';
+        }
+        document.getElementById('CustomerCards').innerHTML = html;
+        const summary = document.getElementById('CustomerSearchSummary');
+        if (summary) {
+            summary.textContent = query ? `Showing ${visible} of ${total} customers` : '';
+        }
+    }
+
+    function update() {
+        renderCustomers();
     }
 
     function renderInsights() {

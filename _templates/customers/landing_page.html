@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
     <title>${customer_name}</title>
     ${common_style}
+    ${tokens_style}
     ${tabs_style}
     ${breadcrumbs_style}
     <style>
@@ -407,6 +410,29 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
 </head>
 <body onload="initTab('HomeTab')" onhashchange="initTab('HomeTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html" class="active">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a></nav>
 <div id="breadcrumbs" style="margin-left: 18px"></div>
 ${tabs_script}
 
@@ -414,6 +440,14 @@ ${tabs_script}
     const config = ${config};
     const all_customers = ${all_customers};
     const customer = ${customer};
+    // id -> 'stream' | 'brick'; lets JTBD tiles link to the owning page.
+    const streamBrickKinds = ${stream_brick_kinds};
+    function streamBrickHref(id) {
+        const kind = streamBrickKinds[id];
+        if (kind === 'stream') return '../../product-bricks/stream_pages/' + id + '.html';
+        if (kind === 'brick') return '../../product-bricks/landing_pages/' + id + '.html';
+        return null;
+    }
     const customerInsights = ${customer_insights};
 </script>
 <div id="Navigation"></div>
@@ -578,7 +612,7 @@ ${tabs_script}
             html += '</td>';
             html += '<td style="vertical-align: top">';
             html += '<div style="">' + job.outcome + '</div>';
-            html += '<div style="font-size: 80%; color: grey; margin-top: 8px;">(' + job.what_it_is + ')</div>';
+            html += '<div style="font-size: 80%; color: grey; margin-top: 8px;">(' + job.whatItIs + ')</div>';
             html += '</td>';
             html += '</tr>';
         });
@@ -706,7 +740,7 @@ ${tabs_script}
             html += '</td>';
             html += '<td style="vertical-align: top">';
             html += '<div style="">' + job.outcome + '</div>';
-            html += '<div style="font-size: 80%; color: grey; margin-top: 8px;">(' + job.what_it_is + ')</div>';
+            html += '<div style="font-size: 80%; color: grey; margin-top: 8px;">(' + job.whatItIs + ')</div>';
             html += '</td>';
             html += '</tr>';
         });
@@ -729,7 +763,7 @@ ${tabs_script}
                 html += '</div>';
             }
             html += '<div style="font-size: 210%; color: blue; margin-bottom: 12px">' + job.name + '</div>';
-            html += '<div style="">' + job.what_it_is + '</div>';
+            html += '<div style="">' + job.whatItIs + '</div>';
             html += '<div style="text-align: center; margin-top: 24px; background-color: white" class="group">';
             html += '<div  class="outcome">';
             html += '<div style="">' + job.outcome + '</div>';
@@ -746,10 +780,13 @@ ${tabs_script}
                     html += '<td style=" text-align: left; padding: 0;">';
                     html += '<div style="margin: 6px; border: 1px dashed lightgrey; padding: 6px; ">';
                     html += '<div style="color: blue; font-size: 80%; white-space: nowrap; overflow: hidden; ">';
-                    html += stream.name;
+                    const streamHref = streamBrickHref(stream.id);
+                    html += streamHref
+                        ? '<a href="' + streamHref + '" style="color: blue; text-decoration: none;">' + stream.name + '</a>'
+                        : stream.name;
                     html += '</div>';
                     html += '<div style="font-size: 70%;">';
-                    html += stream.how_it_supports;
+                    html += stream.howItSupports;
                     html += '</div>';
                     html += '</div>';
                     html += '</td>';
@@ -760,7 +797,10 @@ ${tabs_script}
                     html += '<td style=" text-align: left; padding: 0;">';
                     html += '<div style="margin: 6px 6px 6px 24px; border-left: 2px solid #eee; padding: 2px 6px; ">';
                     html += '<div style="color: #888; font-size: 70%; white-space: nowrap; overflow: hidden; ">';
-                    html += '&#8627; ' + brick.name;
+                    const brickHref = streamBrickHref(brick.id);
+                    html += '&#8627; ' + (brickHref
+                        ? '<a href="' + brickHref + '" style="color: #888; text-decoration: none;">' + brick.name + '</a>'
+                        : brick.name);
                     html += '</div>';
                     html += '</div>';
                     html += '</td>';
@@ -1165,9 +1205,9 @@ ${tabs_script}
         }
 
         let strategy = customer.productStrategy;
-        const timeHorizon1 = strategy.timeHorizons['1_year'];
-        const timeHorizon2 = strategy.timeHorizons['3_year'];
-        const timeHorizon3 = strategy.timeHorizons['5_year'];
+        const timeHorizon1 = strategy.timeHorizons['year1'];
+        const timeHorizon2 = strategy.timeHorizons['year3'];
+        const timeHorizon3 = strategy.timeHorizons['year5'];
         const businessKpi1 = normalizeRoadmapKpi(timeHorizon1.businessKPI, 'revenueStreams');
         const businessKpi2 = normalizeRoadmapKpi(timeHorizon2.businessKPI, 'revenueStreams');
         const businessKpi3 = normalizeRoadmapKpi(timeHorizon3.businessKPI, 'revenueStreams');
@@ -1303,7 +1343,7 @@ ${tabs_script}
     }
 
     function escapeHtml(value) {
-        return (value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')

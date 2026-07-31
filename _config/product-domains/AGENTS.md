@@ -60,8 +60,6 @@ A mature domain normally contains:
 - `product-deployments/deployment.json`
 - `product-bricks/product-bricks.json`
 - `product-bricks/product-stream.json`
-- `product-bricks/bricks-evidence.json`
-- `product-bricks/streams-evidence.json`
 - `data/data-assets.json`
 - `teams/teams.json`
 - `business/competition.json`
@@ -133,9 +131,9 @@ Preferred horizon shape:
 
 - `vision`
 - `timeHorizons`
-- `1_year`
-- `3_year`
-- `5_year`
+- `year1`
+- `year3`
+- `year5`
 
 Each time horizon should normally include:
 

@@ -2,16 +2,19 @@
 <html lang="en" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
-    <title>Product Bricks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Product Bricks (${domain_name})</title>
 
     ${breadcrumbs_style}
+    ${tokens_style}
     ${tabs_style}
 
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
             margin-left: 28px;
-            margin-rigth: 28px;
+            margin-right: 28px;
             margin-bottom: 28px;
             color: #202124;
             --text-color: #111;
@@ -108,6 +111,25 @@
             align-items: center;
             gap: 12px 18px;
             margin-bottom: 18px;
+        }
+
+        .brick-search {
+            flex: 1;
+            min-width: 220px;
+            max-width: 520px;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            color: #202124;
+        }
+
+        .brick-search-summary {
+            font-size: 13px;
+            color: #6b7280;
+            margin: -8px 0 12px 0;
+            min-height: 16px;
         }
 
         .bricks-toggle {
@@ -424,7 +446,7 @@
 
         .data-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 14px;
         }
 
@@ -437,7 +459,7 @@
 
         .data-card-title {
             font-size: 20px;
-            color: #111827;
+            color: #1d4ed8;
             margin-bottom: 6px;
         }
 
@@ -1349,8 +1371,21 @@
             return new Set(checkboxes.filter(input => input.checked).map(input => normalizeStatus(input.value)));
         }
 
+        function brickSearchQuery() {
+            const input = document.getElementById('BrickSearch');
+            return input ? input.value.trim().toLowerCase() : '';
+        }
+
+        function brickMatchesSearch(item, query) {
+            if (!query) return true;
+            const haystack = [item.id, item.name, item.description, item.type, item.status]
+                .filter(Boolean).join(' ').toLowerCase();
+            return haystack.includes(query);
+        }
+
         function shouldRenderBrick(item) {
-            return selectedBrickStatuses().has(normalizeStatus(item.status) || 'unspecified');
+            return selectedBrickStatuses().has(normalizeStatus(item.status) || 'unspecified')
+                && brickMatchesSearch(item, brickSearchQuery());
         }
 
         function statusBorderStyle(item) {
@@ -1458,7 +1493,7 @@
             )).sort((left, right) => left - right);
 
             if (!normalizedItems.length) {
-                return '<div class="empty-state">No bricks match the selected statuses.</div>';
+                return '<div class="empty-state">No bricks match the current search and status filters.</div>';
             }
 
             return `
@@ -2770,10 +2805,75 @@
             renderActiveDependencyGraph();
         }
 
+        // ---- URL state: ?q=, ?modules=1, ?status=1, ?statuses=a,b keep the
+        // bricks view shareable; the tab itself stays in the #hash. ----
+        let brickUrlStateRestored = false;
+
+        function restoreBricksStateFromUrl() {
+            if (brickUrlStateRestored) return;
+            brickUrlStateRestored = true;
+            const params = new URLSearchParams(window.location.search);
+            const query = params.get('q');
+            const searchInput = document.getElementById('BrickSearch');
+            if (query && searchInput) searchInput.value = query;
+            const structureToggle = document.getElementById('brickStructureToggle');
+            if (structureToggle && params.get('modules') === '1') structureToggle.checked = true;
+            const statusToggle = document.getElementById('brickStatusToggle');
+            if (statusToggle && params.get('status') === '1') statusToggle.checked = true;
+            const statuses = params.get('statuses');
+            if (statuses !== null) {
+                const wanted = new Set(statuses.split(',').filter(Boolean));
+                document.querySelectorAll('.brick-status-filter-input').forEach(input => {
+                    input.checked = wanted.has(input.value);
+                });
+            }
+        }
+
+        function syncBricksUrl() {
+            if (!brickUrlStateRestored || !window.history || !window.history.replaceState) return;
+            const params = new URLSearchParams(window.location.search);
+            const query = brickSearchQuery();
+            if (query) params.set('q', query); else params.delete('q');
+            if (shouldShowBrickStructure()) params.set('modules', '1'); else params.delete('modules');
+            if (shouldShowBrickStatus()) params.set('status', '1'); else params.delete('status');
+            const checkboxes = Array.from(document.querySelectorAll('.brick-status-filter-input'));
+            const checked = checkboxes.filter(input => input.checked).map(input => input.value);
+            if (checkboxes.length && checked.length !== checkboxes.length) {
+                params.set('statuses', checked.join(','));
+            } else {
+                params.delete('statuses');
+            }
+            const qs = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        }
+
+        function countBricks(groups, predicate) {
+            let total = 0;
+            (groups || []).forEach(group => {
+                total += (group.bricks || []).filter(predicate).length;
+                total += countBricks(group.subGroups, predicate);
+            });
+            return total;
+        }
+
+        function renderBrickSearchSummary() {
+            const el = document.getElementById('BrickSearchSummary');
+            if (!el) return;
+            const query = brickSearchQuery();
+            const visible = countBricks(rootGroups, shouldRenderBrick);
+            const total = countBricks(rootGroups, () => true);
+            el.textContent = (query || visible !== total)
+                ? `Showing ${visible} of ${total} bricks`
+                : '';
+        }
+
         function updateBricksView() {
             ensureBrickStatusControls();
+            restoreBricksStateFromUrl();
             document.getElementById('Current').innerHTML = renderMap(rootGroups);
             document.getElementById('Legend').innerHTML = renderLegend();
+            renderBrickSearchSummary();
+            syncBricksUrl();
         }
 
         function getMatrixCatalog() {
@@ -3038,6 +3138,29 @@
 </head>
 
 <body onload="updateBricksView(); updateTabLabels(); initTab('bricks');" onhashchange="initTab('bricks')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../start/index.html">Home</a><a href="../customers/index.html">Customers</a><a href="../product-deployments/index.html">Products</a><a href="../product-bricks/index.html" class="active">Bricks &amp; Streams</a><a href="../teams/index.html">Teams</a><a href="../competition/index.html">Competition</a></nav>
 
 <div id="breadcrumbs"></div>
 ${tabs_script}
@@ -3063,6 +3186,8 @@ ${tabs_script}
     <div id="tab_content_bricks" class="tabcontent">
         <div class="bricks-panel">
             <div class="bricks-toolbar">
+                <input type="search" id="BrickSearch" class="brick-search" placeholder="Search bricks by name, id, or description&hellip;"
+                       autocomplete="off" oninput="updateBricksView()">
                 <label class="bricks-toggle" for="brickStructureToggle">
                     <input type="checkbox" id="brickStructureToggle" onchange="updateBricksView()">
                     <span>Show modules</span>
@@ -3073,6 +3198,7 @@ ${tabs_script}
                 </label>
                 <div class="bricks-status-filters" id="BrickStatusFilters"></div>
             </div>
+            <div class="brick-search-summary" id="BrickSearchSummary"></div>
             <div id="Current"></div>
             <div class="legend" id="Legend"></div>
         </div>

@@ -57,7 +57,10 @@ right or generation/validation fails.
   }
 }
 ```
-> Use `brickTypes`/`brickStatuses` (NOT legacy `types`/`statuses`).
+> `brickTypes`/`brickStatuses`/`modulesConfig` normally come from the shared model
+> `_config/_shared/product-brick-model.json` — OMIT them in domain files unless the
+> domain genuinely diverges (a local value overrides the shared one). Never use
+> legacy `types`/`statuses`.
 > `modulesConfig.layerTypes` must cover exactly the six layers and `moduleTypes` the
 > twelve module types below, each `moduleType` with a `color`. The validator rejects
 > mismatched sets or missing colors.
@@ -86,7 +89,14 @@ right or generation/validation fails.
   "type": "full-stack",                  // → metadata.brickTypes[].id
   "status": "sustaining",                // → metadata.brickStatuses[].id
   "description": "…",
-  "links": [ { "label": "…", "url": "https://…", "note": "…" } ],
+  "links": [                                  // grouped; rendered in the Links tab
+    { "group": "Evidence", "description": "…",
+      "links": [ { "label": "Evidence Explorer",
+                   "link": "../../../../evidence-explorer/index.html",
+                   "description": "…",
+                   "embedLink": "../../../../evidence-explorer/index.html?embed=1",  // optional: renders an iframe
+                   "embedHeight": 400 } ] }    // optional; iframe height in px, default 400
+  ],
   "layers": [ … ],
   "brickDependencies": [ … ],
   "dataDependencies": [ … ],
@@ -186,7 +196,6 @@ When you add/rename a **brick id**, update every referencing file:
 - `product-bricks/product-stream.json` → `…brickDependencies[].targetBrickId` and
   flow `steps[].dependencies[]` of `type:"brick"`
 - `teams/teams.json` → `…teams[].brickDependencies[].brickId`
-- `product-bricks/bricks-evidence.json` → `object-id`
 
 When you add/rename a **module id**, fix any `brickDependencies[].moduleId/sourceModuleId`
 and `dependencies.modules[].moduleId` (in this and other bricks) that point at it, plus
@@ -205,7 +214,7 @@ add a `dataDependencies.assetId`, it must exist in `data-assets.json` (add it wi
 2. Regenerate: from `_wiring/product-domains/`,
    `python3 generate-product-bricks-docs.py <domain-id> "<Domain Name>" "<Domain description>"`
    (also rebuilds stream/data-asset pages; name/description from `run.sh`
-   `domains_ALL`). Generator wipes the product-bricks docs folder — ensure that area's
+   the domain's `start/config.json`; or use `./run-one.sh <domain-id>`). Generator wipes the product-bricks docs folder — ensure that area's
    worktree is clean first.
 3. Report bricks/modules added or changed, dependency wiring, and which referencing
    files you updated.

@@ -2,72 +2,40 @@ import json
 import os
 import shutil
 import datetime
+from functools import partial
+
 from domain_cli import load_domain_args
+from generator_common import (
+    build_customers_lookup as build_customers_and_kpi_lookup,
+    copy_icons as copy_icons_common,
+    enter_docs_root,
+    render_breadcrumbs as render_breadcrumbs_from,
+    today_string,
+)
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
-date_string = datetime.date.today().strftime('%Y-%m-%d')
+date_string = today_string()
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/product-deployments/'
 domain, site_config = load_domain_args()
 common_style = open(templates_root + '../_imports/common/style.html').read()
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
+tokens_style = open(templates_root + '../_imports/tokens/style.html').read()
 tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
 breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
 
+copy_icons = partial(copy_icons_common, recursive=True)
+
 
 def render_breadcrumbs(template_name, replacements):
-    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
-    for key, value in replacements.items():
-        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
-    return breadcrumbs
-
-
-def copy_icons(icons_path, docs_folder):
-    if os.path.exists(icons_path):
-        target_root = os.path.join(docs_folder, 'icons')
-        for root, _, filenames in os.walk(icons_path):
-            rel_root = os.path.relpath(root, icons_path)
-            target_dir = target_root if rel_root == '.' else os.path.join(target_root, rel_root)
-            os.makedirs(target_dir, exist_ok=True)
-            for filename in filenames:
-                src = os.path.join(root, filename)
-                dst = os.path.join(target_dir, filename)
-                if os.path.isfile(src):
-                    shutil.copy2(src, dst)
-
-
-def normalize_icon_name(icon_name, fallback='customer.png'):
-    value = (icon_name or fallback).strip()
-    if not value:
-        value = fallback
-    while value.endswith('.png.png'):
-        value = value[:-4]
-    while value.endswith('.svg.png'):
-        value = value[:-4]
-    if '.' in value:
-        return value
-    return value + '.png'
+    return render_breadcrumbs_from(templates_root, template_name, replacements)
 
 
 def build_customers_lookup(customers):
-    customer_icon_map = {
-        'house-search': 'seeker.png',
-        'owner-key': 'owner.png',
-        'briefcase-building': 'intermediary.png'
-    }
-
-    lookup = {}
-    for group in customers:
-        for customer in group.get('customers', []):
-            lookup[customer['id']] = {
-                'id': customer['id'],
-                'name': customer.get('name', customer['id']),
-                'icon': normalize_icon_name(customer_icon_map.get(customer.get('icon', ''), customer.get('icon', 'customer.png')))
-            }
+    lookup, _ = build_customers_and_kpi_lookup(customers)
     return lookup
 
 
@@ -87,7 +55,62 @@ def enrich_products_with_customers(products, customers_lookup):
     return enriched
 
 
+
+def load_brick_names(domain_id):
+    """brick id -> display name, resolved from the brick catalog (the source
+    of truth) so deployment.json does not need to duplicate brick names."""
+    path = domains_root + domain_id + '/product-bricks/product-bricks.json'
+    if not os.path.exists(path):
+        return {}
+    payload = json.load(open(path))
+    names = {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            for brick in node.get('bricks', []) or []:
+                if isinstance(brick, dict) and brick.get('id'):
+                    names[brick['id']] = brick.get('name', brick['id'])
+            for key in ('rootGroups', 'subGroups'):
+                for child in node.get(key, []) or []:
+                    walk(child)
+        elif isinstance(node, list):
+            for child in node:
+                walk(child)
+
+    walk(payload.get('rootGroups', payload))
+    return names
+
+
+def load_deployment(domain_id):
+    """Load deployment.json and enrich deployedBricks with brickName from the
+    brick catalog (brickName is derived, not stored)."""
+    path = domains_root + domain_id + '/product-deployments/deployment.json'
+    deployment = json.load(open(path)) if os.path.exists(path) else {'metadata': {}, 'channels': []}
+    brick_names = load_brick_names(domain_id)
+    for group in deployment.get('channels', []) or []:
+        for channel in group.get('channels', []) or []:
+            enriched_bricks = []
+            for deployed in channel.get('deployedBricks', []) or []:
+                if not isinstance(deployed, dict):
+                    enriched_bricks.append(deployed)
+                    continue
+                enriched = {'brickId': deployed.get('brickId', '')}
+                enriched['brickName'] = brick_names.get(enriched['brickId'], deployed.get('brickName', enriched['brickId']))
+                for key, value in deployed.items():
+                    if key not in ('brickId', 'brickName'):
+                        enriched[key] = value
+                enriched_bricks.append(enriched)
+            if 'deployedBricks' in channel:
+                channel['deployedBricks'] = enriched_bricks
+    return deployment
+
+
 def create_overview_docs(domain, docs_folder):
+    # Parse inputs before wiping the output folder, so a config error leaves
+    # the previously generated docs intact.
+    template = open(templates_root + 'index.html').read()
+    deployment = load_deployment(domain['id'])
+
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 
@@ -95,11 +118,9 @@ def create_overview_docs(domain, docs_folder):
     copy_icons(domains_root + domain['id'] + '/product-deployments/icons', docs_folder)
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
-        template = open(templates_root + 'index.html').read()
-        deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
-        deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
         html_file.write(template
                         .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                         .replace('${tabs_script}', tabs_script)
                         .replace('${breadcrumbs_style}', breadcrumbs_style)
                         .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -117,8 +138,7 @@ def create_landing_pages(products, docs_folder):
 
     template = open(templates_root + 'landing_page.html').read()
 
-    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
-    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+    deployment = load_deployment(domain['id'])
 
     date_string = datetime.date.today().strftime('%Y-%m-%d')
 
@@ -129,6 +149,7 @@ def create_landing_pages(products, docs_folder):
                 html_file.write(template
                                 .replace('${common_style}', common_style)
                                 .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                                 .replace('${tabs_script}', tabs_script)
                                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                                 .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -141,12 +162,12 @@ def create_landing_pages(products, docs_folder):
                                 .replace('${all_products}', json.dumps(products['portfolio']['products']))
                                 .replace('${deployment}', json.dumps(deployment))
                                 .replace('${product_name}', product['name'])
+                                .replace('${domain_name}', domain['name'])
                                 .replace('${product}', json.dumps(product)))
 
 
 def create_deployment_landing_pages(domain, products, docs_folder):
-    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
-    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+    deployment = load_deployment(domain['id'])
 
     target_folder = os.path.join(docs_folder, 'deployment')
     os.makedirs(target_folder, exist_ok=True)
@@ -166,14 +187,17 @@ def create_deployment_landing_pages(domain, products, docs_folder):
                 html_file.write(template
                                 .replace('${common_style}', common_style)
                                 .replace('${tabs_style}', tabs_style)
+                        .replace('${tokens_style}', tokens_style)
                                 .replace('${tabs_script}', tabs_script)
                                 .replace('${breadcrumbs_style}', breadcrumbs_style)
                                 .replace('${breadcrumbs_script}', breadcrumbs_script)
                                 .replace('${breadcrumbs}', render_breadcrumbs('deployment_landing_page_breadcrumbs.json', {
                                     'domain_name': domain['name'],
-                                    'channel_name': channel.get('name', channel_id)
+                                    'channel_name': channel.get('subChannelName', channel.get('name', channel_id))
                                 }))
                                 .replace('${date}', date_string)
+                                .replace('${domain_name}', domain['name'])
+                                .replace('${sub_channel_name}', channel.get('subChannelName', channel.get('name', channel_id)))
                                 .replace('${domain_description}', domain['description'])
                                 .replace('${products}', json.dumps(products))
                                 .replace('${deployment}', json.dumps(deployment))

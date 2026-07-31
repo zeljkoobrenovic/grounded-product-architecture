@@ -59,7 +59,7 @@ Target files (per domain):
   every metric a `unit` and avoid vanity terminals.
 - KPI **ids** must be unique within a customer (across both pyramids). Reuse KPI
   **names** consistently across customers, teams, and insights (they link by name, not
-  id) — every `northStar`/`supporting`/insight `kpis` name must exist as a node in that
+  id) — every `northStar`/`supporting` name must exist as a node in that
   customer's pyramids.
 
 ### Insights (evidence)
@@ -111,7 +111,7 @@ Target files (per domain):
 {
   "id": "book",
   "name": "Book a reliable ride for a time-sensitive trip",
-  "what_it_is": "…",
+  "whatItIs": "…",
   "outcome": "…",
   "steps": [
     {
@@ -119,7 +119,7 @@ Target files (per domain):
       "description": "…",
       "streamsNeeded": [
         { "id": "trip", "name": "Trip Request and Intent Capture",
-          "how_it_supports": "…" }
+          "howItSupports": "…" }
       ],
       "media": []
     }
@@ -190,7 +190,7 @@ Every non-leaf node below has ≥2 children — mirror this fan-out (top → 2 b
 > Shape rule: `top → ≥2 branches → ≥2 mid metrics each → ≥2 leaves each`. Every
 > non-leaf node has ≥2 children; only leaves have `children: []`. Never one child.
 
-### productStrategy.timeHorizons (per horizon: `1_year`, `3_year`, `5_year`)
+### productStrategy.timeHorizons (per horizon: `year1`, `year3`, `year5`)
 
 ```json
 {
@@ -221,7 +221,7 @@ Every non-leaf node below has ≥2 children — mirror this fan-out (top → 2 b
       "sourceIds": ["uber-q4-2025"],        // → sources[].id
       "linkedCustomers": [
         { "customerId": "ridu", "jobIds": ["book"],
-          "kpis": ["Reliable on-time trip completion"] }  // kpis by NAME
+          "kpiIds": ["rrel"] }  // KPI pyramid node ids (never the legacy name-based `kpis`)
       ]
     }
   ]
@@ -263,7 +263,7 @@ When you add/rename a **persona id**, update references in:
 
 When you add/rename a **JTBD id**, update `linkedJobIds` in the same persona's
 journeys and `jobIds` in insights. When you change a **KPI name**, update teams'
-metrics, insights' `kpis`, and the persona's `productStrategy` northStar/supporting
+metrics and the persona's `productStrategy` northStar/supporting (insights link by `kpiIds`)
 (these link by name). When a JTBD step needs a stream that doesn't exist yet, either
 add the stream (`edit-streams`) or point at an existing brick id.
 
@@ -274,7 +274,7 @@ add the stream (`edit-streams`) or point at an existing brick id.
    files above, or run `audit-domain-balance`).
 2. Regenerate: from `_wiring/product-domains/`,
    `python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"`
-   (name/description from `run.sh` `domains_ALL`). Generator wipes the customers docs
+   (name/description come from the domain's `start/config.json`; or use `./run-one.sh <domain-id>`). Generator wipes the customers docs
    folder — ensure that area's worktree is clean first.
 3. Report personas/insights added or changed and which referencing files you updated.
 
@@ -287,7 +287,7 @@ add the stream (`edit-streams`) or point at an existing brick id.
   child (`top → 1 branch → 1 child → 1 leaf`). Every non-leaf node needs ≥2 children.
 - Vanity terminal metrics, arbitrary precise targets, or padding leaves just to reach
   a node count.
-- `northStar`/`supporting`/insight `kpis` names that don't exist as a node in the
+- `northStar`/`supporting` names (or insight `kpiIds`) that don't exist as a node in the
   customer's pyramids; duplicate KPI ids within a customer.
 - Inventing business metrics or sources; copying identical strategy horizons across
   personas.

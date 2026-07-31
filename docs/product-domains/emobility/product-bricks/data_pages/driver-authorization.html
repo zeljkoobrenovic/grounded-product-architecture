@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Driver Authorization</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Driver Authorization — Data Asset (eMobility)</title>
 
     <style>
     .page-type-badge {
@@ -16,6 +18,46 @@
         font-size: 11px;
     }
 </style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
     <style>
     .tab {
         display: flex;
@@ -102,7 +144,7 @@
         margin: 0;
         padding: 6px 4px;
         font-size: 80%;
-        color: #a0a0a0;
+        color: #5b6472;
     }
 
     .breadcrumb {
@@ -110,7 +152,7 @@
 
     .breadcrumb a {
         text-decoration: none;
-        color: #343434;;
+        color: #343434;
     }
 </style>
 
@@ -349,8 +391,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -366,6 +439,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -374,7 +448,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -387,22 +463,46 @@
 </head>
 
 <body>
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html" class="active">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a></nav>
 
 <div id="breadcrumbs" style="margin-left: 20px"></div>
 
+<script src="../shared_data.js"></script>
 <script>
     const config = {"domains": [{"id": "emobility", "name": "eMobility", "description": "The eMobility domain covers the platforms, operations, and customer journeys required to run charging networks, roaming services, driver experiences, and fleet electrification at scale."}]};
-    const all_bricks = [];
-    const allAssets = [{"id": "customer-profile", "name": "Customer Profile"}, {"id": "customer-contact-point", "name": "Customer Contact Point"}, {"id": "identity-credential", "name": "Identity Credential"}, {"id": "consent-record", "name": "Consent Record"}, {"id": "identity-access", "name": "Identity Access"}, {"id": "session-token", "name": "Session Token"}, {"id": "driver-authorization", "name": "Driver Authorization"}, {"id": "fleet", "name": "Fleet"}, {"id": "payment-instrument-reference", "name": "Payment Instrument Reference"}, {"id": "transaction", "name": "Transaction"}, {"id": "metering-rating-transaction-ledger", "name": "Metering Rating Transaction Ledger"}, {"id": "tariff-pricing", "name": "Tariff Pricing"}, {"id": "billing-invoicing-settlement", "name": "Billing Invoicing Settlement"}, {"id": "smart-charging", "name": "Smart Charging"}, {"id": "session-orchestration", "name": "Session Orchestration"}, {"id": "audit-log", "name": "Audit Log"}, {"id": "access-policy", "name": "Access Policy"}];
+    const all_bricks = window.SHARED_DOMAIN_DATA.allBricks;
+    const allAssets = window.SHARED_DOMAIN_DATA.allAssets;
     const currentAsset = {"id": "driver-authorization", "name": "Driver Authorization", "kind": "reference-data", "description": "Validates tokens, RFID users, and credentials to authorize EV drivers to start charging with policy checks.", "businessMeaning": "Reusable domain data centered on Driver Authorization.", "status": "active", "tags": ["identity-access"], "classification": "restricted", "personalDataLevel": "sensitive", "dataSubjects": ["customer", "partner"], "legalTags": ["gdpr"], "systemOfRecordBrickId": "dase", "ownerTeamId": "driver-identity-experience-driver-authorization", "stewardTeamIds": [], "derivedFromAssetIds": [], "stores": [{"storeId": "driver-authorization-db", "role": "system-of-record"}], "interfaces": [{"type": "api", "name": "driver-authorization api", "description": "Access interface for Driver Authorization."}], "governance": {"retention": "active lifecycle plus audit window", "residency": "eu", "sharingPolicy": "internal and approved domain consumers only"}, "rootGroup": "People, Accounts, and Access Data", "group": "Reference and Policy Data"};
-    const allStores = [{"id": "customer-profile-db", "name": "Customer Profile DB", "kind": "operational-database", "description": "Primary operational database for Customer Profile.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "customer-contact-point-db", "name": "Customer Contact Point DB", "kind": "operational-database", "description": "Primary operational database for Customer Contact Point.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "consent-record-db", "name": "Consent Record DB", "kind": "operational-database", "description": "Primary operational database for Consent Record.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "identity-credential-db", "name": "Identity Credential DB", "kind": "operational-database", "description": "Primary operational database for Identity Credential.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "session-token-db", "name": "Session Token Cache", "kind": "cache", "description": "Primary cache for Session Token.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "access-policy-db", "name": "Access Policy DB", "kind": "operational-database", "description": "Primary operational database for Access Policy.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "audit-log-stream", "name": "Audit Log Stream", "kind": "event-topic", "description": "Primary event topic for Audit Log.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "payment-instrument-reference-db", "name": "Payment Instrument Reference DB", "kind": "operational-database", "description": "Primary operational database for Payment Instrument Reference.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "transaction-db", "name": "Transaction DB", "kind": "operational-database", "description": "Primary operational database for Transaction.", "technology": "generated-starter", "status": "active", "classification": "confidential"}, {"id": "session-orchestration-db", "name": "Session Orchestration Cache", "kind": "cache", "description": "Primary cache for Session Orchestration.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "fleet-store", "name": "Fleet Store", "kind": "blob-store", "description": "Primary blob store for Fleet.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "driver-authorization-db", "name": "Driver Authorization DB", "kind": "operational-database", "description": "Primary operational database for Driver Authorization.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "identity-access-db", "name": "Identity Access DB", "kind": "operational-database", "description": "Primary operational database for Identity Access.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "smart-charging-store", "name": "Smart Charging Store", "kind": "blob-store", "description": "Primary blob store for Smart Charging.", "technology": "generated-starter", "status": "active", "classification": "internal"}, {"id": "tariff-pricing-store", "name": "Tariff Pricing Store", "kind": "blob-store", "description": "Primary blob store for Tariff Pricing.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "metering-rating-transaction-ledger-db", "name": "Metering Rating Transaction Ledger DB", "kind": "operational-database", "description": "Primary operational database for Metering Rating Transaction Ledger.", "technology": "generated-starter", "status": "active", "classification": "restricted"}, {"id": "billing-invoicing-settlement-store", "name": "Billing Invoicing Settlement Store", "kind": "blob-store", "description": "Primary blob store for Billing Invoicing Settlement.", "technology": "generated-starter", "status": "active", "classification": "restricted"}];
+    const allStores = window.SHARED_DOMAIN_DATA.allStores;
     const producingBricks = [];
     const consumingBricks = [];
     const ownerTeam = {"teamId": "driver-identity-experience-driver-authorization", "teamName": "Driver Identity & Experience - Driver Authorization", "teamType": "stream-aligned", "groupName": "Value Streams / Driver Identity & Experience"};
     const stewardTeams = [];
 
     function escapeHtml(value) {
-        return (value || '')
+        return String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
             .replaceAll('>', '&gt;')

@@ -29,14 +29,18 @@ def main(dom):
             walk_single(c, path + [n['name']], out)
 
     def names(n, acc):
-        acc.add(n['name'])
+        if n.get('name'):
+            acc.add(n['name'])
         for c in n.get('children', []):
             names(c, acc)
 
-    def ids(n, acc):
-        acc.append(n['id'])
+    def ids(n, acc, where):
+        if n.get('id'):
+            acc.append(n['id'])
+        else:
+            problems.append(f"{where}: pyramid node missing id: '{n.get('name', '<unnamed>')}'")
         for c in n.get('children', []):
-            ids(c, acc)
+            ids(c, acc, where)
 
     # load-bearing names per customer
     ref = {}
@@ -46,7 +50,12 @@ def main(dom):
     for g in d:
         for c in g.get('customers', []):
             s = ref.setdefault(c['id'], set())
-            for hz, hd in c.get('productStrategy', {}).get('timeHorizons', {}).items():
+            horizons = c.get('productStrategy', {}).get('timeHorizons', {})
+            # tolerate both the dict form ({"1_year": {...}}) and list-form drift
+            horizon_values = horizons.values() if isinstance(horizons, dict) else (horizons or [])
+            for hd in horizon_values:
+                if not isinstance(hd, dict):
+                    continue
                 for kk in ('customerKPI', 'businessKPI'):
                     b = hd.get(kk)
                     if not isinstance(b, dict):
@@ -68,12 +77,16 @@ def main(dom):
                 if len(p.get('branches', [])) < 2:
                     problems.append(f"{cid}/{key}: top has {len(p.get('branches', []))} branch(es), need >=2")
                 single = []
-                names(p['top'], all_names)
-                all_ids.append(p['top']['id'])
-                for b in p['branches']:
+                top = p.get('top', {})
+                names(top, all_names)
+                if top.get('id'):
+                    all_ids.append(top['id'])
+                else:
+                    problems.append(f"{cid}/{key}: pyramid top missing id: '{top.get('name', '<unnamed>')}'")
+                for b in p.get('branches', []):
                     walk_single(b, [f"{cid}/{key}"], single)
                     names(b, all_names)
-                    ids(b, all_ids)
+                    ids(b, all_ids, f"{cid}/{key}")
                 for s in single:
                     problems.append(f"{cid}/{key}: single-child node: {s}")
             dups = sorted({x for x in all_ids if all_ids.count(x) > 1})

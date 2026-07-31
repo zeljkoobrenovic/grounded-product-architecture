@@ -1,6 +1,6 @@
 ---
 name: edit-streams
-description: "Create or edit product streams for a product domain: outcome-based streams, their outcomes, brick dependencies, and end-to-end flows with steps, key facts, pain points, and step-level dependencies in _config/product-domains/<domain>/product-bricks/product-stream.json. Use when adding a stream, modeling a customer/operator journey as a flow, or wiring stream and step dependencies to product bricks. Keeps stream IDs consistent with JTBD streamsNeeded and streams-evidence."
+description: "Create or edit product streams for a product domain: outcome-based streams, their outcomes, brick dependencies, and end-to-end flows with steps, key facts, pain points, and step-level dependencies in _config/product-domains/<domain>/product-bricks/product-stream.json. Use when adding a stream, modeling a customer/operator journey as a flow, or wiring stream and step dependencies to product bricks. Keeps stream IDs consistent with JTBD streamsNeeded."
 ---
 
 # Edit Streams
@@ -47,6 +47,14 @@ the reference domain `ride-sharing-marketplace` before editing.**
   "description": "…",
   "outcomes": ["Higher trip conversion", "Better repeat rider retention"],
   "brickDependencies": [ { "targetBrickId": "etar", "type": "composition" } ],
+  "links": [                                  // grouped; rendered in the Links tab
+    { "group": "Evidence", "description": "…",
+      "links": [ { "label": "Evidence Explorer",
+                   "link": "../../../../evidence-explorer/index.html",
+                   "description": "…",
+                   "embedLink": "../../../../evidence-explorer/index.html?embed=1",  // optional: renders an iframe
+                   "embedHeight": 400 } ] }    // optional; iframe height in px, default 400
+  ],
   "flows": [
     {
       "id": "…", "title": "…", "description": "…",
@@ -74,7 +82,7 @@ the reference domain `ride-sharing-marketplace` before editing.**
   `brick`) → real brick ids in `product-bricks.json`.
 - A stream id is referenced by `customers.json`
   (`jobsToBeDone[].steps[].streamsNeeded[].id`) and by
-  `product-bricks/streams-evidence.json` (`object-id`). When you rename a stream id,
+  When you rename a stream id,
   update both.
 
 ## After editing
@@ -89,5 +97,5 @@ the reference domain `ride-sharing-marketplace` before editing.**
 
 - A "stream" that is really a single brick or a UI task.
 - Step dependencies pointing at non-existent bricks.
-- Renaming a stream id without updating JTBD `streamsNeeded` and streams-evidence.
+- Renaming a stream id without updating JTBD `streamsNeeded`.
 - Flows with no steps, or steps with no key facts / pain points / dependencies.

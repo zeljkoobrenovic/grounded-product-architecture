@@ -30,7 +30,6 @@ site under `docs/`. No framework, no build system. Edit JSON in `_config/**`; tr
 | Add/edit data assets, stores, classification, ownership | `edit-data-assets` |
 | Add/edit teams, org design, topology, ownership | `edit-teams` |
 | Add/edit the competitive landscape | `edit-competition` |
-| Add/edit evidence references for bricks/streams | `edit-evidence` |
 | Check integrity & realism / find gaps & imbalance | `audit-domain-balance` |
 | Validate JSON + references and regenerate docs | `validate-domain` |
 

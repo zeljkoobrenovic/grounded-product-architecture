@@ -14,7 +14,7 @@ _config/**  (JSON source of truth)  +  _templates/**  (HTML)  --Python in _wirin
 
 ## Generating the site
 
-All product-domain generators run from `_wiring/product-domains/` and take three positional args (`domain_id`, `domain_name`, `domain_description`). The wrapper script defines the full domain list and the generator order:
+All product-domain generators run from `_wiring/product-domains/` and take three positional args (`domain_id`, `domain_name`, `domain_description`). The wrapper script discovers every domain from `_config/product-domains/*/start/config.json` and defines the generator order:
 
 ```bash
 cd _wiring/product-domains
@@ -35,7 +35,7 @@ There is no test suite, linter config, or package manifest. Validation is: run t
 ## Adding or registering a domain
 
 1. Create `_config/product-domains/<lowercase-slug>/` following an existing domain (use `ride-sharing-marketplace` as the structural reference).
-2. Add a `domain_id|Domain Name|Domain description` line to the `domains=(...)` array in `_wiring/product-domains/run.sh`.
+2. Create `start/config.json` with `id`, `name`, and `description` — that registers the domain; `run.sh` discovers every domain from the config tree (use `./run-one.sh <domain-id>` to regenerate just one).
 3. Regenerate from `_wiring/product-domains/`.
 
 The prompt scaffold for a new domain lives at `_config/_prompts/customers/NEW-DOMAIN-PROMPT.md`.
@@ -49,7 +49,6 @@ Inside `_config/product-domains/<domain>/`:
 - `product-deployments/products.json`, `product-deployments/deployment.json` — products and delivery/deployment model
 - `product-bricks/product-bricks.json` — catalog of implementation-facing building blocks
 - `product-bricks/product-stream.json` — product streams composed from bricks
-- `product-bricks/bricks-evidence.json`, `streams-evidence.json` — evidence references
 - `teams/teams.json`
 - `business/competition.json` (+ `business/logos/`)
 - `data/data-assets.json`
@@ -61,15 +60,25 @@ Shared Python modules in `_wiring/product-domains/` (import these rather than re
 
 - `domain_cli.py` — arg parsing; every generator calls `load_domain_args()`
 - `product_bricks_support.py` — product-brick layer model (`PRODUCT_BRICK_LAYER_ORDER`: ui → interfaces → worker → stateless-service → service → integration) and labels/descriptions
-- `initiatives_support.py` — shared product-domain lookup helpers used by generators
+- `generator_common.py` — shared generator helpers: `enter_docs_root()`, JSON loading, icon/media copying, breadcrumb rendering, `normalize_icon_name`, group-tree iteration, customers/KPI lookups. Import these rather than re-implementing per generator.
 
 Templates live in `_templates/<area>/` with shared partials under `_templates/_imports/` (e.g. `tabs/`, `breadcrumbs/`, `common/`). Generators read template HTML and substitute `${key}` placeholders. Output for each area is fully rebuilt: generators `shutil.rmtree` the target docs folder before regenerating, so do not hand-edit files under `docs/product-domains/`.
 
 ## Evidence database & explorer
 
-`_data/evidence-db/` is a separate pipeline from the product domains. Per-source scripts under `_data/evidence-db/scripts/` write fragment files into `_data/evidence-db/database/evidence-files/<source>.json`, then `database/aggregate-evidence.py` concatenates them into `database/all-evidence.json` (a list of `{group, fragments}` objects; each fragment has `id`, `type`, `icon`, `title`, `description`, `facts`, `links`, `tags`). `_data/evidence-db/run.sh` runs the whole chain.
+`_evidence/` is a separate pipeline from the product domains. Example per-source scripts under `_evidence/_example_scripts/` (source-code, gcp, aws, workday) write fragment files into `_evidence/database/evidence-files/<source>.json`, then `database/aggregate-evidence.py` concatenates them into `database/all-evidence.json` (a list of `{group, fragments}` objects; each fragment has `id`, `type`, `icon`, `title`, `description`, `facts`, `links`, `tags`). `_evidence/run.sh` runs the whole chain; the example scripts need external input data and are skipped when it is absent, keeping the committed fragment files.
 
-`_wiring/evidence-explorer/generate-evidence-explorer-docs.py` builds a standalone search UI at `docs/evidence-explorer/index.html` from `_templates/evidence-explorer/index.html`: it inlines `all-evidence.json` into the page (so the page needs no runtime fetch) and copies both the evidence-db icons and the template's own `icons/` into the output. It is wired as the last step of `_data/evidence-db/run.sh`, so editing fragments and re-running `run.sh` refreshes the explorer too. The explorer shows one tab per evidence `type`; in iframe-embed mode (`?embed=1` / `?ids=<glob patterns>`) `?useTabs=false` switches to stacked sections instead of tabs.
+`_wiring/evidence-explorer/generate-evidence-explorer-docs.py` builds a standalone search UI at `docs/evidence-explorer/index.html` from `_templates/evidence-explorer/index.html`: it inlines `all-evidence.json` into the page (so the page needs no runtime fetch) and copies both the evidence icons and the template's own `icons/` into the output. It is wired as the last step of `_evidence/run.sh`, so editing fragments and re-running `run.sh` refreshes the explorer too. The explorer shows one tab per evidence `type`; in iframe-embed mode (`?embed=1` / `?ids=<glob patterns>`) `?useTabs=false` switches to stacked sections instead of tabs.
+
+## Schemas and validation
+
+Structural contracts for every config artifact live in `_config/_schema/*.schema.json` (required fields, types, fixed enums, retired-field bans). They are enforced by a dependency-free checker (`.claude/skills/scripts/schema_check.py`) as part of `validate-domain-model.py`, which also verifies cross-file references. Run it after any config edit:
+
+```bash
+python3 .claude/skills/scripts/validate-domain-model.py <domain-id>   # or --all
+```
+
+Shared enum/definition defaults (brick types/statuses, module config, team types, stream definitions) live in `_config/_shared/*.json`; domain files only declare those blocks to override the shared model.
 
 ## Conventions
 
