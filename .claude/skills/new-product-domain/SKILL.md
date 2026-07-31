@@ -51,7 +51,6 @@ references resolvable.
      primary customers and data-asset `ownerTeamId` back-references.
 8. **Competition** → `edit-competition`
    - Sourced landscape with official URLs.
-9. **Evidence** → `edit-evidence`
    - Attach evidence to key bricks/streams.
 
 ## Reference-integrity pass (do this before declaring done)

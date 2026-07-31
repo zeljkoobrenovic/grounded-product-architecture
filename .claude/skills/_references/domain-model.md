@@ -29,7 +29,6 @@ dirty worktree before regenerating.
 | Product bricks | `product-bricks/product-bricks.json` | `generate-product-bricks-docs.py` |
 | Streams | `product-bricks/product-stream.json` | `generate-product-bricks-docs.py` |
 | Data assets | `data/data-assets.json` | `generate-product-bricks-docs.py` |
-| Evidence | `product-bricks/bricks-evidence.json`, `streams-evidence.json` | `generate-product-bricks-docs.py` |
 | Teams | `teams/teams.json` | `generate-teams-docs.py` |
 | Competition | `business/competition.json` | `generate-competition-docs.py` |
 | Domain brief | `_domain/DOMAIN.md` | (narrative, not generated) |
@@ -62,13 +61,9 @@ customers.json
 product-bricks.json
   brick.id ────────────────┬─▶ deployment.json     ...deployedBricks[].brickId
                            ├─▶ product-stream.json brickDependencies[].targetBrickId, flows steps deps
-                           ├─▶ teams.json          ...brickDependencies[].brickId
-                           └─▶ bricks-evidence.json object-id
+                           └─▶ teams.json          ...brickDependencies[].brickId
   brick.dataDependencies[].assetId ─▶ data-assets.json  asset.id
   brick.layers[].modules[].id (module-*) ─▶ referenced by brickDependencies[].moduleId
-
-product-stream.json
-  stream.id ───────────────▶ streams-evidence.json object-id
 
 products.json
   portfolio.products[].id ─▶ deployment.json ...deployedBricks[].usedInProducts[].productId

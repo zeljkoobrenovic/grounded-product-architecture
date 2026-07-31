@@ -58,8 +58,6 @@ Each domain typically contains:
   The catalog of reusable implementation-facing building blocks.
 - `product-bricks/product-stream.json`
   Product streams composed from product bricks and external systems.
-- `product-bricks/bricks-evidence.json` and `product-bricks/streams-evidence.json`
-  Evidence references for bricks and streams.
 - `teams/teams.json`
   Team structure.
 - `business/competition.json`
@@ -103,8 +101,6 @@ Recommended flow:
    - `product-deployments/deployment.json`
    - `product-bricks/product-bricks.json`
    - `product-bricks/product-stream.json`
-   - `product-bricks/bricks-evidence.json`
-   - `product-bricks/streams-evidence.json`
    - `teams/teams.json`
    - `business/competition.json`
    - `start/config.json`

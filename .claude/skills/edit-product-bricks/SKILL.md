@@ -189,7 +189,6 @@ When you add/rename a **brick id**, update every referencing file:
 - `product-bricks/product-stream.json` → `…brickDependencies[].targetBrickId` and
   flow `steps[].dependencies[]` of `type:"brick"`
 - `teams/teams.json` → `…teams[].brickDependencies[].brickId`
-- `product-bricks/bricks-evidence.json` → `object-id`
 
 When you add/rename a **module id**, fix any `brickDependencies[].moduleId/sourceModuleId`
 and `dependencies.modules[].moduleId` (in this and other bricks) that point at it, plus

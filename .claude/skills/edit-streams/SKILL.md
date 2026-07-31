@@ -74,7 +74,7 @@ the reference domain `ride-sharing-marketplace` before editing.**
   `brick`) → real brick ids in `product-bricks.json`.
 - A stream id is referenced by `customers.json`
   (`jobsToBeDone[].steps[].streamsNeeded[].id`) and by
-  `product-bricks/streams-evidence.json` (`object-id`). When you rename a stream id,
+  When you rename a stream id,
   update both.
 
 ## After editing
@@ -89,5 +89,5 @@ the reference domain `ride-sharing-marketplace` before editing.**
 
 - A "stream" that is really a single brick or a UI task.
 - Step dependencies pointing at non-existent bricks.
-- Renaming a stream id without updating JTBD `streamsNeeded` and streams-evidence.
+- Renaming a stream id without updating JTBD `streamsNeeded`.
 - Flows with no steps, or steps with no key facts / pain points / dependencies.

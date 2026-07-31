@@ -49,7 +49,6 @@ Inside `_config/product-domains/<domain>/`:
 - `product-deployments/products.json`, `product-deployments/deployment.json` — products and delivery/deployment model
 - `product-bricks/product-bricks.json` — catalog of implementation-facing building blocks
 - `product-bricks/product-stream.json` — product streams composed from bricks
-- `product-bricks/bricks-evidence.json`, `streams-evidence.json` — evidence references
 - `teams/teams.json`
 - `business/competition.json` (+ `business/logos/`)
 - `data/data-assets.json`

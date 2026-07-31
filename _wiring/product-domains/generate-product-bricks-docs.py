@@ -1,13 +1,11 @@
 import json
 import os
-import re
 import shutil
 from domain_cli import load_domain_args
 from generator_common import (
     copy_icons,
     enter_docs_root,
     load_json_if_exists,
-    load_json_items_from_paths as load_json_from_paths,
     today_string,
 )
 from product_bricks_support import (
@@ -26,47 +24,15 @@ date_string = today_string()
 domains_root = '../../_config/product-domains/'
 root_templates = '../../_templates/product-bricks/'
 domain, site_config = load_domain_args()
-evidence_fragments_cache = load_json_if_exists('../../_evidence/database/all-evidence.json', [])
 
 common_style = open(root_templates + '../_imports/common/style.html').read()
 
 breadcrumbs_style = open(root_templates + '../_imports/breadcrumbs/style.html').read()
 breadcrumbs_script = open(root_templates + '../_imports/breadcrumbs/script.html').read()
 
-evidence_style = open(root_templates + '../_imports/evidence/style.html').read()
-evidence_script = open(root_templates + '../_imports/evidence/script.html').read()
-
 tabs_style = open(root_templates + '../_imports/tabs/style.html').read()
 tokens_style = open(root_templates + '../_imports/tokens/style.html').read()
 tabs_script = open(root_templates + '../_imports/tabs/script.html').read()
-
-
-def build_evidence_lookup(cache_groups):
-    lookup = {}
-    for group in cache_groups:
-        group_title = group.get('group', {}).get('title', '')
-        group_description = group.get('group', {}).get('description', '')
-        for fragment in group.get('fragments', []):
-            enriched_fragment = dict(fragment)
-            if 'facts' not in enriched_fragment:
-                if enriched_fragment.get('summary'):
-                    enriched_fragment['facts'] = [enriched_fragment['summary']]
-                else:
-                    enriched_fragment['facts'] = []
-            elif not isinstance(enriched_fragment.get('facts'), list):
-                enriched_fragment['facts'] = [str(enriched_fragment.get('facts', ''))]
-            enriched_fragment.pop('summary', None)
-            fragment_id = str(enriched_fragment.get('id', '')).strip()
-            if not fragment_id:
-                continue
-            enriched_fragment['id'] = fragment_id
-            enriched_fragment['evidenceGroupTitle'] = group_title
-            enriched_fragment['evidenceGroupDescription'] = group_description
-            lookup[fragment_id] = enriched_fragment
-    return lookup
-
-
-evidence_fragment_lookup = build_evidence_lookup(evidence_fragments_cache)
 
 
 def build_customer_lookup(customers):
@@ -251,64 +217,6 @@ def build_data_asset_brick_usage(asset_id, bricks):
     return producing, consuming
 
 
-def build_evidence(object_id, evidence_items):
-    matched_item = next((item for item in evidence_items if str(item.get('object-id', '')).strip() == str(object_id).strip()), None)
-    if not matched_item:
-        return {'objectId': object_id, 'tabs': []}
-
-    tabs_payload = matched_item.get('tabs', [])
-    if not tabs_payload and matched_item.get('evidence-groups'):
-        tabs_payload = [{
-            'label': 'Source Code',
-            'evidence-groups': matched_item.get('evidence-groups', [])
-        }]
-
-    tabs = []
-    for tab in tabs_payload:
-        groups = []
-        for item in tab.get('evidence-groups', []):
-            fragments = []
-            use_regex = bool(item.get('useRegex', False))
-            evidence_refs = item.get('evidence-ids', [])
-            if use_regex:
-                matched_ids = set()
-                for evidence_ref in evidence_refs:
-                    pattern = evidence_ref.get('id', '') if isinstance(evidence_ref, dict) else evidence_ref
-                    try:
-                        regex = re.compile(pattern)
-                    except re.error:
-                        continue
-                    for fragment_id, fragment in evidence_fragment_lookup.items():
-                        if fragment_id in matched_ids:
-                            continue
-                        if regex.search(fragment_id):
-                            fragment_with_context = dict(fragment)
-                            if isinstance(evidence_ref, dict) and evidence_ref.get('note'):
-                                fragment_with_context['note'] = evidence_ref.get('note')
-                            fragments.append(fragment_with_context)
-                            matched_ids.add(fragment_id)
-            else:
-                for evidence_ref in evidence_refs:
-                    fragment_id = evidence_ref.get('id', '') if isinstance(evidence_ref, dict) else evidence_ref
-                    fragment = evidence_fragment_lookup.get(fragment_id)
-                    if fragment:
-                        fragment_with_context = dict(fragment)
-                        if isinstance(evidence_ref, dict) and evidence_ref.get('note'):
-                            fragment_with_context['note'] = evidence_ref.get('note')
-                        fragments.append(fragment_with_context)
-            groups.append({
-                'name': item.get('group-name', ''),
-                'description': item.get('description', ''),
-                'fragments': fragments
-            })
-
-        tabs.append({
-            'label': tab.get('label', 'Evidence'),
-            'groups': groups
-        })
-
-    return {'objectId': object_id, 'tabs': tabs}
-
 
 def dedupe_by(items, key_builder):
     index = {}
@@ -380,7 +288,7 @@ def merge_named_records(items, id_field, list_fields=None):
     return ordered
 
 
-def create_landing_pages(bricks, products, customers, evidence_items, teams_payload):
+def create_landing_pages(bricks, products, customers, teams_payload):
     landing_page_template = open(root_templates + 'brick_landing_page.html').read();
     breadcrumbs = open(root_templates + 'brick_landing_page_breadcrumbs.json').read();
 
@@ -388,7 +296,6 @@ def create_landing_pages(bricks, products, customers, evidence_items, teams_payl
         name = brick['name']
         linked_products, supported_jobs = build_brick_context(brick, products, customers)
         related_teams = build_brick_team_context(brick, teams_payload)
-        evidence = build_evidence(brick['id'], evidence_items)
 
         htmlFile = docs_folder + 'landing_pages/' + str(brick['id']) + '.html'
         with open(htmlFile, 'w') as html_file:
@@ -408,16 +315,13 @@ def create_landing_pages(bricks, products, customers, evidence_items, teams_payl
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
                             .replace('${breadcrumbs}', breadcrumbs)
                             .replace('${domain_name}', domain['name'])
-                            .replace('${evidence_style}', evidence_style)
-                            .replace('${evidence_script}', evidence_script)
-                            .replace('${evidence}', json.dumps(evidence))
                             .replace('${brick_name}', name.replace('&', '&amp;'))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${supported_jobs}', json.dumps(supported_jobs)))
 
 
-def create_stream_landing_pages(streams, bricks, products, customers, evidence_items, teams_payload):
+def create_stream_landing_pages(streams, bricks, products, customers, teams_payload):
     landing_page_template = open(root_templates + 'stream_landing_page.html').read();
     brick_lookup = {brick['id']: brick for brick in bricks}
     breadcrumbs = open(root_templates + 'stream_landing_page_breadcrumbs.json').read();
@@ -443,8 +347,6 @@ def create_stream_landing_pages(streams, bricks, products, customers, evidence_i
         linked_products = merge_named_records(linked_products, 'id')
         supported_jobs = merge_supported_jobs(supported_jobs)
         related_teams = merge_named_records(related_teams, 'teamId')
-
-        evidence = build_evidence(stream['id'], evidence_items)
         html_file = docs_folder + 'stream_pages/' + str(stream['id']) + '.html'
         with open(html_file, 'w') as html_file:
             html_file.write(landing_page_template
@@ -461,12 +363,9 @@ def create_stream_landing_pages(streams, bricks, products, customers, evidence_i
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
                             .replace('${breadcrumbs}', breadcrumbs)
                             .replace('${domain_name}', domain['name'])
-                            .replace('${evidence_style}', evidence_style)
-                            .replace('${evidence_script}', evidence_script)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
                             .replace('${stream_name}', stream.get('name', stream.get('id', '')).replace('&', '&amp;'))
-                            .replace('${evidence}', json.dumps(evidence))
                             .replace('${linked_products}', json.dumps(linked_products))
                             .replace('${related_teams}', json.dumps(related_teams))
                             .replace('${supported_jobs}', json.dumps(supported_jobs)))
@@ -546,14 +445,6 @@ data_assets_payload = load_data_assets_payload(data_assets_config_path)
 products = load_json_if_exists(domains_root + domain_id + '/product-deployments/products.json', {'portfolio': {'products': []}})
 customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
 teams_payload = load_json_if_exists(domains_root + domain_id + '/teams/teams.json', {'groups': []})
-bricks_evidence_items = load_json_from_paths([
-    root_domain + 'brick-evidence.json',
-    root_domain + 'bricks-evidence.json',
-], [])
-streams_evidence_items = load_json_from_paths([
-    root_domain + 'stream-evidence.json',
-    root_domain + 'streams-evidence.json',
-], [])
 
 if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
 os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
@@ -563,7 +454,6 @@ os.makedirs(os.path.join(docs_folder, 'data_pages'), exist_ok=True)
 
 copy_icons(root_templates + 'icons', docs_folder)
 copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)
-copy_icons('../../_evidence/icons', docs_folder)
 
 with open(docs_folder + 'index.html', 'w') as html_file:
     template = open(root_templates + 'index.html').read()
@@ -589,6 +479,6 @@ with open(docs_folder + 'index.html', 'w') as html_file:
     }))
     html_file.write(content)
 
-create_landing_pages(flat_bricks, products, customers, bricks_evidence_items, teams_payload)
-create_stream_landing_pages(flat_streams, flat_bricks, products, customers, streams_evidence_items, teams_payload)
+create_landing_pages(flat_bricks, products, customers, teams_payload)
+create_stream_landing_pages(flat_streams, flat_bricks, products, customers, teams_payload)
 create_data_asset_landing_pages(data_assets_payload, flat_bricks, teams_payload)

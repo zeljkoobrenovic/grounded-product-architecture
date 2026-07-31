@@ -60,8 +60,6 @@ A mature domain normally contains:
 - `product-deployments/deployment.json`
 - `product-bricks/product-bricks.json`
 - `product-bricks/product-stream.json`
-- `product-bricks/bricks-evidence.json`
-- `product-bricks/streams-evidence.json`
 - `data/data-assets.json`
 - `teams/teams.json`
 - `business/competition.json`

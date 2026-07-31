@@ -21,7 +21,6 @@ Then use the per-artifact skill for each phase, in this order:
 3. Architecture → `edit-product-bricks`, then `edit-streams`, then `edit-data-assets`
 4. Products & delivery → `edit-products`
 5. Teams & operating model → `edit-teams`
-6. Evidence → `edit-evidence`
 7. Validate & audit → `validate-domain`, then `audit-domain-balance`
 
 Load only the skill you need for the current phase; do the phase, validate, continue.
