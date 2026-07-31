@@ -15,7 +15,7 @@ the reference domain `ride-sharing-marketplace` (11 players) before editing.**
 - Include players that genuinely compete for the same customers/jobs; state the
   inclusion logic in `scope`. Categorize (global_leader, regional, challenger, niche).
 - **Every business stat is sourced.** Use official sources (investor relations, annual
-  reports, regulator filings) with a real `source_url` and the reported `period` and
+  reports, regulator filings) with a real `sourceUrl` and the reported `period` and
   `scope`. Preserve reported scope — don't normalize away caveats. **Never invent
   metrics or precision.** Omit a stat rather than fabricate it.
 - Logos go in `business/logos/`; reference by relative path.
@@ -24,10 +24,10 @@ the reference domain `ride-sharing-marketplace` (11 players) before editing.**
 
 ```json
 {
-  "generated_on": "YYYY-MM-DD",
+  "generatedOn": "YYYY-MM-DD",
   "domain": "<domain-id>",
   "title": "… Competitive Landscape",
-  "scope": { "description": "…", "inclusion_logic": "…", "notes": "…" },
+  "scope": { "description": "…", "inclusionLogic": "…", "notes": "…" },
   "players": [
     {
       "id": "uber",                              // lowercase slug, stable
@@ -35,14 +35,14 @@ the reference domain `ride-sharing-marketplace` (11 players) before editing.**
       "name": "Uber",
       "hq": "San Francisco, United States",
       "category": "global_leader",
-      "primary_regions": ["north_america", "europe"],
+      "primaryRegions": ["north_america", "europe"],
       "description": "…",
-      "business_stats": [
+      "businessStats": [
         {
           "metric": "gross_bookings", "value": "$162.8bn",
           "period": "FY2024", "scope": "platform",
-          "source_title": "Uber Announces Results for Fourth Quarter and Full Year 2024",
-          "source_url": "https://investor.uber.com/…"
+          "sourceTitle": "Uber Announces Results for Fourth Quarter and Full Year 2024",
+          "sourceUrl": "https://investor.uber.com/…"
         }
       ],
       "links": {
@@ -72,7 +72,7 @@ players in the file.
 
 ## Avoid
 
-- Any business stat without a `source_url` and reported `period`/`scope`.
+- Any business stat without a `sourceUrl` and reported `period`/`scope`.
 - Invented or suspiciously precise numbers; normalizing away reported scope caveats.
 - Including non-competitors to pad the list.
 - Inconsistent category/region vocabularies vs existing players.

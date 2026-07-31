@@ -131,9 +131,9 @@ Preferred horizon shape:
 
 - `vision`
 - `timeHorizons`
-- `1_year`
-- `3_year`
-- `5_year`
+- `year1`
+- `year3`
+- `year5`
 
 Each time horizon should normally include:
 

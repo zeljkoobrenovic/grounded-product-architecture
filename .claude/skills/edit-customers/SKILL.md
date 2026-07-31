@@ -111,7 +111,7 @@ Target files (per domain):
 {
   "id": "book",
   "name": "Book a reliable ride for a time-sensitive trip",
-  "what_it_is": "…",
+  "whatItIs": "…",
   "outcome": "…",
   "steps": [
     {
@@ -119,7 +119,7 @@ Target files (per domain):
       "description": "…",
       "streamsNeeded": [
         { "id": "trip", "name": "Trip Request and Intent Capture",
-          "how_it_supports": "…" }
+          "howItSupports": "…" }
       ],
       "media": []
     }
@@ -190,7 +190,7 @@ Every non-leaf node below has ≥2 children — mirror this fan-out (top → 2 b
 > Shape rule: `top → ≥2 branches → ≥2 mid metrics each → ≥2 leaves each`. Every
 > non-leaf node has ≥2 children; only leaves have `children: []`. Never one child.
 
-### productStrategy.timeHorizons (per horizon: `1_year`, `3_year`, `5_year`)
+### productStrategy.timeHorizons (per horizon: `year1`, `year3`, `year5`)
 
 ```json
 {

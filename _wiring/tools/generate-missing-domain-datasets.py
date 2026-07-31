@@ -142,7 +142,7 @@ def stream_refs_from_customers(customers_data):
                             refs[key] = {
                                 'id': stream.get('id', slugify(stream.get('name', 'stream'))),
                                 'name': stream.get('name', stream.get('id', 'Stream')),
-                                'description': stream.get('how_it_supports', ''),
+                                'description': stream.get('howItSupports', ''),
                                 'domain': group.get('group', 'Customer Workflows'),
                                 'group': slugify(job.get('name', 'workflow')) or 'workflow'
                             }
@@ -299,8 +299,8 @@ def normalize_products(domain, customers_by_id, bricks):
         stream_slice = brick_list[idx * 4:(idx + 1) * 4] or brick_list[:4]
         interfaces = [
             {'type': 'web', 'name': f'{name} Web Workspace', 'description': f'Primary browser workspace for {name}.', 'users': ['Users'], 'availabilityHorizon': 'live'},
-            {'type': 'dashboard', 'name': f'{name} Dashboard', 'description': f'Operational analytics view for {name}.', 'users': ['Managers'], 'availabilityHorizon': '1_year'},
-            {'type': 'api', 'name': f'{name} API', 'description': f'Integration API for {name}.', 'users': ['Internal Systems', 'Partners'], 'availabilityHorizon': '1_year'}
+            {'type': 'dashboard', 'name': f'{name} Dashboard', 'description': f'Operational analytics view for {name}.', 'users': ['Managers'], 'availabilityHorizon': 'year1'},
+            {'type': 'api', 'name': f'{name} API', 'description': f'Integration API for {name}.', 'users': ['Internal Systems', 'Partners'], 'availabilityHorizon': 'year1'}
         ]
         if idx == 1:
             interfaces.insert(1, {'type': 'mobile_app', 'name': f'{name} Mobile App', 'description': f'Mobile surface for {name}.', 'users': ['Mobile Users'], 'availabilityHorizon': 'live'})

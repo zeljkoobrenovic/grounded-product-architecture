@@ -55,12 +55,61 @@ def enrich_products_with_customers(products, customers_lookup):
     return enriched
 
 
+
+def load_brick_names(domain_id):
+    """brick id -> display name, resolved from the brick catalog (the source
+    of truth) so deployment.json does not need to duplicate brick names."""
+    path = domains_root + domain_id + '/product-bricks/product-bricks.json'
+    if not os.path.exists(path):
+        return {}
+    payload = json.load(open(path))
+    names = {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            for brick in node.get('bricks', []) or []:
+                if isinstance(brick, dict) and brick.get('id'):
+                    names[brick['id']] = brick.get('name', brick['id'])
+            for key in ('rootGroups', 'subGroups'):
+                for child in node.get(key, []) or []:
+                    walk(child)
+        elif isinstance(node, list):
+            for child in node:
+                walk(child)
+
+    walk(payload.get('rootGroups', payload))
+    return names
+
+
+def load_deployment(domain_id):
+    """Load deployment.json and enrich deployedBricks with brickName from the
+    brick catalog (brickName is derived, not stored)."""
+    path = domains_root + domain_id + '/product-deployments/deployment.json'
+    deployment = json.load(open(path)) if os.path.exists(path) else {'metadata': {}, 'channels': []}
+    brick_names = load_brick_names(domain_id)
+    for group in deployment.get('channels', []) or []:
+        for channel in group.get('channels', []) or []:
+            enriched_bricks = []
+            for deployed in channel.get('deployedBricks', []) or []:
+                if not isinstance(deployed, dict):
+                    enriched_bricks.append(deployed)
+                    continue
+                enriched = {'brickId': deployed.get('brickId', '')}
+                enriched['brickName'] = brick_names.get(enriched['brickId'], deployed.get('brickName', enriched['brickId']))
+                for key, value in deployed.items():
+                    if key not in ('brickId', 'brickName'):
+                        enriched[key] = value
+                enriched_bricks.append(enriched)
+            if 'deployedBricks' in channel:
+                channel['deployedBricks'] = enriched_bricks
+    return deployment
+
+
 def create_overview_docs(domain, docs_folder):
     # Parse inputs before wiping the output folder, so a config error leaves
     # the previously generated docs intact.
     template = open(templates_root + 'index.html').read()
-    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
-    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+    deployment = load_deployment(domain['id'])
 
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
@@ -89,8 +138,7 @@ def create_landing_pages(products, docs_folder):
 
     template = open(templates_root + 'landing_page.html').read()
 
-    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
-    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+    deployment = load_deployment(domain['id'])
 
     date_string = datetime.date.today().strftime('%Y-%m-%d')
 
@@ -119,8 +167,7 @@ def create_landing_pages(products, docs_folder):
 
 
 def create_deployment_landing_pages(domain, products, docs_folder):
-    deployment_path = domains_root + domain['id'] + '/product-deployments/deployment.json'
-    deployment = json.load(open(deployment_path)) if os.path.exists(deployment_path) else {'metadata': {}, 'channels': []}
+    deployment = load_deployment(domain['id'])
 
     target_folder = os.path.join(docs_folder, 'deployment')
     os.makedirs(target_folder, exist_ok=True)

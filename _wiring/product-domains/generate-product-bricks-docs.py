@@ -77,9 +77,9 @@ def build_brick_context(brick, products, customers):
                 'productIcon': product.get('icon', 'product.png'),
                 'jobId': job.get('id', ''),
                 'jobName': job.get('name', ''),
-                'jobWhatItIs': job.get('what_it_is', ''),
+                'jobWhatItIs': job.get('whatItIs', ''),
                 'jobOutcome': job.get('outcome', ''),
-                'supportRationale': stream.get('how_it_supports', '') or matched_stream.get('whyNeeded', ''),
+                'supportRationale': stream.get('howItSupports', '') or matched_stream.get('whyNeeded', ''),
                 'usedInSteps': []
             }
             supported_jobs.append(supported_jobs_index[item_key])
@@ -88,7 +88,7 @@ def build_brick_context(brick, products, customers):
         used_step = {
             'step': step.get('step', ''),
             'description': step.get('description', ''),
-            'howItSupports': stream.get('how_it_supports', '') or matched_stream.get('whyNeeded', ''),
+            'howItSupports': stream.get('howItSupports', '') or matched_stream.get('whyNeeded', ''),
             'media': step.get('media', [])
         }
         if used_step not in supported_job['usedInSteps']:
