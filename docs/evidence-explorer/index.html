@@ -648,6 +648,23 @@
 
     let activeType = TYPES[0] || null;
 
+    // ---- URL state: ?q= and ?type= are readable, shareable, and kept in sync
+    // (standalone page only; embeds keep their iframe URL untouched). ----
+    const initialType = params.get("type");
+    if (initialType && TYPES.includes(initialType)) activeType = initialType;
+    const initialQuery = params.get("q");
+    if (initialQuery) document.getElementById("search").value = initialQuery;
+
+    function syncUrl(q) {
+        if (isEmbed || !window.history || !window.history.replaceState) return;
+        const url = new URLSearchParams(window.location.search);
+        if (q) url.set("q", q); else url.delete("q");
+        if (useTabs && activeType && activeType !== TYPES[0]) url.set("type", activeType);
+        else url.delete("type");
+        const qs = url.toString();
+        window.history.replaceState({}, "", window.location.pathname + (qs ? "?" + qs : ""));
+    }
+
     function fragmentMatchesQuery(f, q) {
         if (!q) return true;
         const haystack = [f.title, f.id, f.type, f.description, f._group]
@@ -768,6 +785,7 @@
         const q = searchInput.value.trim().toLowerCase();
         if (useTabs) renderTabs(q);
         else renderSections(q);
+        syncUrl(q);
     }
 
     searchInput.addEventListener("input", render);

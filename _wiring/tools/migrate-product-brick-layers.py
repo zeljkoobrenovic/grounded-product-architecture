@@ -2,6 +2,9 @@
 import json
 from pathlib import Path
 
+import sys
+import os as _os
+sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'product-domains'))
 from product_bricks_support import normalize_product_brick_metadata, normalize_product_brick_root_groups
 
 

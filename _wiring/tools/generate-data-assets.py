@@ -1,5 +1,8 @@
 import json
 import os
+import sys
+import os as _os
+sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'product-domains'))
 from product_bricks_support import (
     flatten_data_asset_groups,
     flatten_product_bricks,

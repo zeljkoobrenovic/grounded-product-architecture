@@ -5,7 +5,7 @@ import os
 
 
 TODAY = datetime.date.today()
-ROOT = os.path.dirname(__file__)
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '_config', 'product-domains'))
 
 
 def load_json(path):

@@ -59,6 +59,38 @@ def copy_media(icons_path, docs_folder):
                 shutil.copy2(src, dst)
 
 
+def load_stream_brick_kinds(domain_id):
+    """Map stream/brick ids to their kind so JTBD streamsNeeded entries can
+    link to the corresponding stream or brick landing page."""
+    kinds = {}
+
+    def walk(node, key, out):
+        if isinstance(node, dict):
+            for item in node.get(key, []) or []:
+                if isinstance(item, dict) and item.get('id'):
+                    out.append(str(item['id']))
+            for group_key in ('rootGroups', 'subGroups', 'groups'):
+                for child in node.get(group_key, []) or []:
+                    walk(child, key, out)
+        elif isinstance(node, list):
+            for child in node:
+                walk(child, key, out)
+
+    bricks_path = domains_root + domain_id + '/product-bricks/product-bricks.json'
+    if os.path.exists(bricks_path):
+        ids = []
+        walk(json.load(open(bricks_path)), 'bricks', ids)
+        for brick_id in ids:
+            kinds[brick_id] = 'brick'
+    streams_path = domains_root + domain_id + '/product-bricks/product-stream.json'
+    if os.path.exists(streams_path):
+        ids = []
+        walk(json.load(open(streams_path)), 'streams', ids)
+        for stream_id in ids:
+            kinds[stream_id] = 'stream'
+    return kinds
+
+
 def create_overview_docs(domain, docs_folder, customers, insights, links):
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
@@ -139,6 +171,7 @@ def create_landing_pages(customers, docs_folder, insights):
                                 .replace('${all_customers}', json.dumps(all_customers))
                                 .replace('${customer_name}', customer['name'])
                                 .replace('${customer}', json.dumps(customer))
+                                .replace('${stream_brick_kinds}', json.dumps(stream_brick_kinds))
                                 .replace('${customer_insights}', json.dumps(customer_insights)))
 
 domain_id = domain['id']
@@ -149,6 +182,7 @@ if not os.path.exists(customers_file_path):
 customers = json.load(open(customers_file_path))
 insights = load_insights(domain_id)
 links = load_links(domain_id)
+stream_brick_kinds = load_stream_brick_kinds(domain_id)
 
 docs_folder = domain_id + '/customers/'
 create_overview_docs(domain, docs_folder, customers, insights, links)

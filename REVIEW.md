@@ -18,7 +18,7 @@ The **execution layer has three systemic problems**:
 
 ## Part 1 — Broken right now (fix before anything else)
 
-> **Status 2026-07-31 (evening):** items 1, 2, 3, 5, and 7 are FIXED; item 6 is mostly fixed; item 4 (data-assets generator not in run.sh) is still open. Details inline.
+> **Status 2026-07-31 (night):** all seven items FIXED (item 6 has two flagged leftovers needing owner decisions). Details inline.
 
 Verified defects, not opinions:
 
@@ -30,7 +30,7 @@ Verified defects, not opinions:
    - Note: the explorer still has **zero inbound links, zero iframes, zero `?embed=1` usages** from domain pages — that integration is the Phase 2 "embed explorer" item, still open. Only domains with populated `bricks-evidence.json` will show evidence tabs (currently digital-medication-management).
 2. **✅ FIXED — `emobility` was structurally broken.** `product-bricks.json` had been accidentally emptied to `[]` by commit `a82e73c50` ("README updates"). Restored the last good 276 KB version from commit `1d3a67d7c`: 25 bricks, all 24 deployment brick refs and 20 stream refs resolve, validator passes, all six doc generators re-run (25 brick landing pages now exist).
 3. **✅ FIXED — All dangling references resolved (was 403 → 0).** `validate-domain-model.py` was extended with the five missing reference-check classes (deployment→brick, brick→asset, stream→brick, JTBD→stream|brick, insight→customer/job/KPI-name) plus duplicate-id detection for streams, assets, customers, and products, plus product→primaryCustomer checks. Running it surfaced **64** live breaks, all fixed: 25 freight data assets **authored** (full schema — governance, stores, interfaces, owners from freight's real teams — placed in matching root groups plus a new "Analytics, Intelligence, and Sustainability" group); freight's `cg1-p1` pyramid gained a "Network efficiency" branch for the three network/carbon KPIs its insights referenced; 8 wrong-customer KPI links moved to the owning customer; 8 near-synonym KPI names aligned to the pyramid node; emobility's 13 `cap_*` JTBD refs and enterprise-crm's 2 remapped to real bricks. `--all` now passes clean on all 30 domains.
-4. **`generate-data-assets.py` (653 lines) is not in `run.sh`** — and it *mutates `_config`* (back-fills `dataDependencies` into `product-bricks.json`), so docs may or may not reflect its enrichment depending on manual runs.
+4. **✅ FIXED — `generate-data-assets.py` mutated config from inside the generator folder.** Relocated to `_wiring/tools/` (with `migrate-product-brick-layers.py` and `generate-missing-domain-datasets.py`; the retired `generate-goals-datasets.py` stub deleted), import paths shimmed, verified idempotent (skips all 29 domains that already have assets). It is deliberately *not* in `run.sh`: it is a one-time scaffolding tool, not a doc generator.
 5. **✅ FIXED — Documented registration procedure was wrong.** `domains_ALL` → `domains` corrected in all six skill files. `run-one.sh` rewritten: it now takes a domain id as an argument and reads the name/description from that domain's `start/config.json`, so the hardcoded-wrong-name failure class is gone.
 6. **Mostly fixed — Stale/misplaced artifacts.** Cleaned (48 items): `docs/product-domains/mambu/` orphan deleted; all 21 dead `brick-evidence.json` (singular, verified `[]` everywhere) deleted; `_temp.json` and the two byte-identical 399-line `prompt.txt` files deleted; 18 `.DS_Store` and 4 committed `__pycache__` dirs removed; `bike-mobility/DOMAIN.md` moved to `_domain/DOMAIN.md`; "accomodation" typo fixed in `_config/start-packages/overview/apps.json` and the overview page regenerated. **Still open:** `real-estate-marketplace/customers/products.json` (it *differs* from the canonical `product-deployments/products.json`, so it needs a human decision, not deletion); the 13 broken `../../../` links in `docs/start-packages/uber/index.html` (source lives in `_config/start-packages/uber/`); 7 domains missing DOMAIN.md (content authoring); the stale `bricksMetadata` description naming the old "nutrition" domain.
 7. **✅ FIXED — A build failure destroyed output.** The two generators that `rmtree`d docs folders *before* parsing inputs (`generate-product-bricks-docs.py`, `generate-products-docs.py`) now parse every input first and only then wipe/rebuild, so a JSON typo can no longer destroy previously generated docs. (Per-domain failure isolation in `run.sh` remains a Phase 3 item.)
@@ -132,6 +132,13 @@ Hash tab deep-linking works on 13 templates and is well implemented (validates t
 ---
 
 ## Change log
+
+- **2026-07-31 (Phase 2/3 continuation, commit follows `1974abb80`)** —
+  - **Global navigation bar** added to all 14 domain page templates (`.site-nav`: Home · Customers · Products · Bricks & Streams · Teams · Competition · Evidence), depth-correct relative links, active-area highlighting. The breadcrumb-→Home-→card round-trip is no longer the only way between areas.
+  - **Evidence Explorer URL state**: `?q=` and `?type=` are now read on load and kept in sync via `history.replaceState` (standalone page only; embeds untouched) — searches and type views are shareable and survive reload. JS syntax verified with `node --check`.
+  - **Customer landing pages are no longer dead ends**: JTBD `streamsNeeded`/`bricksNeeded` tiles now link to the corresponding stream or brick landing page, via a new id→kind map injected by `generate-customers-docs.py` (`${stream_brick_kinds}`). The first hop of customer→stream/brick→team traceability is clickable.
+  - **Config-mutating tools relocated** to `_wiring/tools/` (see Part 1 item 4).
+  - Full-site regeneration to propagate.
 
 - **2026-07-31** — Initial review: full-tree surveys (config schemas, wiring, templates) + hand-verified defect list.
 - **2026-07-31 (later)** — Folded in generated-site walkthrough: evidence explorer confirmed fully orphaned (0 inbound links; 100% of brick evidence tabs empty); inlined-dataset quantification (66% of each brick page is `all_bricks`; 78 MB duplicated JSON in one folder); customer landing pages confirmed dead ends; site chrome gaps (0 favicons, 0 footers, 3 title schemes); image dedup numbers (54% byte-identical icons); 13 broken links in `start-packages/uber`; GitHub Pages 1 GB limit exceeded 2.2×.
