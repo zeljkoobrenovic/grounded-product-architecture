@@ -70,6 +70,16 @@ Templates live in `_templates/<area>/` with shared partials under `_templates/_i
 
 `_wiring/evidence-explorer/generate-evidence-explorer-docs.py` builds a standalone search UI at `docs/evidence-explorer/index.html` from `_templates/evidence-explorer/index.html`: it inlines `all-evidence.json` into the page (so the page needs no runtime fetch) and copies both the evidence icons and the template's own `icons/` into the output. It is wired as the last step of `_evidence/run.sh`, so editing fragments and re-running `run.sh` refreshes the explorer too. The explorer shows one tab per evidence `type`; in iframe-embed mode (`?embed=1` / `?ids=<glob patterns>`) `?useTabs=false` switches to stacked sections instead of tabs.
 
+## Schemas and validation
+
+Structural contracts for every config artifact live in `_config/_schema/*.schema.json` (required fields, types, fixed enums, retired-field bans). They are enforced by a dependency-free checker (`.claude/skills/scripts/schema_check.py`) as part of `validate-domain-model.py`, which also verifies cross-file references. Run it after any config edit:
+
+```bash
+python3 .claude/skills/scripts/validate-domain-model.py <domain-id>   # or --all
+```
+
+Shared enum/definition defaults (brick types/statuses, module config, team types, stream definitions) live in `_config/_shared/*.json`; domain files only declare those blocks to override the shared model.
+
 ## Conventions
 
 - All ID values in `_config/**` (`id`, `*Id`, `*Ids`) are **lowercase**.

@@ -5,6 +5,39 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import schema_check
+
+# artifact path (relative to the domain folder) -> schema file in _config/_schema/
+SCHEMA_BY_ARTIFACT = {
+    'start/config.json': 'config.schema.json',
+    'customers/customers.json': 'customers.schema.json',
+    'customers/insights.json': 'insights.schema.json',
+    'customers/links.json': 'links.schema.json',
+    'product-deployments/products.json': 'products.schema.json',
+    'product-deployments/deployment.json': 'deployment.schema.json',
+    'product-bricks/product-bricks.json': 'product-bricks.schema.json',
+    'product-bricks/product-stream.json': 'product-stream.schema.json',
+    'teams/teams.json': 'teams.schema.json',
+    'data/data-assets.json': 'data-assets.schema.json',
+    'business/competition.json': 'competition.schema.json',
+}
+_schema_cache = {}
+
+
+def validate_against_schema(domain_dir, json_path, payload, errors):
+    relative = json_path.relative_to(domain_dir).as_posix()
+    schema_name = SCHEMA_BY_ARTIFACT.get(relative)
+    if not schema_name:
+        return
+    if schema_name not in _schema_cache:
+        schema_path = domain_dir.parent.parent / '_schema' / schema_name
+        if not schema_path.exists():
+            return
+        _schema_cache[schema_name] = schema_check.load_schema(schema_path)
+    for problem in schema_check.validate(payload, _schema_cache[schema_name]):
+        errors.append(f'{domain_dir.name}: {relative} {problem}')
+
 
 LOWER_ID_RE = re.compile(r'^[a-z0-9][a-z0-9._:-]*$')
 PRODUCT_BRICK_LAYER_IDS = {'ui', 'interfaces', 'worker', 'stateless-service', 'service', 'integration'}
@@ -557,6 +590,7 @@ def validate_domain(domain_dir, strict_ids=False):
         payload = load_json(json_path, errors)
         if payload is not None:
             json_payloads.append((json_path, payload))
+            validate_against_schema(domain_dir, json_path, payload, errors)
             if strict_ids and 'evidence' not in json_path.name:
                 validate_lowercase_ids(domain_dir, payload, errors)
 

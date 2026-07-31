@@ -31,6 +31,8 @@ What the validator checks:
   duplicate brick/module IDs; brick/module/data dependencies resolve; no legacy
   fields (`interfaces`/`internalModules` top-level, `storeIds`, `interface`).
 - `modulesConfig.layerTypes`/`moduleTypes` match the supported sets and carry colors.
+- Every artifact matches its JSON Schema in `_config/_schema/` (required fields,
+  types, fixed enums, retired-field bans) via the dependency-free `schema_check.py`.
 - Teams: valid team `type` and dependency types vs `orgDesign`; `otherTeamDependencies`
   resolve to real teams; `brickDependencies` resolve to real bricks; non-negative
   integer headcount; no duplicate team IDs.

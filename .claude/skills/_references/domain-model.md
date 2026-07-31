@@ -119,7 +119,9 @@ having `children[]`.
 ## Validate → regenerate loop (run after every edit)
 
 ```bash
-# 1. Validate JSON + cross-file references for the domain you touched
+# 1. Validate JSON + schemas + cross-file references for the domain you touched
+#    (structural contracts live in _config/_schema/*.schema.json, enforced by a
+#    dependency-free checker — see scripts/schema_check.py)
 python3 .claude/skills/scripts/validate-domain-model.py <domain-id>
 #    add --strict-ids for a lowercase/ID-format pass
 
