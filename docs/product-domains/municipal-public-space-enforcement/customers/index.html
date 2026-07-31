@@ -209,6 +209,34 @@
             padding: 2px;
         }
 
+        .customer-search-bar {
+            padding: 12px 12px 0 12px;
+        }
+
+        .customer-search {
+            width: 100%;
+            max-width: 520px;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            color: #202124;
+        }
+
+        .customer-search-summary {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 6px;
+            min-height: 16px;
+        }
+
+        .customer-search-empty {
+            padding: 24px 12px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
         .customer-group {
             display: inline-block;
             vertical-align: top;
@@ -575,7 +603,15 @@
     <button class="tablinks" id="tab_links" onclick="openTab('links')">Links</button>
 </div>
 <div>
-    <div id="tab_content_customers" class="tabcontent"></div>
+    <div id="tab_content_customers" class="tabcontent">
+        <div class="customer-search-bar">
+            <input type="search" id="CustomerSearch" class="customer-search"
+                   placeholder="Search customers by name, group, or what they care about&hellip;"
+                   autocomplete="off" oninput="renderCustomers()">
+            <div id="CustomerSearchSummary" class="customer-search-summary"></div>
+        </div>
+        <div id="CustomerCards"></div>
+    </div>
     <div id="tab_content_insights" class="tabcontent"></div>
     <div id="tab_content_links" class="tabcontent"></div>
 </div>
@@ -677,13 +713,29 @@
         return html;
     }
 
-    function update() {
+    function customerMatchesSearch(customer, groupName, query) {
+        if (!query) return true;
+        const haystack = [customer.id, customer.name, customer.description, groupName]
+            .concat(customer.careAbout || [], customer.winsThem || [], customer.theirFear || [])
+            .filter(Boolean).join(' ').toLowerCase();
+        return haystack.includes(query);
+    }
+
+    function renderCustomers() {
+        const searchInput = document.getElementById('CustomerSearch');
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        let visible = 0;
+        let total = 0;
         let html = '<div style="padding: 12px">';
 
         customers.forEach(group => {
+            total += group.customers.length;
+            const matching = group.customers.filter(customer => customerMatchesSearch(customer, group.group, query));
+            visible += matching.length;
+            if (!matching.length) return;
             html += '<div class="customer-group">';
             html += '<div class="customer-group-label">' + escapeHtml(group.group) + '</div>';
-            group.customers.forEach(customer => {
+            matching.forEach(customer => {
                 html += '<a target="_blank" href="landing_pages/' + escapeHtml(customer.id) + '.html">';
                 html += '<div class="customer-card">';
                 html += '<img class="customer-card-photo" src="icons/' + escapeHtml(customer.icon) + '" onerror="this.onerror=null;this.src=\'icons/customer.png\'">';
@@ -703,7 +755,18 @@
         });
 
         html += '</div>';
-        document.getElementById('tab_content_customers').innerHTML = html;
+        if (!visible) {
+            html = '<div class="customer-search-empty">No customers match the current search.</div>';
+        }
+        document.getElementById('CustomerCards').innerHTML = html;
+        const summary = document.getElementById('CustomerSearchSummary');
+        if (summary) {
+            summary.textContent = query ? `Showing ${visible} of ${total} customers` : '';
+        }
+    }
+
+    function update() {
+        renderCustomers();
     }
 
     function renderInsights() {
