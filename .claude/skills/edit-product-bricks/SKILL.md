@@ -89,7 +89,14 @@ right or generation/validation fails.
   "type": "full-stack",                  // → metadata.brickTypes[].id
   "status": "sustaining",                // → metadata.brickStatuses[].id
   "description": "…",
-  "links": [ { "label": "…", "url": "https://…", "note": "…" } ],
+  "links": [                                  // grouped; rendered in the Links tab
+    { "group": "Evidence", "description": "…",
+      "links": [ { "label": "Evidence Explorer",
+                   "link": "../../../../evidence-explorer/index.html",
+                   "description": "…",
+                   "embedLink": "../../../../evidence-explorer/index.html?embed=1",  // optional: renders an iframe
+                   "embedHeight": 400 } ] }    // optional; iframe height in px, default 400
+  ],
   "layers": [ … ],
   "brickDependencies": [ … ],
   "dataDependencies": [ … ],

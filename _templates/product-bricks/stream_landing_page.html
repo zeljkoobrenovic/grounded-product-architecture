@@ -13,6 +13,54 @@
 
     <style>
 
+        .links-group {
+            margin-bottom: 20px;
+            padding: 16px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .links-group-title {
+            font-size: 12px;
+            color: #1d4ed8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+
+        .links-group-description {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .link-entry { margin-bottom: 16px; }
+        .link-entry:last-child { margin-bottom: 0; }
+
+        .link-entry-title {
+            color: #1d4ed8;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .link-entry-title:hover { text-decoration: underline; }
+
+        .link-entry-copy {
+            color: #4b5563;
+            font-size: 13px;
+            margin: 4px 0 8px;
+            line-height: 1.45;
+        }
+
+        .link-embed {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            margin-top: 4px;
+        }
+
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
         }
@@ -856,30 +904,43 @@
     }
 
     function renderLinks() {
-        // Evidence placeholder is always first; refine its url with ?q=<query>
-        // once concrete evidence is linked for this stream.
-        const evidenceLink = {
-            label: 'Evidence Explorer',
-            url: '../../../../evidence-explorer/index.html',
-            note: 'Search real-world evidence (repositories, cloud resources, contacts) related to this stream.'
-        };
-        const links = [evidenceLink].concat(currentStream.links || []);
-        let html = '<div class="page"><div class="group">';
-        html += '<div class="section-title">Links</div>';
-        html += '<div class="card-grid">';
-        links.forEach(link => {
-            html += '<a class="card" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(link.url || '#') + '">';
-            html += '<div class="card-title">' + escapeHtml(link.label || link.url || 'Reference') + ' &#8599;</div>';
-            if (link.note) {
-                html += '<div class="card-copy">' + escapeHtml(link.note) + '</div>';
+        // Grouped links from config: [{group, description, links: [{label, link,
+        // description, embedLink?, embedHeight?}]}]. embedLink renders an iframe
+        // (default height 400px) while the label still opens `link` directly.
+        const groups = currentStream.links || [];
+        let html = '<div class="page">';
+        let count = 0;
+        if (!groups.length) {
+            html += '<div class="muted">No links are configured for this stream.</div>';
+        }
+        groups.forEach(group => {
+            html += '<div class="links-group">';
+            html += '<div class="links-group-title">' + escapeHtml(group.group || 'Links') + '</div>';
+            if (group.description) {
+                html += '<div class="links-group-description">' + escapeHtml(group.description) + '</div>';
             }
-            html += '</a>';
+            (group.links || []).forEach(link => {
+                count++;
+                html += '<div class="link-entry">';
+                html += '<a class="link-entry-title" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(link.link || '#') + '">'
+                    + escapeHtml(link.label || link.link || 'Reference') + ' &#8599;</a>';
+                if (link.description) {
+                    html += '<div class="link-entry-copy">' + escapeHtml(link.description) + '</div>';
+                }
+                if (link.embedLink) {
+                    const embedHeight = Number(link.embedHeight) || 400;
+                    html += '<iframe class="link-embed" loading="lazy" src="' + escapeHtml(link.embedLink)
+                        + '" style="height: ' + embedHeight + 'px" title="' + escapeHtml(link.label || 'Embedded link') + '"></iframe>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
         });
-        html += '</div></div></div>';
+        html += '</div>';
         document.getElementById('tab_content_links').innerHTML = html;
         const linksTab = document.getElementById('tab_links');
         if (linksTab) {
-            linksTab.textContent = 'Links (' + links.length + ')';
+            linksTab.textContent = 'Links (' + count + ')';
         }
     }
 
