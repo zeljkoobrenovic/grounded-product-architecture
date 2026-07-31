@@ -305,11 +305,7 @@ def create_landing_pages(bricks, products, customers, teams_payload):
                             .replace('${tabs_script}', tabs_script)
                             .replace('${date}', date_string)
                             .replace('${config}', json.dumps(site_config))
-                            .replace('${all_bricks}', json.dumps(bricks))
-                            .replace('${all_streams}', json.dumps(flat_streams))
-                            .replace('${bricks_metadata}', json.dumps(data.get('metadata', {})))
                             .replace('${brick_data}', json.dumps(brick))
-                            .replace('${data_assets}', json.dumps(data_assets_payload))
                             .replace('${common_style}', common_style)
                             .replace('${breadcrumbs_style}', breadcrumbs_style)
                             .replace('${breadcrumbs_script}', breadcrumbs_script)
@@ -354,8 +350,6 @@ def create_stream_landing_pages(streams, bricks, products, customers, teams_payl
                         .replace('${tokens_style}', tokens_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${config}', json.dumps(site_config))
-                            .replace('${all_bricks}', json.dumps(bricks))
-                            .replace('${all_streams}', json.dumps(streams))
                             .replace('${stream_data}', json.dumps(stream))
                             .replace('${related_bricks}', json.dumps(related_bricks))
                             .replace('${common_style}', common_style)
@@ -407,10 +401,7 @@ def create_data_asset_landing_pages(data_assets_payload, bricks, teams_payload):
                         .replace('${tokens_style}', tokens_style)
                             .replace('${tabs_script}', tabs_script)
                             .replace('${config}', json.dumps(site_config))
-                            .replace('${all_bricks}', json.dumps(bricks))
-                            .replace('${all_assets}', json.dumps(nav_assets))
                             .replace('${asset_data}', json.dumps(asset))
-                            .replace('${all_stores}', json.dumps(stores))
                             .replace('${producing_bricks}', json.dumps(producing_bricks))
                             .replace('${consuming_bricks}', json.dumps(consuming_bricks))
                             .replace('${owner_team}', json.dumps(owner_team))
@@ -478,6 +469,22 @@ with open(docs_folder + 'index.html', 'w') as html_file:
         'streams': flat_streams
     }))
     html_file.write(content)
+
+
+# The landing pages under landing_pages/, stream_pages/, and data_pages/ all
+# load ../shared_data.js instead of inlining these payloads per page — one
+# copy per domain instead of one per page (works from file:// too, unlike fetch).
+_shared_assets = flatten_data_assets_with_context(data_assets_payload.get('rootGroups', []))
+shared_domain_data = {
+    'allBricks': flat_bricks,
+    'allStreams': flat_streams,
+    'bricksMetadata': data.get('metadata', {}),
+    'dataAssetsPayload': data_assets_payload,
+    'allAssets': [{'id': a.get('id', ''), 'name': a.get('name', a.get('id', ''))} for a in _shared_assets],
+    'allStores': data_assets_payload.get('stores', []),
+}
+with open(docs_folder + 'shared_data.js', 'w') as shared_file:
+    shared_file.write('window.SHARED_DOMAIN_DATA = ' + json.dumps(shared_domain_data, ensure_ascii=False) + ';\n')
 
 create_landing_pages(flat_bricks, products, customers, teams_payload)
 create_stream_landing_pages(flat_streams, flat_bricks, products, customers, teams_payload)
