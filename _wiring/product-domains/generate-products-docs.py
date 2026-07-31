@@ -2,12 +2,20 @@ import json
 import os
 import shutil
 import datetime
+from functools import partial
+
 from domain_cli import load_domain_args
+from generator_common import (
+    build_customers_lookup as build_customers_and_kpi_lookup,
+    copy_icons as copy_icons_common,
+    enter_docs_root,
+    render_breadcrumbs as render_breadcrumbs_from,
+    today_string,
+)
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
-date_string = datetime.date.today().strftime('%Y-%m-%d')
+date_string = today_string()
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/product-deployments/'
@@ -18,56 +26,15 @@ tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 breadcrumbs_style = open(templates_root + '../_imports/breadcrumbs/style.html').read()
 breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html').read()
 
+copy_icons = partial(copy_icons_common, recursive=True)
+
 
 def render_breadcrumbs(template_name, replacements):
-    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
-    for key, value in replacements.items():
-        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
-    return breadcrumbs
-
-
-def copy_icons(icons_path, docs_folder):
-    if os.path.exists(icons_path):
-        target_root = os.path.join(docs_folder, 'icons')
-        for root, _, filenames in os.walk(icons_path):
-            rel_root = os.path.relpath(root, icons_path)
-            target_dir = target_root if rel_root == '.' else os.path.join(target_root, rel_root)
-            os.makedirs(target_dir, exist_ok=True)
-            for filename in filenames:
-                src = os.path.join(root, filename)
-                dst = os.path.join(target_dir, filename)
-                if os.path.isfile(src):
-                    shutil.copy2(src, dst)
-
-
-def normalize_icon_name(icon_name, fallback='customer.png'):
-    value = (icon_name or fallback).strip()
-    if not value:
-        value = fallback
-    while value.endswith('.png.png'):
-        value = value[:-4]
-    while value.endswith('.svg.png'):
-        value = value[:-4]
-    if '.' in value:
-        return value
-    return value + '.png'
+    return render_breadcrumbs_from(templates_root, template_name, replacements)
 
 
 def build_customers_lookup(customers):
-    customer_icon_map = {
-        'house-search': 'seeker.png',
-        'owner-key': 'owner.png',
-        'briefcase-building': 'intermediary.png'
-    }
-
-    lookup = {}
-    for group in customers:
-        for customer in group.get('customers', []):
-            lookup[customer['id']] = {
-                'id': customer['id'],
-                'name': customer.get('name', customer['id']),
-                'icon': normalize_icon_name(customer_icon_map.get(customer.get('icon', ''), customer.get('icon', 'customer.png')))
-            }
+    lookup, _ = build_customers_and_kpi_lookup(customers)
     return lookup
 
 

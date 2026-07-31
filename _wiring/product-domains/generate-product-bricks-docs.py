@@ -1,9 +1,15 @@
 import json
-import datetime
 import os
 import re
 import shutil
 from domain_cli import load_domain_args
+from generator_common import (
+    copy_icons,
+    enter_docs_root,
+    load_json_if_exists,
+    load_json_items_from_paths as load_json_from_paths,
+    today_string,
+)
 from product_bricks_support import (
     flatten_product_bricks,
     flatten_product_streams,
@@ -13,36 +19,9 @@ from product_bricks_support import (
     sanitize_product_stream_root_groups,
 )
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
-
-def load_json_if_exists(path, default_value):
-    if os.path.exists(path):
-        return json.load(open(path))
-    return default_value
-
-
-def load_json_from_paths(paths, default_value):
-    for path in paths:
-        if os.path.exists(path):
-            payload = json.load(open(path))
-            if isinstance(payload, dict) and isinstance(payload.get('items'), list):
-                return payload.get('items')
-            return payload
-    return default_value
-
-
-def copy_icons(icons_path, docs_folder):
-    if os.path.exists(icons_path):
-        for filename in os.listdir(icons_path):
-            src = os.path.join(icons_path, filename)
-            dst = os.path.join(docs_folder, 'icons', filename)
-            if os.path.isfile(src):
-                shutil.copy2(src, dst)
-
-
-date_string = datetime.date.today().strftime('%Y-%m-%d')
+date_string = today_string()
 
 domains_root = '../../_config/product-domains/'
 root_templates = '../../_templates/product-bricks/'

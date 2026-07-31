@@ -3,11 +3,16 @@ import os
 import shutil
 import datetime
 from domain_cli import load_domain_args
+from generator_common import (
+    copy_files_into,
+    enter_docs_root,
+    render_breadcrumbs as render_breadcrumbs_from,
+    today_string,
+)
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
-date_string = datetime.date.today().strftime('%Y-%m-%d')
+date_string = today_string()
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/customers/'
@@ -21,10 +26,7 @@ breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html'
 
 
 def render_breadcrumbs(template_name, replacements):
-    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
-    for key, value in replacements.items():
-        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
-    return breadcrumbs
+    return render_breadcrumbs_from(templates_root, template_name, replacements)
 
 
 def load_insights(domain_id):
@@ -50,13 +52,7 @@ def load_links(domain_id):
     return json.load(open(links_file_path))
 
 
-def copy_media(icons_path, docs_folder):
-    if os.path.exists(icons_path):
-        for filename in os.listdir(icons_path):
-            src = os.path.join(icons_path, filename)
-            dst = os.path.join(docs_folder, filename)
-            if os.path.isfile(src):
-                shutil.copy2(src, dst)
+copy_media = copy_files_into
 
 
 def load_stream_brick_kinds(domain_id):

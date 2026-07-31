@@ -3,9 +3,13 @@ import os
 import shutil
 
 from domain_cli import load_domain_args
+from generator_common import (
+    copy_files_into,
+    enter_docs_root,
+    render_breadcrumbs as render_breadcrumbs_from,
+)
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/competition/'
@@ -20,21 +24,10 @@ domain, _ = load_domain_args()
 
 
 def render_breadcrumbs(template_name, replacements):
-    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
-    for key, value in replacements.items():
-        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
-    return breadcrumbs
+    return render_breadcrumbs_from(templates_root, template_name, replacements)
 
 
-def copy_folder_files(src_folder, dst_folder):
-    if not os.path.exists(src_folder):
-        return
-    os.makedirs(dst_folder, exist_ok=True)
-    for filename in os.listdir(src_folder):
-        src = os.path.join(src_folder, filename)
-        dst = os.path.join(dst_folder, filename)
-        if os.path.isfile(src):
-            shutil.copy2(src, dst)
+copy_folder_files = copy_files_into
 
 
 def build_available_logos(logos_root):

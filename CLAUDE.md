@@ -61,7 +61,7 @@ Shared Python modules in `_wiring/product-domains/` (import these rather than re
 
 - `domain_cli.py` — arg parsing; every generator calls `load_domain_args()`
 - `product_bricks_support.py` — product-brick layer model (`PRODUCT_BRICK_LAYER_ORDER`: ui → interfaces → worker → stateless-service → service → integration) and labels/descriptions
-- `initiatives_support.py` — shared product-domain lookup helpers used by generators
+- `generator_common.py` — shared generator helpers: `enter_docs_root()`, JSON loading, icon/media copying, breadcrumb rendering, `normalize_icon_name`, group-tree iteration, customers/KPI lookups. Import these rather than re-implementing per generator.
 
 Templates live in `_templates/<area>/` with shared partials under `_templates/_imports/` (e.g. `tabs/`, `breadcrumbs/`, `common/`). Generators read template HTML and substitute `${key}` placeholders. Output for each area is fully rebuilt: generators `shutil.rmtree` the target docs folder before regenerating, so do not hand-edit files under `docs/product-domains/`.
 

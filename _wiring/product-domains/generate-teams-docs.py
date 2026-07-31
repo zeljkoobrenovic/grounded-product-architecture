@@ -1,20 +1,27 @@
-import datetime
 import json
 import os
 import shutil
 
 from domain_cli import load_domain_args
-from initiatives_support import build_bricks_lookup, build_customers_lookup
+from generator_common import (
+    build_customers_lookup,
+    copy_icons,
+    enter_docs_root,
+    load_json_if_exists,
+    normalize_icon_name,
+    render_breadcrumbs as render_breadcrumbs_from,
+    today_string,
+)
 from product_bricks_support import (
+    build_bricks_lookup,
     flatten_product_streams,
     load_product_bricks_payload,
     load_product_streams_payload,
 )
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+enter_docs_root()
 
-date_string = datetime.date.today().strftime('%Y-%m-%d')
+date_string = today_string()
 
 domains_root = '../../_config/product-domains/'
 templates_root = '../../_templates/teams/'
@@ -28,36 +35,7 @@ breadcrumbs_script = open(templates_root + '../_imports/breadcrumbs/script.html'
 
 
 def render_breadcrumbs(template_name, replacements):
-    breadcrumbs = open(os.path.join(templates_root, template_name)).read()
-    for key, value in replacements.items():
-        breadcrumbs = breadcrumbs.replace('${' + key + '}', value)
-    return breadcrumbs
-
-
-def copy_icons(icons_path, docs_folder):
-    if os.path.exists(icons_path):
-        for filename in os.listdir(icons_path):
-            src = os.path.join(icons_path, filename)
-            dst = os.path.join(docs_folder, 'icons', filename)
-            if os.path.isfile(src):
-                shutil.copy2(src, dst)
-
-
-def load_json_if_exists(path, default):
-    if os.path.exists(path):
-        return json.load(open(path))
-    return default
-
-
-def normalize_icon_name(icon_name, fallback='customer.png'):
-    value = icon_name or fallback
-    while value.endswith('.png.png'):
-        value = value[:-4]
-    while value.endswith('.svg.png'):
-        value = value[:-4]
-    if '.' in value:
-        return value
-    return value + '.png'
+    return render_breadcrumbs_from(templates_root, template_name, replacements)
 
 
 def build_streams_lookup(streams):
@@ -75,13 +53,7 @@ def build_streams_lookup(streams):
     return lookup
 
 
-def iter_groups(groups, ancestors=None):
-    """Yield (group, ancestors) for every group in the recursive tree."""
-    ancestors = ancestors or []
-    for group in groups or []:
-        yield group, ancestors
-        for descendant in iter_groups(group.get('groups', []), ancestors + [group]):
-            yield descendant
+from generator_common import iter_group_tree as iter_groups
 
 
 def build_team_lookup(teams_payload):
