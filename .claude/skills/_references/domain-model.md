@@ -122,15 +122,15 @@ python3 .claude/skills/scripts/validate-domain-model.py <domain-id>
 
 # 2. Regenerate that domain's docs (from _wiring/product-domains/)
 cd _wiring/product-domains
-#    temporarily ensure <domain-id> is the active entry in run.sh `domains=(...)`,
+#    run ./run-one.sh <domain-id> (name/description come from start/config.json),
 #    or run a single generator directly:
 python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"
 ```
 
-> The `domains=(...)` array in `run.sh` usually holds a single active domain.
+> `run.sh` regenerates every domain discovered from the config tree; use `run-one.sh <domain-id>` for one domain.
 > To regenerate a different domain without editing run.sh, call the relevant
 > generator(s) directly with the three positional args (id, name, description) —
-> the canonical name/description live in the `domains=(...)` array in run.sh.
+> the canonical name/description live in the domain's `start/config.json`.
 
 ## Reference domain
 

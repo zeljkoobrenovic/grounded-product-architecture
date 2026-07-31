@@ -883,8 +883,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -900,6 +931,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -908,7 +940,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -919,7 +953,7 @@
 
 
 <script>
-    const config = {"domains": [{"id": "travel-and-expense-management", "name": "Travel and Expense Management", "description": "Expense management, travel expense flows, mileage, per diem, approvals, policy, card reconciliation, and finance integrations"}]};
+    const config = {"domains": [{"id": "travel-and-expense-management", "name": "Travel and Expense Management", "description": "The Travel and Expense Management domain covers employee spend capture, travel booking and policy control, corporate card operations, reimbursement, finance automation, and spend intelligence workflows used by companies to control business spend without slowing employees down."}]};
     const all_products = [{"id": "p1", "name": "Mobile Expense Capture and Submission", "icon": "", "type": "B2B", "primaryCustomers": [{"id": "cg3-p1", "name": "Traveling Employee / Team Manager", "icon": "traveling_employee.png"}, {"id": "cg1-p1", "name": "Finance Operations Director / Group Controller", "icon": "finance_controller.png"}]}, {"id": "p2", "name": "Policy, Audit, and Approval Control", "icon": "", "type": "B2B", "primaryCustomers": [{"id": "cg1-p1", "name": "Finance Operations Director / Group Controller", "icon": "finance_controller.png"}]}, {"id": "p3", "name": "Travel and Trip Spend Control", "icon": "", "type": "B2B", "primaryCustomers": [{"id": "cg2-p1", "name": "Travel Manager / Procurement Lead", "icon": "travel_manager.png"}]}, {"id": "p4", "name": "Card-Backed Spend Management", "icon": "", "type": "B2B", "primaryCustomers": [{"id": "cg1-p1", "name": "Finance Operations Director / Group Controller", "icon": "finance_controller.png"}, {"id": "cg3-p1", "name": "Traveling Employee / Team Manager", "icon": "traveling_employee.png"}]}, {"id": "p5", "name": "Finance Close and Spend Intelligence", "icon": "", "type": "B2B", "primaryCustomers": [{"id": "cg1-p1", "name": "Finance Operations Director / Group Controller", "icon": "finance_controller.png"}, {"id": "cg2-p1", "name": "Travel Manager / Procurement Lead", "icon": "travel_manager.png"}]}];
     const product = {"id": "p4", "name": "Card-Backed Spend Management", "icon": "", "type": "B2B", "primaryCustomers": [{"id": "cg1-p1", "name": "Finance Operations Director / Group Controller", "icon": "finance_controller.png"}, {"id": "cg3-p1", "name": "Traveling Employee / Team Manager", "icon": "traveling_employee.png"}]};
     const deployment = {"metadata": {"title": "Travel and Expense Management Deployment and Operating Surfaces", "description": "Primary runtime, operator, mobile, and integration surfaces used to deliver the travel-and-expense-management domain.", "modelVersion": "3.0"}, "channels": [{"groupId": "core-cloud-runtime", "groupName": "Core Cloud Runtime", "groupType": "runtime", "description": "Primary live runtimes for domain services, policy engines, integrations, and analytics.", "channels": [{"subChannelId": "tem-core-prod", "subChannelName": "TEM Core Production", "channelType": "public-cloud", "description": "Primary production runtime for expense, policy, and finance services.", "deployedBricks": [{"brickId": "expf", "brickName": "Expense Form and Report Builder", "deploymentRole": "Claim and report workflow services", "usedInProducts": [{"productId": "p1", "description": "Builds the compliant expense line and report."}]}, {"brickId": "poli", "brickName": "Policy Rules Engine", "deploymentRole": "Policy evaluation services", "usedInProducts": [{"productId": "p2", "description": "Applies configurable spend and travel policy."}]}, {"brickId": "aprv", "brickName": "Approval Workflow Orchestration", "deploymentRole": "Approval routing and escalation services", "usedInProducts": [{"productId": "p2", "description": "Routes claims and trips through the right approver chain."}]}, {"brickId": "reim", "brickName": "Reimbursement Orchestration", "deploymentRole": "Reimbursement state and payout preparation services", "usedInProducts": [{"productId": "p5", "description": "Controls reimbursement status and batch readiness."}]}]}, {"subChannelId": "tem-data-prod", "subChannelName": "TEM Data and Intelligence Runtime", "channelType": "public-cloud", "description": "Production runtime for integrations, analytics, and anomaly detection.", "deployedBricks": [{"brickId": "inte", "brickName": "Integration Hub", "deploymentRole": "Connector runtime and data normalization", "usedInProducts": []}, {"brickId": "anal", "brickName": "Spend Analytics and Benchmarking", "deploymentRole": "Analytics models and dashboards", "usedInProducts": [{"productId": "p5", "description": "Makes audit, tax, and spend-leakage insight usable."}]}, {"brickId": "anom", "brickName": "Anomaly and Leakage Detection", "deploymentRole": "Leakage scoring and signal generation", "usedInProducts": []}]}]}, {"groupId": "employee-channels", "groupName": "Employee and Operator Channels", "groupType": "experience", "description": "Main employee, manager, finance, and travel operator interfaces.", "channels": [{"subChannelId": "mobile-app", "subChannelName": "Mobile App", "channelType": "mobile", "description": "Employee and manager mobile workflow for capture, approval, and reimbursement status.", "deployedBricks": [{"brickId": "mobl", "brickName": "Mobile Expense Submission", "deploymentRole": "Mobile employee and manager experience", "usedInProducts": [{"productId": "p1", "description": "Provides the employee and manager mobile experience."}]}, {"brickId": "rcpt", "brickName": "Receipt Capture and OCR", "deploymentRole": "Mobile receipt ingestion and extraction", "usedInProducts": [{"productId": "p1", "description": "Captures the receipt and starts the structured claim automatically."}]}]}, {"subChannelId": "ops-web", "subChannelName": "Operations Web Workspace", "channelType": "web", "description": "Web interfaces for finance, travel, and admin operators.", "deployedBricks": [{"brickId": "saud", "brickName": "Smart Audit and Risk Scoring", "deploymentRole": "Finance audit review workspace", "usedInProducts": [{"productId": "p2", "description": "Prioritizes only the claims that need human attention."}]}, {"brickId": "trav", "brickName": "Travel Booking Hub", "deploymentRole": "Trip workspace", "usedInProducts": [{"productId": "p3", "description": "Maintains the shared trip and itinerary model."}]}, {"brickId": "card", "brickName": "Corporate Card Program", "deploymentRole": "Card administration workspace", "usedInProducts": [{"productId": "p4", "description": "Provides controlled company card workflows."}]}]}]}, {"groupId": "partner-integrations", "groupName": "Partner Integrations", "groupType": "integration", "description": "Connected external systems feeding or consuming travel, identity, finance, and card data.", "channels": [{"subChannelId": "partner-api-runtime", "subChannelName": "Partner API Runtime", "channelType": "integration", "description": "Integration runtime for ERP, identity, travel, and card feeds.", "deployedBricks": [{"brickId": "acct", "brickName": "ERP and Accounting Sync", "deploymentRole": "Outbound finance exports", "usedInProducts": [{"productId": "p5", "description": "Exports approved spend into ERP and accounting systems."}]}, {"brickId": "tatt", "brickName": "Travel Feed and TMC Connectors", "deploymentRole": "Inbound travel booking and itinerary feeds", "usedInProducts": [{"productId": "p3", "description": "Imports booking data from external travel systems."}]}, {"brickId": "crec", "brickName": "Card Transaction Reconciliation", "deploymentRole": "Inbound card transaction feeds", "usedInProducts": [{"productId": "p4", "description": "Matches transaction feeds with receipts and reports."}]}]}]}]};

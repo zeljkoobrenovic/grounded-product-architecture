@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <link rel="icon"
+          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
     <title>${domain_name}</title>
     <style>
         body {
             font-family: Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
-            margin: 40px;
             text-align: center;
         }
 
@@ -107,6 +107,7 @@
         font-family: Ubuntu, Optima, Segoe, sans-serif;
         font-size: 13px;
     }
+
     .site-nav a {
         color: #6b7280;
         text-decoration: none;
@@ -114,138 +115,151 @@
         border-radius: 6px;
         white-space: nowrap;
     }
-    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
-    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+
+    .site-nav a:hover {
+        color: #1d4ed8;
+        background: #eff6ff;
+    }
+
+    .site-nav a.active {
+        color: #1d4ed8;
+        font-weight: 600;
+        background: #dbeafe;
+    }
 </style>
-<nav class="site-nav"><a href="../start/index.html" class="active">Home</a><a href="../customers/index.html">Customers</a><a href="../product-deployments/index.html">Products</a><a href="../product-bricks/index.html">Bricks &amp; Streams</a><a href="../teams/index.html">Teams</a><a href="../competition/index.html">Competition</a><a href="../../../evidence-explorer/index.html">Evidence</a></nav>
-<div style="margin-top: 10px"><img src="icons/logo.png" style="height: 164px; border: 1px solid lightgrey; border-radius: 20px; padding: 12px; margin: 8px;"></div>
-<div style="margin: 8px; margin-top: 0; font-size: 40px; color: #8c8c8c">${domain_name}</div>
-<div style="margin-bottom: 36px; font-size: 20px; color: #8c8c8c">${domain_description}</div>
+<nav class="site-nav" style="margin-left: 20px"><a href="../start/index.html" class="active">Home</a><a href="../customers/index.html">Customers</a><a href="../product-deployments/index.html">Products</a><a
+        href="../product-bricks/index.html">Bricks &amp; Streams</a><a href="../teams/index.html">Teams</a><a href="../competition/index.html">Competition</a><a
+        href="../../../evidence-explorer/index.html">Evidence</a></nav>
+<div style="margin: 40px">
+    <div style="margin-top: 10px"><img src="icons/logo.png" style="height: 164px; border: 1px solid lightgrey; border-radius: 20px; padding: 12px; margin: 8px;"></div>
+    <div style="margin: 8px; margin-top: 0; font-size: 40px; color: #8c8c8c">${domain_name}</div>
+    <div style="margin-bottom: 36px; font-size: 20px; color: #8c8c8c">${domain_description}</div>
 
-<div style="margin: -10px; padding: 6px" id="search_container">
-    <div style="margin-bottom: 30px; color: grey">
-        <input id="filter_all" type="text" placeholder="search..."
-               style="font-size: 16px; height: 32px; width: 320px"
-               onkeyup="update()">
-        <span id="summary_all"></span>
+    <div style="margin: -10px; padding: 6px" id="search_container">
+        <div style="margin-bottom: 30px; color: grey">
+            <input id="filter_all" type="text" placeholder="search..."
+                   style="font-size: 16px; height: 32px; width: 320px"
+                   onkeyup="update()">
+            <span id="summary_all"></span>
+        </div>
+        <div id="content_search"></div>
     </div>
-    <div id="content_search"></div>
-</div>
 
-<div class="tab" id="tab_navigation">
-</div>
+    <div class="tab" id="tab_navigation">
+    </div>
 
-<div id="tab_content"></div>
+    <div id="tab_content"></div>
 
-<script>
-    const apps = ${apps}.apps;
-    const config = ${apps}.config;
-    let tabNavigationHtml = '';
-    let tabContentHtml = '';
-    apps.forEach(tab => {
-        tabNavigationHtml += '<button id="tab_' + tab.tab + '" class="tablinks" onclick="openTab(\'' + tab.tab + '\')">' + tab.tab + '</button>';
-
-        tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;">' +
-            '<div id="content_' + tab.tab + '"></div>' +
-            '</div>';
-    });
-
-    document.getElementById('tab_navigation').innerHTML = tabNavigationHtml;
-    document.getElementById('tab_content').innerHTML = tabContentHtml;
-
-    // Default to the first tab, but prefer the last opened tab (URL hash wins over both,
-    // resolved inside the shared initTab).
-    const storedStartTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
-    const defaultStartTab = (storedStartTab && document.getElementById('tab_' + storedStartTab))
-        ? storedStartTab
-        : (apps.length ? apps[0].tab : '');
-    initTab(defaultStartTab);
-</script>
-
-<script>
-    // Pre-build a flat list with pre-lowercased fields for search
-    const allApps = [];
-    apps.forEach(tab => {
-        tab.apps.forEach(group => {
-            group.apps.forEach(app => {
-                allApps.push({
-                    app: app,
-                    name: (app.name || '').toLowerCase(),
-                    description: (app.description || '').toLowerCase(),
-                    source: (app.source || '').toLowerCase()
-                });
-            });
-        });
-    });
-
-    function renderAppCard(app) {
-        let html = '<div class="app">';
-        if (config.openInNewTab === false || app.openInNewTab === false) {
-            html += '<a href="' + app.link + '">';
-        } else {
-            html += '<a target="_blank" href="' + app.link + '">';
-        }
-        html += '<div style="height: 38px">';
-        html += '<div class="name">' + app.name + '</div>';
-        if (app.source) {
-            html += '<div class="source">source: ' + app.source + '</div>';
-        } else {
-            html += '<div class="source"></div>';
-        }
-        html += '</div>';
-        html += '<div><img class="icon" src="' + app.icon + '"></div>';
-        html += '<div class="description">' + app.description + '</div>';
-        html += '</a>';
-        html += '</div>';
-        return html;
-    }
-
-    function renderTabs() {
+    <script>
+        const apps = ${apps}.apps;
+        const config = ${apps}.config;
+        let tabNavigationHtml = '';
+        let tabContentHtml = '';
         apps.forEach(tab => {
-            let html = '';
-            tab.apps.forEach(group => {
-                html += '<div class="group">';
-                html += '<div class="group-title">' + group.group + '</div>';
-                group.apps.forEach(app => {
-                    html += renderAppCard(app);
-                });
-                html += '</div>';
-            });
-            document.getElementById('content_' + tab.tab).innerHTML = html;
+            tabNavigationHtml += '<button id="tab_' + tab.tab + '" class="tablinks" onclick="openTab(\'' + tab.tab + '\')">' + tab.tab + '</button>';
+
+            tabContentHtml += '<div id="tab_content_' + tab.tab + '" class="tabcontent" style="margin: 0; padding: 6px;">' +
+                '<div id="content_' + tab.tab + '"></div>' +
+                '</div>';
         });
-    }
 
-    function update() {
-        const filterText = document.getElementById('filter_all').value.trim().toLowerCase();
+        document.getElementById('tab_navigation').innerHTML = tabNavigationHtml;
+        document.getElementById('tab_content').innerHTML = tabContentHtml;
 
-        if (filterText) {
-            document.getElementById('tab_navigation').style.display = 'none';
-            document.getElementById('tab_content').style.display = 'none';
-            document.getElementById('content_search').style.display = 'block';
+        // Default to the first tab, but prefer the last opened tab (URL hash wins over both,
+        // resolved inside the shared initTab).
+        const storedStartTab = window.sessionStorage.getItem(START_TAB_STORAGE_KEY);
+        const defaultStartTab = (storedStartTab && document.getElementById('tab_' + storedStartTab))
+            ? storedStartTab
+            : (apps.length ? apps[0].tab : '');
+        initTab(defaultStartTab);
+    </script>
 
-            let html = '';
-            let count = 0;
-            allApps.forEach(entry => {
-                if (entry.name.includes(filterText) || entry.description.includes(filterText) || entry.source.includes(filterText)) {
-                    html += renderAppCard(entry.app);
-                    count++;
-                }
+    <script>
+        // Pre-build a flat list with pre-lowercased fields for search
+        const allApps = [];
+        apps.forEach(tab => {
+            tab.apps.forEach(group => {
+                group.apps.forEach(app => {
+                    allApps.push({
+                        app: app,
+                        name: (app.name || '').toLowerCase(),
+                        description: (app.description || '').toLowerCase(),
+                        source: (app.source || '').toLowerCase()
+                    });
+                });
             });
-            document.getElementById('content_search').innerHTML = html;
-            document.getElementById('summary_all').innerHTML = ' = ' + count + ' app' + (count !== 1 ? 's' : '');
-        } else {
-            document.getElementById('tab_navigation').style.display = '';
-            document.getElementById('tab_content').style.display = '';
-            document.getElementById('content_search').style.display = 'none';
-            document.getElementById('summary_all').innerHTML = '';
+        });
+
+        function renderAppCard(app) {
+            let html = '<div class="app">';
+            if (config.openInNewTab === false || app.openInNewTab === false) {
+                html += '<a href="' + app.link + '">';
+            } else {
+                html += '<a target="_blank" href="' + app.link + '">';
+            }
+            html += '<div style="height: 38px">';
+            html += '<div class="name">' + app.name + '</div>';
+            if (app.source) {
+                html += '<div class="source">source: ' + app.source + '</div>';
+            } else {
+                html += '<div class="source"></div>';
+            }
+            html += '</div>';
+            html += '<div><img class="icon" src="' + app.icon + '"></div>';
+            html += '<div class="description">' + app.description + '</div>';
+            html += '</a>';
+            html += '</div>';
+            return html;
         }
-    }
 
-    if (!config || !config.enableSearch) {
-        document.getElementById('search_container').style.display = 'none';
-    }
+        function renderTabs() {
+            apps.forEach(tab => {
+                let html = '';
+                tab.apps.forEach(group => {
+                    html += '<div class="group">';
+                    html += '<div class="group-title">' + group.group + '</div>';
+                    group.apps.forEach(app => {
+                        html += renderAppCard(app);
+                    });
+                    html += '</div>';
+                });
+                document.getElementById('content_' + tab.tab).innerHTML = html;
+            });
+        }
 
-    renderTabs();
-</script>
+        function update() {
+            const filterText = document.getElementById('filter_all').value.trim().toLowerCase();
+
+            if (filterText) {
+                document.getElementById('tab_navigation').style.display = 'none';
+                document.getElementById('tab_content').style.display = 'none';
+                document.getElementById('content_search').style.display = 'block';
+
+                let html = '';
+                let count = 0;
+                allApps.forEach(entry => {
+                    if (entry.name.includes(filterText) || entry.description.includes(filterText) || entry.source.includes(filterText)) {
+                        html += renderAppCard(entry.app);
+                        count++;
+                    }
+                });
+                document.getElementById('content_search').innerHTML = html;
+                document.getElementById('summary_all').innerHTML = ' = ' + count + ' app' + (count !== 1 ? 's' : '');
+            } else {
+                document.getElementById('tab_navigation').style.display = '';
+                document.getElementById('tab_content').style.display = '';
+                document.getElementById('content_search').style.display = 'none';
+                document.getElementById('summary_all').innerHTML = '';
+            }
+        }
+
+        if (!config || !config.enableSearch) {
+            document.getElementById('search_container').style.display = 'none';
+        }
+
+        renderTabs();
+    </script>
+</div>
 </body>
 </html>

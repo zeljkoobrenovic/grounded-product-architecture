@@ -14,7 +14,7 @@ _config/**  (JSON source of truth)  +  _templates/**  (HTML)  --Python in _wirin
 
 ## Generating the site
 
-All product-domain generators run from `_wiring/product-domains/` and take three positional args (`domain_id`, `domain_name`, `domain_description`). The wrapper script defines the full domain list and the generator order:
+All product-domain generators run from `_wiring/product-domains/` and take three positional args (`domain_id`, `domain_name`, `domain_description`). The wrapper script discovers every domain from `_config/product-domains/*/start/config.json` and defines the generator order:
 
 ```bash
 cd _wiring/product-domains
@@ -35,7 +35,7 @@ There is no test suite, linter config, or package manifest. Validation is: run t
 ## Adding or registering a domain
 
 1. Create `_config/product-domains/<lowercase-slug>/` following an existing domain (use `ride-sharing-marketplace` as the structural reference).
-2. Add a `domain_id|Domain Name|Domain description` line to the `domains=(...)` array in `_wiring/product-domains/run.sh`.
+2. Create `start/config.json` with `id`, `name`, and `description` — that registers the domain; `run.sh` discovers every domain from the config tree (use `./run-one.sh <domain-id>` to regenerate just one).
 3. Regenerate from `_wiring/product-domains/`.
 
 The prompt scaffold for a new domain lives at `_config/_prompts/customers/NEW-DOMAIN-PROMPT.md`.

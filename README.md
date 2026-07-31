@@ -109,7 +109,7 @@ Recommended flow:
    - `business/competition.json`
    - `start/config.json`
    - `data/data-assets.json`
-8. Register the new domain in `_wiring/product-domains/run.sh` by adding a new `domain_id|Domain Name|Domain description` entry to the `domains=(...)` list.
+8. Registration is automatic: `_wiring/product-domains/run.sh` discovers every domain that has a `start/config.json` with `id`, `name`, and `description`. Use `./run-one.sh <domain-id>` to regenerate a single domain.
 9. Regenerate the documentation from `_wiring/product-domains/`.
 
 Example prompt setup:

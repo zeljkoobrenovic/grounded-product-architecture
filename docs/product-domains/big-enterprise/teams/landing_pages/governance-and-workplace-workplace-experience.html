@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
-    <title>Governance and Workplace - Workplace Experience — Team (Big Enterprise)</title>
+    <title>Governance and Workplace - Workplace Experience — Team (Internal)</title>
     <style>
     .page-type-badge {
         display: inline-block;
@@ -350,8 +350,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -367,6 +398,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -375,7 +407,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -404,7 +438,7 @@
 
 <script>
     const team = {"id": "governance-and-workplace-workplace-experience", "name": "Governance and Workplace - Workplace Experience", "type": "stream-aligned", "description": "Own workplace booking, visitor access, events, and internal communication workflows.", "teamHeadcount": {"headcount": 7, "description": "Cross-functional product team."}, "documentLinks": [], "customerDependencies": [{"customerId": "eemp", "name": "Enterprise Employee", "icon": "badge.png", "href": "../customers/landing_pages/eemp.html", "description": ""}], "streamDependencies": [], "brickDependencies": [{"brickId": "onjo", "name": "Onboarding journey orchestrator", "icon": "onjo.png", "href": "../product-bricks/landing_pages/onjo.html", "description": ""}, {"brickId": "bcas", "name": "Broadcast and campaign studio", "icon": "bcas.png", "href": "../product-bricks/landing_pages/bcas.html", "description": ""}, {"brickId": "coll", "name": "Collaboration channel governance", "icon": "coll.png", "href": "../product-bricks/landing_pages/coll.html", "description": ""}, {"brickId": "feed", "name": "Employee news and pulse feed", "icon": "feed.png", "href": "../product-bricks/landing_pages/feed.html", "description": ""}, {"brickId": "evnt", "name": "Enterprise events and townhall orchestration", "icon": "evnt.png", "href": "../product-bricks/landing_pages/evnt.html", "description": ""}, {"brickId": "room", "name": "Room and workplace booking", "icon": "room.png", "href": "../product-bricks/landing_pages/room.html", "description": ""}, {"brickId": "vism", "name": "Visitor and site access manager", "icon": "vism.png", "href": "../product-bricks/landing_pages/vism.html", "description": ""}], "otherTeamDependencies": [{"teamId": "employee-experience-work-hub", "name": "Employee Experience - Work Hub", "type": "stream-aligned", "groupName": "Employee & Workplace / Employee Experience", "href": "landing_pages/employee-experience-work-hub.html", "dependencyType": "facilitating", "dependencyTypeName": "Facilitating", "description": ""}], "groupId": "governance-and-workplace", "groupName": "Employee & Workplace / Governance and Workplace"};
-    const domainName = 'Big Enterprise';
+    const domainName = 'Internal';
     const orgDesign = team.__orgDesign || {};
 
     const TEAM_TYPE_LABELS = {
@@ -576,7 +610,7 @@
   "breadcrumbs": [
     {
       "link": "../../start/index.html",
-      "label": "Big Enterprise Home"
+      "label": "Internal Home"
     },
     {
       "link": "../index.html",

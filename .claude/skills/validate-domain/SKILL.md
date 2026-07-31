@@ -55,7 +55,7 @@ the worktree is clean for that area first.
 ```bash
 cd _wiring/product-domains
 # Run only the generator(s) for the artifact you changed, with the three positional
-# args (id, name, description). Canonical name/description are in run.sh `domains`.
+# args (id, name, description). Canonical name/description are in the domain's start/config.json.
 python3 generate-customers-docs.py <domain-id> "<Domain Name>" "<Domain description>"
 ```
 
@@ -71,7 +71,7 @@ Generator ↔ artifact map:
 | business/competition.json | generate-competition-docs.py |
 
 To rebuild everything for the active domain, run `./run.sh` (regenerates the
-domain(s) listed in its `domains=(...)` array, in fixed generator order).
+every domain that has a `start/config.json`, in fixed generator order; use `run-one.sh <domain-id>` for one domain).
 
 ## 4. Report
 

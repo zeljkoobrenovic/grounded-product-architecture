@@ -883,8 +883,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -900,6 +931,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -908,7 +940,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -919,7 +953,7 @@
 
 
 <script>
-    const config = {"domains": [{"id": "technical-design-collaboration-platform", "name": "Technical Design Collaboration Platform", "description": "Product-led B2B SaaS company serving engineering organizations with AI-assisted technical design and collaboration workflows."}]};
+    const config = {"domains": [{"id": "technical-design-collaboration-platform", "name": "Technical Design Collaboration Platform", "description": "The Technical Design Collaboration Platform domain covers AI diagramming, markdown design docs, code-connected architecture workflows, collaborative review, enterprise governance, and programmable diagram delivery for engineering organizations."}]};
     const all_products = [{"id": "prod_canvas", "name": "AI Diagram Workspace", "icon": "web.png", "type": "B2B SaaS Product", "primaryCustomers": [{"id": "star", "name": "Staff Engineer / Solution Architect", "icon": "architecture.png"}, {"id": "plat", "name": "Platform Architect", "icon": "platform.png"}]}, {"id": "prod_docs", "name": "Technical Design Docs", "icon": "web.png", "type": "B2B SaaS Product", "primaryCustomers": [{"id": "enma", "name": "Engineering Manager", "icon": "engineering.png"}, {"id": "star", "name": "Staff Engineer / Solution Architect", "icon": "architecture.png"}]}, {"id": "prod_sync", "name": "Repo Sync and Codebase Diagrams", "icon": "web.png", "type": "B2B SaaS Product", "primaryCustomers": [{"id": "star", "name": "Staff Engineer / Solution Architect", "icon": "architecture.png"}, {"id": "plat", "name": "Platform Architect", "icon": "platform.png"}]}, {"id": "prod_api", "name": "Diagramming API and Embedded Whiteboard", "icon": "web.png", "type": "Platform Product", "primaryCustomers": [{"id": "plat", "name": "Platform Architect", "icon": "platform.png"}, {"id": "seco", "name": "Security and Compliance Lead", "icon": "security.png"}]}];
     const product = {"id": "prod_docs", "name": "Technical Design Docs", "icon": "web.png", "type": "B2B SaaS Product", "primaryCustomers": [{"id": "enma", "name": "Engineering Manager", "icon": "engineering.png"}, {"id": "star", "name": "Staff Engineer / Solution Architect", "icon": "architecture.png"}]};
     const deployment = {"metadata": {"title": "Technical Design Collaboration Portfolio Deployment and Operating Surfaces", "description": "Primary deployment, distribution, integration, analytics, and admin channels used to deliver and operate the Technical Design Collaboration Platform domain.", "modelVersion": "3.0"}, "channels": [{"groupId": "runtime-cloud", "groupName": "Cloud Runtime Environments", "groupType": "runtime", "description": "Primary live runtimes for backend services.", "channels": [{"subChannelId": "core-services", "subChannelName": "Core Services", "channelType": "platform-runtime", "description": "Primary runtime for authoring, publishing, and shared backend services.", "deployedBricks": [{"brickId": "aidi", "brickName": "AI Diagram Generation", "deploymentRole": "AI drafting services", "usedInProducts": [{"productId": "prod_canvas", "description": "Supports the core AI Diagram Workspace workflow."}]}, {"brickId": "mdoc", "brickName": "Markdown Document Editor", "deploymentRole": "Document services", "usedInProducts": [{"productId": "prod_docs", "description": "Supports the core Technical Design Docs workflow."}]}]}]}, {"groupId": "web-edge-delivery", "groupName": "Web and Edge Delivery", "groupType": "delivery", "description": "Edge-delivered web surfaces.", "channels": [{"subChannelId": "app-web", "subChannelName": "Application Web", "channelType": "web", "description": "Primary web application surface.", "deployedBricks": [{"brickId": "cavs", "brickName": "Canvas Editing and Figure Layout", "deploymentRole": "Diagram editor frontend", "usedInProducts": [{"productId": "prod_canvas", "description": "Supports the core AI Diagram Workspace workflow."}]}, {"brickId": "admi", "brickName": "Admin Controls and Usage Reporting", "deploymentRole": "Admin console frontend", "usedInProducts": []}]}]}, {"groupId": "external-integrations", "groupName": "External Integration Surfaces", "groupType": "integration", "description": "External tool surfaces and connector runtimes.", "channels": [{"subChannelId": "source-control", "subChannelName": "Source Control Services", "channelType": "integration", "description": "Connector runtime for git hosting integrations.", "deployedBricks": [{"brickId": "gcon", "brickName": "Git Repository Connection", "deploymentRole": "SCM install and auth services", "usedInProducts": [{"productId": "prod_sync", "description": "Supports the core Repo Sync and Codebase Diagrams workflow."}]}, {"brickId": "inte", "brickName": "Confluence Notion and IDE Integrations", "deploymentRole": "Third-party adapter services", "usedInProducts": []}]}]}, {"groupId": "analytics-and-admin", "groupName": "Analytics and Metering", "groupType": "analytics", "description": "Usage analytics, metering, and commercial reporting surfaces.", "channels": [{"subChannelId": "metering", "subChannelName": "Metering and Reporting", "channelType": "analytics", "description": "Runtime for metering, usage analytics, and packaging reporting.", "deployedBricks": [{"brickId": "aimt", "brickName": "AI Credit Metering and Prompt Orchestration", "deploymentRole": "Metering and cost-control services", "usedInProducts": [{"productId": "prod_api", "description": "Supports the core Diagramming API and Embedded Whiteboard workflow."}]}]}]}]};

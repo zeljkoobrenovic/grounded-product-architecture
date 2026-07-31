@@ -205,7 +205,7 @@ add a `dataDependencies.assetId`, it must exist in `data-assets.json` (add it wi
 2. Regenerate: from `_wiring/product-domains/`,
    `python3 generate-product-bricks-docs.py <domain-id> "<Domain Name>" "<Domain description>"`
    (also rebuilds stream/data-asset pages; name/description from `run.sh`
-   `domains`). Generator wipes the product-bricks docs folder — ensure that area's
+   the domain's `start/config.json`; or use `./run-one.sh <domain-id>`). Generator wipes the product-bricks docs folder — ensure that area's
    worktree is clean first.
 3. Report bricks/modules added or changed, dependency wiring, and which referencing
    files you updated.

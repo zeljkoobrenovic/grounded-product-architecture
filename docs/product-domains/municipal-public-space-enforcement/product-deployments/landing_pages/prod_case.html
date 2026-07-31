@@ -883,8 +883,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -900,6 +931,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -908,7 +940,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -919,7 +953,7 @@
 
 
 <script>
-    const config = {"domains": [{"id": "municipal-public-space-enforcement", "name": "Municipal Public Space Enforcement", "description": "The devices, workflows, legal procedures, and analytics that help local authorities detect public-space offences, build enforceable cases, coordinate field action, and demonstrate visible resident impact without intrusive surveillance."}]};
+    const config = {"domains": [{"id": "municipal-public-space-enforcement", "name": "Municipal Public Space Enforcement", "description": "The Municipal Public Space Enforcement domain covers the devices, workflows, legal procedures, and analytics that help local authorities detect public-space offences, build enforceable cases, coordinate field action, and demonstrate visible resident impact without intrusive surveillance."}]};
     const all_products = [{"id": "prod_waste", "name": "Waste Enforcement Network", "icon": "camera.png", "type": "Municipal SaaS + Device Product", "primaryCustomers": [{"id": "mayr", "name": "Mayor / Deputy Mayor", "icon": "leadership.png"}, {"id": "lpch", "name": "Head of Local Police", "icon": "police.png"}, {"id": "clom", "name": "Cleanliness Operations Manager", "icon": "operations.png"}]}, {"id": "prod_case", "name": "Compliance and Case Management", "icon": "case.png", "type": "Municipal Workflow Product", "primaryCustomers": [{"id": "lpch", "name": "Head of Local Police", "icon": "police.png"}, {"id": "mayr", "name": "Mayor / Deputy Mayor", "icon": "leadership.png"}]}, {"id": "prod_safety", "name": "Neighborhood Safety Response Pilot", "icon": "safety.png", "type": "Adjacent Municipal Expansion Product", "primaryCustomers": [{"id": "mayr", "name": "Mayor / Deputy Mayor", "icon": "leadership.png"}, {"id": "lpch", "name": "Head of Local Police", "icon": "police.png"}]}];
     const product = {"id": "prod_case", "name": "Compliance and Case Management", "icon": "case.png", "type": "Municipal Workflow Product", "primaryCustomers": [{"id": "lpch", "name": "Head of Local Police", "icon": "police.png"}, {"id": "mayr", "name": "Mayor / Deputy Mayor", "icon": "leadership.png"}]};
     const deployment = {"metadata": {"title": "Municipal Public Space Enforcement Deployment and Operating Surfaces", "description": "Primary field, cloud, mobile, and municipal integration channels used to deliver and operate the Municipal Public Space Enforcement domain.", "modelVersion": "3.0"}, "channels": [{"groupId": "field-edge", "groupName": "Field Edge Deployments", "groupType": "edge-runtime", "description": "Movable field hardware and local control surfaces deployed in public-space hotspots.", "channels": [{"subChannelId": "edge-device-fleet", "subChannelName": "Edge Device Fleet", "channelType": "connected-device", "description": "Primary fleet of movable camera and sensor units used for hotspot coverage.", "deployedBricks": [{"brickId": "edgc", "brickName": "Edge Camera and Sensor Unit", "deploymentRole": "Captures field events and supporting media.", "usedInProducts": [{"productId": "prod_waste", "description": "Waste enforcement starts with fast hotspot deployment and credible event capture."}]}, {"brickId": "solr", "brickName": "Solar and Power Reliability", "deploymentRole": "Keeps units operating in low-infrastructure settings.", "usedInProducts": []}, {"brickId": "zone", "brickName": "Privacy Zoning and Masking", "deploymentRole": "Applies compliant capture boundaries at the edge.", "usedInProducts": []}]}, {"subChannelId": "field-connectivity", "subChannelName": "Field Connectivity Layer", "channelType": "network-control", "description": "Secure connectivity and device health channel for live municipal deployments.", "deployedBricks": [{"brickId": "gate", "brickName": "Secure 4G/5G Connectivity Gateway", "deploymentRole": "Transports events and enables remote device operation.", "usedInProducts": []}, {"brickId": "heal", "brickName": "Device Health and Fleet Monitoring", "deploymentRole": "Tracks uptime, battery, signal, and fault state across the fleet.", "usedInProducts": []}]}]}, {"groupId": "eu-cloud", "groupName": "EU Cloud Control Plane", "groupType": "cloud-runtime", "description": "Primary EU-hosted control plane for detection, evidence, workflow, and analytics.", "channels": [{"subChannelId": "operations-control-plane", "subChannelName": "Operations Control Plane", "channelType": "saas-runtime", "description": "Core SaaS runtime for detection, triage, mapping, and case workflow.", "deployedBricks": [{"brickId": "dete", "brickName": "Incident Detection Rules Engine", "deploymentRole": "Processes incoming events and flags suspected incidents.", "usedInProducts": []}, {"brickId": "triag", "brickName": "AI-assisted Incident Triage", "deploymentRole": "Ranks and qualifies likely actionable incidents.", "usedInProducts": []}, {"brickId": "mapi", "brickName": "Geospatial Incident Map", "deploymentRole": "Provides site-level spatial operations and hotspot views.", "usedInProducts": []}, {"brickId": "case", "brickName": "Enforcement Case Workspace", "deploymentRole": "Runs case workflow and operator review.", "usedInProducts": [{"productId": "prod_waste", "description": "Operators need one place to review incidents, prioritize hotspots, and coordinate municipal action."}]}]}, {"subChannelId": "evidence-and-governance", "subChannelName": "Evidence and Governance Plane", "channelType": "secure-storage", "description": "Governed evidence storage, retention, audit, and compliance surfaces.", "deployedBricks": [{"brickId": "evid", "brickName": "Evidence Vault and Chain of Custody", "deploymentRole": "Stores evidence and its provenance.", "usedInProducts": [{"productId": "prod_case", "description": "The product only works if evidence integrity and procedural workflow are native to the case model."}]}, {"brickId": "retn", "brickName": "Retention and Deletion Scheduler", "deploymentRole": "Automates legal retention and deletion windows.", "usedInProducts": []}, {"brickId": "dpia", "brickName": "DPIA and GDPR Compliance Workspace", "deploymentRole": "Packages governance artifacts and deployment controls.", "usedInProducts": [{"productId": "prod_safety", "description": "The safety pilot can only scale if it reuses the existing compliant deployment and governance foundation."}]}, {"brickId": "audit", "brickName": "Access Control and Audit Trail", "deploymentRole": "Tracks access and workflow accountability.", "usedInProducts": []}]}]}, {"groupId": "user-surfaces", "groupName": "Officer and Municipal User Surfaces", "groupType": "user-surface", "description": "Primary interfaces used by municipal staff, officers, and leaders.", "channels": [{"subChannelId": "municipal-web-console", "subChannelName": "Enforcement Operations Console", "channelType": "web-app", "description": "Main browser-based surface for operators, legal reviewers, and leaders.", "deployedBricks": [{"brickId": "dash", "brickName": "Executive Impact Dashboard", "deploymentRole": "Provides leadership reporting and value proof.", "usedInProducts": []}, {"brickId": "proc", "brickName": "Legal Procedure Templates", "deploymentRole": "Guides case progression through compliant workflow.", "usedInProducts": [{"productId": "prod_case", "description": "Operators and legal teams need a guided case workflow inside the main municipal web surface."}]}, {"brickId": "nota", "brickName": "Notice and Fine Pack Generator", "deploymentRole": "Generates sanctions and notification material.", "usedInProducts": []}]}, {"subChannelId": "officer-mobile", "subChannelName": "Officer Mobile Workflow", "channelType": "mobile-app", "description": "Field surface for officers and municipal teams working away from the desk.", "deployedBricks": [{"brickId": "mobi", "brickName": "Officer Mobile Workflow", "deploymentRole": "Supports field updates, validation, and closure.", "usedInProducts": []}, {"brickId": "task", "brickName": "Field Service Task Dispatch", "deploymentRole": "Pushes tasks and captures field completion.", "usedInProducts": []}]}]}, {"groupId": "municipal-ecosystem", "groupName": "Municipal Ecosystem Integrations", "groupType": "integration", "description": "Interfaces to finance, service management, and partner authority systems.", "channels": [{"subChannelId": "municipal-api", "subChannelName": "Municipal Integration API", "channelType": "integration-api", "description": "Integration surface for municipal ERP, CRM, treasury, and partner workflow systems.", "deployedBricks": [{"brickId": "apii", "brickName": "Municipal Integration API", "deploymentRole": "Exchanges incident, case, task, and reporting data with municipal systems.", "usedInProducts": []}, {"brickId": "inte", "brickName": "Interagency Evidence Sharing", "deploymentRole": "Packages and transmits evidence to partner organizations.", "usedInProducts": []}, {"brickId": "finc", "brickName": "Fine Recovery and Treasury Integration", "deploymentRole": "Synchronizes sanction and payment state with treasury workflows.", "usedInProducts": []}]}]}]};

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
-    <title>Engineering Product Platform - Internal Developer Portal — Team (Big Enterprise)</title>
+    <title>Engineering Product Platform - Internal Developer Portal — Team (Internal)</title>
     <style>
     .page-type-badge {
         display: inline-block;
@@ -350,8 +350,39 @@
     }
 
     function initTab(tabName) {
+        setupTabAccessibility();
         const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
         openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
     }
 
     function openTab(tabName, options) {
@@ -367,6 +398,7 @@
         const tablinks = document.getElementsByClassName('tablinks');
         for (let i = 0; i < tablinks.length; i++) {
             tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
         }
 
         const shouldUpdateHistory = !options || options.updateHistory !== false;
@@ -375,7 +407,9 @@
         }
 
         document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
-        document.getElementById('tab_' + resolvedTabName).className += ' active';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
         if (typeof window.afterOpenTab === 'function') {
             window.afterOpenTab(resolvedTabName);
         }
@@ -404,7 +438,7 @@
 
 <script>
     const team = {"id": "engineering-product-platform-internal-developer-portal", "name": "Engineering Product Platform - Internal Developer Portal", "type": "platform", "description": "Provide architecture, integration, workflow tooling, and developer enablement for internal systems teams. This team specifically focuses on internal developer portal.", "teamHeadcount": {"headcount": 6, "description": "Cross-functional product team."}, "documentLinks": [], "customerDependencies": [{"customerId": "cphi", "name": "Chief Product Officer / CTO / Head of IT", "icon": "hub.png", "href": "../customers/landing_pages/cphi.html", "description": ""}], "streamDependencies": [], "brickDependencies": [{"brickId": "pacg", "name": "Policy-as-code guardrails", "icon": "pacg.png", "href": "../product-bricks/landing_pages/pacg.html", "description": ""}, {"brickId": "spse", "name": "Shared platform services", "icon": "spse.png", "href": "../product-bricks/landing_pages/spse.html", "description": ""}, {"brickId": "tere", "name": "Technical exception registry", "icon": "tere.png", "href": "../product-bricks/landing_pages/tere.html", "description": ""}], "otherTeamDependencies": [{"teamId": "enterprise-data-office-enterprise-metric-layer", "name": "Enterprise Data Office - Enterprise Metric Layer", "type": "platform", "groupName": "Executive & Capital / Enterprise Data Office", "href": "landing_pages/enterprise-data-office-enterprise-metric-layer.html", "dependencyType": "x-as-a-service", "dependencyTypeName": "X-as-a-Service", "description": ""}], "groupId": "shared-enablement-engineering-product-platform", "groupName": "Product, Technology & Enablement / Engineering Product Platform"};
-    const domainName = 'Big Enterprise';
+    const domainName = 'Internal';
     const orgDesign = team.__orgDesign || {};
 
     const TEAM_TYPE_LABELS = {
@@ -576,7 +610,7 @@
   "breadcrumbs": [
     {
       "link": "../../start/index.html",
-      "label": "Big Enterprise Home"
+      "label": "Internal Home"
     },
     {
       "link": "../index.html",
