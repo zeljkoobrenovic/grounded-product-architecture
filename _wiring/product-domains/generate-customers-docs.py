@@ -53,6 +53,13 @@ def load_links(domain_id):
     return json.load(open(links_file_path))
 
 
+def load_relations(domain_id):
+    relations_file_path = domains_root + domain_id + '/customers/relations.json'
+    if not os.path.exists(relations_file_path):
+        return {"relationTypes": [], "relations": []}
+    return json.load(open(relations_file_path))
+
+
 copy_media = copy_files_into
 
 
@@ -88,7 +95,7 @@ def load_stream_brick_kinds(domain_id):
     return kinds
 
 
-def create_overview_docs(domain, docs_folder, customers, insights, links):
+def create_overview_docs(domain, docs_folder, customers, insights, links, relations):
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
     os.makedirs(os.path.join(docs_folder, 'media'), exist_ok=True)
@@ -116,7 +123,8 @@ def create_overview_docs(domain, docs_folder, customers, insights, links):
                         .replace('${domain_description}', domain['description'])
                         .replace('${customers}', json.dumps(customers))
                         .replace('${insights}', json.dumps(insights))
-                        .replace('${links}', json.dumps(links)))
+                        .replace('${links}', json.dumps(links))
+                        .replace('${relations}', json.dumps(relations)))
 
 
 def create_landing_pages(customers, docs_folder, insights):
@@ -182,8 +190,9 @@ if not os.path.exists(customers_file_path):
 customers = json.load(open(customers_file_path))
 insights = load_insights(domain_id)
 links = load_links(domain_id)
+relations = load_relations(domain_id)
 stream_brick_kinds = load_stream_brick_kinds(domain_id)
 
 docs_folder = domain_id + '/customers/'
-create_overview_docs(domain, docs_folder, customers, insights, links)
+create_overview_docs(domain, docs_folder, customers, insights, links, relations)
 create_landing_pages(customers, docs_folder, insights)
