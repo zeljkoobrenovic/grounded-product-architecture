@@ -661,23 +661,31 @@
 <style>
     .relations-section { padding: 8px 2px; font-family: Ubuntu, Optima, Segoe, sans-serif; }
     .relations-intro { color: #4b5563; font-size: 90%; max-width: 860px; margin: 4px 0 10px 0; }
-    .relations-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 4px 0; }
-    .relations-legend-item { display: flex; align-items: center; gap: 6px; font-size: 82%; color: #374151; }
+    .relations-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 4px 0; }
+    .relations-legend-item { display: flex; align-items: center; gap: 6px; font-size: 82%; color: #374151;
+        border: 1px solid #e5e7eb; border-radius: 999px; padding: 4px 12px; background: #fff; cursor: pointer; user-select: none; }
+    .relations-legend-item:hover { border-color: #9ca3af; }
+    .relations-legend-item.off { opacity: 0.45; background: #f3f4f6; text-decoration: line-through; }
     .relations-legend-swatch { width: 22px; height: 4px; border-radius: 2px; display: inline-block; }
+    .relations-legend-hint { font-size: 76%; color: #9ca3af; align-self: center; }
     .relations-diagram-wrap { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; margin: 8px 0 16px 0; }
     .relations-diagram-wrap svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
     .relation-edge { cursor: pointer; }
     .relation-edge:hover { stroke-width: 5; }
     .relation-node text { fill: #1f2937; font-size: 13px; font-weight: 600; }
     .relation-node:hover circle { stroke: #1d4ed8; stroke-width: 3; }
-    .relations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 6px; }
-    .relation-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; background: #fff; }
-    .relation-card-route { font-size: 82%; color: #6b7280; margin-bottom: 4px; }
-    .relation-card-route b { color: #111827; }
-    .relation-card-name { font-weight: 600; margin-bottom: 4px; }
-    .relation-card-description { font-size: 86%; color: #4b5563; }
-    .relation-type-chip { display: inline-block; font-size: 72%; padding: 2px 8px; border-radius: 999px; color: #fff; margin-left: 6px; vertical-align: middle; }
-    .relation-card-streams { margin-top: 8px; font-size: 72%; color: #6b7280; }
+    .relations-table-wrap { overflow-x: auto; margin-top: 6px; }
+    .relations-table { border-collapse: collapse; width: 100%; background: #fff; font-size: 86%; }
+    .relations-table th { text-align: left; background: #f9fafb; color: #374151; border: 1px solid #e5e7eb;
+        padding: 8px 12px; white-space: nowrap; }
+    .relations-table td { border: 1px solid #e5e7eb; padding: 8px 12px; vertical-align: top; color: #4b5563; }
+    .relations-table td.relation-endpoint { white-space: nowrap; font-weight: 600; color: #111827; }
+    .relations-table td.relation-endpoint a { color: #111827; text-decoration: none; }
+    .relations-table td.relation-endpoint a:hover { color: #1d4ed8; }
+    .relations-table td.relation-name-cell { font-weight: 600; color: #1f2937; }
+    .relation-type-chip { display: inline-block; font-size: 86%; padding: 2px 10px; border-radius: 999px; color: #fff; white-space: nowrap; }
+    .relation-streams { font-size: 90%; color: #6b7280; }
+    .relations-empty-row { color: #9ca3af; font-style: italic; }
 </style>
 
 <script>
@@ -967,10 +975,17 @@
         document.getElementById('tab_content_links').innerHTML = html;
     }
 
+    const relationTypeState = {};
+
+    function toggleRelationType(typeId) {
+        relationTypeState[typeId] = !relationTypeState[typeId];
+        renderRelations();
+    }
+
     function renderRelations() {
-        const rels = (relations.relations || []);
+        const allRels = (relations.relations || []);
         const container = document.getElementById('tab_content_relations');
-        if (!rels.length) {
+        if (!allRels.length) {
             container.innerHTML = '<div style="padding:16px;color:#6b7280">No customer relations defined for this domain yet.</div>';
             return;
         }
@@ -978,13 +993,21 @@
         const lookup = customerLookup();
         const types = relations.relationTypes || [];
         const typeById = {};
-        types.forEach(type => { typeById[type.id] = type; });
+        types.forEach(type => {
+            typeById[type.id] = type;
+            if (!(type.id in relationTypeState)) relationTypeState[type.id] = true;
+        });
+        allRels.forEach(rel => {
+            if (!(rel.type in relationTypeState)) relationTypeState[rel.type] = true;
+        });
         const colorFor = typeId => (typeById[typeId] || {}).color || '#64748b';
+        const rels = allRels.filter(rel => relationTypeState[rel.type]);
 
-        // Nodes: customers that participate in at least one relation, in group order.
+        // Nodes: customers that participate in at least one relation (regardless of
+        // the type filter, so toggling never rearranges the ring), in group order.
         const nodeIds = [];
         customers.forEach(group => (group.customers || []).forEach(customer => {
-            if (rels.some(rel => rel.from === customer.id || rel.to === customer.id)) {
+            if (allRels.some(rel => rel.from === customer.id || rel.to === customer.id)) {
                 nodeIds.push(customer.id);
             }
         }));
@@ -1055,34 +1078,39 @@
             html += '<div class="relations-intro">' + escapeHtml(relations.description) + '</div>';
         }
         html += '<div class="relations-legend">';
-        types.forEach(type => {
-            html += '<span class="relations-legend-item"><span class="relations-legend-swatch" style="background:' + escapeHtml(type.color || '#64748b') + '"></span>' + escapeHtml(type.name || type.id);
-            if (type.description) {
-                html += ' <span style="color:#9ca3af">— ' + escapeHtml(type.description) + '</span>';
-            }
+        Object.keys(relationTypeState).forEach(typeId => {
+            const type = typeById[typeId] || { id: typeId };
+            const count = allRels.filter(rel => rel.type === typeId).length;
+            html += '<span class="relations-legend-item' + (relationTypeState[typeId] ? '' : ' off') + '"' +
+                ' onclick="toggleRelationType(\'' + escapeHtml(typeId) + '\')"' +
+                ' title="' + escapeHtml(type.description || '') + '">';
+            html += '<span class="relations-legend-swatch" style="background:' + escapeHtml(type.color || '#64748b') + '"></span>';
+            html += escapeHtml(type.name || typeId) + ' (' + count + ')';
             html += '</span>';
         });
+        html += '<span class="relations-legend-hint">Click a type to show or hide its relations.</span>';
         html += '</div>';
         html += '<div class="relations-diagram-wrap">' + svg + '</div>';
 
-        html += '<div class="relations-grid">';
+        html += '<div class="relations-table-wrap"><table class="relations-table">';
+        html += '<tr><th>From</th><th>To</th><th>Type</th><th>Relation</th><th>Description</th><th>Via streams</th></tr>';
+        if (!rels.length) {
+            html += '<tr><td colspan="6" class="relations-empty-row">All relation types are switched off — click a type above to show its relations.</td></tr>';
+        }
         rels.forEach(rel => {
             const fromName = (lookup[rel.from] || {}).name || rel.from;
             const toName = (lookup[rel.to] || {}).name || rel.to;
             const type = typeById[rel.type] || {};
-            html += '<div class="relation-card" style="border-top:3px solid ' + escapeHtml(colorFor(rel.type)) + '">';
-            html += '<div class="relation-card-route"><b>' + escapeHtml(fromName) + '</b> → <b>' + escapeHtml(toName) + '</b>';
-            html += '<span class="relation-type-chip" style="background:' + escapeHtml(colorFor(rel.type)) + '">' + escapeHtml(type.name || rel.type || '') + '</span></div>';
-            html += '<div class="relation-card-name">' + escapeHtml(rel.name || '') + '</div>';
-            if (rel.description) {
-                html += '<div class="relation-card-description">' + escapeHtml(rel.description) + '</div>';
-            }
-            if (rel.streamIds && rel.streamIds.length) {
-                html += '<div class="relation-card-streams">Via: ' + rel.streamIds.map(escapeHtml).join(' · ') + '</div>';
-            }
-            html += '</div>';
+            html += '<tr>';
+            html += '<td class="relation-endpoint"><a href="landing_pages/' + escapeHtml(rel.from) + '.html">' + escapeHtml(fromName) + '</a></td>';
+            html += '<td class="relation-endpoint"><a href="landing_pages/' + escapeHtml(rel.to) + '.html">' + escapeHtml(toName) + '</a></td>';
+            html += '<td><span class="relation-type-chip" style="background:' + escapeHtml(colorFor(rel.type)) + '">' + escapeHtml(type.name || rel.type || '') + '</span></td>';
+            html += '<td class="relation-name-cell">' + escapeHtml(rel.name || '') + '</td>';
+            html += '<td>' + escapeHtml(rel.description || '') + '</td>';
+            html += '<td class="relation-streams">' + (rel.streamIds || []).map(escapeHtml).join('<br>') + '</td>';
+            html += '</tr>';
         });
-        html += '</div></div>';
+        html += '</table></div></div>';
         container.innerHTML = html;
     }
 
