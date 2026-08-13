@@ -32,6 +32,11 @@ artifacts that are skeletal (1–2 entries where the reference has many) or abse
 ### Cross-segment coverage
 - Every customer group has personas with JTBD, journeys, KPI pyramids, and
   per-customer `productStrategy`. Flag personas missing any of these.
+- Journey stories use the fixed adoption stages (Trigger, Discovery, Evaluation,
+  Trial, Engagement, Retention) and describe adopting the product. **P1: flag any
+  journey whose stages are task phases ("Preparation", "Award", "Dispatch"…) or
+  whose narratives would read the same without the product — that's a JTBD
+  narrative in journey clothing.**
 - Multi-sided domains have distinct segments (buyer/user/operator/partner), not one
   generic "user". Flag collapsed segmentation.
 - Each segment maps to at least one product and one owning team.

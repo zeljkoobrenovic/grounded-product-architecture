@@ -34,7 +34,10 @@ references resolvable.
      Decide scope, value exchange, vision, 1/3/5-year horizons.
 2. **Customers** → `edit-customers`
    - Groups, personas, JTBD, journeys, KPI pyramids, per-customer productStrategy,
-     `insights.json`. Establishes customer ids + KPI names everything else reuses.
+     `insights.json`, `relations.json`. Establishes customer ids + KPI names
+     everything else reuses. Journey stories use the fixed adoption stages
+     (Trigger → Discovery → Evaluation → Trial → Engagement → Retention) — they
+     describe adopting the product, not performing the job.
 3. **Product bricks** → `edit-product-bricks`
    - Root groups → subgroups → 20+ bricks with layered modules and dependencies.
      Establishes brick ids.
