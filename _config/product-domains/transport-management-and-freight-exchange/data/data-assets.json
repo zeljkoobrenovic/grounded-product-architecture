@@ -1,0 +1,1268 @@
+{
+  "metadata": {
+    "title": "Transport Management and Freight Exchange Data Assets",
+    "description": "Catalog of the business, personal, financial, and network data assets that power the transport lifecycle (Plan, Procure, Execute, Track, Settle, Analyse) and the pan-European freight-exchange network, with classification, governance, and team ownership.",
+    "modelVersion": "1.0"
+  },
+  "rootGroups": [
+    {
+      "name": "Transport Order and Execution Data",
+      "description": "The operational spine of the domain: transport orders flowing in from shipper ERPs and planning systems, their execution state across the carrier network, and the legal transport documents (eCMR, POD) that prove what happened.",
+      "subGroups": [
+        {
+          "name": "Order Lifecycle Records",
+          "description": "Durable order and execution records that every shipper-facing and carrier-facing workflow reads and writes.",
+          "assets": [
+            {
+              "id": "transport-order",
+              "name": "Transport Order",
+              "kind": "logical-object",
+              "description": "The canonical transport order: loads imported from shipper ERPs (SAP, Oracle, plant systems) or created by planners, with pickup and delivery stops, time windows, cargo lines, equipment requirements, and assigned carrier. Consumed by planning, tendering, execution, dock scheduling, settlement, and analytics. Stop contacts carry names and phone numbers of warehouse staff.",
+              "businessMeaning": "The unit of work the whole platform revolves around: one order equals one movement of goods a shipper needs executed and a carrier gets paid for.",
+              "status": "active",
+              "tags": [
+                "shipper-products",
+                "execution-and-visibility"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "owning shipper organization, assigned carrier, and internal execution workflows",
+              "systemOfRecordBrickId": "tord",
+              "ownerTeamId": "transport-planning",
+              "stewardTeamIds": [
+                "transport-execution"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "transport-order-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "transport-order-events",
+                  "role": "event-source"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "transport-order api",
+                  "description": "CRUD and lifecycle API for transport orders, used by the TMS UI, Transport Execution API clients, and the ERP integration hub."
+                },
+                {
+                  "type": "event",
+                  "name": "transport-order state events",
+                  "description": "Order created, tendered, accepted, dispatched, delivered, and cancelled events consumed by visibility, dock scheduling, and settlement."
+                }
+              ],
+              "governance": {
+                "retention": "active lifecycle plus 24 months operational history; stop-contact personal data minimized after delivery closure",
+                "residency": "eu",
+                "sharingPolicy": "visible only to the owning shipper organization and the carriers assigned to the order; never shared across shipper tenants"
+              }
+            },
+            {
+              "id": "shipment-execution-record",
+              "name": "Shipment Execution Record",
+              "kind": "operational-state",
+              "description": "The execution-side record of a dispatched shipment: carrier acceptance, assigned vehicle and driver, planned vs actual times, milestone confirmations, deviations, and completion status. Originates from carrier confirmations via the portal, mobile app, and connectivity gateway; consumed by exception management, settlement, trust scoring, and emissions calculation. Contains driver names, phone numbers, and vehicle plates.",
+              "businessMeaning": "The single account of how a transport actually went, and the evidence base for paying carriers, scoring reliability, and computing CO2.",
+              "status": "active",
+              "tags": [
+                "execution-and-visibility"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "shipper and carrier parties to the shipment, plus internal settlement, trust, and analytics workflows",
+              "systemOfRecordBrickId": "texe",
+              "ownerTeamId": "transport-execution",
+              "stewardTeamIds": [
+                "visibility"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "shipment-execution-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "shipment-execution api",
+                  "description": "Milestone and status API used by the carrier portal, mobile app, and Transport Execution integrations."
+                },
+                {
+                  "type": "event",
+                  "name": "execution milestone events",
+                  "description": "Pickup, in-transit, delivery, and deviation events feeding exception management and downstream derivations."
+                }
+              ],
+              "governance": {
+                "retention": "36 months for operational and dispute use; driver personal identifiers pseudonymized after 12 months",
+                "residency": "eu",
+                "sharingPolicy": "shared between the shipper and carrier parties to a shipment; only anonymized aggregates leave the transaction context (trust scores, benchmarks, emissions)"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transport Documents",
+          "description": "Legally meaningful documents generated or captured during execution.",
+          "assets": [
+            {
+              "id": "transport-document",
+              "name": "Transport Document",
+              "kind": "document",
+              "description": "Digital transport documents attached to a shipment: electronic consignment notes (eCMR) with sender, carrier, and consignee signatures, proof-of-delivery photos and scans, pallet notes, and dangerous-goods declarations. Originates from the e-documents product via driver mobile signature capture and document upload; consumed by settlement (self-billing evidence), freight audit, dispute resolution, and shipper compliance archives. eCMR content includes driver names and handwritten signatures.",
+              "businessMeaning": "The legal proof layer of road transport: what was handed over, to whom, when, in what condition, and under whose signature.",
+              "status": "active",
+              "tags": [
+                "execution-and-visibility",
+                "commercial-and-insight"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "ecmr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "shipment parties, settlement and audit workflows, and legal or customs authorities on lawful request",
+              "systemOfRecordBrickId": "edoc",
+              "ownerTeamId": "transport-execution",
+              "stewardTeamIds": [
+                "settlement"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "transport-document-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "transport-document-index",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "transport-document api",
+                  "description": "Upload, signature, retrieval, and verification API for eCMR and POD documents."
+                }
+              ],
+              "governance": {
+                "retention": "statutory transport-document retention, typically 6-10 years depending on member state; immutable once countersigned",
+                "residency": "eu",
+                "sharingPolicy": "accessible to the named parties on the consignment note; disclosed to authorities only through the legal-request process"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Procurement and Rate Data",
+      "description": "Contracted rates and the tender activity that produced them: the commercial agreements between shippers and carriers that planning, execution, and settlement price against.",
+      "subGroups": [
+        {
+          "name": "Contracts and Tenders",
+          "description": "Rate cards, routing guides, and the RFP/RFQ event history behind them.",
+          "assets": [
+            {
+              "id": "contract-rate-card",
+              "name": "Contract Rate Card",
+              "kind": "reference-data",
+              "description": "Contracted lane rates, surcharges (fuel, tolls, accessorials), validity periods, allocation shares, and routing-guide positions agreed between a shipper and its carriers. Originates from awarded freight tenders in the procurement product or manual contract entry; consumed by carrier selection (routing-guide waterfall), transport planning (cost estimation), freight cost management, and freight audit (invoice-vs-contract matching). Commercially sensitive: rate leakage between carriers or across shippers would damage negotiations.",
+              "businessMeaning": "The commercial contract expressed as data: which carrier hauls which lane at what price, and in what order carriers are asked.",
+              "status": "active",
+              "tags": [
+                "shipper-products",
+                "commercial-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "high",
+              "accessScope": "owning shipper organization, the specific carrier for its own rates, and internal pricing workflows",
+              "systemOfRecordBrickId": "rate",
+              "ownerTeamId": "freight-procurement",
+              "stewardTeamIds": [
+                "settlement"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "contract-rate-card-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "contract-rate-card api",
+                  "description": "Rate lookup and routing-guide API used by carrier selection, cost management, and audit."
+                }
+              ],
+              "governance": {
+                "retention": "contract validity plus 7 years for audit and dispute purposes",
+                "residency": "eu",
+                "sharingPolicy": "each carrier sees only its own rates; cross-customer use only as anonymized aggregates in lane benchmarks"
+              }
+            },
+            {
+              "id": "tender-event",
+              "name": "Tender Event",
+              "kind": "event",
+              "description": "The event history of freight procurement: RFP/RFQ rounds published to carriers, per-lane bids received, negotiation rounds, and award decisions, plus the daily-tendering trail of load offers sent through the routing guide and each carrier's accept, reject, or timeout response. Originates in the tendering and carrier-selection products; consumed by procurement analytics (bid comparison, savings tracking), tender acceptance KPIs, and lane rate benchmarking. Bids are strictly confidential between the bidding carrier and the tendering shipper.",
+              "businessMeaning": "The negotiation record: what capacity was asked for, who bid what, who won, and how carriers respond to offered loads day to day.",
+              "status": "active",
+              "tags": [
+                "shipper-products"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "medium",
+              "accessScope": "tendering shipper, each bidding carrier for its own bids, and internal procurement analytics",
+              "systemOfRecordBrickId": "tndr",
+              "ownerTeamId": "freight-procurement",
+              "stewardTeamIds": [
+                "analytics"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "tender-event-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "tender api",
+                  "description": "Tender publication, bidding, and award API for the procurement web application and carrier portal."
+                },
+                {
+                  "type": "event",
+                  "name": "tender response events",
+                  "description": "Bid submitted, load accepted, load rejected, and tender awarded events feeding acceptance-rate analytics."
+                }
+              ],
+              "governance": {
+                "retention": "7 years to support procurement audits and savings verification",
+                "residency": "eu",
+                "sharingPolicy": "bids visible only to the bidding carrier and the tendering shipper; aggregated and anonymized before entering cross-customer benchmarks"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Freight Exchange and Network Trust Data",
+      "description": "The marketplace side of the business: spot freight and truck-capacity offers flowing through the exchanges (Teleroute, Wtransnet, Bursa Transport heritage), and the identity, trust, fraud, and payment-security data that keeps a network of 80,000+ carriers safe to trade in.",
+      "subGroups": [
+        {
+          "name": "Marketplace Offers",
+          "description": "The transactional liquidity of the exchange: hundreds of thousands of freight and capacity offers per day.",
+          "assets": [
+            {
+              "id": "spot-freight-offer",
+              "name": "Spot Freight Offer",
+              "kind": "logical-object",
+              "description": "A load posted to the freight exchange: origin, destination, dates, cargo type, weight and loading meters, vehicle requirements, offered price, and the posting company's contact person with name and phone number. Posted by shippers, forwarders, and carriers, or automatically from uncovered TMS loads spilling to spot; consumed by matching, exchange search, and (anonymized) lane rate benchmarks. Short-lived: offers expire in hours to days.",
+              "businessMeaning": "One side of the marketplace's liquidity: freight looking for a truck, priced by the spot market in near real time.",
+              "status": "active",
+              "tags": [
+                "network-and-carrier-products"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "authenticated exchange members within the offer's visibility rules; contact details revealed on interest",
+              "systemOfRecordBrickId": "fxch",
+              "ownerTeamId": "freight-exchange",
+              "stewardTeamIds": [],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "exchange-offer-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "exchange-offer-search",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "freight-offer api",
+                  "description": "Post, search, and book API for spot freight offers, used by the exchange web app, mobile app, and TMS spot-spill integration."
+                },
+                {
+                  "type": "event",
+                  "name": "offer lifecycle events",
+                  "description": "Offer posted, matched, booked, and expired events feeding matching and market analytics."
+                }
+              ],
+              "governance": {
+                "retention": "90 days after expiry for dispute handling; anonymized transaction facts kept long-term for benchmarking",
+                "residency": "eu",
+                "sharingPolicy": "visible to vetted exchange members only; contact personal data shown on legitimate interest within a negotiation; aggregated and anonymized before any cross-customer analytics"
+              }
+            },
+            {
+              "id": "vehicle-capacity-offer",
+              "name": "Vehicle Capacity Offer",
+              "kind": "logical-object",
+              "description": "A free truck posted to the exchange: current or future availability location, radius or preferred destination lanes, vehicle type and equipment, available dates, and the dispatcher's contact details. Originates from carrier dispatchers and owner-operators looking for return loads; consumed by matching and recommendations (freight-to-truck pairing), exchange search, and network capacity analytics. Availability positions approximate vehicle whereabouts and are treated as personal data for owner-operators.",
+              "businessMeaning": "The other side of marketplace liquidity: empty capacity looking for freight, the raw material for cutting empty kilometers.",
+              "status": "active",
+              "tags": [
+                "network-and-carrier-products"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "authenticated exchange members within the offer's visibility rules",
+              "systemOfRecordBrickId": "fxch",
+              "ownerTeamId": "freight-exchange",
+              "stewardTeamIds": [],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "exchange-offer-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "exchange-offer-search",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "capacity-offer api",
+                  "description": "Post and search API for available vehicles, used by the exchange web app and carrier mobile app."
+                }
+              ],
+              "governance": {
+                "retention": "30 days after expiry; capacity patterns retained only as anonymized aggregates",
+                "residency": "eu",
+                "sharingPolicy": "visible to vetted exchange members; owner-operator location data never exposed outside the exchange context"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Carrier Identity and Trust",
+          "description": "Who is allowed to trade on the network, how trustworthy they are, and what happens when payment goes wrong.",
+          "assets": [
+            {
+              "id": "carrier-profile",
+              "name": "Carrier Profile",
+              "kind": "master-data",
+              "description": "The vetted identity of a network carrier: legal entity data, VAT and transport-license numbers, insurance certificates, fleet and equipment, operating lanes, contact persons, and vetting status with document evidence. Created at signup and continuously re-verified against license registries, insurance validity, and sanction lists; consumed by exchange access control, carrier selection, trust scoring, and guarantee underwriting. For owner-operators the legal entity is a natural person, so much of this profile is personal data.",
+              "businessMeaning": "The network's membership register: proof that a carrier is real, licensed, insured, and safe to hand cargo to.",
+              "status": "active",
+              "tags": [
+                "network-and-carrier-products"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "vetting and trust workflows, exchange member directory (public subset), and shipper carrier-selection views",
+              "systemOfRecordBrickId": "cvet",
+              "ownerTeamId": "network-trust",
+              "stewardTeamIds": [
+                "carrier-experience"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "carrier-profile-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "carrier-document-store",
+                  "role": "data-files"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "carrier-profile api",
+                  "description": "Profile, vetting-status, and directory API used by the exchange, carrier portal, and shipper carrier-selection screens."
+                },
+                {
+                  "type": "event",
+                  "name": "vetting status events",
+                  "description": "Carrier verified, document expiring, and membership suspended events consumed by exchange access control and trust scoring."
+                }
+              ],
+              "governance": {
+                "retention": "membership lifetime plus 5 years; vetting evidence retained for fraud-defense purposes after offboarding",
+                "residency": "eu",
+                "sharingPolicy": "public directory subset visible to members; license and insurance documents restricted to vetting workflows; never sold or shared externally"
+              }
+            },
+            {
+              "id": "network-trust-score",
+              "name": "Network Trust Score",
+              "kind": "derived-metric",
+              "description": "Computed trust and fraud-risk scoring for every network member: reliability from executed shipments (on-time, disputes, cancellations), payment behavior from settlement history, fraud flags from anomaly detection (identity mismatches, cloned-company patterns, cargo-theft indicators), and peer ratings. Derived from carrier profiles, execution records, and payment-guarantee cases; consumed by exchange ranking, trust badges, and fraud-investigation queues. Scores attach to owner-operators as natural persons, so scoring logic and appeals fall under GDPR profiling rules.",
+              "businessMeaning": "The network's immune system: the quantified answer to whether this counterparty will show up, deliver, and pay.",
+              "status": "active",
+              "tags": [
+                "network-and-carrier-products"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "trust and fraud workflows internally; coarse-grained badges and ratings visible to exchange members",
+              "systemOfRecordBrickId": "trst",
+              "ownerTeamId": "network-trust",
+              "stewardTeamIds": [
+                "freight-exchange"
+              ],
+              "derivedFromAssetIds": [
+                "carrier-profile",
+                "shipment-execution-record",
+                "payment-guarantee-case"
+              ],
+              "stores": [
+                {
+                  "storeId": "trust-score-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "trust-feature-store",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "trust-score api",
+                  "description": "Score and badge lookup API for exchange ranking, matching, and member profile pages; full score detail restricted to fraud operations."
+                }
+              ],
+              "governance": {
+                "retention": "recomputed continuously; score history kept 5 years for fraud investigation and appeal handling",
+                "residency": "eu",
+                "sharingPolicy": "raw scores and fraud flags internal-only; members see coarse public badges; scoring inputs and logic documented for GDPR profiling transparency and appeals"
+              }
+            },
+            {
+              "id": "payment-guarantee-case",
+              "name": "Payment Guarantee Case",
+              "kind": "financial-record",
+              "description": "A payment-security case on an exchange transaction: the guaranteed amount, covered parties, underlying transaction references, debtor payment status, dunning and collection steps, payout decisions, and recovery outcomes. Originates when a carrier books a load under payment guarantee or reports non-payment; consumed by collections operations, trust scoring (payment behavior), guarantee underwriting, and finance reporting. Contains debtor financial data, claim correspondence, and bank details for payouts.",
+              "businessMeaning": "The product that removes a carrier's worst fear on the spot market: if the freight payer defaults, the case record is the basis on which the carrier still gets paid.",
+              "status": "active",
+              "tags": [
+                "network-and-carrier-products",
+                "commercial-and-insight"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "collections and guarantee operations, the claiming carrier for its own cases, and finance",
+              "systemOfRecordBrickId": "pgar",
+              "ownerTeamId": "network-trust",
+              "stewardTeamIds": [
+                "settlement"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "payment-guarantee-db",
+                  "role": "system-of-record"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "payment-guarantee api",
+                  "description": "Case creation, status, and payout API for the carrier portal and internal collections tooling."
+                }
+              ],
+              "governance": {
+                "retention": "10 years per financial-record obligations; collection correspondence retained for the legal claim period",
+                "residency": "eu",
+                "sharingPolicy": "case details visible only to the claiming carrier and internal operations; debtor payment behavior feeds trust scores in aggregated form only"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Visibility and Site Operations Data",
+      "description": "Live movement data and site scheduling: GPS and telematics streams from the connected carrier fleet, the ETA predictions computed on top of them, and dock-slot bookings that synchronize trucks with warehouses.",
+      "subGroups": [
+        {
+          "name": "Tracking and Prediction",
+          "description": "High-volume position telemetry and the derived predictions served to planners and warehouses.",
+          "assets": [
+            {
+              "id": "tracking-event-stream",
+              "name": "Tracking Event Stream",
+              "kind": "event-stream",
+              "description": "Real-time position and status telemetry of shipments in execution: GPS positions from carrier telematics providers and the driver mobile app, geofence events, temperature readings, and status pings, normalized by the connectivity gateway from dozens of telematics formats. Consumed by live visibility maps, ETA prediction, exception detection, and dock arrival triggers. Vehicle positions identify drivers and owner-operators, so the stream is consent-gated per shipment with deliberately short retention.",
+              "businessMeaning": "The live pulse of the network: where every tracked truck is right now, feeding everything the platform predicts and preempts.",
+              "status": "active",
+              "tags": [
+                "execution-and-visibility"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "shipment parties during execution, and internal visibility, ETA, and exception workflows",
+              "systemOfRecordBrickId": "conn",
+              "ownerTeamId": "visibility",
+              "stewardTeamIds": [
+                "connectivity"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "tracking-event-topic",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "tracking-event-archive",
+                  "role": "archive"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "event",
+                  "name": "tracking event topic",
+                  "description": "Normalized position and status stream consumed by visibility, ETA, exception, and dock-scheduling services."
+                },
+                {
+                  "type": "api",
+                  "name": "tracking history api",
+                  "description": "Per-shipment track history for live maps and post-delivery dispute review."
+                }
+              ],
+              "governance": {
+                "retention": "raw positions 90 days, then reduced to shipment-level route summaries; consent scope limited to active shipments",
+                "residency": "eu",
+                "sharingPolicy": "positions visible only to the parties of the tracked shipment while it executes; never used to profile drivers; aggregates only beyond the transaction"
+              }
+            },
+            {
+              "id": "eta-prediction",
+              "name": "ETA Prediction",
+              "kind": "derived-metric",
+              "description": "Continuously recomputed estimated arrival times per shipment stop, with confidence bands and delay-risk classification, computed from the tracking event stream combined with route distance, driving-time regulation constraints, and historical lane transit times. Consumed by the visibility UI (arrival boards), exception management (late-risk alerts before the customer notices), and dock scheduling (slot re-planning on predicted delay). Predictions attach to shipments, not people, and carry no direct personal data.",
+              "businessMeaning": "The promise-keeping engine: turning raw positions into 'this truck arrives at 14:40' so planners and docks act before delays become failures.",
+              "status": "active",
+              "tags": [
+                "execution-and-visibility"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "medium",
+              "accessScope": "shipment parties and internal visibility, exception, and dock-scheduling workflows",
+              "systemOfRecordBrickId": "trck",
+              "ownerTeamId": "visibility",
+              "stewardTeamIds": [],
+              "derivedFromAssetIds": [
+                "tracking-event-stream"
+              ],
+              "stores": [
+                {
+                  "storeId": "eta-prediction-cache",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "eta api",
+                  "description": "Current ETA and delay-risk lookup per shipment stop, used by visibility UI, notifications, and dock scheduling."
+                },
+                {
+                  "type": "event",
+                  "name": "eta change events",
+                  "description": "Significant ETA shift and late-risk events that trigger exceptions and slot re-planning."
+                }
+              ],
+              "governance": {
+                "retention": "live predictions ephemeral; prediction-vs-actual history 24 months for model accuracy monitoring",
+                "residency": "eu",
+                "sharingPolicy": "served to shipment parties; accuracy statistics shared internally for model improvement"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dock and Yard Records",
+          "description": "Site-side scheduling records that synchronize truck arrivals with warehouse capacity.",
+          "assets": [
+            {
+              "id": "dock-slot-booking",
+              "name": "Dock Slot Booking",
+              "kind": "logical-object",
+              "description": "A booked loading or unloading time slot at a plant or DC dock: site, dock and equipment type, slot window, linked transport order, booking carrier, expected driver name and phone for gate check-in, and actual gate-in/gate-out timestamps. Originates from carriers and forwarders booking slots in the dock-scheduling product against site capacity rules; consumed by site gate operations, truck-turnaround analytics, and visibility (arrival vs slot). Driver identification at the gate makes this a personal-data record.",
+              "businessMeaning": "The handshake between a truck and a warehouse: the slot that turns unpredictable arrivals into a smooth dock plan and short turnarounds.",
+              "status": "active",
+              "tags": [
+                "execution-and-visibility"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "site operations of the owning shipper, the booking carrier, and turnaround analytics",
+              "systemOfRecordBrickId": "dock",
+              "ownerTeamId": "site-logistics",
+              "stewardTeamIds": [],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "dock-slot-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "dock-slot api",
+                  "description": "Slot search, booking, and gate check-in API for the dock-scheduling web app and carrier-facing booking flows."
+                },
+                {
+                  "type": "event",
+                  "name": "slot lifecycle events",
+                  "description": "Slot booked, rescheduled, gate-in, and gate-out events feeding turnaround KPIs and visibility."
+                }
+              ],
+              "governance": {
+                "retention": "18 months for turnaround analytics; driver gate-identification data minimized 30 days after the visit",
+                "residency": "eu",
+                "sharingPolicy": "visible to the site owner and booking carrier; site utilization statistics internal to the owning shipper"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Commercial and Financial Data",
+      "description": "The settlement layer: invoices, self-billing statements, and audited freight costs that close the loop from delivered shipment to paid carrier.",
+      "subGroups": [
+        {
+          "name": "Settlement Records",
+          "description": "Financial records with statutory retention and strict access control.",
+          "assets": [
+            {
+              "id": "freight-invoice",
+              "name": "Freight Invoice",
+              "kind": "financial-record",
+              "description": "Carrier invoices and shipper self-billing statements for executed transports: invoice lines matched to orders and rate cards, surcharge breakdowns, VAT treatment per country, audit status, credit notes, and payment references including carrier bank details. Submitted by carriers or generated by the self-billing engine from execution records and contract rates; consumed by freight audit, shipper AP export, cost allocation, and lane benchmarking. Financial data under statutory bookkeeping retention.",
+              "businessMeaning": "The money truth of every shipment: what was actually charged, whether it matches the contract, and what the carrier gets paid.",
+              "status": "active",
+              "tags": [
+                "commercial-and-insight"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "settlement and audit workflows, the invoicing carrier and paying shipper for their own documents, and finance export integrations",
+              "systemOfRecordBrickId": "audt",
+              "ownerTeamId": "settlement",
+              "stewardTeamIds": [
+                "analytics"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "freight-invoice-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "freight-invoice api",
+                  "description": "Invoice submission, audit-status, and self-billing API used by the carrier portal, audit UI, and ERP AP export."
+                },
+                {
+                  "type": "event",
+                  "name": "settlement events",
+                  "description": "Invoice matched, disputed, approved, and paid events feeding carrier payment-behavior signals and cost analytics."
+                }
+              ],
+              "governance": {
+                "retention": "statutory bookkeeping retention, typically 10 years; bank details vaulted and access-logged",
+                "residency": "eu",
+                "sharingPolicy": "restricted to the transaction parties and finance workflows; rate content anonymized before entering cross-customer benchmarks"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytics and Sustainability Data",
+      "description": "The data products built on network transaction flow: anonymized lane rate benchmarks sold back to the market, and CSRD-grade emissions records per shipment.",
+      "subGroups": [
+        {
+          "name": "Benchmarks and Emissions",
+          "description": "Derived datasets with explicit anonymization and methodology obligations.",
+          "assets": [
+            {
+              "id": "lane-rate-benchmark",
+              "name": "Lane Rate Benchmark",
+              "kind": "analytics-dataset",
+              "description": "Aggregated market price intelligence per lane, vehicle type, and time window: spot-rate indices from exchange transactions, contract-rate corridors from tenders and audited invoices, capacity-tension indicators, and trend series. Derived from tender events, spot freight offers, and freight invoices, aggregated across customers with minimum-sample (k-anonymity) thresholds so no single shipper's or carrier's rates are recoverable. Consumed by the analytics and benchmarking product for shipper procurement decisions and by internal pricing research.",
+              "businessMeaning": "The data moat monetized: the network's transaction flow turned into the market-price reference shippers negotiate against.",
+              "status": "active",
+              "tags": [
+                "commercial-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "medium",
+              "accessScope": "benchmark subscribers through the analytics product; underlying per-transaction data never exposed",
+              "systemOfRecordBrickId": "anly",
+              "ownerTeamId": "analytics",
+              "stewardTeamIds": [
+                "freight-procurement"
+              ],
+              "derivedFromAssetIds": [
+                "tender-event",
+                "spot-freight-offer",
+                "freight-invoice"
+              ],
+              "stores": [
+                {
+                  "storeId": "lane-benchmark-mart",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "benchmark api",
+                  "description": "Lane rate and trend query API for the analytics UI and benchmark data-product subscribers."
+                }
+              ],
+              "governance": {
+                "retention": "long-term time series; source-level lineage retained internally to reproduce published figures",
+                "residency": "eu",
+                "sharingPolicy": "published only as aggregates passing minimum-contributor and k-anonymity thresholds; contributing customers' identities and individual rates are never derivable"
+              }
+            },
+            {
+              "id": "emissions-record",
+              "name": "Emissions Record",
+              "kind": "derived-dataset",
+              "description": "Per-shipment greenhouse-gas accounting: well-to-wheel CO2e per transport leg computed from executed distance, vehicle and fuel class, load factor, and empty-running allocation following GLEC/ISO 14083 methodology, rolled up to lane, carrier, and period totals. Derived from execution records enriched with vehicle data; consumed for shipper CSRD disclosures, carrier fleet footprints, and decarbonization tracking. Auditability of the calculation chain is the key obligation.",
+              "businessMeaning": "The regulatory currency of transport sustainability: the number a shipper puts in its CSRD report and defends to auditors.",
+              "status": "active",
+              "tags": [
+                "commercial-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "csrd"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "reporting shipper and carrier for their own footprint, and internal sustainability analytics",
+              "systemOfRecordBrickId": "co2e",
+              "ownerTeamId": "analytics",
+              "stewardTeamIds": [
+                "transport-execution"
+              ],
+              "derivedFromAssetIds": [
+                "shipment-execution-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "emissions-record-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "network-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "emissions api",
+                  "description": "Per-shipment and period-rollup emissions query and CSRD export API for the reporting UI."
+                }
+              ],
+              "governance": {
+                "retention": "aligned with sustainability-reporting audit windows, at least 10 years including calculation inputs and methodology version",
+                "residency": "eu",
+                "sharingPolicy": "each customer sees only its own footprint; network-level emission statistics published as anonymized aggregates only"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Platform and Master Data",
+      "description": "The foundation both sides of the platform stand on: shipper tenant organizations with their users and entitlements, and the logistics location master shared by planning, execution, and dock scheduling.",
+      "subGroups": [
+        {
+          "name": "Organizations and Reference Data",
+          "description": "Tenant, user, and reference records with platform-wide blast radius.",
+          "assets": [
+            {
+              "id": "shipper-organization",
+              "name": "Shipper Organization",
+              "kind": "master-data",
+              "description": "The tenant model for shipper and forwarder customers: legal entity and billing data, organizational hierarchy (business units, plants, DCs), user accounts with roles and entitlements, subscription state, and API credentials. Maintained through onboarding and admin self-service; consumed by access management in every product, subscription billing, and support. User account data (names, work emails, roles) is personal data; entitlement errors have platform-wide blast radius.",
+              "businessMeaning": "Who the customer is, who inside it may do what, and what they pay for — the contract between the platform and every shipper tenant.",
+              "status": "active",
+              "tags": [
+                "platform-foundation"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "identity and billing platform, tenant admins for their own organization, and support operations",
+              "systemOfRecordBrickId": "iden",
+              "ownerTeamId": "platform-foundation",
+              "stewardTeamIds": [],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "shipper-organization-db",
+                  "role": "system-of-record"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "organization api",
+                  "description": "Tenant, user, role, and entitlement API consumed by every product's access control and by subscription billing."
+                },
+                {
+                  "type": "event",
+                  "name": "organization change events",
+                  "description": "User added, role changed, and subscription updated events consumed by product provisioning and billing."
+                }
+              ],
+              "governance": {
+                "retention": "contract lifetime plus statutory commercial retention; user accounts deleted or anonymized on offboarding per GDPR",
+                "residency": "eu",
+                "sharingPolicy": "strictly tenant-isolated; visible only to the tenant's own admins and authorized internal operations"
+              }
+            },
+            {
+              "id": "location-master",
+              "name": "Location Master",
+              "kind": "master-data",
+              "description": "The shared register of logistics locations: plants, warehouses, DCs, docks, and frequent third-party addresses, with geocoordinates, loading equipment, opening hours, site instructions, and dock configurations. Fed by shipper onboarding, ERP master-data sync, and site-manager maintenance; consumed by planning (distances, routing), order capture, visibility geofences, and dock capacity. Company site data with no personal content, but planning quality degrades network-wide when it drifts.",
+              "businessMeaning": "The map every process agrees on: if two products disagree about where a warehouse is or when it loads, plans and slots fall apart.",
+              "status": "active",
+              "tags": [
+                "platform-foundation"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "medium",
+              "accessScope": "all planning, execution, visibility, and scheduling workflows of the owning tenant",
+              "systemOfRecordBrickId": "mdat",
+              "ownerTeamId": "integration-and-data",
+              "stewardTeamIds": [
+                "site-logistics"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "location-master-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "location-master-cache",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "location api",
+                  "description": "Location lookup, geocoding, and site-detail API used by planning, order capture, visibility geofencing, and dock scheduling."
+                },
+                {
+                  "type": "event",
+                  "name": "location change events",
+                  "description": "Location created and updated events that invalidate planning caches and geofence definitions."
+                }
+              ],
+              "governance": {
+                "retention": "maintained while referenced; superseded versions kept 24 months for plan reproducibility",
+                "residency": "eu",
+                "sharingPolicy": "tenant-scoped; shared third-party addresses deduplicated without exposing which tenants use them"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stores": [
+    {
+      "id": "transport-order-db",
+      "name": "Transport Order DB",
+      "kind": "operational-database",
+      "description": "Primary relational database for transport orders, stops, and cargo lines.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "transport-order-events",
+      "name": "Transport Order Event Topic",
+      "kind": "event-topic",
+      "description": "Order lifecycle event stream feeding execution, visibility, dock scheduling, and settlement.",
+      "technology": "kafka",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "shipment-execution-db",
+      "name": "Shipment Execution DB",
+      "kind": "operational-database",
+      "description": "Relational store for execution state, milestones, and carrier confirmations.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "transport-document-store",
+      "name": "Transport Document Store",
+      "kind": "blob-store",
+      "description": "Object storage for eCMR documents, signatures, POD photos, and scans; write-once after countersignature.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "transport-document-index",
+      "name": "Transport Document Index",
+      "kind": "document-database",
+      "description": "Document metadata and signature-state index enabling search and settlement matching over stored documents.",
+      "technology": "document-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "contract-rate-card-db",
+      "name": "Contract Rate Card DB",
+      "kind": "operational-database",
+      "description": "Relational store for lane rates, surcharges, validity periods, and routing-guide positions.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "tender-event-db",
+      "name": "Tender Event DB",
+      "kind": "operational-database",
+      "description": "Store for RFP rounds, bids, awards, and daily tender responses.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "exchange-offer-db",
+      "name": "Exchange Offer DB",
+      "kind": "operational-database",
+      "description": "System of record for spot freight and vehicle capacity offers across the exchange brands.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "exchange-offer-search",
+      "name": "Exchange Offer Search Index",
+      "kind": "search-index",
+      "description": "Low-latency geo and attribute search index serving exchange search and matching at network scale.",
+      "technology": "opensearch",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "carrier-profile-db",
+      "name": "Carrier Profile DB",
+      "kind": "operational-database",
+      "description": "Master store for carrier legal, license, insurance, fleet, and vetting-status data.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "carrier-document-store",
+      "name": "Carrier Document Store",
+      "kind": "blob-store",
+      "description": "Object storage for vetting evidence: licenses, insurance certificates, and identity documents.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "trust-score-db",
+      "name": "Trust Score DB",
+      "kind": "operational-database",
+      "description": "Score history, fraud flags, and rating records per network member.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "trust-feature-store",
+      "name": "Trust Feature Store",
+      "kind": "feature-store",
+      "description": "Serving store for trust and fraud-model features used in exchange ranking and screening.",
+      "technology": "feature-store",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "payment-guarantee-db",
+      "name": "Payment Guarantee DB",
+      "kind": "operational-database",
+      "description": "Case store for guarantee coverage, dunning, collections, and payout records.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "tracking-event-topic",
+      "name": "Tracking Event Topic",
+      "kind": "event-topic",
+      "description": "Normalized real-time position and status stream from telematics providers and the driver app.",
+      "technology": "kafka",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "tracking-event-archive",
+      "name": "Tracking Event Archive",
+      "kind": "blob-store",
+      "description": "Short-retention archive of raw telemetry for dispute review and ETA model training, purged on schedule.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "eta-prediction-cache",
+      "name": "ETA Prediction Cache",
+      "kind": "cache",
+      "description": "Low-latency serving cache of current ETAs and delay-risk classifications per shipment stop.",
+      "technology": "redis",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "dock-slot-db",
+      "name": "Dock Slot DB",
+      "kind": "operational-database",
+      "description": "Bookings, site capacity calendars, and gate check-in records for dock scheduling.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "freight-invoice-db",
+      "name": "Freight Invoice DB",
+      "kind": "operational-database",
+      "description": "Financial store for invoices, self-billing statements, audit states, and credit notes; access-logged.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "lane-benchmark-mart",
+      "name": "Lane Benchmark Mart",
+      "kind": "analytical-mart",
+      "description": "Curated, anonymized benchmark tables published to the analytics product; only aggregates passing k-anonymity thresholds.",
+      "technology": "snowflake",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "emissions-record-db",
+      "name": "Emissions Record DB",
+      "kind": "operational-database",
+      "description": "Per-shipment CO2e records with calculation inputs and methodology versioning for auditability.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "shipper-organization-db",
+      "name": "Shipper Organization DB",
+      "kind": "operational-database",
+      "description": "Tenant, user, role, entitlement, and subscription store backing platform-wide access control.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "location-master-db",
+      "name": "Location Master DB",
+      "kind": "operational-database",
+      "description": "Master register of plants, warehouses, docks, and third-party addresses with geodata and site attributes.",
+      "technology": "postgresql",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "location-master-cache",
+      "name": "Location Master Cache",
+      "kind": "cache",
+      "description": "Read cache for high-frequency location lookups in planning, geofencing, and order capture.",
+      "technology": "redis",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "network-data-warehouse",
+      "name": "Network Data Warehouse",
+      "kind": "analytics-warehouse",
+      "description": "Cross-domain analytical warehouse holding governed copies of orders, executions, tenders, invoices, slots, and emissions for KPI reporting and benchmark derivation; pseudonymized where source assets carry personal data.",
+      "technology": "snowflake",
+      "status": "active",
+      "classification": "confidential"
+    }
+  ]
+}
