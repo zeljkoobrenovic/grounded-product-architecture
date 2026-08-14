@@ -65,9 +65,12 @@ Load only the skill you need for the current phase; do the phase, validate, cont
 
 - Define materially distinct customer groups, personas, buyers, users, operators, partners, and beneficiaries where relevant.
 - Model jobs to be done as customer progress, not feature usage.
+- Journey stories describe how the customer adopts and stays with the product — never how they perform their job. Use exactly these six stages, in this order: `Trigger`, `Discovery`, `Evaluation`, `Trial`, `Engagement`, `Retention`. Task-phase stages ("Preparation", "Award", "Dispatch") are wrong: that content belongs in JTBD steps or streams.
+- Define `Trigger` as the pain or event that starts the search for a solution, not a work task.
 - In journey stories, define `Discovery` as how customers become aware of the product or offer before active use through channels such as search, referrals, sales outreach, app stores, partner ecosystems, procurement shortlists, internal enablement, or brand touchpoints.
 - Define `Evaluation` as how customers decide whether the product is right after discovery and before trial, using alternatives, fit, value, trust, cost, adoption effort, and risk.
 - Do not use `Discovery` or `Evaluation` for in-product search, browsing, or task execution.
+- Define `Trial` as the first bounded real use (pilot, parallel run, first booking), `Engagement` as the product embedded in routine use, and `Retention` as why the customer stays, renews, expands, and advocates.
 - Define product strategy horizons for substantive customer groups: 1-year, 3-year, and 5-year focus, product theme, customer KPI, business KPI, and milestones.
 - KPIs should be specific, measurable, and relevant to the domain, with realistic target values based on public information or explicit assumptions. Use a proper tree and minimize one-child branches.
 

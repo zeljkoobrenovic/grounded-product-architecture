@@ -74,6 +74,11 @@ Useful flags:
 - `generate_jtbd_images_*` creates:
   - one image for each `jobsToBeDone[]`
   - one image for each `jobsToBeDone[].steps[]`
+- `generate_customer_relations_images_gemini_nanobanana_api.py` creates:
+  - one relationship-map illustration per domain from `customers/relations.json`
+    (saved as `customers/media/relations-overview.png`, referenced via a top-level
+    `media` entry in `relations.json` and shown at the top of the Relations tab;
+    the reference is only written once the image exists)
 
 ## Notes
 
