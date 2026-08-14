@@ -437,6 +437,13 @@
                   "description": "Delivers tender offers to carriers over API, EDI, portal, or mailbox channels and receives accept/reject responses."
                 },
                 {
+                  "targetBrickId": "fxch",
+                  "moduleId": "module-fxch-api",
+                  "sourceModuleId": "module-csel-cascade-worker",
+                  "type": "marketplace",
+                  "description": "Posts loads to the spot exchange when the routing guide is exhausted or all contracted carriers reject."
+                },
+                {
                   "targetBrickId": "notf",
                   "moduleId": "module-notf-api",
                   "sourceModuleId": "module-csel-cascade-worker",
@@ -832,6 +839,21 @@
                             "moduleId": "module-fxch-api",
                             "type": "uses",
                             "description": "UI module posts, searches, and books offers through the exchange API."
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "module-fxch-mobile",
+                      "name": "Exchange Mobile App",
+                      "type": "mobile-component",
+                      "description": "Dispatcher mobile app for searching loads, posting free capacity, and closing deals on the road — where small-carrier dispatching actually happens.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-fxch-api",
+                            "type": "uses",
+                            "description": "Mobile module searches, posts, and confirms deals through the exchange API."
                           }
                         ]
                       }
@@ -1674,6 +1696,21 @@
                       "name": "Execution Order Queue",
                       "type": "message-queue",
                       "description": "Buffers inbound load submissions and outbound status callbacks so bursts of thousands of loads per day process reliably."
+                    },
+                    {
+                      "id": "module-texe-webhook-dispatcher",
+                      "name": "Webhook Callback Dispatcher",
+                      "type": "message-consumer",
+                      "description": "Delivers signed status, confirmation, and document webhooks to registered shipper endpoints with retries, backoff, and per-endpoint delivery monitoring.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-texe-order-queue",
+                            "type": "processes",
+                            "description": "Asynchronous module drains outbound callback messages from the execution queue for delivery."
+                          }
+                        ]
+                      }
                     }
                   ]
                 },
@@ -1740,6 +1777,13 @@
                   "interface": "Execution API",
                   "description": "SAP ERP/S4HANA and third-party TMS installations submit loads and consume confirmations, statuses, and documents at thousands of loads per day.",
                   "moduleId": "module-texe-api"
+                },
+                {
+                  "system": "Shipper webhook endpoints",
+                  "type": "channel-consumer",
+                  "interface": "Status Webhook Callbacks",
+                  "description": "Shipper-side endpoints receive signed push callbacks for carrier confirmations, status changes, and returned documents.",
+                  "moduleId": "module-texe-webhook-dispatcher"
                 }
               ],
               "dataDependencies": [
@@ -1822,6 +1866,12 @@
                       "name": "Telematics and FMS Adapter",
                       "type": "integration",
                       "description": "Pulls positions, statuses, and vehicle events from telematics and fleet-management providers across carrier fleets."
+                    },
+                    {
+                      "id": "module-conn-mailbox-adapter",
+                      "name": "Mailbox Fallback Adapter",
+                      "type": "integration",
+                      "description": "Structured-email channel for the long tail of unconnected carriers: sends tenders and orders as actionable messages and parses replies and status mails back into normalized events."
                     }
                   ]
                 }
@@ -2288,6 +2338,13 @@
                   "description": "Pulls order context and service commitments for case evaluation and resolution."
                 },
                 {
+                  "targetBrickId": "texe",
+                  "moduleId": "module-texe-api",
+                  "sourceModuleId": "module-excp-detection-consumer",
+                  "type": "data",
+                  "description": "Reads execution records for loads orchestrated through connected execution so exceptions cover API-submitted shipments too."
+                },
+                {
                   "targetBrickId": "notf",
                   "moduleId": "module-notf-api",
                   "sourceModuleId": "module-excp-detection-consumer",
@@ -2388,6 +2445,27 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-dock-reschedule-worker",
+                      "name": "ETA Reschedule Worker",
+                      "type": "daemon",
+                      "description": "Watches live ETAs for booked trucks, flags slots that will be missed, and proposes reschedules into free capacity before the dock queue backs up.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-dock-slot-store",
+                            "type": "processes",
+                            "description": "Asynchronous module writes reschedule proposals and slot moves to the slot store."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -2411,9 +2489,9 @@
                 {
                   "targetBrickId": "trck",
                   "moduleId": "module-trck-api",
-                  "sourceModuleId": "module-dock-api",
+                  "sourceModuleId": "module-dock-reschedule-worker",
                   "type": "data",
-                  "description": "Uses live ETAs to flag late arrivals and propose slot rescheduling."
+                  "description": "Polls live ETAs for booked trucks to flag late arrivals and drive slot rescheduling."
                 },
                 {
                   "targetBrickId": "notf",
@@ -2436,7 +2514,8 @@
                 {
                   "assetId": "dock-slot-booking",
                   "moduleIds": [
-                    "module-dock-slot-store"
+                    "module-dock-slot-store",
+                    "module-dock-reschedule-worker"
                   ],
                   "role": "own",
                   "description": "System of record for dock slots, bookings, gate events, and turnaround measurements."
@@ -3554,6 +3633,21 @@
                             "moduleId": "module-bill-account-store",
                             "type": "processes",
                             "description": "Asynchronous module writes rated usage onto billing accounts."
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "module-bill-invoicing-worker",
+                      "name": "Invoicing Run Worker",
+                      "type": "daemon",
+                      "description": "Runs periodic billing cycles: closes usage periods, applies subscription plans and rated usage, and issues customer invoices for collection.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-bill-account-store",
+                            "type": "processes",
+                            "description": "Asynchronous module closes billing periods and writes issued invoices to the account store."
                           }
                         ]
                       }
