@@ -437,6 +437,13 @@
                   "description": "Delivers tender offers to carriers over API, EDI, portal, or mailbox channels and receives accept/reject responses."
                 },
                 {
+                  "targetBrickId": "fxch",
+                  "moduleId": "module-fxch-api",
+                  "sourceModuleId": "module-csel-cascade-worker",
+                  "type": "marketplace",
+                  "description": "Posts loads to the spot exchange when the routing guide is exhausted or all contracted carriers reject."
+                },
+                {
                   "targetBrickId": "notf",
                   "moduleId": "module-notf-api",
                   "sourceModuleId": "module-csel-cascade-worker",
@@ -835,6 +842,21 @@
                           }
                         ]
                       }
+                    },
+                    {
+                      "id": "module-fxch-mobile",
+                      "name": "Exchange Mobile App",
+                      "type": "mobile-component",
+                      "description": "Dispatcher mobile app for searching loads, posting free capacity, and closing deals on the road — where small-carrier dispatching actually happens.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-fxch-api",
+                            "type": "uses",
+                            "description": "Mobile module searches, posts, and confirms deals through the exchange API."
+                          }
+                        ]
+                      }
                     }
                   ]
                 },
@@ -891,6 +913,13 @@
                   "sourceModuleId": "module-fxch-api",
                   "type": "trust",
                   "description": "Checks member trust status and score before allowing postings, contact reveals, and deal confirmation."
+                },
+                {
+                  "targetBrickId": "uifn",
+                  "moduleId": "module-uifn-web-foundation",
+                  "sourceModuleId": "module-fxch-web",
+                  "type": "foundation",
+                  "description": "Exchange web app is built on the shared web foundation, design system, and localization across exchange brands."
                 },
                 {
                   "targetBrickId": "pgar",
@@ -1174,6 +1203,13 @@
                   "sourceModuleId": "module-cprt-bff",
                   "type": "marketplace",
                   "description": "Surfaces exchange search, posting, and deal flows inside the carrier portal."
+                },
+                {
+                  "targetBrickId": "uifn",
+                  "moduleId": "module-uifn-mobile-foundation",
+                  "sourceModuleId": "module-cprt-mobile",
+                  "type": "foundation",
+                  "description": "Driver app is built on the shared mobile foundation: offline sync, push, design system, and localization."
                 },
                 {
                   "targetBrickId": "texe",
@@ -1674,6 +1710,21 @@
                       "name": "Execution Order Queue",
                       "type": "message-queue",
                       "description": "Buffers inbound load submissions and outbound status callbacks so bursts of thousands of loads per day process reliably."
+                    },
+                    {
+                      "id": "module-texe-webhook-dispatcher",
+                      "name": "Webhook Callback Dispatcher",
+                      "type": "message-consumer",
+                      "description": "Delivers signed status, confirmation, and document webhooks to registered shipper endpoints with retries, backoff, and per-endpoint delivery monitoring.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-texe-order-queue",
+                            "type": "processes",
+                            "description": "Asynchronous module drains outbound callback messages from the execution queue for delivery."
+                          }
+                        ]
+                      }
                     }
                   ]
                 },
@@ -1740,6 +1791,13 @@
                   "interface": "Execution API",
                   "description": "SAP ERP/S4HANA and third-party TMS installations submit loads and consume confirmations, statuses, and documents at thousands of loads per day.",
                   "moduleId": "module-texe-api"
+                },
+                {
+                  "system": "Shipper webhook endpoints",
+                  "type": "channel-consumer",
+                  "interface": "Status Webhook Callbacks",
+                  "description": "Shipper-side endpoints receive signed push callbacks for carrier confirmations, status changes, and returned documents.",
+                  "moduleId": "module-texe-webhook-dispatcher"
                 }
               ],
               "dataDependencies": [
@@ -1822,6 +1880,12 @@
                       "name": "Telematics and FMS Adapter",
                       "type": "integration",
                       "description": "Pulls positions, statuses, and vehicle events from telematics and fleet-management providers across carrier fleets."
+                    },
+                    {
+                      "id": "module-conn-mailbox-adapter",
+                      "name": "Mailbox Fallback Adapter",
+                      "type": "integration",
+                      "description": "Structured-email channel for the long tail of unconnected carriers: sends tenders and orders as actionable messages and parses replies and status mails back into normalized events."
                     }
                   ]
                 }
@@ -2288,6 +2352,13 @@
                   "description": "Pulls order context and service commitments for case evaluation and resolution."
                 },
                 {
+                  "targetBrickId": "texe",
+                  "moduleId": "module-texe-api",
+                  "sourceModuleId": "module-excp-detection-consumer",
+                  "type": "data",
+                  "description": "Reads execution records for loads orchestrated through connected execution so exceptions cover API-submitted shipments too."
+                },
+                {
                   "targetBrickId": "notf",
                   "moduleId": "module-notf-api",
                   "sourceModuleId": "module-excp-detection-consumer",
@@ -2388,6 +2459,27 @@
                   ]
                 },
                 {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-dock-reschedule-worker",
+                      "name": "ETA Reschedule Worker",
+                      "type": "daemon",
+                      "description": "Watches live ETAs for booked trucks, flags slots that will be missed, and proposes reschedules into free capacity before the dock queue backs up.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-dock-slot-store",
+                            "type": "processes",
+                            "description": "Asynchronous module writes reschedule proposals and slot moves to the slot store."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
                   "layer": "service",
                   "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
                   "modules": [
@@ -2411,9 +2503,9 @@
                 {
                   "targetBrickId": "trck",
                   "moduleId": "module-trck-api",
-                  "sourceModuleId": "module-dock-api",
+                  "sourceModuleId": "module-dock-reschedule-worker",
                   "type": "data",
-                  "description": "Uses live ETAs to flag late arrivals and propose slot rescheduling."
+                  "description": "Polls live ETAs for booked trucks to flag late arrivals and drive slot rescheduling."
                 },
                 {
                   "targetBrickId": "notf",
@@ -2436,7 +2528,8 @@
                 {
                   "assetId": "dock-slot-booking",
                   "moduleIds": [
-                    "module-dock-slot-store"
+                    "module-dock-slot-store",
+                    "module-dock-reschedule-worker"
                   ],
                   "role": "own",
                   "description": "System of record for dock slots, bookings, gate events, and turnaround measurements."
@@ -2881,6 +2974,13 @@
                   "sourceModuleId": "module-anly-pipeline",
                   "type": "data",
                   "description": "Reads delivery performance and ETA accuracy for service-level analytics."
+                },
+                {
+                  "targetBrickId": "dplt",
+                  "moduleId": "module-dplt-lakehouse",
+                  "sourceModuleId": "module-anly-pipeline",
+                  "type": "data",
+                  "description": "Runs benchmark and metric aggregation over the curated, anonymization-compliant lakehouse zones."
                 },
                 {
                   "targetBrickId": "iden",
@@ -3557,6 +3657,21 @@
                           }
                         ]
                       }
+                    },
+                    {
+                      "id": "module-bill-invoicing-worker",
+                      "name": "Invoicing Run Worker",
+                      "type": "daemon",
+                      "description": "Runs periodic billing cycles: closes usage periods, applies subscription plans and rated usage, and issues customer invoices for collection.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-bill-account-store",
+                            "type": "processes",
+                            "description": "Asynchronous module closes billing periods and writes issued invoices to the account store."
+                          }
+                        ]
+                      }
                     }
                   ]
                 },
@@ -3616,6 +3731,428 @@
                   "description": "Reads organization and legal-entity structure to build billing accounts and invoice addressing."
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "Technical Platform",
+          "description": "The engineering foundation underneath every product brick: the public API edge and developer experience, the shared event and data platform, and the cloud runtime and reliability practice that keeps a 24/7 freight network up.",
+          "subGroups": [],
+          "bricks": [
+            {
+              "id": "apig",
+              "name": "API Gateway and Developer Portal",
+              "type": "integration",
+              "status": "invest",
+              "description": "Single public edge for the platform's APIs: authentication, rate limiting, quotas, and versioned routing in front of the execution, exchange, and visibility APIs, plus a developer portal with reference docs, sandbox credentials, and webhook configuration. The front door of the API-first strategy — a shipper IT team or carrier TMS vendor should get from signup to a first successful call in under a day.",
+              "links": [
+                {
+                  "group": "Evidence",
+                  "description": "Real-world evidence related to this product brick.",
+                  "links": [
+                    {
+                      "label": "Evidence Explorer",
+                      "link": "../../../../evidence-explorer/index.html",
+                      "description": "Search evidence — source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.",
+                      "embedLink": "../../../../evidence-explorer/index.html?embed=1"
+                    }
+                  ]
+                }
+              ],
+              "layers": [
+                {
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-apig-portal-web",
+                      "name": "Developer Portal",
+                      "type": "web-component",
+                      "description": "Self-service portal for external integrators: API reference, sandbox keys, webhook subscriptions, and per-client usage dashboards.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-apig-client-registry",
+                            "type": "uses",
+                            "description": "Portal manages API clients, credentials, and webhook subscriptions in the client registry."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-apig-gateway",
+                      "name": "API Edge Gateway",
+                      "type": "api",
+                      "description": "Terminates all public API traffic: OAuth client authentication, rate limiting and quota enforcement, version routing, and request logging.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-apig-client-registry",
+                            "type": "uses",
+                            "description": "Gateway resolves client credentials, scopes, and quota plans from the registry on every request."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-apig-client-registry",
+                      "name": "API Client Registry",
+                      "type": "stateful-service",
+                      "description": "Owns API clients, credentials, scopes, quota plans, webhook subscriptions, and per-client usage counters."
+                    }
+                  ]
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "iden",
+                  "moduleId": "module-iden-api",
+                  "sourceModuleId": "module-apig-gateway",
+                  "type": "identity",
+                  "description": "Maps authenticated API clients to organizations and their entitlements before routing any request."
+                },
+                {
+                  "targetBrickId": "texe",
+                  "moduleId": "module-texe-api",
+                  "sourceModuleId": "module-apig-gateway",
+                  "type": "channel",
+                  "description": "Routes public execution API traffic from shipper systems to the execution orchestration brick."
+                },
+                {
+                  "targetBrickId": "fxch",
+                  "moduleId": "module-fxch-api",
+                  "sourceModuleId": "module-apig-gateway",
+                  "type": "channel",
+                  "description": "Routes carrier TMS integrations to the exchange offer API for posting, search, and deal confirmation."
+                },
+                {
+                  "targetBrickId": "trck",
+                  "moduleId": "module-trck-api",
+                  "sourceModuleId": "module-apig-gateway",
+                  "type": "channel",
+                  "description": "Routes shipper-system visibility queries to positions, timelines, and ETA predictions."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [
+                {
+                  "system": "Third-party developer and partner applications",
+                  "type": "channel-consumer",
+                  "interface": "Public Platform APIs",
+                  "description": "External integrators — shipper IT, carrier TMS vendors, and visibility partners — call every public API through the gateway.",
+                  "moduleId": "module-apig-gateway"
+                }
+              ],
+              "dataDependencies": []
+            },
+            {
+              "id": "dplt",
+              "name": "Data Platform and Event Backbone",
+              "type": "service",
+              "status": "sustaining",
+              "description": "Shared data foundation under the product bricks: the managed event backbone that carries offer, tracking, execution, and settlement event streams with schema governance, and the governed lakehouse where that flow lands for analytics, emissions, benchmarks, and ML features. GDPR-aware retention and anonymization are enforced here once, so the network's data products can be built without each team re-solving compliance.",
+              "links": [
+                {
+                  "group": "Evidence",
+                  "description": "Real-world evidence related to this product brick.",
+                  "links": [
+                    {
+                      "label": "Evidence Explorer",
+                      "link": "../../../../evidence-explorer/index.html",
+                      "description": "Search evidence — source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.",
+                      "embedLink": "../../../../evidence-explorer/index.html?embed=1"
+                    }
+                  ]
+                }
+              ],
+              "layers": [
+                {
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-dplt-catalog-console",
+                      "name": "Data Catalog and Governance Console",
+                      "type": "backoffice-interface",
+                      "description": "Internal catalog of datasets and event topics with owners, schemas, retention policies, and access grants.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-dplt-lakehouse",
+                            "type": "delegates",
+                            "description": "Console reads dataset metadata and manages access policies on the lakehouse."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-dplt-event-backbone",
+                      "name": "Network Event Backbone",
+                      "type": "message-queue",
+                      "description": "Managed streaming topics with schema registry and delivery guarantees — the transport underneath the exchange offer bus, connectivity message bus, and tracking event stream."
+                    },
+                    {
+                      "id": "module-dplt-ingestion-pipeline",
+                      "name": "Lakehouse Ingestion Pipeline",
+                      "type": "message-consumer",
+                      "description": "Lands event streams and operational snapshots into curated lakehouse zones, applying anonymization and GDPR retention rules on the way in.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-dplt-lakehouse",
+                            "type": "processes",
+                            "description": "Asynchronous module writes curated, policy-compliant datasets into the lakehouse."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-dplt-lakehouse",
+                      "name": "Governed Lakehouse",
+                      "type": "stateful-service",
+                      "description": "Owns curated data zones, dataset schemas, retention and access policies — the substrate for benchmarks, emissions, trust features, and ML."
+                    }
+                  ]
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "iden",
+                  "moduleId": "module-iden-api",
+                  "sourceModuleId": "module-dplt-catalog-console",
+                  "type": "identity",
+                  "description": "Scopes dataset access grants to organizations, teams, and roles from the identity backbone."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": []
+            },
+            {
+              "id": "infr",
+              "name": "Cloud Runtime and Reliability",
+              "type": "service",
+              "status": "sustaining",
+              "description": "The runtime and reliability foundation for a network that trades around the clock: container runtime and paved-road deployment pipelines across EU regions, observability with metrics, logs, and traces, SLOs with error budgets per brick, and the incident practice behind them. Exchange downtime is freight not moving, so availability is treated as a product feature with an operations console and status history to prove it.",
+              "links": [
+                {
+                  "group": "Evidence",
+                  "description": "Real-world evidence related to this product brick.",
+                  "links": [
+                    {
+                      "label": "Evidence Explorer",
+                      "link": "../../../../evidence-explorer/index.html",
+                      "description": "Search evidence — source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.",
+                      "embedLink": "../../../../evidence-explorer/index.html?embed=1"
+                    }
+                  ]
+                }
+              ],
+              "layers": [
+                {
+                  "layer": "interfaces",
+                  "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.",
+                  "modules": [
+                    {
+                      "id": "module-infr-ops-console",
+                      "name": "Platform Operations Console",
+                      "type": "backoffice-interface",
+                      "description": "Internal console for service health, SLO and error-budget state, deploys in flight, and incident timelines.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-infr-slo-store",
+                            "type": "delegates",
+                            "description": "Console reads SLO state and incident records from the SLO and incident store."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "worker",
+                  "description": "Background workers, event consumers, daemons, and asynchronous processing modules.",
+                  "modules": [
+                    {
+                      "id": "module-infr-observability-pipeline",
+                      "name": "Observability Pipeline",
+                      "type": "message-consumer",
+                      "description": "Collects metrics, logs, and traces from every brick's modules, evaluates alert rules, and pages on-call teams on SLO burn.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-infr-slo-store",
+                            "type": "processes",
+                            "description": "Asynchronous module updates SLO burn state and opens incident records on alert."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-infr-container-runtime",
+                      "name": "Container Runtime and Paved Road",
+                      "type": "service",
+                      "description": "Kubernetes-based runtime with golden-path deployment pipelines, secrets management, autoscaling, and multi-region failover across EU cloud regions."
+                    },
+                    {
+                      "id": "module-infr-slo-store",
+                      "name": "SLO and Incident Store",
+                      "type": "stateful-service",
+                      "description": "Owns SLO definitions, error budgets, alert state, incident records, and status-page history per brick and product surface."
+                    }
+                  ]
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "iden",
+                  "moduleId": "module-iden-api",
+                  "sourceModuleId": "module-infr-ops-console",
+                  "type": "identity",
+                  "description": "Restricts operations-console and deployment access to authorized platform and on-call staff."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [
+                {
+                  "system": "Cloud infrastructure providers",
+                  "type": "service",
+                  "interface": "Cloud IaaS and Managed Service APIs",
+                  "description": "EU-region compute, storage, networking, and managed services the container runtime provisions and scales on.",
+                  "sourceModuleId": "module-infr-container-runtime"
+                }
+              ],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": []
+            },
+            {
+              "id": "uifn",
+              "name": "UI Foundations and Design System",
+              "type": "development",
+              "status": "sustaining",
+              "description": "Shared front-end foundation for every product surface: the design system with tokens, components, and accessibility standards; the web application foundation (shell, routing, session handling, feature flags) under the TMS, exchange, and portal web apps; the mobile foundation (offline sync, push, telemetry) under the carrier and driver apps; and translation management for a network operating in 25+ languages. One consistent, accessible experience across brands — and a new product surface starts from a working app, not a blank page.",
+              "links": [
+                {
+                  "group": "Evidence",
+                  "description": "Real-world evidence related to this product brick.",
+                  "links": [
+                    {
+                      "label": "Evidence Explorer",
+                      "link": "../../../../evidence-explorer/index.html",
+                      "description": "Search evidence — source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.",
+                      "embedLink": "../../../../evidence-explorer/index.html?embed=1"
+                    }
+                  ]
+                }
+              ],
+              "layers": [
+                {
+                  "layer": "ui",
+                  "description": "User-facing web, mobile, backoffice, and operator experience modules.",
+                  "modules": [
+                    {
+                      "id": "module-uifn-design-system",
+                      "name": "Design System and Component Library",
+                      "type": "web-component",
+                      "description": "Design tokens, shared components, patterns, and WCAG accessibility standards used by every web and mobile surface across the TMS and exchange brands."
+                    },
+                    {
+                      "id": "module-uifn-web-foundation",
+                      "name": "Web Application Foundation",
+                      "type": "web-component",
+                      "description": "Shared web shell: routing, session and entitlement handling, feature flags, error reporting, and localization plumbing every web application builds on.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-uifn-design-system",
+                            "type": "uses",
+                            "description": "Web shell composes screens from design-system tokens and components."
+                          },
+                          {
+                            "moduleId": "module-uifn-localization-service",
+                            "type": "uses",
+                            "description": "Web shell resolves translations and locale formats from the localization service."
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "module-uifn-mobile-foundation",
+                      "name": "Mobile App Foundation",
+                      "type": "mobile-component",
+                      "description": "Shared mobile shell for the carrier and driver apps: offline queueing and sync, push registration, background location plumbing, and crash and performance telemetry.",
+                      "dependencies": {
+                        "modules": [
+                          {
+                            "moduleId": "module-uifn-design-system",
+                            "type": "uses",
+                            "description": "Mobile shell renders from the shared design tokens and component patterns."
+                          },
+                          {
+                            "moduleId": "module-uifn-localization-service",
+                            "type": "uses",
+                            "description": "Mobile shell loads translation bundles and locale formats from the localization service."
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "layer": "service",
+                  "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.",
+                  "modules": [
+                    {
+                      "id": "module-uifn-localization-service",
+                      "name": "Localization and Translation Service",
+                      "type": "stateful-service",
+                      "description": "Owns translation catalogs, locale formats, and the translation workflow that keeps every surface current across the network's 25+ languages."
+                    }
+                  ]
+                }
+              ],
+              "brickDependencies": [
+                {
+                  "targetBrickId": "iden",
+                  "moduleId": "module-iden-api",
+                  "sourceModuleId": "module-uifn-web-foundation",
+                  "type": "identity",
+                  "description": "Handles login sessions, token refresh, and entitlement-aware navigation against the identity backbone."
+                }
+              ],
+              "externalSystemsThisBrickDependsOn": [],
+              "externalSystemsDependingOnThisBrick": [],
+              "dataDependencies": []
             }
           ]
         }

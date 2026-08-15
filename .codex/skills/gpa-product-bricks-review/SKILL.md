@@ -1,13 +1,13 @@
 ---
-name: spda-product-bricks-review
-description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**` product bricks, product streams, data assets, layered modules, dependencies, external systems, team ownership, and implementation traceability before editing the model; save the review in the domain root `REVIEW.md`."
+name: gpa-product-bricks-review
+description: "Use in the Grounded Product Architecture project when reviewing `_config/product-domains/**` product bricks, product streams, data assets, layered modules, dependencies, external systems, team ownership, and implementation traceability before editing the model; save the review in the domain root `REVIEW.md`."
 ---
 
-# SPDA Product Bricks Review
+# GPA Product Bricks Review
 
 ## Purpose
 
-Review the implementation-facing product architecture of a Spec-Driven Product Architecture domain. The goal is to find gaps in product bricks, streams, modules, dependencies, data assets, and ownership in `_config/product-domains/<domain>/REVIEW.md` so a later editing pass can improve `_config/product-domains/<domain>/product-bricks/` and related source files.
+Review the implementation-facing product architecture of a Grounded Product Architecture domain. The goal is to find gaps in product bricks, streams, modules, dependencies, data assets, and ownership in `_config/product-domains/<domain>/REVIEW.md` so a later editing pass can improve `_config/product-domains/<domain>/product-bricks/` and related source files.
 
 ## Source Files
 
