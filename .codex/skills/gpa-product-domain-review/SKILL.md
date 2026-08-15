@@ -1,13 +1,13 @@
 ---
-name: spda-product-domain-review
-description: "Use in the Spec-Driven Product Architecture project when reviewing `_config/product-domains/**` customer, JTBD, journey, value proposition, KPI, strategy, insights, research evidence, and competition quality before editing or regenerating domain docs; save the review in the domain root `REVIEW.md`."
+name: gpa-product-domain-review
+description: "Use in the Grounded Product Architecture project when reviewing `_config/product-domains/**` customer, JTBD, journey, value proposition, KPI, strategy, insights, research evidence, and competition quality before editing or regenerating domain docs; save the review in the domain root `REVIEW.md`."
 ---
 
-# SPDA Product Domain Review
+# GPA Product Domain Review
 
 ## Purpose
 
-Review the strategic and customer-facing quality of a Spec-Driven Product Architecture product domain. The goal is not to rewrite the domain during the review; it is to produce specific, grounded feedback in `_config/product-domains/<domain>/REVIEW.md` that a later editing skill can use to improve the domain safely.
+Review the strategic and customer-facing quality of a Grounded Product Architecture product domain. The goal is not to rewrite the domain during the review; it is to produce specific, grounded feedback in `_config/product-domains/<domain>/REVIEW.md` that a later editing skill can use to improve the domain safely.
 
 ## Source Files
 

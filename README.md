@@ -1,10 +1,10 @@
-# Spec-Driven Product Architecture
+# Grounded Product Architecture
 
-Spec-Driven Product Architecture is a repository for modeling product strategy in a structured, implementation-aware way and publishing that model as a static documentation site.
+Grounded Product Architecture is a repository for modeling product strategy in a structured, implementation-aware way and publishing that model as a static documentation site.
 
 The generated documentation is published via GitHub Pages at:
 
-https://zeljkoobrenovic.github.io/spec-driven-product-architecture/
+https://zeljkoobrenovic.github.io/grounded-product-architecture/
 
 The core idea is to describe product strategy from a customer-centric perspective and connect it to:
 
