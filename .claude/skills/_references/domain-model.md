@@ -24,7 +24,7 @@ dirty worktree before regenerating.
 | Artifact | File(s) | Generator |
 |---|---|---|
 | Start / domain config | `start/config.json` | `generate-start-docs.py` |
-| Customers | `customers/customers.json`, `customers/insights.json`, `customers/links.json` | `generate-customers-docs.py` |
+| Customers | `customers/customers.json`, `customers/insights.json`, `customers/links.json`, `customers/relations.json` | `generate-customers-docs.py` |
 | Products & deployment | `product-deployments/products.json`, `deployment.json` | `generate-products-docs.py` |
 | Product bricks | `product-bricks/product-bricks.json` | `generate-product-bricks-docs.py` |
 | Streams | `product-bricks/product-stream.json` | `generate-product-bricks-docs.py` |
@@ -94,6 +94,23 @@ and `teamTypes`/`teamDependencyTypes` in `team-model.json`, stream `definitions`
 `product-stream-model.json`) — domain files only declare these blocks to override
 the shared model. Source of truth for the fixed sets:
 `_wiring/product-domains/product_bricks_support.py`.
+
+## Customer journey model (fixed)
+
+`customerJourneyStories[].stages[].stage` values are the fixed adoption lifecycle:
+`Trigger → Discovery → Evaluation → Trial → Engagement → Retention` (exactly these
+six, in order). A journey describes how the persona adopts and stays with the
+**product** — never a walkthrough of their work tasks (that belongs in JTBD steps
+and streams). See `edit-customers` for per-stage definitions.
+
+## Customer relations model
+
+`customers/relations.json` (optional per domain) declares directed customer-to-
+customer relations rendered as a diagram + filterable table on the customers page:
+`relationTypes[]` (standard ids `commercial`, `operational`, `financial`,
+`information`) and `relations[]` with `from`/`to` = customer ids, `type`, `name`,
+`description`, optional `streamIds[]` = stream ids. Every id must resolve;
+`transport-management-and-freight-exchange` is the exemplar.
 
 ## KPI pyramid model (fixed)
 

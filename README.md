@@ -1,10 +1,12 @@
-# Spec-Driven Product Architecture
+# Productscape
 
-Spec-Driven Product Architecture is a repository for modeling product strategy in a structured, implementation-aware way and publishing that model as a static documentation site.
+**Deep research. Curated structure. Visual landscape.**
+
+Productscape is a toolset for AI-powered deep research into a product domain, curated into a structured, visual landscape — customers, products, product bricks, teams, and competition — and published as a static documentation site. Each generated domain is a *productscape*: a pragmatic structure that can later be grounded in real implementation evidence.
 
 The generated documentation is published via GitHub Pages at:
 
-https://zeljkoobrenovic.github.io/spec-driven-product-architecture/
+https://zeljkoobrenovic.github.io/productscape/
 
 The core idea is to describe product strategy from a customer-centric perspective and connect it to:
 

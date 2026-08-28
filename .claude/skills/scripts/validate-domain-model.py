@@ -582,8 +582,85 @@ def validate_cross_references(domain_dir, bricks, errors):
                             errors.append(f'{domain_dir.name}: product {product.get("id", "?")} references missing customer {primary_id}')
 
 
+JOURNEY_STAGES = ['Trigger', 'Discovery', 'Evaluation', 'Trial', 'Engagement', 'Retention']
+
+
+def validate_journey_stages(domain_dir, warnings):
+    path = domain_dir / 'customers' / 'customers.json'
+    if not path.exists():
+        return
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return  # load/parse failures are reported as errors elsewhere
+    for group in payload if isinstance(payload, list) else []:
+        for customer in group.get('customers', []) or []:
+            for story in customer.get('customerJourneyStories', []) or []:
+                stages = [stage.get('stage') for stage in story.get('stages', []) or []]
+                bad = [stage for stage in stages if stage not in JOURNEY_STAGES]
+                if bad:
+                    warnings.append(
+                        f"{domain_dir.name}: journey '{story.get('id')}' uses non-standard stage(s) {bad}; "
+                        f"journeys model product adoption with stages {JOURNEY_STAGES}")
+
+
+def validate_relations(domain_dir, errors):
+    path = domain_dir / 'customers' / 'relations.json'
+    if not path.exists():
+        return
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return  # load/parse failures are reported as errors elsewhere
+    customer_ids = set()
+    customers_path = domain_dir / 'customers' / 'customers.json'
+    if customers_path.exists():
+        try:
+            for group in json.loads(customers_path.read_text()):
+                for customer in group.get('customers', []) or []:
+                    customer_ids.add(customer.get('id'))
+        except (OSError, ValueError):
+            return
+    stream_ids = set()
+    streams_path = domain_dir / 'product-bricks' / 'product-stream.json'
+    if streams_path.exists():
+        try:
+            def walk(node):
+                if isinstance(node, dict):
+                    for stream in node.get('streams', []) or []:
+                        if isinstance(stream, dict):
+                            stream_ids.add(stream.get('id'))
+                    for value in node.values():
+                        walk(value)
+                elif isinstance(node, list):
+                    for value in node:
+                        walk(value)
+            walk(json.loads(streams_path.read_text()))
+        except (OSError, ValueError):
+            pass
+    type_ids = {t.get('id') for t in payload.get('relationTypes', []) or []}
+    seen = set()
+    for relation in payload.get('relations', []) or []:
+        rid = relation.get('id')
+        if rid in seen:
+            errors.append(f'{domain_dir.name}: relations.json duplicate relation id: {rid}')
+        seen.add(rid)
+        for endpoint in ('from', 'to'):
+            value = relation.get(endpoint)
+            if customer_ids and value not in customer_ids:
+                errors.append(f"{domain_dir.name}: relations.json {rid}: '{endpoint}' is not a customer id: {value}")
+        if relation.get('from') == relation.get('to'):
+            errors.append(f'{domain_dir.name}: relations.json {rid}: self-loop relation')
+        if relation.get('type') not in type_ids:
+            errors.append(f"{domain_dir.name}: relations.json {rid}: undeclared relation type: {relation.get('type')}")
+        for stream_id in relation.get('streamIds', []) or []:
+            if stream_ids and stream_id not in stream_ids:
+                errors.append(f'{domain_dir.name}: relations.json {rid}: unknown stream id: {stream_id}')
+
+
 def validate_domain(domain_dir, strict_ids=False):
     errors = []
+    warnings = []
     json_payloads = []
 
     for json_path in sorted(domain_dir.rglob('*.json')):
@@ -607,7 +684,9 @@ def validate_domain(domain_dir, strict_ids=False):
 
     validate_team_model(domain_dir, bricks, errors)
     validate_cross_references(domain_dir, bricks, errors)
-    return errors, len(json_payloads), len(bricks)
+    validate_relations(domain_dir, errors)
+    validate_journey_stages(domain_dir, warnings)
+    return errors, warnings, len(json_payloads), len(bricks)
 
 
 def main():
@@ -627,14 +706,21 @@ def main():
         parser.error('pass one or more domain IDs, or use --all for a full repository scan')
 
     all_errors = []
+    all_warnings = []
     summaries = []
     for domain_dir in domain_dirs:
         if not domain_dir.exists():
             all_errors.append(f'{domain_dir.name}: domain directory does not exist')
             continue
-        errors, json_count, brick_count = validate_domain(domain_dir, strict_ids=args.strict_ids)
+        errors, warnings, json_count, brick_count = validate_domain(domain_dir, strict_ids=args.strict_ids)
         all_errors.extend(errors)
+        all_warnings.extend(warnings)
         summaries.append((domain_dir.name, json_count, brick_count))
+
+    if all_warnings:
+        print(f'Warnings ({len(all_warnings)}):')
+        for warning in all_warnings:
+            print(f'- {warning}')
 
     if all_errors:
         print('Domain validation failed:')

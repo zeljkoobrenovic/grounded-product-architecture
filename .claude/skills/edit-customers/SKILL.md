@@ -37,9 +37,23 @@ Target files (per domain):
   Neither is in-product browsing/search.
 
 ### Journeys
-- Separate the commercial/adoption journey from in-product task workflow.
-- Cover discovery → evaluation → trial/onboarding → active use → support/recovery →
-  retention/expansion. Include trust/compliance/payment moments when material.
+- **A journey story is the customer's adoption journey WITH THE PRODUCT, not a
+  walkthrough of doing their job.** The single most common mistake is writing a
+  task-execution narrative (e.g. "prepare tender → run bids → award → publish") —
+  that content belongs in JTBD steps or streams, never in journey stages.
+- **Stages are fixed — use exactly these six, in this order, as the `stage` values:**
+  `Trigger`, `Discovery`, `Evaluation`, `Trial`, `Engagement`, `Retention`.
+  - `Trigger` — the pain/event that starts the search (not a work task).
+  - `Discovery` — how they become AWARE of the product (referrals, conferences,
+    analyst reports, app stores, sales outreach, a colleague's screen) before use.
+  - `Evaluation` — deciding before committing: comparisons, references, security/
+    procurement review, pricing vs. value, trust and compliance checks.
+  - `Trial` — first bounded real use: pilot, parallel run, first booking/load.
+  - `Engagement` — the product embedded in their routine; depth and habit.
+  - `Retention` — why they stay/renew/expand; advocacy and lock-in moments.
+- Litmus test per stage: if the narrative would still be true without this product
+  existing, it is a job narrative, not an adoption journey — rewrite it.
+- Include trust/compliance/payment moments where material (usually in Evaluation).
 
 ### KPI pyramids
 - A top customer outcome and (where modeled) business outcome, each decomposed into a
@@ -138,10 +152,20 @@ Target files (per domain):
   "name": "Airport ride without pickup friction",
   "linkedJobIds": ["book", "trust"],      // ids from this persona's jobsToBeDone
   "summary": "…",
-  "stages": [ { "stage": "Discovery", "narrative": "…", "media": [] } ],
+  "stages": [
+    { "stage": "Trigger",    "narrative": "…", "media": [] },
+    { "stage": "Discovery",  "narrative": "…", "media": [] },
+    { "stage": "Evaluation", "narrative": "…", "media": [] },
+    { "stage": "Trial",      "narrative": "…", "media": [] },
+    { "stage": "Engagement", "narrative": "…", "media": [] },
+    { "stage": "Retention",  "narrative": "…", "media": [] }
+  ],
   "media": [ { "type": "image", "src": "…", "title": "…", "alt": "…" } ]
 }
 ```
+
+> The six stages above are the fixed adoption-journey model (see "Journeys").
+> Do not invent task-phase stage names like "Preparation", "Tender", or "Award".
 
 ### kpiPyramids
 

@@ -18,9 +18,9 @@ Use this `AGENTS.md` file for always-on repository rules, source-vs-generated po
 
 For deeper review guidance, use the invocable skills under `.codex/skills/`:
 
-- `spda-product-domain-review` for customers, JTBD, journeys, value propositions, KPIs, strategy, insights, and competition.
-- `spda-product-bricks-review` for product bricks, product streams, data assets, layered modules, dependencies, external systems, team ownership, and implementation traceability.
-- `spda-teams-review` for organization design, ownership coverage, topology, staffing, dependencies, charters, AI-agent boundaries, and alignment with customers, product deployments, product bricks, and data assets.
+- `gpa-product-domain-review` for customers, JTBD, journeys, value propositions, KPIs, strategy, insights, and competition.
+- `gpa-product-bricks-review` for product bricks, product streams, data assets, layered modules, dependencies, external systems, team ownership, and implementation traceability.
+- `gpa-teams-review` for organization design, ownership coverage, topology, staffing, dependencies, charters, AI-agent boundaries, and alignment with customers, product deployments, product bricks, and data assets.
 
 Keep detailed modeling guidance in skills; keep this file focused on operational rules that apply to every product-domain edit.
 
