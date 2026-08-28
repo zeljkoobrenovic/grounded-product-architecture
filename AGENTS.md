@@ -2,7 +2,7 @@
 
 ## Project
 
-This repository contains **Grounded Product Architecture**, a toolset for modeling product strategy in a structured, implementation-aware way.
+This repository contains **Productscape**, a toolset for modeling product strategy in a structured, implementation-aware way.
 
 The core idea is to describe product strategy from a customer-centric perspective and connect it to:
 
@@ -136,4 +136,4 @@ When working in this repo, think in this order:
 5. implementation and architectural evidence
 6. generated static documentation
 
-That sequence matches the intent of Grounded Product Architecture: strategy should remain grounded in actual product building blocks and implementation reality.
+That sequence matches the intent of Productscape: deep research curated into a structure that stays connected to actual product building blocks and implementation reality.
