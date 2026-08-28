@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Grounded Product Architecture models product strategy as structured JSON and generates a self-contained static documentation site (published via GitHub Pages). There is **no frontend framework, build system, npm, or external JS runtime** — generators are plain Python 3, output is standalone HTML with embedded data. Preserve this no-framework approach; do not introduce React, bundlers, or client-side package dependencies.
+Productscape models product strategy as structured JSON and generates a self-contained static documentation site (published via GitHub Pages). There is **no frontend framework, build system, npm, or external JS runtime** — generators are plain Python 3, output is standalone HTML with embedded data. Preserve this no-framework approach; do not introduce React, bundlers, or client-side package dependencies.
 
 The pipeline is one-directional:
 

@@ -1,13 +1,13 @@
 ---
 name: gpa-teams-review
-description: "Use in the Grounded Product Architecture project when reviewing `_config/product-domains/**/teams/teams.json` for organizational realism, ownership coverage, topology, headcount, dependencies, AI-agent boundaries, and alignment with product bricks, customers, streams, product deployments, and data assets; save the review in the domain root `REVIEW.md`."
+description: "Use in the Productscape project when reviewing `_config/product-domains/**/teams/teams.json` for organizational realism, ownership coverage, topology, headcount, dependencies, AI-agent boundaries, and alignment with product bricks, customers, streams, product deployments, and data assets; save the review in the domain root `REVIEW.md`."
 ---
 
 # GPA Teams Review
 
 ## Purpose
 
-Review the operating model for a Grounded Product Architecture product domain. The goal is to identify ownership gaps, unrealistic team design, staffing imbalance, weak charters, and broken cross-model relationships in `_config/product-domains/<domain>/REVIEW.md` before an editing pass changes `_config/product-domains/<domain>/teams/teams.json`.
+Review the operating model for a Productscape product domain. The goal is to identify ownership gaps, unrealistic team design, staffing imbalance, weak charters, and broken cross-model relationships in `_config/product-domains/<domain>/REVIEW.md` before an editing pass changes `_config/product-domains/<domain>/teams/teams.json`.
 
 ## Source Files
 

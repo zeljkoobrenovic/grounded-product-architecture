@@ -1,6 +1,6 @@
 ---
 name: product-domain
-description: "Router and index for creating and maintaining Grounded Product Architecture domain data (customers, strategy, jobs-to-be-done, product vision, insights, competition, teams, product bricks, streams, data assets, product deployments). Use when the user wants to work on a product domain but the specific artifact isn't named, when they ask what's possible, or to understand the model, ID conventions, and the validate/regenerate loop before editing _config/product-domains/**."
+description: "Router and index for creating and maintaining Productscape domain data (customers, strategy, jobs-to-be-done, product vision, insights, competition, teams, product bricks, streams, data assets, product deployments). Use when the user wants to work on a product domain but the specific artifact isn't named, when they ask what's possible, or to understand the model, ID conventions, and the validate/regenerate loop before editing _config/product-domains/**."
 ---
 
 # Product Domain (router)
