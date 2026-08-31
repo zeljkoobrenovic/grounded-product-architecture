@@ -122,6 +122,7 @@ def render_package(package_folder, template):
             .replace('${tabs_script}', TABS_SCRIPT)
             .replace('${date}', DATE_STRING)
             .replace('${apps}', json.dumps(rendered_apps))
+            .replace('${domain_nav_links}', '')
             .replace('${domain_name}', config['domain_name'])
             .replace('${domain_description}', config['domain_description'])
         )

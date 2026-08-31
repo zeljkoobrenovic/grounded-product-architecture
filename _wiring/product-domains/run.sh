@@ -21,6 +21,7 @@ scripts=(
   "generate-product-bricks-docs.py"
   "generate-teams-docs.py"
   "generate-competition-docs.py"
+  "generate-residuality-docs.py"
 )
 
 domains_root="../../_config/product-domains"

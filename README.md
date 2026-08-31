@@ -17,6 +17,7 @@ The core idea is to describe product strategy from a customer-centric perspectiv
 - delivery structure and channels
 - product bricks, the implementation-facing building blocks
 - supporting evidence, documents, and architectural references
+- stress tests that show how unexpected business changes affect strategy, implementation, and organization
 
 ## How It Works
 
@@ -64,6 +65,8 @@ Each domain typically contains:
   Team structure.
 - `business/competition.json`
   Competitive landscape (with `business/logos/`).
+- `residuality/residuality.json`
+  Optional outside-change tests that describe the new business situation, the required response, the concrete design change, and affected productscape items.
 - `data/data-assets.json`
   Domain data assets.
 - `start/config.json`
@@ -143,6 +146,12 @@ The explorer shows one tab per evidence type with central search. It also has an
 
 Product bricks connect strategy to execution. They bridge customer and business needs with systems, services, APIs, delivery work, and architecture.
 
+### Residuality Stress Test
+
+Every generated productscape includes a Residuality Stress Test. It asks a practical question: if customers, markets, regulation, operations, or competitors changed unexpectedly, what would the business do and what would need to change in the product? Domains without authored tests show an empty starting state plus an explanation of the method; add `_config/product-domains/<domain-id>/residuality/residuality.json` to populate it. The eMobility domain is the flagship example, adapted from the EV-charging example in Barry M. O'Reilly's *Residues: Time, Change, and Uncertainty in Software Architecture* (2024).
+
+Each test records what outside change occurs, what would reveal it, the new situation the business enters, how the business responds, and the exact product or architecture change required. Residuality Theory calls the outside change a *stressor*, the recurring business situation an *attractor*, and the resulting design change a *residue*, but the app presents the plain-language explanation first. Every change is linked to existing vision, JTBD, journey, KPI, competitor, product, product-stream, product-brick, and team ids, grouped as Strategy & Vision, Implementation, and Organization. The shared-impact matrix then makes it clear when one outside change requires coordinated changes across several parts of the productscape.
+
 ## Generation
 
 Generation scripts live under `_wiring/`.
@@ -155,6 +164,7 @@ Product-domain generators:
 - `generate-product-bricks-docs.py`
 - `generate-teams-docs.py`
 - `generate-competition-docs.py`
+- `generate-residuality-docs.py`
 
 Run them from the generator folder, either domain-by-domain or via the wrapper script:
 
@@ -170,6 +180,7 @@ python3 generate-products-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-product-bricks-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-teams-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-competition-docs.py <domain_id> <domain_name> <domain_description>
+python3 generate-residuality-docs.py <domain_id> <domain_name> <domain_description>
 ```
 
 Other generators live under:
@@ -195,7 +206,8 @@ Work in this order:
 2. KPIs and strategy horizons
 3. product delivery structure
 4. product bricks and capabilities
-5. implementation and architectural evidence
-6. generated static documentation
+5. outside-change tests and the resulting productscape changes
+6. implementation and architectural evidence
+7. generated static documentation
 
 That sequence reflects the intent of the repository: strategy should stay grounded in real product building blocks and implementation reality.

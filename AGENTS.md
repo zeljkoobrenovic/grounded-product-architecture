@@ -31,7 +31,7 @@ All generated HTML files are intended to be self-contained and easy to publish a
 ## Repository Structure
 
 - `_config/`
-  - Source-of-truth data for product domains, product bricks, customers, product deployments, teams, data assets, evidence metadata, and supporting documents.
+  - Source-of-truth data for product domains, product bricks, customers, product deployments, teams, data assets, residuality stress tests, evidence metadata, and supporting documents.
 - `_templates/`
   - HTML templates used to generate the static site.
 - `_wiring/`
@@ -73,6 +73,8 @@ Each domain typically contains:
   - Domain data assets.
 - `start/config.json`
   - Start-page configuration (with `start/icons/`).
+- `residuality/residuality.json` (optional)
+  - Business-context stressors, attractors, reactions, residues, looping links, and impacts on strategy, products, bricks, teams, and competition.
 
 ### 2. Product bricks
 
@@ -93,6 +95,7 @@ Generation scripts live under `_wiring/product-domains/` and run in this order (
 - `generate-product-bricks-docs.py`
 - `generate-teams-docs.py`
 - `generate-competition-docs.py`
+- `generate-residuality-docs.py`
 
 These scripts read from `_config/...` and `_templates/...` and write generated pages into `docs/...`.
 
@@ -133,7 +136,8 @@ When working in this repo, think in this order:
 2. KPIs and strategic horizons
 3. product delivery structure
 4. product bricks/capabilities
-5. implementation and architectural evidence
-6. generated static documentation
+5. residuality stressors and residues across the modeled landscape
+6. implementation and architectural evidence
+7. generated static documentation
 
 That sequence matches the intent of Productscape: deep research curated into a structure that stays connected to actual product building blocks and implementation reality.

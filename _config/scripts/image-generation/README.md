@@ -1,6 +1,6 @@
-# Customer Image Generation
+# Product Domain Image Generation
 
-This folder contains source-first scripts that scan product-domain customer models, generate customer-facing imagery, save files into each domain's `customers/media/` folder, and update `customers.json` media references when needed.
+This folder contains source-first scripts that scan product-domain models, generate supporting imagery, save files beside the relevant source JSON, and update media references when needed.
 
 ## What It Does
 
@@ -16,6 +16,7 @@ This folder contains source-first scripts that scan product-domain customer mode
 - calls either the OpenAI Images API or the Gemini Nano Banana image API for JTBD images, and the Gemini Nano Banana image API for journey images
 - writes image files into `customers/media/`
 - patches `media` entries in JSON if missing or stale
+- generates one Gemini Nano Banana illustration for every residuality stressor, writes it into `residuality/media/`, and patches the stressor's `media` entry
 
 ## Requirements
 
@@ -58,6 +59,15 @@ python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobana
 python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --overwrite
 ```
 
+Residuality stressor images via Gemini Nano Banana API:
+
+```bash
+export GEMINI_API_KEY=...
+python3 _config/scripts/image-generation/generate_residuality_images_gemini_nanobanana_api.py --dry-run
+python3 _config/scripts/image-generation/generate_residuality_images_gemini_nanobanana_api.py --domain ride-sharing-marketplace --limit 2
+python3 _config/scripts/image-generation/generate_residuality_images_gemini_nanobanana_api.py --domain ride-sharing-marketplace --overwrite
+```
+
 Useful flags:
 
 - `--domain <id>` limits work to one domain
@@ -79,10 +89,14 @@ Useful flags:
     (saved as `customers/media/relations-overview.png`, referenced via a top-level
     `media` entry in `relations.json` and shown at the top of the Relations tab;
     the reference is only written once the image exists)
+- `generate_residuality_images_gemini_nanobanana_api.py` creates:
+  - one landscape illustration per `stressors[]` item
+  - files named `residuality/media/stressor-<stressor-id>.<format>` using the image format returned by Gemini
+  - an image `media` entry on each generated stressor for the residuality page
 
 ## Notes
 
-- The script updates only `customers/customers.json`. It does not regenerate `docs/`.
+- Image scripts update only their source JSON files. They do not regenerate `docs/`.
 - Existing non-image media entries are preserved.
 - Existing user changes elsewhere in the worktree are untouched.
 - A safe first run is `--dry-run` or `--json-only` on one domain before doing full image generation.

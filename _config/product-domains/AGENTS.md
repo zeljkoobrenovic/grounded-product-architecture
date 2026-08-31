@@ -36,7 +36,8 @@ Work in this sequence:
 6. Data assets and ownership
 7. Teams and operating model
 8. Competition and market context
-9. Generated documentation
+9. Residuality stressors, attractors, residues, and cross-landscape impacts
+10. Generated documentation
 
 Do not start from pages or visuals. Start from the source model.
 
@@ -63,6 +64,7 @@ A mature domain normally contains:
 - `data/data-assets.json`
 - `teams/teams.json`
 - `business/competition.json`
+- `residuality/residuality.json` (optional)
 
 Optional media and icon folders may live beside the JSON sources they support.
 
@@ -231,7 +233,15 @@ Define:
 
 Include scope, inclusion logic, caveats, direct competitors, substitutes, adjacent platforms, official source links, and comparable business statistics where useful.
 
-### 10. Add Icons When Needed
+### 10. Add A Residuality Stress Test When Needed
+
+Define optional business-context stressors in:
+
+- `residuality/residuality.json`
+
+For each stressor, record detection, the business attractor, the business reaction, the resulting residue, and explicit impacts on existing vision, JTBD, journey, KPI, product, product-stream, product-brick, team, and competitor ids. The app groups these as Strategy & Vision, Implementation, and Organization. Do not assign probability or likelihood. Mark looping with `status: "already-survived"` and link the earlier integrated residues through `reusesResidueIds`.
+
+### 11. Add Icons When Needed
 
 If the domain uses custom icon names, add matching assets under the relevant local `icons/` folder.
 
@@ -307,6 +317,7 @@ From `_wiring/product-domains/`:
 - `python3 generate-product-bricks-docs.py`
 - `python3 generate-teams-docs.py`
 - `python3 generate-competition-docs.py`
+- `python3 generate-residuality-docs.py`
 
 Run only the generators relevant to the files you changed.
 
@@ -358,6 +369,7 @@ And the generated docs exist under:
 - `docs/product-domains/<domain-id>/product-bricks/`
 - `docs/product-domains/<domain-id>/teams/`
 - `docs/product-domains/<domain-id>/business/`
+- `docs/product-domains/<domain-id>/residuality/`
 
 ## Biases To Keep
 

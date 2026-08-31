@@ -1,0 +1,726 @@
+{
+  "metadata": {
+    "title": "eMobility Residuality Stress Test",
+    "description": "Explore how the eMobility service would need to change when drivers, fleets, regulation, pricing, public behavior, or the physical charging network behave differently from today's assumptions.",
+    "modelVersion": "1.0",
+    "naiveArchitecture": "A registered driver presents an RFID key fob at a charge point. The charger calls a cloud authorization API, which reads the membership record from a database and either permits or denies the charging session.",
+    "residualArchitecture": "Instead of treating one membership key fob as the only way to start and pay for charging, the adapted design separates four decisions: who or what may start a session, whether charging can begin, how the price is calculated, and who pays. RFID, vehicle recognition, fleet accounts, roaming, and walk-up payment can therefore change independently. Operational evidence and capacity controls help the network respond to regulation, new customer groups, and physical disruption.",
+    "note": "This flagship dataset adapts the EV-charger worked example to the existing eMobility Productscape objects. It is a teaching dataset, not a claim that every residue has been implemented in a production system.",
+    "source": {
+      "title": "Residues: Time, Change, and Uncertainty in Software Architecture",
+      "author": "Barry M. O'Reilly",
+      "year": "2024",
+      "url": "https://leanpub.com/residuality"
+    }
+  },
+  "stressors": [
+    {
+      "id": "kfob",
+      "name": "A driver's key fob breaks at the charger",
+      "group": "Customer behavior",
+      "detection": "Authorization-failure events, repeated tap attempts, roadside-support calls, and charger-panel telemetry.",
+      "attractor": "A driver with little remaining battery is stranded at a functioning charger because the subscription credential—not the ability to pay or charge—has failed.",
+      "businessReaction": "Let the driver charge without the original membership credential, identify the vehicle or accept another authorization method, and recover payment afterwards.",
+      "residue": "Decouple charging permission from membership identity. Session orchestration accepts an authorization token from RFID, vehicle recognition, support, or walk-up payment, while billing resolves the payer separately.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "urban_ev_driver",
+          "effect": "Makes seamless and predictable public charging depend on credential-independent recovery, not only normal authentication success."
+        },
+        {
+          "targetType": "job",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere",
+          "effect": "Extends reliable charging to the moment when the driver's normal credential is unavailable."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere/authenticate-and-start-session",
+          "effect": "Turns authentication from one RFID path into a recoverable choice of authorization paths."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "urban_ev_driver/kpi_session_success_rate",
+          "effect": "Session success must include recovery starts, not only first-attempt RFID authorization."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_driver_experience",
+          "effect": "Needs a visible recovery flow and a post-session path for confirming identity and payment."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "dase",
+          "effect": "Must validate multiple authorization token types without treating a membership record as the charging command."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "seor",
+          "effect": "Must start and track a session from an authorization token whose payer may be resolved later."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bise",
+          "effect": "Must support post-session payment recovery and later association of the charge with a payer."
+        },
+        {
+          "targetType": "team",
+          "targetId": "driver-identity-experience-driver-authorization",
+          "effect": "Owns the credential-independent authorization policy and recovery experience."
+        },
+        {
+          "targetType": "team",
+          "targetId": "cpo-network-operations-session-orchestration",
+          "effect": "Owns a charge-start contract that remains stable while authorization methods change."
+        },
+        {
+          "targetType": "team",
+          "targetId": "value-streams-roaming-and-settlement-pricing-billing",
+          "effect": "Owns delayed payer resolution, post-paid collection, and auditability of the recovered session."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "driver-find-and-start-charging",
+          "effect": "Keeps charger discovery and session start recoverable when the driver's normal credential fails."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "shell_recharge",
+          "effect": "Makes credential-independent roadside recovery a benchmark for broad public-charging access."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-kfob.jpg",
+          "title": "Residuality stressor illustration: A driver's key fob breaks at the charger",
+          "alt": "Illustration of the residuality stressor 'A driver's key fob breaks at the charger', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "flet",
+      "name": "A fleet wants one account for many drivers and vehicles",
+      "group": "Customer structure",
+      "detection": "Enterprise sales requests, fleet RFPs, account-onboarding workshops, and invoice consolidation requests.",
+      "attractor": "The economically important customer is an organization with a single commercial relationship, while many drivers, vehicles, credentials, cost centers, and reimbursement rules use it.",
+      "businessReaction": "Sell and operate a hierarchical fleet account with delegated access, consolidated billing, vehicle and driver assignment, and policy controls.",
+      "residue": "Separate payer, account, driver, vehicle, and credential. Allow many authorization identities to resolve to one contract while preserving per-driver and per-vehicle usage records.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "fleet_manager_electric",
+          "effect": "Makes enterprise-scale electrification depend on a multi-actor account model rather than a consumer account reused many times."
+        },
+        {
+          "targetType": "job",
+          "targetId": "fleet_manager_electric/jtbd_manage_ev_fleet_costs",
+          "effect": "Adds organization-wide identity, policy, and cost allocation to the fleet-cost job."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "fleet_manager_electric/jtbd_manage_ev_fleet_costs/provide-drivers-with-access",
+          "effect": "Changes access issuance into a lifecycle for drivers, vehicles, roles, credentials, and exceptions."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "fleet_manager_electric/kpi_vehicles_managed",
+          "effect": "Becomes a scale test for the account hierarchy and assignment model, not only a sales volume measure."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_fleet_energy",
+          "effect": "Requires account hierarchy, delegated administration, policy, allocation, and consolidated billing as core product behavior."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "flma",
+          "effect": "Becomes the explicit model for fleet, vehicle, driver, assignment, and charging-policy relationships."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ccma",
+          "effect": "Must model the contracting organization separately from members and charging credentials."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iama",
+          "effect": "Must support delegated fleet roles and scoped permissions rather than a single account owner."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bise",
+          "effect": "Must consolidate usage while retaining vehicle, driver, tax, and cost-center detail."
+        },
+        {
+          "targetType": "team",
+          "targetId": "fleet-and-enterprise-solutions-cell-4",
+          "effect": "Owns the cross-brick enterprise account model and its end-to-end behavior."
+        },
+        {
+          "targetType": "team",
+          "targetId": "driver-identity-experience-identity-access",
+          "effect": "Owns delegation and permission boundaries for fleet administrators and drivers."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "chargepoint",
+          "effect": "Raises enterprise fleet and workplace account depth as a competitive benchmark, not an optional consumer-account extension."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "fleet-manager-govern-charging-behaviour",
+          "effect": "Carries fleet hierarchy, delegated access, vehicle assignment, policy, and exceptions into daily charging behavior."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-flet.jpg",
+          "title": "Residuality stressor illustration: A fleet wants one account for many drivers and vehicles",
+          "alt": "Illustration of the residuality stressor 'A fleet wants one account for many drivers and vehicles', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "prio",
+      "name": "Emergency vehicles need priority access to constrained charging capacity",
+      "group": "Public service",
+      "detection": "Health-authority procurement, emergency-service operating exercises, site-capacity alerts, and priority-access requests.",
+      "attractor": "Charging is no longer first-come first-served: public-service vehicles must receive time-critical capacity while ordinary drivers and fleets are already using the site.",
+      "businessReaction": "Offer governed priority contracts, reserve capacity, explain displaced sessions, and preserve a clear audit trail for every override.",
+      "residue": "Introduce a policy-driven priority token into authorization and smart charging. Session orchestration requests capacity by service class, while site constraints remain separate from customer identity.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "cpo_enterprise_ops_director",
+          "effect": "Expands network reliability from average availability to differentiated service continuity for critical customers."
+        },
+        {
+          "targetType": "job",
+          "targetId": "cpo_enterprise_ops_director/jtbd_scale_network",
+          "effect": "Adds governed capacity prioritization to operating a pan-European network."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "cpo_enterprise_ops_director/jtbd_scale_network/optimize-energy-usage",
+          "effect": "Optimization must honor service priority as well as grid cost and site constraints."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "cpo_enterprise_ops_director/kpi_peak_utilization",
+          "effect": "Peak utilization needs a companion view of protected capacity and priority-service fulfillment."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_cpms_enterprise",
+          "effect": "Needs contract-driven capacity reservation, operator controls, and explainable overrides."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "scen",
+          "effect": "Must allocate power using service priority without embedding customer-specific rules in the optimization engine."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "semc",
+          "effect": "Must expose reservable and interruptible site capacity as explicit constraints."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "dase",
+          "effect": "Must attach a verified service-class claim to the authorization token."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "seor",
+          "effect": "Must coordinate priority, displacement, notification, and recovery across active sessions."
+        },
+        {
+          "targetType": "team",
+          "targetId": "cpo-network-operations-smart-charging",
+          "effect": "Owns policy-safe allocation behavior and the service-level evidence for priority capacity."
+        },
+        {
+          "targetType": "team",
+          "targetId": "cpo-network-operations-session-orchestration",
+          "effect": "Owns the session state transitions when ordinary capacity is displaced or reserved."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "operator-balance-energy-and-capacity",
+          "effect": "Allocates constrained site power across ordinary and protected service classes with explainable outcomes."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "chargepoint",
+          "effect": "Makes governed fleet and public-service capacity controls an enterprise charging benchmark."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-prio.jpg",
+          "title": "Residuality stressor illustration: Emergency vehicles need priority access to constrained charging capacity",
+          "alt": "Illustration of the residuality stressor 'Emergency vehicles need priority access to constrained charging capacity', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "crsh",
+      "name": "Vehicles collide with charge points",
+      "group": "Physical environment",
+      "detection": "Sudden telemetry loss, impact or tilt sensors, camera events, site reports, insurance claims, and unusual support contacts.",
+      "attractor": "Physical assets fail unpredictably, a site loses capacity, queues move elsewhere, and operators need evidence before repair, safety, and liability decisions can proceed.",
+      "businessReaction": "Isolate the unsafe asset, redirect drivers, use spare network capacity, dispatch repair, and retain reliable incident evidence.",
+      "residue": "Treat physical capacity and evidence as explicit parts of network operation: health events remove assets from availability, location publishing redirects demand, spare capacity absorbs loss, and camera or site evidence is attached to the incident.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "job",
+          "targetId": "cpo_enterprise_ops_director/jtbd_scale_network",
+          "effect": "Makes physical damage detection and capacity substitution part of reliable network operation."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "cpo_enterprise_ops_director/jtbd_scale_network/ensure-network-uptime",
+          "effect": "Extends uptime work from software incidents to damaged field assets and redirected demand."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "cpo_enterprise_ops_director/kpi_uptime",
+          "effect": "Must distinguish unsafe, isolated, degraded, and substituted physical capacity."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "cpo_enterprise_ops_director/kpi_mttr",
+          "effect": "Begins at reliable damage detection and includes evidence collection, dispatch, and safe recommissioning."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_cpms_enterprise",
+          "effect": "Needs physical-asset incident state, evidence, isolation, repair, and capacity-degradation views."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "maro",
+          "effect": "Correlates missing telemetry, site signals, reports, and evidence into a physical-asset incident."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "cpma",
+          "effect": "Must carry safe isolation, repair, replacement, and recommissioning states for each charge point."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "alpu",
+          "effect": "Must rapidly remove unsafe capacity and direct drivers toward viable alternatives."
+        },
+        {
+          "targetType": "team",
+          "targetId": "cpo-network-operations-alarms-remote",
+          "effect": "Owns detection, triage, evidence linkage, and operational response across software and physical signals."
+        },
+        {
+          "targetType": "team",
+          "targetId": "cpo-network-operations-charge-point",
+          "effect": "Owns the asset lifecycle from isolation through safe recommissioning."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "cpo_enterprise_ops_director",
+          "effect": "Network reliability includes physical safety, lost capacity, evidence, repair, and demand redirection."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "operator-run-network-remotely",
+          "effect": "Coordinates detection, isolation, repair, alternative capacity, and safe recommissioning of damaged assets."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "evgo",
+          "effect": "Makes rapid physical-site incident recovery a high-utilization public fast-charging benchmark."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-crsh.jpg",
+          "title": "Residuality stressor illustration: Vehicles collide with charge points",
+          "alt": "Illustration of the residuality stressor 'Vehicles collide with charge points', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "park",
+      "name": "Drivers leave vehicles at chargers for hours after charging",
+      "group": "Usage economics",
+      "detection": "Connector-state telemetry, completed-energy sessions that remain occupied, queue complaints, and falling site throughput.",
+      "attractor": "The scarce product is parking time rather than electricity: technically available chargers remain unusable, queues grow, and subscribers cannot access promised capacity.",
+      "businessReaction": "Make extended occupancy progressively expensive, warn drivers before penalties begin, and show the full rule before a session starts.",
+      "residue": "Separate energy rating from occupancy rating. Tariff policy can apply a sliding time charge after completion, while notifications and receipts explain every transition.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "urban_ev_driver",
+          "effect": "Makes predictable charging depend on fair access to occupied infrastructure as well as charger discovery."
+        },
+        {
+          "targetType": "job",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere",
+          "effect": "Adds post-charge vehicle removal and transparent occupancy pricing to the end-to-end charging job."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere/pay-and-receive-receipt",
+          "effect": "The receipt and live session view must separate energy cost from occupancy cost."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "cpo_enterprise_ops_director/kpi_idle_time",
+          "effect": "Becomes an actionable measure of blocked capacity, not simply time without energy transfer."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "cpo_enterprise_ops_director/kpi_sessions_per_cp",
+          "effect": "Measures whether occupancy policy converts installed capacity into completed customer sessions."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_driver_experience",
+          "effect": "Needs pre-session disclosure, countdowns, notifications, and explainable occupancy charges."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_cpms_enterprise",
+          "effect": "Needs operator policy, site exceptions, occupancy analytics, and dispute evidence."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "tpma",
+          "effect": "Must model time-based occupancy tiers independently from the energy tariff."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mrtl",
+          "effect": "Must rate energy and occupancy intervals as separately explainable ledger lines."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bise",
+          "effect": "Must invoice, collect, refund, and settle occupancy charges with a complete audit trail."
+        },
+        {
+          "targetType": "team",
+          "targetId": "driver-identity-experience-ev-driver-app",
+          "effect": "Owns transparent disclosure and timely nudges before occupancy charges escalate."
+        },
+        {
+          "targetType": "team",
+          "targetId": "roaming-and-settlement-tariff-pricing",
+          "effect": "Owns portable tariff semantics across direct and roaming sessions."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "driver-understand-price-and-pay",
+          "effect": "Explains energy and occupancy pricing before, during, and after the session."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "shell_recharge",
+          "effect": "Makes transparent idle-fee policy and notification a large-network customer-experience benchmark."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-park.jpg",
+          "title": "Residuality stressor illustration: Drivers leave vehicles at chargers for hours after charging",
+          "alt": "Illustration of the residuality stressor 'Drivers leave vehicles at chargers for hours after charging', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "iceg",
+      "name": "Petrol vehicles intentionally block EV chargers",
+      "group": "Social behavior",
+      "detection": "Camera or site reports, a recognized non-EV plate, occupied-bay signals without a charging session, and clustered driver complaints.",
+      "attractor": "Charging bays become a target for deliberate obstruction; capacity is socially contested even though the charging technology remains healthy.",
+      "businessReaction": "Identify and document the obstruction, apply enforceable occupancy consequences, redirect affected drivers, and make repeated blocking unattractive.",
+      "residue": "No new architectural change is needed: vehicle recognition and incident evidence, spare-capacity redirection, and sliding occupancy billing combine to absorb the new behavior.",
+      "status": "already-survived",
+      "reusesResidueIds": [
+        "kfob",
+        "crsh",
+        "park"
+      ],
+      "impacts": [
+        {
+          "targetType": "job",
+          "targetId": "cpo_enterprise_ops_director/jtbd_scale_network",
+          "effect": "Shows that reliable operation includes adversarial social use of the physical network, not only equipment health."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "cpo_enterprise_ops_director/jtbd_scale_network/ensure-network-uptime",
+          "effect": "Treats blocked but functional bays as unavailable capacity that needs detection and redirection."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "cpo_enterprise_ops_director/kpi_idle_time",
+          "effect": "Must distinguish genuinely idle capacity from physically blocked capacity."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_cpms_enterprise",
+          "effect": "Reuses existing evidence, capacity, and pricing controls without introducing an ICE-specific subsystem."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "maro",
+          "effect": "Correlates bay occupancy without a charging session into an actionable obstruction event."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "alpu",
+          "effect": "Removes blocked capacity from availability and redirects drivers."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "tpma",
+          "effect": "Reuses occupancy policy instead of adding behavior-specific billing logic."
+        },
+        {
+          "targetType": "team",
+          "targetId": "cpo-network-operations-alarms-remote",
+          "effect": "Coordinates evidence, site response, and capacity redirection through existing incident operations."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "cpo_enterprise_ops_director",
+          "effect": "Reliable network capacity includes detecting and resolving deliberate obstruction of healthy assets."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "operator-run-network-remotely",
+          "effect": "Reuses incident evidence, capacity state, redirection, and site response for socially blocked bays."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "chargepoint",
+          "effect": "Makes obstruction-aware site operations a benchmark for widely distributed charging networks."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-iceg.jpg",
+          "title": "Residuality stressor illustration: Petrol vehicles intentionally block EV chargers",
+          "alt": "Illustration of the residuality stressor 'Petrol vehicles intentionally block EV chargers', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "afir",
+      "name": "Regulation mandates ad-hoc card payment at every public charger",
+      "group": "Regulation",
+      "detection": "Regulatory monitoring, legal counsel, standards forums, public procurement rules, and competitors shipping compliant payment flows.",
+      "attractor": "A driver without a subscription or roaming contract expects immediate, transparent point-of-use payment; membership can no longer be the only route to a charge.",
+      "businessReaction": "Accept walk-up card payment, disclose the price before authorization, preserve existing subscriptions, and produce compliant receipts and settlement records.",
+      "residue": "No fundamental redesign is needed: the charge command already accepts authorization independently from membership, so card payment supplies another token and billing path behind the same session contract.",
+      "status": "already-survived",
+      "reusesResidueIds": [
+        "kfob"
+      ],
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "urban_ev_driver",
+          "effect": "Makes seamless charging explicitly inclusive of drivers without an existing account or roaming agreement."
+        },
+        {
+          "targetType": "job",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere",
+          "effect": "Adds walk-up price acceptance and card authorization to reliable public charging."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere/authenticate-and-start-session",
+          "effect": "Accepts payment authorization as a valid charge-start token without first creating a membership."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere/pay-and-receive-receipt",
+          "effect": "Requires pre-authorization price disclosure and a receipt for an unregistered payer."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "urban_ev_driver/kpi_session_success_rate",
+          "effect": "Must include successful walk-up sessions and distinguish payment decline from charger failure."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_driver_experience",
+          "effect": "Needs an account-free payment journey that coexists with app and RFID experiences."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_roaming_hub",
+          "effect": "Must distinguish direct ad-hoc payment from roaming authorization and settlement."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "dase",
+          "effect": "Accepts a payment authorization token without coupling it to a member identity."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "seor",
+          "effect": "Keeps the session start contract stable across card, RFID, app, and roaming channels."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bise",
+          "effect": "Adds card capture, receipt, refund, reconciliation, and payment-service-provider settlement."
+        },
+        {
+          "targetType": "team",
+          "targetId": "driver-identity-experience-driver-authorization",
+          "effect": "Owns the channel-neutral authorization contract rather than a membership-only gate."
+        },
+        {
+          "targetType": "team",
+          "targetId": "value-streams-roaming-and-settlement-pricing-billing",
+          "effect": "Owns compliant card collection and its separation from roaming settlement."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "shell_recharge",
+          "effect": "Makes walk-up access at a large energy-backed network a parity benchmark for the driver experience."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "driver-understand-price-and-pay",
+          "effect": "Provides account-free price disclosure, card authorization, receipt, refund, and payment support."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-afir.jpg",
+          "title": "Residuality stressor illustration: Regulation mandates ad-hoc card payment at every public charger",
+          "alt": "Illustration of the residuality stressor 'Regulation mandates ad-hoc card payment at every public charger', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "prce",
+      "name": "A major competitor cuts public-charging prices below our subscriber tariff",
+      "group": "Competition",
+      "detection": "Competitor tariff pages, driver-app price comparisons, partner notices, churn interviews, and a sudden shift in route-level demand.",
+      "attractor": "Price becomes the visible acquisition benchmark; subscription lock-in no longer justifies friction, and operators must protect utilization and margin at the same time.",
+      "businessReaction": "Respond by segment and context rather than copying one headline price: launch bounded offers, show total cost clearly, reward flexible demand, and protect unit economics.",
+      "residue": "Decouple offer policy from metering, settlement, and session orchestration. Versioned tariffs and eligibility rules can change rapidly, while analytics measures margin, conversion, utilization, and competitor response.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "cpo_enterprise_ops_director",
+          "effect": "Tests whether the most reliable platform can also preserve operator profitability during price-led competition."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "urban_ev_driver",
+          "effect": "Adds transparent, competitive total cost to the promise of seamless and predictable charging."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "cpo_enterprise_ops_director/kpi_network_ebitda",
+          "effect": "Becomes the guardrail that prevents a price response from buying utilization with structurally unprofitable sessions."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "urban_ev_driver/kpi_price_accuracy",
+          "effect": "Must show whether displayed savings and final billed prices remain trustworthy during rapid offer changes."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_driver_experience",
+          "effect": "Needs segment-aware offers and clear comparison of subscription, roaming, and walk-up prices."
+        },
+        {
+          "targetType": "product",
+          "targetId": "prod_cpms_enterprise",
+          "effect": "Needs operator controls for bounded campaigns, site eligibility, and margin-aware rollout."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "tpma",
+          "effect": "Must version price policy and eligibility independently from ledger and session behavior."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "anre",
+          "effect": "Must connect competitor movement to conversion, utilization, margin, churn, and site-level response."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mrtl",
+          "effect": "Must apply rapidly changing offers deterministically and preserve the policy version used for every charge."
+        },
+        {
+          "targetType": "team",
+          "targetId": "roaming-and-settlement-tariff-pricing",
+          "effect": "Owns fast tariff response with explicit commercial guardrails and cross-channel semantics."
+        },
+        {
+          "targetType": "team",
+          "targetId": "mobility-platform-foundation-observability-incident",
+          "effect": "Owns the analytical feedback that distinguishes healthy price response from margin leakage or measurement error."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "chargepoint",
+          "effect": "Provides the enterprise software and network benchmark against which price and bundled value are compared."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "evgo",
+          "effect": "Provides a fast-charging utilization and customer-account benchmark for the North American response."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "blink_charging",
+          "effect": "Tests whether a challenger combining hardware, network operation, and services can sustain a different price bundle."
+        },
+        {
+          "targetType": "job",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere",
+          "effect": "Reliable charging includes choosing an offer whose displayed total cost remains competitive and trustworthy."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "urban_ev_driver/jtbd_charge_reliably_anywhere/pay-and-receive-receipt",
+          "effect": "Shows the active offer, eligibility, comparison, billed price, and savings consistently through payment."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "driver-understand-price-and-pay",
+          "effect": "Connects competitive offer design to clear driver choice, deterministic rating, receipt, and margin evidence."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-prce.jpg",
+          "title": "Residuality stressor illustration: A major competitor cuts public-charging prices below our subscriber tariff",
+          "alt": "Illustration of the residuality stressor 'A major competitor cuts public-charging prices below our subscriber tariff', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    }
+  ]
+}

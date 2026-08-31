@@ -1,0 +1,457 @@
+{
+  "metadata": {
+    "title": "Digital Medication Management Residuality Stress Test",
+    "description": "Explore how medication-management services would need to change when patients become isolated, prescriptions change after packing, cognitive ability declines, funding depends on outcomes, medicines are recalled, or consumer competitors reshape the channel.",
+    "modelVersion": "1.0",
+    "naiveArchitecture": "A care professional configures a patient's medication schedule in a portal. A connected home device dispenses the prepared pouch at the scheduled time, records confirmation, and sends a missed-dose alarm to a carer.",
+    "residualArchitecture": "Instead of treating the portal schedule, medicine pouches, device actions, patient confirmation, and care escalation as one current plan, the adapted design keeps each as a separate, versioned record. The device can continue safely offline from a signed plan; prescription changes identify the exact affected doses; dispensing is not confused with proof of ingestion; and every transition can be reconciled across pharmacy, care, patient, and funding records.",
+    "note": "The stressors are centered on the care and medication context, not a list of infrastructure failures. Candidate residues are design hypotheses and do not claim clinical implementation or regulatory approval.",
+    "source": {
+      "title": "Residues: Time, Change, and Uncertainty in Software Architecture",
+      "author": "Barry M. O'Reilly",
+      "year": "2024",
+      "url": "https://leanpub.com/residuality"
+    }
+  },
+  "stressors": [
+    {
+      "id": "isol",
+      "name": "A winter storm isolates patients at home without power or connectivity for three days",
+      "group": "Home environment",
+      "detection": "Weather and civil-protection alerts, device power state, missed heartbeats, battery telemetry, local interaction events, and care-provider welfare checks.",
+      "attractor": "The home device becomes the only immediately available medication support while carers, pharmacy deliveries, cloud decisions, and video assistance may all be unreachable.",
+      "businessReaction": "Preserve safe scheduled dispensing locally, communicate remaining autonomy, prevent ambiguous plan changes, give the patient an offline help path, and reconcile all evidence when contact returns.",
+      "residue": "Deploy a signed, bounded medication plan with effective times, local schedule, policy, stock state, battery horizon, and emergency instructions. The device records an append-only local dose ledger and reconciles idempotently; cloud reachability is not the authority to dispense a currently valid dose.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "pati",
+          "effect": "Independent living includes a defined safe-autonomy horizon when home and care connectivity disappear."
+        },
+        {
+          "targetType": "job",
+          "targetId": "pati/live-independently",
+          "effect": "Reliable dosing continues from the last signed plan rather than stopping because the cloud is unavailable."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "pati/live-independently/be-covered-if-i-miss-or-struggle-with-a-dose",
+          "effect": "Offers local instructions and a pre-agreed escalation path that does not assume an online carer."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "pati/bcont",
+          "effect": "Continued service on device must distinguish safe local autonomy from merely appearing connected."
+        },
+        {
+          "targetType": "product",
+          "targetId": "anna",
+          "effect": "Shows the patient remaining power, plan validity, stock horizon, and offline help instructions."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "fwos",
+          "effect": "Verifies and executes a bounded signed plan locally and preserves an append-only event history."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "sched",
+          "effect": "Publishes effective, versioned plans with explicit offline validity and transition rules."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "conn",
+          "effect": "Reports autonomy horizon and performs conflict-safe replay instead of treating heartbeat loss as the whole state."
+        },
+        {
+          "targetType": "team",
+          "targetId": "dispensing-device-team",
+          "effect": "Owns safe local execution, power behavior, and auditable reconnection."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "dose",
+          "effect": "Keeps a scheduled dose safe and explainable through bounded offline operation and later reconciliation."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "medminder",
+          "effect": "Makes multi-day offline medication continuity a home-dispensing benchmark."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-isol.jpg",
+          "title": "Residuality stressor illustration: A winter storm isolates patients at home without power or connectivity for three days",
+          "alt": "Illustration of the residuality stressor 'A winter storm isolates patients at home without power or connectivity for three days', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "rxch",
+      "name": "A clinician changes the prescription after the current pouch roll has been packed",
+      "group": "Clinical change",
+      "detection": "e-Prescription update, clinician order, pharmacy notification, patient discharge, medication reconciliation, and mismatch between packed and active regimen.",
+      "attractor": "The clinically valid regimen, physically available pouches, device schedule, and carer expectation disagree; blindly continuing or replacing data in place can both create a medication error.",
+      "businessReaction": "Establish the effective clinical transition, identify affected pouches and doses, pause or substitute safely, coordinate repacking or manual support, and prove which instruction governed each dispense decision.",
+      "residue": "Model prescriptions and regimens as immutable versions with effective intervals and supersession reasons. Every pouch, planned dose, device plan, dispense event, and exception references its governing version; reconciliation drives quarantine, replacement, controlled overlap, and human escalation.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "phar",
+          "effect": "Prescription-accurate packing includes controlled transitions after a roll has left the pharmacy."
+        },
+        {
+          "targetType": "job",
+          "targetId": "phar/integrate-orders",
+          "effect": "Order alignment becomes a continuous clinical-version reconciliation job, not a batch handoff."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "phar/integrate-orders/handle-changes-safely-mid-cycle",
+          "effect": "Shows affected doses, transition authority, stock disposition, replacement, and care escalation as one case."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "phar/beff",
+          "effect": "Packing efficiency must be balanced with safe mid-cycle change and avoidable repack work."
+        },
+        {
+          "targetType": "product",
+          "targetId": "pharm",
+          "effect": "Coordinates immutable prescription versions, pouch lineage, transition cases, and pharmacy fulfillment."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "rxsy",
+          "effect": "Imports clinical changes as new effective versions and preserves source authority and reason."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "pord",
+          "effect": "Relates each packed order and pouch run to the regimen version it was intended to fulfill."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "recon",
+          "effect": "Finds the exact ordered, packed, loaded, planned, and dispensed set affected by a transition."
+        },
+        {
+          "targetType": "team",
+          "targetId": "pharmacy-supply-team",
+          "effect": "Owns the cross-boundary transition workflow and pouch disposition evidence with scheduling."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "omnicell",
+          "effect": "Makes pharmacy-to-device reconciliation depth a differentiator against institutional medication automation."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "intg",
+          "effect": "Carries the prescription change from clinical source through packing, device plan, exceptions, and replacement."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-rxch.jpg",
+          "title": "Residuality stressor illustration: A clinician changes the prescription after the current pouch roll has been packed",
+          "alt": "Illustration of the residuality stressor 'A clinician changes the prescription after the current pouch roll has been packed', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "cogn",
+      "name": "A patient's cognitive decline makes button confirmation unreliable evidence of ingestion",
+      "group": "Changing patient state",
+      "detection": "Care observations, repeated interaction anomalies, dose-taken disputes, clinical review, alarm patterns, and consented assisted-session evidence.",
+      "attractor": "The product reports adherence while the patient's ability to understand, retrieve, and ingest the dose has changed; the normal self-service interaction becomes false reassurance to carers.",
+      "businessReaction": "Reassess the support level, distinguish dispense from ingestion confidence, adapt reminders and assistance, involve authorized carers, and escalate the care plan when evidence is insufficient.",
+      "residue": "Represent adherence as a chain of evidence with type, source, confidence, consent, and observation time. A governed support profile selects reminder, confirmation, video, carer, and visit paths; no single device action is permanently equated with ingestion.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "nurs",
+          "effect": "Remote caseload confidence is based on evidence quality and changing patient capability, not a binary device event."
+        },
+        {
+          "targetType": "job",
+          "targetId": "nurs/monitor-remotely",
+          "effect": "Nurses can identify patients whose evidence no longer supports remote-only care."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "nurs/monitor-remotely/decide-where-a-visit-is-actually-needed",
+          "effect": "Prioritizes visits using evidence confidence, patient support profile, and recent change rather than missed doses alone."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "nurs/badopt",
+          "effect": "Staff use should be evaluated against appropriate intervention and evidence interpretation, not portal login alone."
+        },
+        {
+          "targetType": "product",
+          "targetId": "tele",
+          "effect": "Shows evidence type, confidence, change trend, consent, and the active support profile for each patient."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "adhr",
+          "effect": "Stores dispense, retrieval, confirmation, observation, and clinical assessment as distinct evidence."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "vcam",
+          "effect": "Provides an assisted evidence channel under explicit consent and retention policy."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "alrm",
+          "effect": "Routes low-confidence or changing evidence according to patient support policy, not only missed timing."
+        },
+        {
+          "targetType": "team",
+          "targetId": "adherence-and-alarms-team",
+          "effect": "Owns evidence semantics and escalation thresholds with clinical safety governance."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "spencer",
+          "effect": "Raises assisted interaction and evidence quality as a benchmark beyond automated dispensing."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "moni",
+          "effect": "Turns changing adherence evidence into a governed caseload decision and appropriate intervention."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-cogn.jpg",
+          "title": "Residuality stressor illustration: A patient's cognitive decline makes button confirmation unreliable evidence of ingestion",
+          "alt": "Illustration of the residuality stressor 'A patient's cognitive decline makes button confirmation unreliable evidence of ingestion', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "outc",
+      "name": "A municipality pays only for verified medication outcomes and avoided care visits",
+      "group": "Funding model",
+      "detection": "Tender documents, payer workshops, reimbursement rules, procurement scoring, outcome-audit requests, and contract-renewal negotiations.",
+      "attractor": "Revenue and program survival depend on defensible outcomes across cohorts, while device activity alone cannot prove adherence improvement, avoided visits, causality, or fair comparison.",
+      "businessReaction": "Define measurable outcomes with the buyer, capture consented evidence, preserve cohort and intervention context, report limitations, and reconcile service payment to the agreed outcome contract.",
+      "residue": "Introduce a versioned outcome contract linking population, eligibility, baseline, intervention, evidence, metric definition, attribution rule, reporting window, privacy basis, and payment term. Operational events remain raw facts; derived outcomes are reproducible governed views.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "caom",
+          "effect": "Provable safety and cost-to-serve become contract execution, not retrospective presentation work."
+        },
+        {
+          "targetType": "job",
+          "targetId": "caom/prove-value",
+          "effect": "Funders and regulators receive reproducible measures tied to the exact cohort and service contract."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "caom/prove-value/report-and-defend-the-programme",
+          "effect": "Every reported result links to metric definition, input evidence, exclusions, consent, and audit trail."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "caom/bcor",
+          "effect": "Organization retention can be related to agreed outcome fulfillment rather than device count alone."
+        },
+        {
+          "targetType": "product",
+          "targetId": "insight",
+          "effect": "Needs outcome-contract authoring, cohort versioning, reproducible analysis, evidence quality, and audit exports."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "data",
+          "effect": "Separates immutable operational facts from governed outcome definitions and derived evidence."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "audit",
+          "effect": "Carries privacy basis, consent, access, purpose, and derivation evidence into outcome reporting."
+        },
+        {
+          "targetType": "team",
+          "targetId": "data-and-analytics-team",
+          "effect": "Owns reproducibility and evidence quality while care and commercial owners define outcome meaning."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "moni",
+          "effect": "Supplies the governed intervention and caseload evidence from which contracted outcomes are derived."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "dignio-karie",
+          "effect": "Makes reproducible care-outcome evidence a benchmark for remote medication services."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-outc.jpg",
+          "title": "Residuality stressor illustration: A municipality pays only for verified medication outcomes and avoided care visits",
+          "alt": "Illustration of the residuality stressor 'A municipality pays only for verified medication outcomes and avoided care visits', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "recl",
+      "name": "A medicine lot in loaded pouch rolls is recalled overnight",
+      "group": "Medication safety",
+      "detection": "Pharmacy and manufacturer notice, regulator alert, lot evidence, prescription matching, pouch lineage, and device inventory reconciliation.",
+      "attractor": "Affected doses are distributed across homes, some devices are offline, and the next scheduled dispense may occur before a carer or replacement roll can arrive.",
+      "businessReaction": "Identify affected patients and doses, stop unsafe dispensing even while disconnected, preserve unaffected medication where clinically allowed, arrange replacement or assisted dosing, and prove complete remediation.",
+      "residue": "No new structural change is required: versioned regimen and pouch lineage identify the affected set, while the signed local-plan transition can quarantine future doses on each device and retain an auditable offline decision until reconciliation.",
+      "status": "already-survived",
+      "reusesResidueIds": [
+        "isol",
+        "rxch"
+      ],
+      "impacts": [
+        {
+          "targetType": "job",
+          "targetId": "phar/integrate-orders",
+          "effect": "The existing lineage and transition model can scope and replace affected pouches precisely."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "phar/integrate-orders/reconcile-ordered-packed-and-dispensed",
+          "effect": "Produces the patient, device, pouch, dose, dispense, and replacement set from the same reconciliation graph."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "phar/bcont",
+          "effect": "Supply continuity can distinguish safe replacement coverage from continued use of recalled stock."
+        },
+        {
+          "targetType": "product",
+          "targetId": "pharm",
+          "effect": "Coordinates recall scope and replacement through the existing regimen-transition case."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "recon",
+          "effect": "Resolves all loaded and dispensed doses linked to the recalled lot."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "fwos",
+          "effect": "Applies the signed quarantine transition locally and records the decision while offline."
+        },
+        {
+          "targetType": "team",
+          "targetId": "safety-and-compliance-team",
+          "effect": "Can execute the recall through existing lineage, transition, and local-control contracts."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "omnicell",
+          "effect": "Makes end-to-end recall traceability from pharmacy lot to home dispense a defensible safety benchmark."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "phar",
+          "effect": "Pharmacy safety extends from packed production lots to every loaded and potentially dispensed home dose."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "poch",
+          "effect": "Reuses pouch lineage and device reconciliation to quarantine, replace, and verify every affected dose."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-recl.jpg",
+          "title": "Residuality stressor illustration: A medicine lot in loaded pouch rolls is recalled overnight",
+          "alt": "Illustration of the residuality stressor 'A medicine lot in loaded pouch rolls is recalled overnight', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "bund",
+      "name": "A pharmacy chain bundles a consumer dispenser at no upfront cost",
+      "group": "Competitive channel",
+      "detection": "Pharmacy tenders, consumer offers, care-provider churn interviews, pricing comparisons, prescription-transfer patterns, and new device activations.",
+      "attractor": "Hardware price disappears as a barrier and the pharmacy owns enrollment, refill, and recurring customer contact; a device-centric proposition loses against a bundled medication service.",
+      "businessReaction": "Compete on clinical continuity, care workflow, open pharmacy integration, measurable outcomes, and service portability; support channel partnerships without surrendering patient consent or evidence continuity.",
+      "residue": "Separate device, service entitlement, care organization, pharmacy supplier, payer, patient, and evidence custodian. A patient service record can change device or supply partner while consented medication history, regimen transitions, alarms, and outcome evidence remain continuous.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "caom",
+          "effect": "The value proposition shifts from procuring devices to governing a portable, evidence-backed medication service."
+        },
+        {
+          "targetType": "job",
+          "targetId": "caom/deploy-service",
+          "effect": "Rollout can combine devices and pharmacies without fragmenting safety, access, and outcome governance."
+        },
+        {
+          "targetType": "journey",
+          "targetId": "caom/deploy-service/select-clients-and-provision-devices",
+          "effect": "Provisioning binds a patient service entitlement to replaceable device and pharmacy providers."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "caom/bdev",
+          "effect": "Devices deployed becomes a channel measure beneath active, safe patient service rather than the sole growth outcome."
+        },
+        {
+          "targetType": "product",
+          "targetId": "medido",
+          "effect": "Must participate in a portable multi-device service model instead of depending on vertically owned hardware."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "onbp",
+          "effect": "Binds patient, consent, service entitlement, device, pharmacy, payer, and care organization independently."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "cint",
+          "effect": "Makes provider and device transitions explicit while preserving clinical and operational continuity."
+        },
+        {
+          "targetType": "team",
+          "targetId": "integration-and-identity-team",
+          "effect": "Owns portable service identity and partner boundaries across a changing channel model."
+        },
+        {
+          "targetType": "competitor",
+          "targetId": "hero",
+          "effect": "Frames consumer-device competition around channel ownership and service continuity rather than hardware features alone."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "onbd",
+          "effect": "Separates enrollment and service continuity from the current pharmacy and device bundle."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-bund.jpg",
+          "title": "Residuality stressor illustration: A pharmacy chain bundles a consumer dispenser at no upfront cost",
+          "alt": "Illustration of the residuality stressor 'A pharmacy chain bundles a consumer dispenser at no upfront cost', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    }
+  ]
+}
