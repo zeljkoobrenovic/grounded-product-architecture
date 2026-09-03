@@ -1,0 +1,1749 @@
+{
+  "metadata": {
+    "title": "Tour Operator ERP Platform Data Assets",
+    "description": "Catalog of the product, supplier, booking, passenger, operational, financial, marketing, and tenant data assets that power the travel trade lifecycle (Product, Sell, Book, Operate, Serve, Settle, Steer) on the combined 1TIS + TravelSpirit ERP platform, with classification, GDPR and Dutch fiscal governance, backing stores, and team ownership.",
+    "modelVersion": "1.0"
+  },
+  "rootGroups": [
+    {
+      "name": "Travel Product and Supply Data",
+      "description": "What the travel organisation sells and what it buys: packages, departure series, and individual components with their availability, pricing and yield rules, supplier contracts, and the texts and photos that describe them. This is tenant-owned commercial data with almost no personal data, but it is the operator's intellectual property and the basis of every price on every invoice.",
+      "subGroups": [
+        {
+          "name": "Product Catalog and Pricing",
+          "description": "The sellable catalog and its price logic: products, components, price and yield rules, and travel content.",
+          "assets": [
+            {
+              "id": "travel-product",
+              "name": "Travel Product",
+              "kind": "master-data",
+              "description": "A sellable travel product of a tenant: a fixed-date group tour or bus round trip with its departure series, a packaged itinerary, a single-service product (hotel stay, excursion, transfer), or a tailor-made template. Carries product type, day-by-day programme, included and optional components, sales periods, brand and market assignments, minimum and maximum participants, target margin, and publication state per channel (own website, reseller portal, partner feeds). Maintained in Travel Products and Packages (prod), priced by Pricing, Yield and Group Calculations (pric), and published to the Customer Website, CMS and Online Booking (webs).",
+              "businessMeaning": "The commercial promise the operator makes to the market: one product equals one thing a traveler can book and the operator must deliver and account for.",
+              "status": "active",
+              "tags": [
+                "travel-product-and-supply",
+                "sales-and-booking"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "package-travel-directive"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "product managers and sales staff of the owning tenant; published attributes visible to travelers, resellers, and partner channels per channel rules",
+              "systemOfRecordBrickId": "prod",
+              "ownerTeamId": "product-and-pricing",
+              "stewardTeamIds": [
+                "web-and-channels"
+              ],
+              "derivedFromAssetIds": [
+                "travel-component",
+                "supplier-contract"
+              ],
+              "stores": [
+                {
+                  "storeId": "travel-product-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "product-availability-cache",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "travel-content-index",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "travel-product api",
+                  "description": "CRUD, publication, and availability-lookup API for products and departure series, used by the back-office product module, the online booking website, the reseller portal, and the partner product feed."
+                },
+                {
+                  "type": "event",
+                  "name": "product publication events",
+                  "description": "Product created, updated, published, unpublished, and sold-out events consumed by website caches, channel feeds, and the data warehouse."
+                }
+              ],
+              "governance": {
+                "retention": "product lifecycle plus 7 years of version history so that every historical booking and invoice can be traced to the product definition it was sold under",
+                "residency": "eu",
+                "sharingPolicy": "owned by the tenant; published attributes shared with the tenant's own website, resellers, and partner channels; never shared between tenants; anonymised product-type facts may feed cross-tenant benchmarks"
+              }
+            },
+            {
+              "id": "travel-component",
+              "name": "Travel Component",
+              "kind": "master-data",
+              "description": "An individually bookable building block of a trip: an accommodation and room type, a transport leg (flight, bus, train, ferry, transfer), an excursion or activity, a guide service, or an ancillary such as insurance or eSIM. Holds the supplier, destination, service description, allotment and release rules, blocked inventory, availability calendars, purchase cost basis linked to the supplier contract, and the texts and photos used when the component appears in a proposal. Components are the raw material of the Visual Tour Builder (vtbl) and of package composition, and their availability drives real-time bookability on the website.",
+              "businessMeaning": "The unit of supply the operator composes trips from: every proposal, package, and supplier request is a list of components with dates and quantities.",
+              "status": "active",
+              "tags": [
+                "travel-product-and-supply"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "medium",
+              "accessScope": "product and purchasing staff of the owning tenant for maintenance; tour builders and booking agents read; availability served to booking channels",
+              "systemOfRecordBrickId": "comp",
+              "ownerTeamId": "product-and-pricing",
+              "stewardTeamIds": [
+                "tour-builder"
+              ],
+              "derivedFromAssetIds": [
+                "supplier-contract",
+                "supplier-profile"
+              ],
+              "stores": [
+                {
+                  "storeId": "travel-product-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "product-availability-cache",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "travel-content-index",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "component and availability api",
+                  "description": "Search, detail, and availability-check API for components, used by the tour builder, package composition, the online booking flow, and bed-bank and channel connectors that update allotments."
+                },
+                {
+                  "type": "event",
+                  "name": "availability change events",
+                  "description": "Allotment consumed, released, stop-sale, and reopened events that refresh availability caches and alert product managers via the workflow module."
+                }
+              ],
+              "governance": {
+                "retention": "active while the supplier relationship lasts; retired components kept 7 years for cost-basis traceability of past bookings",
+                "residency": "eu",
+                "sharingPolicy": "internal to the tenant; availability and descriptive content exposed to the tenant's own channels; purchase cost never exposed outside the tenant"
+              }
+            },
+            {
+              "id": "price-and-yield-rule",
+              "name": "Price and Yield Rule",
+              "kind": "reference-data",
+              "description": "The price logic applied to products and departures: base prices per season, room type, and age band, supplements and discounts, early-booking and last-minute rules, currency and exchange-rate assumptions, tour-operator margin (TOMS VAT) treatment, group calculation sheets that spread fixed costs (bus, guide, permits) over expected participants, and yield tiers that raise or lower a departure's price as the load factor changes. Owned by Pricing, Yield and Group Calculations (pric) and evaluated at quote, booking, and invoice time so that every amount on a booking line can be reproduced.",
+              "businessMeaning": "How the operator turns cost into a sales price and protects margin per departure: the rules that decide whether a trip is profitable before it runs.",
+              "status": "active",
+              "tags": [
+                "travel-product-and-supply",
+                "finance-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "toms-vat"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "pricing and product managers of the owning tenant; evaluated server-side for booking channels, which see resulting prices but not cost or margin",
+              "systemOfRecordBrickId": "pric",
+              "ownerTeamId": "product-and-pricing",
+              "stewardTeamIds": [
+                "payments-and-invoicing"
+              ],
+              "derivedFromAssetIds": [
+                "supplier-contract"
+              ],
+              "stores": [
+                {
+                  "storeId": "travel-product-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "product-availability-cache",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "price calculation api",
+                  "description": "Price-a-trip and price-a-departure API returning itemised sales price, cost, and margin for a proposal, booking, or departure scenario; used by the tour builder, booking desk, website, and reseller portal."
+                },
+                {
+                  "type": "event",
+                  "name": "price and yield change events",
+                  "description": "Rule versions published and yield tier changes per departure, consumed by website price caches, channel feeds, and BI margin dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "every rule version kept 7 years after its last use so that invoiced amounts remain reproducible for fiscal and consumer-dispute purposes",
+                "residency": "eu",
+                "sharingPolicy": "strictly internal to the tenant; only resulting sales prices leave the system; cost and margin are never shown to travelers, resellers, or suppliers"
+              }
+            },
+            {
+              "id": "travel-content-asset",
+              "name": "Travel Content Asset",
+              "kind": "document",
+              "description": "The texts, photos, videos, maps, and PDF brochures that describe destinations, products, and components: multilingual descriptions, highlight bullets, practical information, hotel and excursion photo sets managed in the MediaSpirit-style media library, licence and photographer credits, and usage rights per channel. Managed in Travel Content and Media Management (ctnt), attached to products by Travel Products and Packages (prod), and rendered in proposals by the Visual Tour Builder (vtbl), on the website, and in travel documents.",
+              "businessMeaning": "The operator's storytelling capital: reusable content that makes a proposal or website page compelling without rewriting it per trip.",
+              "status": "active",
+              "tags": [
+                "travel-product-and-supply",
+                "sales-and-booking"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "copyright-licensing"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "content editors of the owning tenant; published content public on the tenant's website and proposals; licensed stock content restricted to permitted channels",
+              "systemOfRecordBrickId": "ctnt",
+              "ownerTeamId": "product-and-pricing",
+              "stewardTeamIds": [
+                "tour-builder",
+                "web-and-channels"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "travel-content-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "travel-content-index",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "content and media api",
+                  "description": "Upload, tag, search, and render API for texts and media, including CDN-ready image variants, used by the product module, tour builder, CMS, document generation, and the traveler portal."
+                },
+                {
+                  "type": "event",
+                  "name": "content published events",
+                  "description": "Content created, updated, and licence-expired events that invalidate website and document caches and warn editors about expiring image rights."
+                }
+              ],
+              "governance": {
+                "retention": "kept while the tenant licenses the platform; licensed third-party media purged when its usage rights expire; deleted with the tenant on off-boarding after export",
+                "residency": "eu",
+                "sharingPolicy": "public once published on the tenant's own channels; media rights determine whether content may appear in reseller or partner channels; not shared between tenants"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supplier Contracts and Network",
+          "description": "The buy side: supplier and DMC master data, contracted purchase conditions, and the request/confirmation traffic that keeps suppliers in sync with bookings.",
+          "assets": [
+            {
+              "id": "supplier-contract",
+              "name": "Supplier Contract",
+              "kind": "financial-record",
+              "description": "The purchasing agreement with a hotel, bus company, airline consolidator, DMC, or activity provider: contract period, purchase rates per season and room or seat type, allotments and release days, free places for guides, cancellation and deposit terms, currency, commission or net basis, and signed contract documents. Maintained in Purchasing and Supplier Contracts (cont) and used by Components, Inventory and Availability (comp) to price components and manage allotments, and by settlement to validate supplier invoices.",
+              "businessMeaning": "What the operator owes suppliers per booked service: the cost basis behind margin, the allotment behind availability, and the reference every supplier invoice is checked against.",
+              "status": "active",
+              "tags": [
+                "travel-product-and-supply",
+                "finance-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "fiscal-retention-nl"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "purchasing and finance staff of the owning tenant; product staff read rates and allotments; never visible to travelers or resellers",
+              "systemOfRecordBrickId": "cont",
+              "ownerTeamId": "product-and-pricing",
+              "stewardTeamIds": [
+                "supplier-network",
+                "accounting-and-compliance"
+              ],
+              "derivedFromAssetIds": [
+                "supplier-profile"
+              ],
+              "stores": [
+                {
+                  "storeId": "travel-product-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "travel-document-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "supplier-contract api",
+                  "description": "Contract, rate, and allotment maintenance API with rate lookup by service and date, used by the purchasing module, component pricing, and supplier-invoice matching."
+                },
+                {
+                  "type": "event",
+                  "name": "contract lifecycle events",
+                  "description": "Contract signed, rates updated, allotment released, and contract expiring events consumed by pricing, availability, and workflow alerts."
+                }
+              ],
+              "governance": {
+                "retention": "contract period plus 7 years under Dutch fiscal retention because contracts substantiate supplier invoices and cost of sales",
+                "residency": "eu",
+                "sharingPolicy": "internal to the tenant; contract terms shared only with the counterparty supplier through the supplier portal; supplier contact persons' details limited to the business relationship"
+              }
+            },
+            {
+              "id": "supplier-profile",
+              "name": "Supplier Profile",
+              "kind": "master-data",
+              "description": "Master record of a supplier or DMC in a tenant's network: legal entity, addresses, bank details, VAT number, supplier type (hotel, transport, DMC, activity, airline consolidator), contact persons with roles and languages, preferred communication channel, portal accounts, service quality history, and payment terms. Maintained in Supplier Management and Communication (supl), referenced by Purchasing and Supplier Contracts (cont), and used to route supplier requests, invoices, and payments.",
+              "businessMeaning": "Who the operator buys from and how to reach them: the address book, credentials, and track record behind every supplier request and settlement.",
+              "status": "active",
+              "tags": [
+                "travel-product-and-supply"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "purchasing, operations, and finance staff of the owning tenant; suppliers manage their own contact data via the supplier portal",
+              "systemOfRecordBrickId": "supl",
+              "ownerTeamId": "supplier-network",
+              "stewardTeamIds": [
+                "product-and-pricing"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "supplier-network-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "accounting-provider-mirror",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "supplier-profile api",
+                  "description": "Supplier master data and contact API, used by purchasing, supplier requests, invoice matching, the supplier portal, and accounting-package creditor synchronisation."
+                },
+                {
+                  "type": "event",
+                  "name": "supplier master events",
+                  "description": "Supplier created, contact changed, bank details changed (with four-eyes approval), and supplier blocked events consumed by settlement and workflow alerts."
+                }
+              ],
+              "governance": {
+                "retention": "active while the supplier relationship lasts plus 7 years after the last settled invoice; contact-person details removed when a person leaves the supplier",
+                "residency": "eu",
+                "sharingPolicy": "internal to the tenant; creditor data synchronised to the tenant's accounting package; never shared between tenants even when they use the same supplier"
+              }
+            },
+            {
+              "id": "supplier-request",
+              "name": "Supplier Request",
+              "kind": "operational-state",
+              "description": "A service request from an operator to a supplier or DMC for one or more booking lines: requested services, dates, quantities, passenger names and room configuration, special wishes, deadline, and the full request/approval cycle (requested, confirmed, rejected, amended, cancelled) with confirmation numbers and every email or portal message exchanged. Created and tracked in Supplier Management and Communication (supl), answered through the Supplier and DMC Portal (sprt), and updated automatically when the underlying booking changes so that suppliers always work from the latest version.",
+              "businessMeaning": "The operator's proof that a service is actually secured: no booking line is deliverable until its supplier request is confirmed, and every change must travel through it.",
+              "status": "active",
+              "tags": [
+                "travel-product-and-supply",
+                "operations-and-traveler-service"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "operations and purchasing staff of the owning tenant; the addressed supplier or DMC sees only its own requests through the portal",
+              "systemOfRecordBrickId": "supl",
+              "ownerTeamId": "supplier-network",
+              "stewardTeamIds": [
+                "group-operations"
+              ],
+              "derivedFromAssetIds": [
+                "booking-file",
+                "supplier-contract"
+              ],
+              "stores": [
+                {
+                  "storeId": "supplier-network-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "booking-event-topic",
+                  "role": "event-source"
+                },
+                {
+                  "storeId": "crm-communication-archive",
+                  "role": "archive"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "supplier-request api",
+                  "description": "Create, send, confirm, reject, and amend API for supplier requests, used by the back office, the supplier and DMC portal, email parsing of supplier replies, and partner DMC system integrations."
+                },
+                {
+                  "type": "event",
+                  "name": "supplier request status events",
+                  "description": "Requested, confirmed, rejected, changed, and overdue events that drive booking-line status, workflow alerts for unconfirmed services, and passenger-list synchronisation."
+                }
+              ],
+              "governance": {
+                "retention": "3 years after the service date for dispute handling; passenger names in requests minimised after the trip plus claims window; requests linked to settled supplier invoices kept 7 years",
+                "residency": "eu",
+                "sharingPolicy": "shared with the addressed supplier or DMC only, limited to the passenger details that supplier needs to deliver the service (names, room configuration, relevant wishes); never with other suppliers or tenants"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sales and Booking Data",
+      "description": "The sell and book stage: visual proposals for tailor-made trips, the booking file that becomes the single dossier for a trip, imported flight tickets, and the customer and reseller master data behind them. This is where personal data enters the platform and where the fiscal trail begins.",
+      "subGroups": [
+        {
+          "name": "Quotes and Booking Files",
+          "description": "From proposal to confirmed dossier: quote versions, the booking file with its lines and travelers, and flight ticket records.",
+          "assets": [
+            {
+              "id": "quote-proposal",
+              "name": "Quote Proposal",
+              "kind": "logical-object",
+              "description": "A visual, day-by-day travel proposal for a tailor-made trip built from stored components in the Visual Tour Builder (vtbl): itinerary days with texts and photos, selected accommodations and activities, itemised price with margin, validity date, alternatives, and version history. Each version is shared with the client as an online proposal page where the client can comment, request changes, and accept with a deposit. AI Office Assistants (aiaa) draft proposal texts and suggest components; acceptance opens a booking file.",
+              "businessMeaning": "The conversion instrument of the tailor-made business: the faster and more compelling the proposal, the higher the acceptance rate and the margin it closes at.",
+              "status": "active",
+              "tags": [
+                "sales-and-booking"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "sales staff of the owning tenant; the client reads and accepts through a tokenised proposal link; cost and margin are hidden from the client view",
+              "systemOfRecordBrickId": "vtbl",
+              "ownerTeamId": "tour-builder",
+              "stewardTeamIds": [
+                "booking-desk",
+                "ai-enablement"
+              ],
+              "derivedFromAssetIds": [
+                "travel-component",
+                "travel-content-asset",
+                "customer-profile"
+              ],
+              "stores": [
+                {
+                  "storeId": "quote-proposal-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "travel-content-store",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "proposal api",
+                  "description": "Build, version, price, publish, and accept API for proposals, used by the tour builder web app, the client-facing proposal page, AI drafting assistants, and booking-file creation on acceptance."
+                },
+                {
+                  "type": "event",
+                  "name": "proposal lifecycle events",
+                  "description": "Proposal sent, viewed, commented, accepted, expired, and lost events consumed by workflow follow-up tasks, CRM lead status, and conversion dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "unconverted proposals deleted 24 months after the last client activity; accepted proposals follow the retention of the booking file they created",
+                "residency": "eu",
+                "sharingPolicy": "shared with the addressed client only via an expiring personal link; proposal content may be reused as anonymised templates within the tenant; never shared between tenants"
+              }
+            },
+            {
+              "id": "booking-file",
+              "name": "Booking File",
+              "kind": "logical-object",
+              "description": "The dossier of one trip for one booking party: booking number, booker and travelers, booking lines per component or package with dates, quantities, prices and status (option, requested, confirmed, cancelled), linked departure, option expiry, payment schedule, insurance and ancillaries, remarks and communication log, documents issued, and the cancellation and change history. Created at the desk in Booking Files and Dossiers (book), on the website (webs), or via the reseller portal (rsel); consumed by departures (dept), documents (docs), the traveler portal (mytp), guarantee-fund reporting (gfnd), BI (bint), and workflow automation (wflw).",
+              "businessMeaning": "The single source of truth for a trip from first confirmation to aftercare: what was sold, to whom, for how much, what still has to be arranged, and what has been paid.",
+              "status": "active",
+              "tags": [
+                "sales-and-booking",
+                "operations-and-traveler-service",
+                "finance-and-insight"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "package-travel-directive",
+                "fiscal-retention-nl",
+                "sgr-guarantee-fund"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "booking, operations, and finance staff of the owning tenant; the booker sees their own file in the traveler portal; a reseller sees files it booked; suppliers see only the lines they deliver",
+              "systemOfRecordBrickId": "book",
+              "ownerTeamId": "booking-desk",
+              "stewardTeamIds": [
+                "group-operations",
+                "payments-and-invoicing",
+                "web-and-channels"
+              ],
+              "derivedFromAssetIds": [
+                "travel-product",
+                "quote-proposal",
+                "customer-profile",
+                "price-and-yield-rule"
+              ],
+              "stores": [
+                {
+                  "storeId": "booking-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "booking-event-topic",
+                  "role": "event-source"
+                },
+                {
+                  "storeId": "crm-communication-archive",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "booking-file api",
+                  "description": "Create, option, confirm, amend, cancel, and query API for booking files and lines, used by the back-office booking module, online booking website, reseller portal, traveler portal, partner apps, and the partner REST API."
+                },
+                {
+                  "type": "event",
+                  "name": "booking lifecycle events",
+                  "description": "Option placed, option expired, booking confirmed, line changed, cancelled, departed, and returned events consumed by supplier requests, departure capacity, invoicing, document generation, workflow tasks, and BI."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after the trip end date under Dutch fiscal retention because the file substantiates invoices and guarantee-fund declarations; traveler personal data pseudonymised after that period; free-text wishes with health content removed after the trip plus a 3-month claims window",
+                "residency": "eu",
+                "sharingPolicy": "visible to the owning tenant, the booker, and the booking reseller; service-relevant extracts shared with suppliers and DMCs, aggregated booking values with the guarantee fund, and financial lines with the accounting package; never shared between tenants"
+              }
+            },
+            {
+              "id": "flight-ticket-record",
+              "name": "Flight Ticket Record",
+              "kind": "financial-record",
+              "description": "A flight ticket or PNR imported from a GDS, an Airtrade-style consolidator, or an airline booking tool and matched to a booking file and its travelers: PNR locator, ticket numbers, passenger names as ticketed, segments, fare and tax breakdown, form of payment, issue and void dates, and the settlement lines that appear in the IATA BSP HOT file or the consolidator's statement. Imported by Flight Import and Ticket Settlement (flgt) and reconciled by Accounting Integration and Supplier Settlement (acct).",
+              "businessMeaning": "The link between what the airline settles through BSP or the consolidator and what the operator sold: unmatched tickets are unexplained cost and unpaid tickets are a compliance risk.",
+              "status": "active",
+              "tags": [
+                "sales-and-booking",
+                "finance-and-insight"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "iata-bsp",
+                "fiscal-retention-nl"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "flight desk and finance staff of the owning tenant; travelers see their own ticket numbers and segments in documents and the traveler portal",
+              "systemOfRecordBrickId": "flgt",
+              "ownerTeamId": "booking-desk",
+              "stewardTeamIds": [
+                "accounting-and-compliance"
+              ],
+              "derivedFromAssetIds": [
+                "booking-file"
+              ],
+              "stores": [
+                {
+                  "storeId": "booking-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "flight-import-files",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "finance-ledger-db",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "file",
+                  "name": "gds and consolidator imports",
+                  "description": "Scheduled import of PNR and ticket exports from the GDS, Airtrade-style consolidator statements, and IATA BSP HOT settlement files, matched to booking files by PNR and passenger name."
+                },
+                {
+                  "type": "api",
+                  "name": "flight-ticket api",
+                  "description": "Ticket lookup, manual match, void, and refund API used by the flight desk, document generation, and settlement reconciliation."
+                },
+                {
+                  "type": "event",
+                  "name": "ticket settlement events",
+                  "description": "Ticket imported, matched, unmatched, voided, refunded, and settled events feeding accounting entries and flight-desk alerts."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after ticket issue under Dutch fiscal retention and BSP audit requirements; passenger names retained as part of the fiscal record",
+                "residency": "eu",
+                "sharingPolicy": "exchanged with the GDS, consolidator, and BSP as required for ticketing and settlement; financial lines shared with the accounting package; never shared between tenants"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customers and Resellers",
+          "description": "The parties who buy: end customers with their booking history and preferences, and the reseller agents who book on behalf of their clients.",
+          "assets": [
+            {
+              "id": "customer-profile",
+              "name": "Customer Profile",
+              "kind": "master-data",
+              "description": "The CRM record of a customer of a tenant: person or organisation, contact details, communication preferences and language, relationships (partner, family, travel companions), booking and proposal history, lifetime value, loyalty status, notes from calls and emails, and the linked telephony and email threads. Maintained in CRM and Contact Management (crmr), created from bookings (book), enriched by Email and Telephony Integration (comm), segmented by Email Marketing and Segmentation (mktg), and used by AI Office Assistants (aiaa) to personalise draft replies and proposals.",
+              "businessMeaning": "The operator's customer memory: who has travelled with us, what they like, and how to talk to them, so that repeat business is earned instead of rediscovered.",
+              "status": "active",
+              "tags": [
+                "sales-and-booking",
+                "finance-and-insight",
+                "platform-foundation"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "sales, booking, and marketing staff of the owning tenant; customers manage their own contact data through the traveler portal; AI assistants access it through the tenant's own permissions",
+              "systemOfRecordBrickId": "crmr",
+              "ownerTeamId": "booking-desk",
+              "stewardTeamIds": [
+                "marketing-and-insight",
+                "platform-core"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "booking-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "crm-communication-archive",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "email-marketing-mirror",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "customer-profile api",
+                  "description": "Search, create, merge, update, and consent-aware read API for customers, used by the booking desk, website account registration, telephony screen-pop, email threading, marketing synchronisation, and AI assistants."
+                },
+                {
+                  "type": "event",
+                  "name": "customer profile events",
+                  "description": "Customer created, merged, contact changed, consent changed, and erasure requested events consumed by marketing sync, portals, and data-subject-request workflows."
+                }
+              ],
+              "governance": {
+                "retention": "kept 7 years after the last booking because it anchors fiscal booking records; prospects without a booking deleted 2 years after the last contact; erasure requests honoured except for data locked by fiscal retention",
+                "residency": "eu",
+                "sharingPolicy": "internal to the tenant; contact data shared with the email-marketing provider only under valid consent and with partner apps for the customer's own trip; never shared between tenants"
+              }
+            },
+            {
+              "id": "reseller-agent-profile",
+              "name": "Reseller Agent Profile",
+              "kind": "master-data",
+              "description": "Master record of a retail travel agency, affiliated agent, or independent home-based agent (ZRA-style) that books a tenant's products through the Reseller and Agent Portal (rsel): agency legal entity, licence and guarantee-fund membership, commission scheme and net-rate agreements, portal users and roles, branding on client documents, invoicing preference (agency-collect or direct), and booking and commission history. Governs which products a reseller may see and at which conditions.",
+              "businessMeaning": "The distribution partner ledger: who may sell the operator's products, at which commission, and how their bookings are invoiced and documented.",
+              "status": "active",
+              "tags": [
+                "sales-and-booking"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "fiscal-retention-nl"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "sales and finance staff of the owning tenant; each reseller manages its own users and sees its own bookings and commission statements",
+              "systemOfRecordBrickId": "rsel",
+              "ownerTeamId": "web-and-channels",
+              "stewardTeamIds": [
+                "payments-and-invoicing"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "booking-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "tenant-identity-db",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "reseller-profile api",
+                  "description": "Reseller onboarding, product entitlement, commission scheme, and user management API used by the reseller portal, booking authorisation, and commission statement generation."
+                },
+                {
+                  "type": "event",
+                  "name": "reseller lifecycle events",
+                  "description": "Reseller activated, entitlement changed, commission scheme changed, and reseller suspended events consumed by the portal, invoicing, and channel reporting."
+                }
+              ],
+              "governance": {
+                "retention": "agreement period plus 7 years for commission statements and agency-collect settlements; portal user accounts removed 90 days after deactivation",
+                "residency": "eu",
+                "sharingPolicy": "internal to the tenant and the reseller itself; commission conditions never shown to travelers or other resellers"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Operations and Traveler Service Data",
+      "description": "The operate and serve stages: fixed-date departures with their capacity decisions, bus seat maps and hotel room lists, passenger records with the identity and special-category data suppliers and authorities require, the travel documents travelers receive, and the feedback they give afterwards. The most sensitive personal data in the platform lives here and is deliberately minimised.",
+      "subGroups": [
+        {
+          "name": "Departure Operations",
+          "description": "Running group departures: capacity and yielding per departure, seat and room allocation, and the passenger data behind operational lists.",
+          "assets": [
+            {
+              "id": "departure",
+              "name": "Departure",
+              "kind": "operational-state",
+              "description": "A fixed-date instance of a group product: departure and return dates, capacity (bus seats, flight seat block, hotel allotment), minimum participants and the guaranteed/cancel decision date, current booked and optioned counts, yield tier in force, assigned bus and driver, assigned tour guide or group leader, itinerary variant, and departure status (open, guaranteed, full, closed, cancelled, departed). Managed in Departures and Capacity Management (dept) and consumed by Seat and Room Allocation (seat) and the Guide and Group Leader Portal (guid).",
+              "businessMeaning": "The profit-and-loss unit of a group operator: each departure either fills to a viable load factor or gets cancelled, and every operational list hangs off it.",
+              "status": "active",
+              "tags": [
+                "operations-and-traveler-service",
+                "travel-product-and-supply"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "package-travel-directive"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "operations and product staff of the owning tenant; assigned guides see their departures in the guide portal; availability status served to booking channels",
+              "systemOfRecordBrickId": "dept",
+              "ownerTeamId": "group-operations",
+              "stewardTeamIds": [
+                "product-and-pricing"
+              ],
+              "derivedFromAssetIds": [
+                "travel-product"
+              ],
+              "stores": [
+                {
+                  "storeId": "group-operations-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "product-availability-cache",
+                  "role": "serving"
+                },
+                {
+                  "storeId": "booking-event-topic",
+                  "role": "event-source"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "departure api",
+                  "description": "Departure calendar, capacity, guarantee decision, assignment, and passenger-count API used by the operations dashboard, booking availability checks, the guide portal, and website departure lists."
+                },
+                {
+                  "type": "event",
+                  "name": "departure status events",
+                  "description": "Departure opened, guaranteed, nearly full, full, cancelled, and departed events consumed by pricing yield tiers, website availability, workflow alerts for minimum-participant deadlines, and BI load-factor dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after the departure date as operational history linked to bookings; guide and driver assignments pseudonymised after 2 years",
+                "residency": "eu",
+                "sharingPolicy": "internal to the tenant; open/full status exposed to booking channels; passenger counts and room configuration shared with the bus company, hotels, and DMC delivering the departure"
+              }
+            },
+            {
+              "id": "seat-and-room-assignment",
+              "name": "Seat and Room Assignment",
+              "kind": "operational-state",
+              "description": "The bus seat map and hotel room list of a departure: seat numbers per traveler with rotation rules and seat wishes, room allocations per hotel night (room type, sharing, single supplements, floor and accessibility wishes, arrival and departure differences), group leader and driver placement, and the versions of the seating list and rooming list sent to the driver, hotel, or DMC. Maintained in Seat and Room Allocation (seat) and confirmed or annotated by hotels and DMCs through the Supplier and DMC Portal (sprt).",
+              "businessMeaning": "The operational document that hotels and drivers actually work from: an accurate room list avoids check-in chaos and a fair seat map avoids the first complaint of the trip.",
+              "status": "active",
+              "tags": [
+                "operations-and-traveler-service",
+                "travel-product-and-supply"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "operations staff of the owning tenant; the delivering hotel, bus company, or DMC sees the list for its own service; guides see their departure's lists",
+              "systemOfRecordBrickId": "seat",
+              "ownerTeamId": "group-operations",
+              "stewardTeamIds": [
+                "supplier-network"
+              ],
+              "derivedFromAssetIds": [
+                "departure",
+                "booking-file",
+                "passenger-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "group-operations-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "travel-document-store",
+                  "role": "archive"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "seat and room allocation api",
+                  "description": "Seat map, auto-allocation, rooming list generation, and list export API used by the operations workspace, supplier portal, guide portal, and document generation for driver and hotel lists."
+                },
+                {
+                  "type": "event",
+                  "name": "allocation change events",
+                  "description": "List published, room list changed, and seat conflict events that trigger re-sends to hotels and DMCs and alerts when a booking change invalidates an already-sent list."
+                }
+              ],
+              "governance": {
+                "retention": "deleted 6 months after the trip end date; only anonymised occupancy statistics kept in the warehouse for capacity planning",
+                "residency": "eu",
+                "sharingPolicy": "shared per service with the hotel, bus company, or DMC that delivers it, limited to the travelers on that service; never shared beyond the delivering supplier"
+              }
+            },
+            {
+              "id": "passenger-record",
+              "name": "Passenger Record",
+              "kind": "logical-object",
+              "description": "The per-traveler operational data collected for a booking: full names as on passport, date of birth, nationality, passport number, issue and expiry dates and Advance Passenger Information (APIS) fields required by airlines and authorities, emergency contacts, and the dietary requirements, mobility and medical wishes, and allergies travelers share so that hotels, guides, and DMCs can accommodate them. Collected through the traveler portal and desk in Passenger Data and Operational Lists (pass), exposed to guides through the Guide and Group Leader Portal (guid), and fed into rooming lists, participant lists, and supplier requests only as far as each recipient needs.",
+              "businessMeaning": "The data that lets the trip actually run safely: the airline needs APIS, the hotel needs the dietary list, the guide needs to know who has a mobility limitation. It is also the highest-risk data the platform holds.",
+              "status": "active",
+              "tags": [
+                "operations-and-traveler-service"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-special-category",
+                "apis"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "operations staff of the owning tenant with an explicit passenger-data role; travelers edit their own record; guides, hotels, and DMCs receive field-level extracts per service; passport numbers masked outside the flight and operations roles",
+              "systemOfRecordBrickId": "pass",
+              "ownerTeamId": "group-operations",
+              "stewardTeamIds": [
+                "traveler-experience",
+                "platform-core"
+              ],
+              "derivedFromAssetIds": [
+                "booking-file"
+              ],
+              "stores": [
+                {
+                  "storeId": "passenger-data-vault",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "group-operations-db",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "passenger-data api",
+                  "description": "Field-level, purpose-bound read and update API for passenger data with per-recipient projections (APIS for airlines, dietary lists for hotels, mobility notes for guides), used by the traveler portal, operations lists, guide portal, supplier requests, and document generation."
+                },
+                {
+                  "type": "event",
+                  "name": "passenger data events",
+                  "description": "Passenger data completed, passport expiring before travel, special wish added, and record purged events that drive workflow reminders and re-sends of operational lists."
+                }
+              ],
+              "governance": {
+                "retention": "passport and APIS fields deleted 30 days after the return date; dietary, medical, and mobility wishes deleted after the trip end plus a 3-month claims window; only names and dates of birth survive on the booking file for fiscal retention; explicit consent recorded for special-category fields",
+                "residency": "eu",
+                "sharingPolicy": "shared strictly per purpose: APIS with airlines and authorities, dietary and room wishes with the delivering hotel or DMC, mobility and medical notes with the assigned guide; never used for marketing, never shared between tenants; encrypted at rest and access-logged"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Traveler Documents and Feedback",
+          "description": "What travelers receive and what they give back: generated travel documents and the complaints, surveys, and reviews after the trip.",
+          "assets": [
+            {
+              "id": "travel-document",
+              "name": "Travel Document",
+              "kind": "document",
+              "description": "A generated document for a booking: booking confirmation, invoice copy, travel programme and itinerary booklet, vouchers and e-tickets per service, hotel and transfer details, practical information, insurance certificate, and departure information letter, in the tenant's branding and the traveler's language, each with version and send history. Generated by Travel Documents and Itinerary Delivery (docs) from the booking file, content assets, and passenger data, and delivered through email, the Traveler Portal and My-Trip App (mytp), and partner mobile apps.",
+              "businessMeaning": "The tangible output of the booking that the traveler holds during the trip and that legally records what was agreed and delivered.",
+              "status": "active",
+              "tags": [
+                "operations-and-traveler-service"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "package-travel-directive"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "booking and operations staff of the owning tenant; the booker and travelers download their own documents in the portal and app; resellers download documents for their clients' bookings",
+              "systemOfRecordBrickId": "docs",
+              "ownerTeamId": "traveler-experience",
+              "stewardTeamIds": [
+                "booking-desk"
+              ],
+              "derivedFromAssetIds": [
+                "booking-file",
+                "travel-content-asset",
+                "passenger-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "travel-document-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "booking-db",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "travel-document api",
+                  "description": "Generate, render, version, and secure-download API for documents, used by the back office, traveler portal, reseller portal, partner apps, and email delivery."
+                },
+                {
+                  "type": "event",
+                  "name": "document delivery events",
+                  "description": "Document generated, sent, opened, and outdated-by-booking-change events consumed by workflow tasks, portal notifications, and self-service KPIs."
+                }
+              ],
+              "governance": {
+                "retention": "documents kept 24 months after the trip end for service and dispute purposes, then deleted; the booking file remains the fiscal record and documents can be regenerated from it while it exists",
+                "residency": "eu",
+                "sharingPolicy": "delivered to the booker, the travelers on the booking, and the booking reseller; partner apps receive documents for the traveler's own trip via tokenised links; never shared between tenants"
+              }
+            },
+            {
+              "id": "review-and-survey-response",
+              "name": "Review and Survey Response",
+              "kind": "logical-object",
+              "description": "Post-trip and in-trip feedback linked to a booking and departure: complaints and claims with category, description, evidence, settlement outcome and deadlines under the package-travel rules, post-trip survey responses with scores per hotel, guide, and transport, guide reports, and public reviews synchronised from Trustpilot-style platforms with invitation status and reply. Managed in Quality, Complaints, Surveys and Reviews (qual) and used to score suppliers, guides, and products.",
+              "businessMeaning": "The quality loop of the operator: complaints that must be handled within legal deadlines, survey scores that decide which hotels and guides are rebooked, and reviews that drive online conversion.",
+              "status": "active",
+              "tags": [
+                "operations-and-traveler-service",
+                "finance-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "employee",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "package-travel-directive"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "quality and operations staff of the owning tenant; travelers see their own complaint status in the portal; aggregated scores shared with product and purchasing; public reviews are public by nature",
+              "systemOfRecordBrickId": "qual",
+              "ownerTeamId": "traveler-experience",
+              "stewardTeamIds": [
+                "supplier-network",
+                "marketing-and-insight"
+              ],
+              "derivedFromAssetIds": [
+                "booking-file",
+                "customer-profile"
+              ],
+              "stores": [
+                {
+                  "storeId": "feedback-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "crm-communication-archive",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "feedback and complaint api",
+                  "description": "Complaint registration and handling, survey dispatch and response capture, review invitation, and supplier/guide score API used by the back office, traveler portal, partner apps, and review-platform connectors."
+                },
+                {
+                  "type": "event",
+                  "name": "feedback events",
+                  "description": "Complaint received, deadline approaching, complaint settled, survey completed, and review published events consumed by workflow tasks, marketing (review invitations), and supplier-quality dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "complaints and claims kept 7 years after settlement for liability purposes; survey responses anonymised 3 years after the trip; review-platform copies follow the platform's own terms",
+                "residency": "eu",
+                "sharingPolicy": "internal to the tenant; aggregated and anonymised scores shared with suppliers and guides about their own services; reviews shared with the review platform under the traveler's consent"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Finance and Compliance Data",
+      "description": "The settle stage: customer invoices and the payments that clear them, supplier invoices and settlement, and the guarantee-fund and regulatory reports the Dutch travel trade must file. Everything here is a fiscal record with a 7-year retention obligation and a direct line to the tenant's accounting package.",
+      "subGroups": [
+        {
+          "name": "Invoices and Payments",
+          "description": "Money in and money out per booking: customer invoices, payment transactions, and supplier invoices.",
+          "assets": [
+            {
+              "id": "customer-invoice",
+              "name": "Customer Invoice",
+              "kind": "financial-record",
+              "description": "An invoice, credit note, or deposit request issued to a booker or reseller for a booking: invoice number in the tenant's fiscal sequence, invoice lines mirrored from booking lines with VAT and tour-operator margin (TOMS) treatment, payment schedule (deposit, balance, due dates), guarantee-fund contribution line where applicable, dunning status, and the PDF and UBL e-invoice renditions. Produced by Invoicing, Payment Links and Collection (invc), posted by Accounting Integration and Supplier Settlement (acct), and analysed by Business Intelligence and Reporting (bint).",
+              "businessMeaning": "The legally binding claim on the customer and the revenue record of the trip: the amount the operator books as turnover and reports to the fund and the tax authority.",
+              "status": "active",
+              "tags": [
+                "finance-and-insight",
+                "sales-and-booking"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "fiscal-retention-nl",
+                "toms-vat",
+                "sgr-guarantee-fund"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "finance and booking staff of the owning tenant; the invoiced booker or reseller sees their own invoices in the portal; read-only access for BI",
+              "systemOfRecordBrickId": "invc",
+              "ownerTeamId": "payments-and-invoicing",
+              "stewardTeamIds": [
+                "accounting-and-compliance",
+                "booking-desk"
+              ],
+              "derivedFromAssetIds": [
+                "booking-file",
+                "price-and-yield-rule"
+              ],
+              "stores": [
+                {
+                  "storeId": "finance-ledger-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "travel-document-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "accounting-provider-mirror",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "customer-invoice api",
+                  "description": "Issue, credit, schedule, render, and query API for customer invoices, used by the booking module, traveler and reseller portals, dunning workflows, and accounting export."
+                },
+                {
+                  "type": "event",
+                  "name": "invoice lifecycle events",
+                  "description": "Invoice issued, due, overdue, paid, and credited events consumed by payment collection, workflow reminders, guarantee-fund reporting, and revenue dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after the fiscal year of issue under Dutch fiscal retention; immutable once issued, corrections only by credit note",
+                "residency": "eu",
+                "sharingPolicy": "shared with the invoiced customer or reseller, the tenant's accounting package and accountant, and in aggregated form with the guarantee fund; never shared between tenants"
+              }
+            },
+            {
+              "id": "payment-transaction",
+              "name": "Payment Transaction",
+              "kind": "financial-record",
+              "description": "A money movement against a customer invoice or booking: deposit and balance payments through payment links and the traveler portal (iDEAL, cards, bank transfer via a Mollie-style payment service provider), manual bank receipts matched to invoices, refunds and chargebacks, reseller agency-collect settlements, and the payment status and reconciliation state. Recorded by Invoicing, Payment Links and Collection (invc) and surfaced to travelers in the Traveler Portal and My-Trip App (mytp) as paid and outstanding amounts. Card data never touches the platform; only provider references are stored.",
+              "businessMeaning": "Whether the operator has actually been paid: the trigger for confirming a booking, releasing documents, and stopping reminders, and the cash side of every month-end close.",
+              "status": "active",
+              "tags": [
+                "finance-and-insight",
+                "operations-and-traveler-service"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "fiscal-retention-nl"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "finance staff of the owning tenant; travelers see their own payment status; payment provider references only, no card data held",
+              "systemOfRecordBrickId": "invc",
+              "ownerTeamId": "payments-and-invoicing",
+              "stewardTeamIds": [
+                "accounting-and-compliance",
+                "traveler-experience"
+              ],
+              "derivedFromAssetIds": [
+                "customer-invoice"
+              ],
+              "stores": [
+                {
+                  "storeId": "finance-ledger-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "payment-provider-mirror",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "accounting-provider-mirror",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "payment api",
+                  "description": "Create payment link, record payment, refund, and reconcile API used by the invoicing module, traveler portal checkout, online booking deposit step, and bank-statement matching."
+                },
+                {
+                  "type": "event",
+                  "name": "payment status events",
+                  "description": "Payment initiated, paid, failed, expired, refunded, and chargeback events from the payment provider webhook, consumed by booking confirmation, document release, dunning, and cash dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after the fiscal year of the transaction under Dutch fiscal retention; provider payment references kept, card and bank details held only by the payment provider",
+                "residency": "eu",
+                "sharingPolicy": "exchanged with the payment service provider and the tenant's bank and accounting package; payment status shared with the paying customer or reseller; never shared between tenants"
+              }
+            },
+            {
+              "id": "supplier-invoice",
+              "name": "Supplier Invoice",
+              "kind": "financial-record",
+              "description": "An incoming invoice or credit note from a supplier, DMC, or consolidator, received by email, portal upload, or e-invoice: supplier, invoice number and date, currency, lines matched to confirmed supplier requests and contract rates, discrepancies flagged for approval, VAT treatment, approval workflow state, payment run assignment, and the accounts-payable posting to the accounting package. Managed by Accounting Integration and Supplier Settlement (acct), which also generates self-billing statements for commissions.",
+              "businessMeaning": "What the operator actually owes suppliers per trip versus what was contracted: three-way matching here is where margin leaks are caught before payment.",
+              "status": "active",
+              "tags": [
+                "finance-and-insight",
+                "travel-product-and-supply"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "fiscal-retention-nl"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "finance and purchasing staff of the owning tenant with approval roles; suppliers see their own invoice status through the supplier portal",
+              "systemOfRecordBrickId": "acct",
+              "ownerTeamId": "accounting-and-compliance",
+              "stewardTeamIds": [
+                "supplier-network",
+                "payments-and-invoicing"
+              ],
+              "derivedFromAssetIds": [
+                "supplier-request",
+                "supplier-contract"
+              ],
+              "stores": [
+                {
+                  "storeId": "finance-ledger-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "travel-document-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "accounting-provider-mirror",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "supplier-invoice api",
+                  "description": "Register, match, approve, dispute, and schedule-for-payment API for supplier invoices, used by the finance workspace, supplier portal upload, invoice-recognition assistants, and accounting export."
+                },
+                {
+                  "type": "file",
+                  "name": "accounting and e-invoice exchange",
+                  "description": "Scheduled export of approved purchase invoices and payment runs to the tenant's accounting package (Exact-style connector) and intake of UBL e-invoices from suppliers."
+                },
+                {
+                  "type": "event",
+                  "name": "supplier invoice events",
+                  "description": "Invoice received, matched, discrepancy flagged, approved, paid, and disputed events consumed by workflow approvals, cash-flow forecasting, and margin-per-trip dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after the fiscal year of receipt under Dutch fiscal retention; original invoice images retained immutably",
+                "residency": "eu",
+                "sharingPolicy": "shared with the tenant's accounting package and accountant; status shared with the issuing supplier; never shared between tenants"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Regulatory Reporting",
+          "description": "Reports the Dutch travel trade owes its guarantee fund and regulators.",
+          "assets": [
+            {
+              "id": "guarantee-fund-report",
+              "name": "Guarantee Fund Report",
+              "kind": "derived-dataset",
+              "description": "Periodic and ad-hoc reports required by the travel guarantee fund (SGR-style) and package-travel regulation: forward bookings and prepaid customer money per departure period as the fund's exposure basis, per-booking guarantee contributions collected, insolvency-coverage declarations, package versus linked-travel-arrangement classification of sold products, and the audit trail of the figures back to booking files, invoices, and payments. Compiled by Guarantee Fund and Regulatory Reporting (gfnd) from the booking file and financial records and filed on the fund's schedule.",
+              "businessMeaning": "The operator's licence to trade: without correct guarantee-fund reporting the operator cannot sell packages, and understated exposure is a personal liability for the owner.",
+              "status": "active",
+              "tags": [
+                "finance-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "sgr-guarantee-fund",
+                "package-travel-directive",
+                "fiscal-retention-nl"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "finance lead and owner of the tenant; the guarantee fund receives the filed report; auditors get read access on request",
+              "systemOfRecordBrickId": "gfnd",
+              "ownerTeamId": "accounting-and-compliance",
+              "stewardTeamIds": [
+                "payments-and-invoicing"
+              ],
+              "derivedFromAssetIds": [
+                "booking-file",
+                "customer-invoice",
+                "payment-transaction"
+              ],
+              "stores": [
+                {
+                  "storeId": "compliance-report-archive",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "regulatory report api",
+                  "description": "Compile, preview, approve, and archive API for guarantee-fund and package-travel reports with drill-down to source bookings, used by the finance workspace and auditor read access."
+                },
+                {
+                  "type": "file",
+                  "name": "guarantee fund filing",
+                  "description": "Filing export in the fund's required format, delivered on the fund's reporting calendar and archived with the approval record."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after filing, immutable once approved, with the source snapshot preserved for audit",
+                "residency": "eu",
+                "sharingPolicy": "filed with the guarantee fund and shared with the tenant's auditor; contains aggregated booking and payment values only; never shared between tenants"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Marketing and Platform Data",
+      "description": "The retain and steer stages plus the foundation: marketing consent and segments that decide who may be emailed, and the tenant organisation that scopes every other asset to one travel company with its licensed modules, users, and brands.",
+      "subGroups": [
+        {
+          "name": "Marketing Data",
+          "description": "Consent-driven marketing data derived from CRM and bookings.",
+          "assets": [
+            {
+              "id": "marketing-consent-and-segment",
+              "name": "Marketing Consent and Segment",
+              "kind": "derived-dataset",
+              "description": "Per-customer marketing permissions and the segments built on them: newsletter and campaign consents with source, timestamp, and wording (double opt-in), channel preferences, unsubscribes, and derived segments such as destination interest, travel style, booking recency and value, and lifecycle stage in the ten-phase journey (Inspiration to Retention), synchronised with the tenant's email-marketing platform (Spotler-style). Maintained by Email Marketing and Segmentation (mktg) on top of the customer profile and booking history.",
+              "businessMeaning": "Who the operator may talk to and what to say: the lawful basis for every campaign and the targeting that turns past travelers into repeat bookings.",
+              "status": "active",
+              "tags": [
+                "finance-and-insight",
+                "sales-and-booking"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "eprivacy-nl"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "marketing staff of the owning tenant; customers manage their own consents in the portal and unsubscribe links; the email-marketing provider receives consented contacts and segment tags only",
+              "systemOfRecordBrickId": "mktg",
+              "ownerTeamId": "marketing-and-insight",
+              "stewardTeamIds": [
+                "booking-desk"
+              ],
+              "derivedFromAssetIds": [
+                "customer-profile",
+                "booking-file"
+              ],
+              "stores": [
+                {
+                  "storeId": "marketing-segment-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "email-marketing-mirror",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "travel-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "consent and segment api",
+                  "description": "Consent capture, preference centre, segment definition, and audience export API used by the website, traveler portal, back office, and the email-marketing connector."
+                },
+                {
+                  "type": "event",
+                  "name": "consent and segment events",
+                  "description": "Consent granted, withdrawn, segment membership changed, and campaign sent events consumed by the marketing provider sync, CRM, and campaign attribution in BI."
+                }
+              ],
+              "governance": {
+                "retention": "consent records kept while consent is active and 2 years after withdrawal as proof of lawful processing; segments recalculated nightly and not kept as history beyond 13 months",
+                "residency": "eu",
+                "sharingPolicy": "consented contacts and segment tags shared with the tenant's email-marketing provider under a processor agreement; never shared between tenants; special-category data from passenger records is never used for segmentation"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tenant and Access Data",
+          "description": "The multi-tenant foundation: each travel company as a tenant with its subscription, users, roles, and brand settings.",
+          "assets": [
+            {
+              "id": "tenant-organization",
+              "name": "Tenant Organization",
+              "kind": "master-data",
+              "description": "The travel company as a tenant of the platform: legal entity and trade memberships (ANVR, VVKR, guarantee fund), subscription and licensed modules and portals, brands and websites with their styling and document templates, fiscal settings (VAT, invoice sequences, currencies), users with roles and permissions, single sign-on and API credentials, integration configurations (accounting, payment, flight, marketing, telephony), and audit logs of administrative changes. Maintained by Identity, Tenants and Access (iden) and used by the Integration Hub and Partner APIs (intg) to scope every partner call to one tenant.",
+              "businessMeaning": "The boundary of trust in a multi-tenant ERP: every other asset belongs to exactly one tenant, and the tenant's licensed modules, users, and brand settings decide what its people and partners can do.",
+              "status": "active",
+              "tags": [
+                "platform-foundation"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "tenant administrators for their own tenant; platform operator support and tenant administration back office under logged access; API credentials visible only at creation",
+              "systemOfRecordBrickId": "iden",
+              "ownerTeamId": "platform-core",
+              "stewardTeamIds": [
+                "customer-success-and-consulting"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "tenant-identity-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "integration-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "tenant and identity api",
+                  "description": "Tenant provisioning, module licensing, brand configuration, user and role management, authentication, and API-credential API used by all web applications, portals, the partner REST API gateway, and the tenant administration back office."
+                },
+                {
+                  "type": "event",
+                  "name": "tenant and access events",
+                  "description": "Tenant created, module licensed, user invited, role changed, credential rotated, and tenant suspended events consumed by every module's authorisation cache, integration hub routing, and platform usage reporting."
+                }
+              ],
+              "governance": {
+                "retention": "subscription period plus 7 years for contract and billing records; user accounts deleted 90 days after deactivation; administrative audit logs kept 24 months; tenant data exported and deleted within 90 days of off-boarding",
+                "residency": "eu",
+                "sharingPolicy": "visible only to the tenant's own administrators and the platform operator's support staff; tenant identifiers passed to integration partners only as needed to route calls; never shared between tenants"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stores": [
+    {
+      "id": "travel-product-db",
+      "name": "Travel Product DB",
+      "kind": "operational-database",
+      "description": "Multi-tenant relational schema for products, departure series, components, allotments, price and yield rules, and supplier contracts, isolated per tenant by row-level tenant keys.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "product-availability-cache",
+      "name": "Product Availability Cache",
+      "kind": "cache",
+      "description": "Low-latency serving cache of departure status, component availability, and current sales prices for the online booking website, reseller portal, and partner feeds.",
+      "technology": "redis",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "travel-content-store",
+      "name": "Travel Content and Media Store",
+      "kind": "blob-store",
+      "description": "Object storage for the MediaSpirit-style media library: photos, videos, maps, brochures, and multilingual text blocks with CDN-ready renditions.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "travel-content-index",
+      "name": "Travel Content and Product Search Index",
+      "kind": "search-index",
+      "description": "Full-text and faceted search index over products, components, and content used by the tour builder, website search, and back-office lookups.",
+      "technology": "opensearch",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "supplier-network-db",
+      "name": "Supplier Network DB",
+      "kind": "operational-database",
+      "description": "Relational store for supplier and DMC profiles, portal accounts, supplier requests, and their request/approval history.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "quote-proposal-db",
+      "name": "Quote Proposal DB",
+      "kind": "document-database",
+      "description": "Document store for versioned day-by-day proposals with itinerary structure, selected components, pricing snapshots, and client interaction history.",
+      "technology": "document-database",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "booking-db",
+      "name": "Booking and CRM DB",
+      "kind": "operational-database",
+      "description": "Core multi-tenant relational database for booking files, booking lines, travelers, customer profiles, reseller profiles, flight ticket records, and document metadata; access-logged.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "booking-event-topic",
+      "name": "Booking Event Topic",
+      "kind": "event-topic",
+      "description": "Lifecycle event stream for bookings, departures, and supplier requests feeding invoicing, documents, supplier synchronisation, workflow alerts, and BI.",
+      "technology": "message-bus",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "flight-import-files",
+      "name": "Flight Import File Landing Zone",
+      "kind": "data-files",
+      "description": "Secure file landing zone for GDS and consolidator PNR/ticket exports and IATA BSP HOT settlement files before matching to booking files.",
+      "technology": "sftp-object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "group-operations-db",
+      "name": "Group Operations DB",
+      "kind": "operational-database",
+      "description": "Relational store for departures, capacity and yield state, guide and bus assignments, seat maps, rooming lists, and pseudonymised passenger projections for operational lists.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "passenger-data-vault",
+      "name": "Passenger Data Vault",
+      "kind": "operational-database",
+      "description": "Encrypted, access-logged store for passport, APIS, and special-category passenger data with field-level purpose tags and scheduled purging after the trip.",
+      "technology": "encrypted-relational-store",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "travel-document-store",
+      "name": "Travel Document Store",
+      "kind": "blob-store",
+      "description": "Object storage for generated travel documents, vouchers, invoice PDFs, supplier invoice images, signed contracts, and sent operational lists, versioned per send.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "feedback-db",
+      "name": "Quality and Feedback DB",
+      "kind": "operational-database",
+      "description": "Store for complaints and claims, survey responses, guide reports, and synchronised public reviews with supplier and guide scoring.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "finance-ledger-db",
+      "name": "Finance Ledger DB",
+      "kind": "operational-database",
+      "description": "Financial store for customer invoices, payment schedules, payment transactions, supplier invoices, approval states, and accounting postings; immutable once issued and access-logged.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "payment-provider-mirror",
+      "name": "Payment Provider Mirror",
+      "kind": "integration-mirror",
+      "description": "Synchronised copy of payment, refund, and chargeback records from the payment service provider (Mollie-style), keyed by provider payment id; holds no card or bank account data.",
+      "technology": "payment-service-provider-api",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "accounting-provider-mirror",
+      "name": "Accounting Package Mirror",
+      "kind": "integration-mirror",
+      "description": "Per-tenant staging and reconciliation copy of debtor, creditor, sales, purchase, and payment postings exchanged with the tenant's accounting package (Exact-style connector) and UBL e-invoicing.",
+      "technology": "accounting-connector",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "compliance-report-archive",
+      "name": "Compliance Report Archive",
+      "kind": "blob-store",
+      "description": "Immutable archive of approved guarantee-fund and package-travel filings with their source snapshots and approval records.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "marketing-segment-db",
+      "name": "Marketing Consent and Segment DB",
+      "kind": "operational-database",
+      "description": "Store for consent records with proof of opt-in, preference-centre settings, segment definitions, and nightly segment memberships.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "email-marketing-mirror",
+      "name": "Email Marketing Provider Mirror",
+      "kind": "integration-mirror",
+      "description": "Synchronised contact and segment-tag copy exchanged with the tenant's email-marketing platform (Spotler-style), limited to consented contacts.",
+      "technology": "email-marketing-connector",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "crm-communication-archive",
+      "name": "CRM Communication Archive",
+      "kind": "blob-store",
+      "description": "Archive of emails, call records, and portal messages threaded to customers, bookings, supplier requests, and complaints through the email and telephony integration.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "tenant-identity-db",
+      "name": "Tenant and Identity DB",
+      "kind": "operational-database",
+      "description": "Tenant, subscription, module licence, brand, user, role, credential, and administrative audit-log store backing platform-wide authentication and authorisation.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "integration-event-bus",
+      "name": "Integration Event Bus",
+      "kind": "event-topic",
+      "description": "Platform-wide event bus routing tenant-scoped events to portals, workflow automation, partner webhooks, and integration connectors.",
+      "technology": "message-bus",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "travel-data-warehouse",
+      "name": "Travel Data Warehouse",
+      "kind": "analytics-warehouse",
+      "description": "Per-tenant analytical warehouse behind the BI module (Travel Intelligence-style) holding governed copies of products, departures, bookings, invoices, payments, supplier costs, and feedback for margin, load-factor, forecast, and KPI reporting; pseudonymised where source assets carry personal data.",
+      "technology": "analytics-warehouse",
+      "status": "active",
+      "classification": "confidential"
+    }
+  ]
+}

@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Traveler Portal Web — Deployment (Tour Operator ERP Platform)</title>
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #5b6472;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;
+    }
+</style>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 8px 28px 28px;
+            color: #202124;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .channel-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+            margin-bottom: 18px;
+        }
+
+        .channel-nav-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #f8fafc;
+        }
+
+        .channel-nav-link.active {
+            border-bottom: 2px solid blue;
+        }
+
+        .channel-nav-icon {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+            padding: 2px;
+        }
+
+        .hero {
+            margin-bottom: 18px;
+        }
+
+        .hero-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 14px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 8px;
+        }
+
+        .hero-title {
+            font-size: 44px;
+            line-height: 1.05;
+            margin-bottom: 4px;
+        }
+
+        .hero-subtitle {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 960px;
+            margin-top: 10px;
+        }
+
+        .deployment-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .deployment-stat {
+            display: inline-block;
+            min-width: 120px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .deployment-stat-value {
+            font-size: 28px;
+            color: #1d4ed8;
+        }
+
+        .deployment-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .deployment-copy {
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 18px;
+            max-width: 980px;
+        }
+
+        .deployment-section-title {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 20px 0 10px 0;
+        }
+
+        .deployment-environment {
+            padding: 10px 12px;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            background: #eff6ff;
+            margin-bottom: 10px;
+        }
+
+        .deployment-environment-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+
+        .deployment-environment-copy {
+            color: #4b5563;
+            font-size: 13px;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .deployment-link-row {
+            margin-top: 6px;
+        }
+
+        .deployment-link {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #1d4ed8;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .env-brick-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .env-brick-count {
+            color: #9ca3af;
+            font-weight: normal;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chip-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 2px;
+        }
+
+        .chip-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .chip-copy {
+            font-size: 12px;
+            color: #4b5563;
+            line-height: 1.35;
+            display: inline-block;
+        }
+
+        .empty-state {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .bpd-layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .bpd-controls {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            padding: 12px;
+        }
+
+        .bpd-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .pdg-action {
+            border: 1px solid #d1d5db;
+            background-color: white;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .pdg-action:hover {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .bpd-checklist {
+            max-height: 460px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdg-type-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6b7280;
+            margin: 10px 0 2px 0;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .pdg-type-header:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .pdg-check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #374151;
+            padding: 5px 2px;
+            cursor: pointer;
+        }
+
+        .pdg-check-item .label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pdg-swatch {
+            flex: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(17, 24, 39, 0.15);
+        }
+
+        .bpd-graph {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 14px;
+            overflow: auto;
+            min-height: 300px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body onload="initTab('HomeTab')" onhashchange="initTab('HomeTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html" class="active">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a><a href="../../residuality/index.html">Stress Test</a></nav>
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        setupTabAccessibility();
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+<script>
+    const products = {"portfolio": {"name": "Tour Operator ERP Platform Portfolio", "version": "1.0", "products": [{"id": "group-travel-erp", "name": "Group Travel ERP", "icon": "gops.png", "type": "B2B Vertical ERP SaaS", "description": "The GRIP-style back office for group and coach tour operators: product management for fixed-date departures and series, CRM, booking desk, invoicing and payments, process management and quality in one system, plus the group-operations depth the segment needs - capacity and minimum-participant yielding, bus seat allocation, hotel room lists, guide assignment and passenger lists. Sold as a monthly subscription (published base package from EUR 129 per month) extended with modules and portals.", "primaryCustomers": [{"id": "gops", "name": "Group Travel Operations Manager", "icon": "gops.png"}, {"id": "resa", "name": "Reservations and Sales Agent", "icon": "resa.png"}, {"id": "town", "name": "Travel Company Owner", "icon": "town.png"}]}, {"id": "tailor-made-travel-suite", "name": "Tailor-Made Travel Suite", "icon": "tspc.png", "type": "B2B Vertical ERP SaaS", "description": "The TravelSpirit-style modular back office for tailor-made specialists and DMCs: CRM with integrated email and telephony, workflow, travel plans and stored components, orders and trip files, MediaSpirit photo management, invoicing and documents, together with the Visual Tour Builder that turns a travel wish into a day-by-day visual online proposal the client can approve and pay. Start package for small operators, enterprise contract for larger ones.", "primaryCustomers": [{"id": "tspc", "name": "Tailor-Made Travel Specialist", "icon": "tspc.png"}, {"id": "resa", "name": "Reservations and Sales Agent", "icon": "resa.png"}, {"id": "town", "name": "Travel Company Owner", "icon": "town.png"}]}, {"id": "online-booking-websites", "name": "Online Booking Websites and CMS", "icon": "trav.png", "type": "B2B2C Web", "description": "Real-time bookable customer websites under the operator's own brand (1TIS Klantwebsite, TravelSpirit SPoE Single Point of Entry) driven directly from the back-office product, availability, pricing and content data, with a CMS for pages and campaigns, online checkout with deposit payment and immediate booking-file creation - no re-keying between web and desk.", "primaryCustomers": [{"id": "trav", "name": "Traveler and Booker", "icon": "trav.png"}, {"id": "town", "name": "Travel Company Owner", "icon": "town.png"}]}, {"id": "traveler-portal-and-app", "name": "Traveler Portal and My-Trip App", "icon": "trav.png", "type": "B2B2C Portal and Mobile", "description": "The traveler's personal booking pages (booking inzien) and my-trip experience: approve quotes, pay open amounts, share passenger details, wishes and dietary requirements, download travel documents and itineraries, and travel with the operator-branded partner apps (Travelia, Appit) including in-trip information, Hubby eSIM offers, aftercare surveys and Trustpilot reviews.", "primaryCustomers": [{"id": "trav", "name": "Traveler and Booker", "icon": "trav.png"}]}, {"id": "partner-portals", "name": "Supplier, DMC, Reseller and Guide Portals", "icon": "dmcm.png", "type": "B2B Partner Portals", "description": "The trade-facing portals that hang off the ERP: a supplier and DMC approval portal for one-to-one service requests, confirmations, room lists and passenger details; a reseller and agent portal (including independent ZRA-style agents) for booking the operator's products and retrieving documents; and group-leader and tour-guide portals with participant lists, seating and daily programmes.", "primaryCustomers": [{"id": "dmcm", "name": "DMC Ground Operations Manager", "icon": "dmcm.png"}, {"id": "rsel", "name": "Reseller Travel Agent", "icon": "rsel.png"}, {"id": "gops", "name": "Group Travel Operations Manager", "icon": "gops.png"}]}, {"id": "finance-and-compliance", "name": "Finance, Payments and Compliance", "icon": "fina.png", "type": "B2B SaaS Module", "description": "The finance and accounting attach: invoicing, payment links and alerts (Mollie), accounts receivable and payable, supplier settlement, accounting integration and electronic invoicing (Exact), IATA HOT and Airtrade flight settlement files, and travel-guarantee-fund and package-travel-regulation reporting so month-end closes without spreadsheets.", "primaryCustomers": [{"id": "fina", "name": "Finance and Administration Lead", "icon": "fina.png"}]}, {"id": "marketing-and-insight", "name": "Marketing and Business Intelligence", "icon": "town.png", "type": "B2B SaaS Module", "description": "Marketing and steering on top of the integrated data model: CRM segmentation and consent, email campaigns (Spotler), review collection (Trustpilot), and business-intelligence dashboards and exports (Travel Intelligence) covering bookings, margin, online share, forecast and KPI steering for the business owner.", "primaryCustomers": [{"id": "town", "name": "Travel Company Owner", "icon": "town.png"}]}, {"id": "ai-office-assistant", "name": "AI Travel Office Assistant", "icon": "resa.png", "type": "AI Add-on", "description": "Embedded AI assistants for the travel office, the Vortex thesis of AI inside the ERP: drafting visual proposals from a travel wish and stored components, triaging the shared inbox into booking-file actions, suggesting answers to customer questions from the booking view, and pre-filling supplier requests - always under human review.", "primaryCustomers": [{"id": "resa", "name": "Reservations and Sales Agent", "icon": "resa.png"}, {"id": "tspc", "name": "Tailor-Made Travel Specialist", "icon": "tspc.png"}]}], "deploymentModelRef": "deployment.json"}};
+    const deployment = {"metadata": {"title": "Tour Operator ERP Platform Deployment Channels", "description": "Product bricks are deployed to the tenant back-office and tour-builder web apps, operator-branded customer websites, traveler, supplier/DMC, reseller and guide portals, partner-delivered mobile apps, the partner REST API and integration connectors (accounting, payments, flights, channel feeds, marketing, telephony, BI), and the internal tenant-administration back office. Each deployed brick records the products that use it.", "modelVersion": "4.0"}, "channels": [{"groupId": "web-applications", "groupName": "Web Applications", "groupType": "runtime", "description": "Browser-based workspaces for operator staff, travelers, suppliers, resellers and guides, one sub-channel per major web application.", "channels": [{"subChannelId": "web-back-office", "subChannelName": "Back-Office Web App", "channelType": "web-application", "description": "The tenant's browser-based ERP workspace (1TIS GRIP, TravelSpirit BackOffice): product, CRM, booking, operations, finance, quality, workflow and reporting screens for reservations agents, operations managers and finance staff.", "deployedBricks": [{"brickId": "prod", "brickName": "Travel Products and Packages", "deploymentRole": "Package, departure-series and product-master UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Defines fixed-date departures, series and bus round trips as sellable products with capacity."}, {"productId": "tailor-made-travel-suite", "description": "Holds the templated journeys and building-block products tailor-made specialists start from."}]}, {"brickId": "comp", "brickName": "Components, Inventory and Availability", "deploymentRole": "Component, allotment and availability UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Tracks hotel, coach, flight and activity allotments per departure."}, {"productId": "tailor-made-travel-suite", "description": "Stores the accommodation, transport and activity components with availability that every trip file is built from."}]}, {"brickId": "pric", "brickName": "Pricing, Yield and Group Calculations", "deploymentRole": "Pricing, yield rule and group calculation UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Runs group calculations, minimum-participant thresholds and yield rules per departure."}, {"productId": "tailor-made-travel-suite", "description": "Prices ad-hoc itineraries at target margin with seasonal supplier rates and mark-ups."}]}, {"brickId": "cont", "brickName": "Purchasing and Supplier Contracts", "deploymentRole": "Supplier contract and purchasing UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Keeps coach, hotel and DMC contracts, release dates and purchase prices behind every departure."}, {"productId": "tailor-made-travel-suite", "description": "Records negotiated supplier rates and conditions that pricing and settlement rely on."}]}, {"brickId": "ctnt", "brickName": "Travel Content and Media Management", "deploymentRole": "Travel content and photo library (MediaSpirit-style) UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Maintains itinerary texts, hotel descriptions and photos reused in documents and websites."}, {"productId": "tailor-made-travel-suite", "description": "Supplies the descriptions and images the Visual Tour Builder composes into proposals."}]}, {"brickId": "supl", "brickName": "Supplier Management and Communication", "deploymentRole": "Supplier communication and request-tracking UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Sends and logs one-to-one requests, confirmations and changes to DMCs and direct suppliers."}, {"productId": "tailor-made-travel-suite", "description": "Confirms every ad-hoc component with the supplier before departure from one screen."}]}, {"brickId": "book", "brickName": "Booking Files and Dossiers", "deploymentRole": "Booking file and dossier UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "The booking desk's system of record for group bookings, options, changes and cancellations."}, {"productId": "tailor-made-travel-suite", "description": "The trip file that a converted proposal becomes, with all components, travelers and payments."}]}, {"brickId": "crmr", "brickName": "CRM and Contact Management", "deploymentRole": "CRM, contact and correspondence UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Gives the reservations agent one customer view with history, preferences and contacts."}, {"productId": "tailor-made-travel-suite", "description": "Tracks leads, wishes and follow-ups from first inquiry to repeat booking."}, {"productId": "marketing-and-insight", "description": "Provides the customer base and consent data that segmentation and campaigns build on."}]}, {"brickId": "flgt", "brickName": "Flight Import and Ticket Settlement", "deploymentRole": "Flight import and ticket administration UI deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Imports GDS and Airtrade bookings onto group departures and tracks ticketing deadlines."}, {"productId": "tailor-made-travel-suite", "description": "Attaches imported flights and tickets to individual trip files."}]}, {"brickId": "dept", "brickName": "Departures and Capacity Management", "deploymentRole": "Departure and capacity management UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "The operations manager's cockpit for load factor, go/no-go decisions and departure status."}]}, {"brickId": "seat", "brickName": "Seat and Room Allocation", "deploymentRole": "Bus seating plan and hotel room list UI deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Allocates bus seats and hotel rooms and prints seating and room lists for drivers and hotels."}]}, {"brickId": "pass", "brickName": "Passenger Data and Operational Lists", "deploymentRole": "Passenger data and operational list UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Maintains passenger lists, dietary wishes and special requests per departure."}, {"productId": "tailor-made-travel-suite", "description": "Captures traveler details needed for flights, visas and supplier vouchers."}]}, {"brickId": "docs", "brickName": "Travel Documents and Itinerary Delivery", "deploymentRole": "Travel document templating and generation UI deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Generates confirmations, invoices, itineraries and vouchers per booking and departure."}, {"productId": "tailor-made-travel-suite", "description": "Produces the personalised travel documents and day-by-day itinerary of a trip file."}]}, {"brickId": "qual", "brickName": "Quality, Complaints, Surveys and Reviews", "deploymentRole": "Complaint handling, survey and review management UI deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Registers and resolves complaints and tracks survey scores per departure and guide."}, {"productId": "tailor-made-travel-suite", "description": "Runs aftercare surveys and review invitations after each trip."}]}, {"brickId": "invc", "brickName": "Invoicing, Payment Links and Collection", "deploymentRole": "Invoicing, payment status and collection UI deployed to the back-office web app.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Issues invoices, sends payment links and reminders and shows open receivables."}, {"productId": "group-travel-erp", "description": "Lets the booking desk take deposits and see payment status inside the booking."}]}, {"brickId": "acct", "brickName": "Accounting Integration and Supplier Settlement", "deploymentRole": "Supplier invoice matching and accounting export UI deployed to the back-office web app.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Matches supplier invoices to booked components and posts to the general ledger."}]}, {"brickId": "gfnd", "brickName": "Guarantee Fund and Regulatory Reporting", "deploymentRole": "Guarantee fund and regulatory reporting UI deployed to the back-office web app.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Prepares SGR-style guarantee fund declarations and package-travel-regulation reporting."}]}, {"brickId": "mktg", "brickName": "Email Marketing and Segmentation", "deploymentRole": "Segmentation and campaign management UI deployed to the back-office web app.", "usedInProducts": [{"productId": "marketing-and-insight", "description": "Builds segments from booking history and consent and hands them to email campaigns."}]}, {"brickId": "bint", "brickName": "Business Intelligence and Reporting", "deploymentRole": "Embedded dashboards and reporting UI deployed to the back-office web app.", "usedInProducts": [{"productId": "marketing-and-insight", "description": "Shows margin, load factor, online share and pipeline dashboards to the business owner."}, {"productId": "group-travel-erp", "description": "Gives operations managers per-departure load and yield reporting."}]}, {"brickId": "wflw", "brickName": "Workflow, Tasks and Alerts", "deploymentRole": "Task lists, alerts and process automation UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Drives the process-management module: deadlines, checklists and alerts per departure and booking."}, {"productId": "tailor-made-travel-suite", "description": "Runs workflow steps from lead to trip file with tasks for the specialist."}]}, {"brickId": "comm", "brickName": "Email and Telephony Integration", "deploymentRole": "Integrated inbox and telephony UI deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Links inbound calls and emails to the customer and booking on screen."}, {"productId": "tailor-made-travel-suite", "description": "Puts email and telephony history on the trip file for the specialist."}]}, {"brickId": "aiaa", "brickName": "AI Office Assistants", "deploymentRole": "AI assistant panels embedded in booking, inbox and quote screens of the back-office web app.", "usedInProducts": [{"productId": "ai-office-assistant", "description": "Triages the inbox, suggests answers from the booking view and pre-fills supplier requests."}]}, {"brickId": "iden", "brickName": "Identity, Tenants and Access", "deploymentRole": "Tenant login, roles and user management deployed to the back-office web app.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Authenticates staff and enforces role-based access per tenant."}, {"productId": "tailor-made-travel-suite", "description": "Authenticates staff and enforces role-based access per tenant."}]}]}, {"subChannelId": "web-visual-tour-builder", "subChannelName": "Visual Tour Builder Web", "channelType": "web-application", "description": "The tailor-made specialist's proposal workspace: compose a day-by-day itinerary from stored components, price it, and publish a visual online proposal the client can review, comment on and accept.", "deployedBricks": [{"brickId": "vtbl", "brickName": "Visual Tour Builder, Quotes and Itineraries", "deploymentRole": "Itinerary composer, quote pricing and online proposal publishing deployed to the tour builder web app.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "The core selling surface: from travel wish to accepted visual proposal and opened trip file."}]}, {"brickId": "comp", "brickName": "Components, Inventory and Availability", "deploymentRole": "Component search and availability services surfaced in the tour builder.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "Lets the specialist drag stored accommodations, transfers and activities into the itinerary."}]}, {"brickId": "pric", "brickName": "Pricing, Yield and Group Calculations", "deploymentRole": "Margin and price calculation services surfaced in the tour builder.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "Shows cost, sell price and margin per day and per proposal while composing."}]}, {"brickId": "ctnt", "brickName": "Travel Content and Media Management", "deploymentRole": "Content and photo picker surfaced in the tour builder.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "Provides the descriptions and images that make proposals visual."}]}, {"brickId": "aiaa", "brickName": "AI Office Assistants", "deploymentRole": "AI proposal drafting assistant embedded in the tour builder.", "usedInProducts": [{"productId": "ai-office-assistant", "description": "Drafts a first itinerary and proposal text from the client's wish and the component library."}]}]}, {"subChannelId": "web-customer-website", "subChannelName": "Customer Website and CMS", "channelType": "web-application", "description": "The operator-branded public website (Klantwebsite, SPoE) with real-time product, availability and pricing from the back office, CMS-managed pages and campaigns, and an online checkout that creates the booking file directly.", "deployedBricks": [{"brickId": "webs", "brickName": "Customer Website, CMS and Online Booking", "deploymentRole": "Public website, CMS and online booking funnel deployed under the operator's own domain.", "usedInProducts": [{"productId": "online-booking-websites", "description": "The direct online sales channel: search, real-time availability, checkout and confirmation."}]}, {"brickId": "prod", "brickName": "Travel Products and Packages", "deploymentRole": "Read-only product catalogue services feeding website pages and search.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Publishes packages, departures and prices to the website without duplicate content maintenance."}]}, {"brickId": "comp", "brickName": "Components, Inventory and Availability", "deploymentRole": "Real-time availability services feeding the website checkout.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Confirms seats, rooms and components are available at the moment of booking."}]}, {"brickId": "pric", "brickName": "Pricing, Yield and Group Calculations", "deploymentRole": "Live price calculation services feeding the website.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Calculates the exact price for the selected departure, room type and extras during checkout."}]}, {"brickId": "ctnt", "brickName": "Travel Content and Media Management", "deploymentRole": "Content and media delivery feeding website pages.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Serves itinerary texts, hotel descriptions and photos maintained once in the back office."}]}, {"brickId": "book", "brickName": "Booking Files and Dossiers", "deploymentRole": "Booking creation endpoint behind the website checkout.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Creates the booking file in the back office the moment the traveler completes checkout."}]}, {"brickId": "invc", "brickName": "Invoicing, Payment Links and Collection", "deploymentRole": "Deposit and payment-link step embedded in the website checkout.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Takes the deposit online and records it against the new booking."}]}]}, {"subChannelId": "web-traveler-portal", "subChannelName": "Traveler Portal Web", "channelType": "web-application", "description": "The traveler's personal pages linked from confirmations and proposals: approve quotes, pay, add passenger details and wishes, download documents and follow the trip.", "deployedBricks": [{"brickId": "mytp", "brickName": "Traveler Portal and My-Trip App", "deploymentRole": "Traveler self-service portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "The my-trip home: booking status, payments, documents and contact with the operator."}]}, {"brickId": "vtbl", "brickName": "Visual Tour Builder, Quotes and Itineraries", "deploymentRole": "Client-facing proposal view and acceptance flow deployed to the traveler portal.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Lets the traveler review, comment on and accept the visual proposal online."}, {"productId": "tailor-made-travel-suite", "description": "Closes the proposal loop by capturing acceptance straight into the trip file."}]}, {"brickId": "pass", "brickName": "Passenger Data and Operational Lists", "deploymentRole": "Passenger detail and wish capture forms deployed to the traveler portal.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Collects passport data, dietary requirements and room wishes from the traveler."}]}, {"brickId": "docs", "brickName": "Travel Documents and Itinerary Delivery", "deploymentRole": "Document download and itinerary view deployed to the traveler portal.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Gives self-service access to confirmations, vouchers and itineraries."}]}, {"brickId": "invc", "brickName": "Invoicing, Payment Links and Collection", "deploymentRole": "Payment-link and open-amount view deployed to the traveler portal.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Shows the payment schedule and lets the traveler pay the balance online."}, {"productId": "finance-and-compliance", "description": "Reduces reminders by making the traveler's own payment status visible."}]}, {"brickId": "qual", "brickName": "Quality, Complaints, Surveys and Reviews", "deploymentRole": "Post-trip survey and review invitation deployed to the traveler portal.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Collects the traveler's feedback and routes them to a public review."}]}]}, {"subChannelId": "web-supplier-dmc-portal", "subChannelName": "Supplier and DMC Portal Web", "channelType": "web-application", "description": "The approval portal where DMCs and direct suppliers receive service requests, confirm or reject them, and keep room lists and passenger details in sync with the operator.", "deployedBricks": [{"brickId": "sprt", "brickName": "Supplier and DMC Portal", "deploymentRole": "Supplier and DMC portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "partner-portals", "description": "The DMC's workspace for open requests, confirmations, changes and invoices to the operator."}]}, {"brickId": "supl", "brickName": "Supplier Management and Communication", "deploymentRole": "Request and confirmation exchange services behind the supplier portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Keeps every request and answer logged on both sides in one thread."}]}, {"brickId": "pass", "brickName": "Passenger Data and Operational Lists", "deploymentRole": "Passenger and room list views shared with suppliers through the portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Gives hotels and DMCs the correct guest names, wishes and dietary requirements."}]}, {"brickId": "seat", "brickName": "Seat and Room Allocation", "deploymentRole": "Room list synchronisation exposed to hotels through the supplier portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Publishes the current room list and picks up hotel-side changes."}]}]}, {"subChannelId": "web-reseller-portal", "subChannelName": "Reseller Portal Web", "channelType": "web-application", "description": "The trade portal for retail and affiliated agents, including independent ZRA-style agents, to book the operator's products for their clients and retrieve documents.", "deployedBricks": [{"brickId": "rsel", "brickName": "Reseller and Agent Portal", "deploymentRole": "Reseller and agent portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "partner-portals", "description": "Lets agents search, book and manage their clients' bookings without phone calls."}]}, {"brickId": "prod", "brickName": "Travel Products and Packages", "deploymentRole": "Agent-facing product catalogue services feeding the reseller portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Shows agents the same packages and departures as the operator's own website."}]}, {"brickId": "comp", "brickName": "Components, Inventory and Availability", "deploymentRole": "Availability services feeding the reseller portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Confirms real-time availability before an agent commits a client booking."}]}, {"brickId": "docs", "brickName": "Travel Documents and Itinerary Delivery", "deploymentRole": "Document retrieval deployed to the reseller portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Lets agents download confirmations and travel documents for their clients."}]}]}, {"subChannelId": "web-guide-portal", "subChannelName": "Guide Portal Web", "channelType": "web-application", "description": "The tour-guide and group-leader portal with participant lists, seating, room lists, daily programme and incident reporting per departure.", "deployedBricks": [{"brickId": "guid", "brickName": "Guide and Group Leader Portal", "deploymentRole": "Guide and group-leader portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "partner-portals", "description": "The guide's departure workspace: participants, programme, contacts and reporting."}]}, {"brickId": "pass", "brickName": "Passenger Data and Operational Lists", "deploymentRole": "Participant list views deployed to the guide portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Gives the guide the current passenger list with wishes and special needs."}]}, {"brickId": "seat", "brickName": "Seat and Room Allocation", "deploymentRole": "Seating and room list views deployed to the guide portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Shows the bus seating plan and hotel room list for the departure."}]}, {"brickId": "dept", "brickName": "Departures and Capacity Management", "deploymentRole": "Departure programme and status views deployed to the guide portal.", "usedInProducts": [{"productId": "partner-portals", "description": "Shares the itinerary, timings and supplier contacts of the departure with the guide."}]}]}]}, {"groupId": "mobile-apps", "groupName": "Mobile Apps", "groupType": "distribution", "description": "Mobile app store distribution: operator-branded traveler apps delivered through partner app platforms, and the guide mobile app, shipped to both iOS and Android.", "channels": [{"subChannelId": "mobile-traveler-app", "subChannelName": "Traveler App (Travelia, Appit)", "channelType": "mobile-app-store", "description": "Operator-branded traveler apps delivered through partner app platforms Travelia and Appit and distributed via the iOS App Store and Android Play Store: itinerary, documents, in-trip information, eSIM offers and feedback.", "deployedBricks": [{"brickId": "mytp", "brickName": "Traveler Portal and My-Trip App", "deploymentRole": "My-trip mobile experience delivered through the partner app builds.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "The traveler's in-trip companion with itinerary, documents, payments and messages."}]}, {"brickId": "docs", "brickName": "Travel Documents and Itinerary Delivery", "deploymentRole": "Offline travel documents and itinerary delivery embedded in the traveler app.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Keeps vouchers and the day-by-day programme available without connectivity."}]}, {"brickId": "qual", "brickName": "Quality, Complaints, Surveys and Reviews", "deploymentRole": "In-app survey and review prompts embedded in the traveler app.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Captures feedback during and after the trip and invites Trustpilot reviews."}]}, {"brickId": "comm", "brickName": "Email and Telephony Integration", "deploymentRole": "Push and message delivery services behind the traveler app.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Delivers schedule changes and operator messages to the traveler's phone."}]}]}, {"subChannelId": "mobile-guide-app", "subChannelName": "Guide Mobile", "channelType": "mobile-app-store", "description": "Mobile build of the guide portal for tour guides and group leaders on the road, distributed via the iOS App Store and Android Play Store.", "deployedBricks": [{"brickId": "guid", "brickName": "Guide and Group Leader Portal", "deploymentRole": "Mobile guide app build distributed through the app stores.", "usedInProducts": [{"productId": "partner-portals", "description": "Lets guides check participants, programme and contacts from the coach."}]}, {"brickId": "pass", "brickName": "Passenger Data and Operational Lists", "deploymentRole": "Mobile participant list embedded in the guide app.", "usedInProducts": [{"productId": "partner-portals", "description": "Provides the passenger list with wishes for head counts and hotel check-in."}]}, {"brickId": "qual", "brickName": "Quality, Complaints, Surveys and Reviews", "deploymentRole": "Mobile incident and complaint capture embedded in the guide app.", "usedInProducts": [{"productId": "partner-portals", "description": "Records incidents and complaints on the spot so the office can act."}]}]}]}, {"groupId": "apis-and-integrations", "groupName": "APIs and Integrations", "groupType": "integration", "description": "Machine-to-machine channels: the partner REST API and the connectors to accounting, payment, flight, channel, marketing, telephony and BI partners.", "channels": [{"subChannelId": "api-partner-rest", "subChannelName": "Partner REST API", "channelType": "public-api", "description": "The documented REST API and webhooks through which websites, partner apps, agencies and integrators read products and availability, create bookings and receive status events.", "deployedBricks": [{"brickId": "intg", "brickName": "Integration Hub and Partner APIs", "deploymentRole": "API gateway, credentials, webhooks and developer documentation exposed on the partner API.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Feeds headless or agency-built websites from the same product and booking data."}, {"productId": "partner-portals", "description": "Lets partner systems and affiliated agents integrate system-to-system."}, {"productId": "traveler-portal-and-app", "description": "Supplies partner apps Travelia and Appit with booking and itinerary data."}]}, {"brickId": "iden", "brickName": "Identity, Tenants and Access", "deploymentRole": "OAuth tokens, API keys and tenant scoping behind the partner API.", "usedInProducts": [{"productId": "partner-portals", "description": "Authenticates and scopes every partner call to one tenant."}]}, {"brickId": "prod", "brickName": "Travel Products and Packages", "deploymentRole": "Product catalogue endpoints exposed on the partner API.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Exposes packages, departures and content to external websites."}]}, {"brickId": "comp", "brickName": "Components, Inventory and Availability", "deploymentRole": "Availability endpoints exposed on the partner API.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Answers real-time availability queries from external channels."}]}, {"brickId": "book", "brickName": "Booking Files and Dossiers", "deploymentRole": "Booking create, read and update endpoints exposed on the partner API.", "usedInProducts": [{"productId": "online-booking-websites", "description": "Creates and updates booking files from external websites and apps."}, {"productId": "partner-portals", "description": "Receives bookings from partner agency systems."}]}, {"brickId": "mytp", "brickName": "Traveler Portal and My-Trip App", "deploymentRole": "Traveler booking and document endpoints consumed by partner apps.", "usedInProducts": [{"productId": "traveler-portal-and-app", "description": "Backs the my-trip data shown in Travelia and Appit apps."}]}]}, {"subChannelId": "api-accounting-connectors", "subChannelName": "Accounting Connectors (Exact)", "channelType": "integration", "description": "Connectors that post sales and purchase invoices, payments and journal entries to accounting packages such as Exact and exchange electronic invoices.", "deployedBricks": [{"brickId": "acct", "brickName": "Accounting Integration and Supplier Settlement", "deploymentRole": "General ledger export, supplier invoice import and e-invoicing connectors deployed to the accounting integration.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Posts every invoice and settlement to Exact so finance closes without re-keying."}]}, {"brickId": "invc", "brickName": "Invoicing, Payment Links and Collection", "deploymentRole": "Customer invoice and payment synchronisation to accounting.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Keeps receivables in the ledger identical to the ERP."}]}, {"brickId": "intg", "brickName": "Integration Hub and Partner APIs", "deploymentRole": "Connector framework, mappings and retry handling for accounting integrations.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Provides the shared connector plumbing accounting exports run on."}]}]}, {"subChannelId": "api-payment-connectors", "subChannelName": "Payment Connectors (Mollie)", "channelType": "integration", "description": "Payment service provider integration (Mollie) for payment links, online checkout, iDEAL and card payments, refunds and automatic reconciliation.", "deployedBricks": [{"brickId": "invc", "brickName": "Invoicing, Payment Links and Collection", "deploymentRole": "Payment link creation, webhook reconciliation and refund services deployed to the payment integration.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Collects deposits and balances and reconciles them automatically."}, {"productId": "online-booking-websites", "description": "Processes the deposit paid during online checkout."}, {"productId": "traveler-portal-and-app", "description": "Processes balance payments the traveler makes in the portal or app."}]}, {"brickId": "intg", "brickName": "Integration Hub and Partner APIs", "deploymentRole": "Connector framework and webhook handling for payment providers.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Runs the PSP connector with the same monitoring as other integrations."}]}]}, {"subChannelId": "api-flight-gds-import", "subChannelName": "Flight and GDS Import (Airtrade)", "channelType": "integration", "description": "Imports of GDS PNRs and Airtrade flight bookings onto booking files, and the IATA HOT and Airtrade settlement files that reconcile ticket costs.", "deployedBricks": [{"brickId": "flgt", "brickName": "Flight Import and Ticket Settlement", "deploymentRole": "PNR and Airtrade booking import plus HOT and settlement file processing deployed to the flight integration.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "Attaches imported flights to trip files without retyping."}, {"productId": "group-travel-erp", "description": "Imports group flight allotments and tickets onto departures."}, {"productId": "finance-and-compliance", "description": "Reconciles ticket costs from settlement files against booked flights."}]}, {"brickId": "acct", "brickName": "Accounting Integration and Supplier Settlement", "deploymentRole": "Flight settlement posting to accounting.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Books reconciled ticket costs and commissions to the ledger."}]}]}, {"subChannelId": "api-channel-and-bedbank-feeds", "subChannelName": "Channel and Bed-Bank Feeds (Airtrotter)", "channelType": "integration", "description": "Inbound content and availability feeds from bed banks and channel partners such as Airtrotter, and outbound product feeds to affiliated distribution channels.", "deployedBricks": [{"brickId": "comp", "brickName": "Components, Inventory and Availability", "deploymentRole": "Bed-bank availability and rate import services deployed to the channel feed integration.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "Adds third-party accommodation with live rates to the component library."}]}, {"brickId": "prod", "brickName": "Travel Products and Packages", "deploymentRole": "Outbound product feed export to channel partners.", "usedInProducts": [{"productId": "partner-portals", "description": "Publishes bookable departures to affiliated agent networks and channel partners."}]}, {"brickId": "rsel", "brickName": "Reseller and Agent Portal", "deploymentRole": "Channel booking intake from partner feeds into the reseller model.", "usedInProducts": [{"productId": "partner-portals", "description": "Records channel-originated bookings under the right reseller for commission."}]}, {"brickId": "intg", "brickName": "Integration Hub and Partner APIs", "deploymentRole": "Feed scheduling, mapping and monitoring for channel integrations.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "Runs and monitors nightly and real-time feed jobs."}]}]}, {"subChannelId": "api-email-marketing-connector", "subChannelName": "Email Marketing Connector (Spotler, Trustpilot)", "channelType": "integration", "description": "Synchronises segments and consent to email marketing (Spotler) and triggers review invitations (Trustpilot) from booking and travel events.", "deployedBricks": [{"brickId": "mktg", "brickName": "Email Marketing and Segmentation", "deploymentRole": "Segment and consent synchronisation and campaign trigger services deployed to the marketing integration.", "usedInProducts": [{"productId": "marketing-and-insight", "description": "Pushes segments and lifecycle triggers to Spotler for campaigns."}]}, {"brickId": "crmr", "brickName": "CRM and Contact Management", "deploymentRole": "Contact and consent export to the marketing platform.", "usedInProducts": [{"productId": "marketing-and-insight", "description": "Keeps contacts and opt-ins consistent between CRM and email tool."}]}, {"brickId": "qual", "brickName": "Quality, Complaints, Surveys and Reviews", "deploymentRole": "Review invitation trigger to Trustpilot after trip completion.", "usedInProducts": [{"productId": "marketing-and-insight", "description": "Turns satisfied travelers into public reviews automatically."}]}]}, {"subChannelId": "api-telephony-and-email", "subChannelName": "Email and Telephony Integration (WeCloudIT)", "channelType": "integration", "description": "Mailbox synchronisation and cloud telephony integration (WeCloudIT) that link inbound calls and emails to CRM contacts and booking files.", "deployedBricks": [{"brickId": "comm", "brickName": "Email and Telephony Integration", "deploymentRole": "IMAP/SMTP mailbox sync and telephony screen-pop services deployed to the communication integration.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Pops the customer and booking on screen when the phone rings at the group desk."}, {"productId": "tailor-made-travel-suite", "description": "Files inbound emails on the right trip file automatically."}]}, {"brickId": "wflw", "brickName": "Workflow, Tasks and Alerts", "deploymentRole": "Event-driven task creation from inbound communication.", "usedInProducts": [{"productId": "tailor-made-travel-suite", "description": "Creates follow-up tasks from unanswered emails and missed calls."}]}, {"brickId": "aiaa", "brickName": "AI Office Assistants", "deploymentRole": "Inbox triage assistant services running on synchronised mail.", "usedInProducts": [{"productId": "ai-office-assistant", "description": "Classifies inbound mail and proposes the next action on the booking."}]}]}, {"subChannelId": "api-bi-export", "subChannelName": "BI Export (Travel Intelligence)", "channelType": "integration", "description": "Curated data exports and warehouse feeds to business-intelligence partners such as Travel Intelligence and to the operator's own BI tooling.", "deployedBricks": [{"brickId": "bint", "brickName": "Business Intelligence and Reporting", "deploymentRole": "Data mart, scheduled exports and BI connector services deployed to the analytics integration.", "usedInProducts": [{"productId": "marketing-and-insight", "description": "Feeds Travel Intelligence dashboards with bookings, margin and forecast data."}]}, {"brickId": "gfnd", "brickName": "Guarantee Fund and Regulatory Reporting", "deploymentRole": "Regulatory and fund reporting extracts deployed to the analytics integration.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Produces guarantee-fund and regulator data sets from the same governed source."}]}]}]}, {"groupId": "internal-operations", "groupName": "Internal Operations", "groupType": "backoffice", "description": "Internal tooling for the platform operator: tenant administration, subscription and module management, integration support and platform operations.", "channels": [{"subChannelId": "backoffice-tenant-admin", "subChannelName": "Tenant Administration and Support Back Office", "channelType": "backoffice", "description": "The platform operator's internal workspace for onboarding tenants, managing subscriptions and modules, configuring integrations, supporting customers and operating the platform.", "deployedBricks": [{"brickId": "iden", "brickName": "Identity, Tenants and Access", "deploymentRole": "Tenant provisioning, module entitlement and user administration UI for the platform operator.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Onboards new operators, activates modules and manages tenant access."}, {"productId": "tailor-made-travel-suite", "description": "Onboards new operators, activates modules and manages tenant access."}]}, {"brickId": "intg", "brickName": "Integration Hub and Partner APIs", "deploymentRole": "Integration configuration, monitoring and partner API key administration for support staff.", "usedInProducts": [{"productId": "finance-and-compliance", "description": "Configures and monitors accounting and payment connectors per tenant."}, {"productId": "partner-portals", "description": "Manages partner API credentials and feed configuration per tenant."}]}, {"brickId": "wflw", "brickName": "Workflow, Tasks and Alerts", "deploymentRole": "Platform-wide workflow templates and alert configuration administered by consultants.", "usedInProducts": [{"productId": "group-travel-erp", "description": "Ships best-practice process templates to new tenants during onboarding."}]}, {"brickId": "aiaa", "brickName": "AI Office Assistants", "deploymentRole": "AI assistant model configuration, guardrails and usage monitoring for the platform operator.", "usedInProducts": [{"productId": "ai-office-assistant", "description": "Controls prompts, guardrails and per-tenant enablement of the assistants."}]}, {"brickId": "bint", "brickName": "Business Intelligence and Reporting", "deploymentRole": "Cross-tenant platform analytics for the platform operator (anonymised usage and adoption).", "usedInProducts": [{"productId": "marketing-and-insight", "description": "Gives the platform operator usage and adoption insight to steer the roadmap."}]}]}]}]};
+    const channelRef = "web-applications/web-traveler-portal";
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function deploymentIconFile(channel, group) {
+        const text = [
+            group && group.groupId,
+            group && group.groupName,
+            channel && channel.subChannelId,
+            channel && channel.subChannelName,
+            channel && channel.channelType
+        ].join(' ').toLowerCase();
+
+        if (text.includes('ios')) return 'app_store_ios.png';
+        if (text.includes('android') || text.includes('play store') || text.includes('play-store')) return 'app_store_android.png';
+        if (text.includes('private cloud') || text.includes('private-cloud')) return 'private_cloud.png';
+        if (text.includes('cloud') || text.includes('runtime') || text.includes('edge') || text.includes('cdn')) return 'public_cloud.png';
+        if (text.includes('saas') || text.includes('analytics') || text.includes('crm') || text.includes('datadog') || text.includes('snowflake') || text.includes('databricks') || text.includes('salesforce')) return 'saas.png';
+        return 'deployment.png';
+    }
+
+    function interfaceIconFile(iface) {
+        const text = [iface && iface.type, iface && iface.name].join(' ').toLowerCase();
+        if (text.includes('partner_api')) return 'partner_api.png';
+        if (text.includes('public_api') || text.includes('public api')) return 'public_api.png';
+        if (text.includes('api')) return 'api.png';
+        if (text.includes('mobile web')) return 'mobile_web.png';
+        if (text.includes('mobile') || text.includes('app')) return 'mobile_app.png';
+        if (text.includes('dashboard') || text.includes('cockpit')) return 'dashboard.png';
+        if (text.includes('notification')) return 'notification.png';
+        if (text.includes('search')) return 'search_engine.png';
+        if (text.includes('social')) return 'social_media.png';
+        return 'web.png';
+    }
+
+    function buildDeploymentChannelRecords() {
+        const records = [];
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                records.push({
+                    ref: (group.groupId || '') + '/' + (channel.subChannelId || ''),
+                    group: group,
+                    channel: channel
+                });
+            });
+        });
+        return records;
+    }
+
+    function findCurrentRecord() {
+        return buildDeploymentChannelRecords().find(record => record.ref === channelRef) || null;
+    }
+
+    // Bricks live directly on a channel (subchannel): channel.deployedBricks.
+    function channelDeployedBricks(channel) {
+        return (channel && channel.deployedBricks) || [];
+    }
+
+    function buildChannelProductUsage(record) {
+        // Derive products from this channel's deployedBricks[].usedInProducts.
+        const productLookup = {};
+        ((products.portfolio || {}).products || []).forEach(product => {
+            productLookup[product.id] = product;
+        });
+        const byProduct = {};
+        channelDeployedBricks(record.channel).forEach(brick => {
+            (brick.usedInProducts || []).forEach(use => {
+                const pid = use.productId;
+                if (!pid) return;
+                if (!byProduct[pid]) {
+                    const product = productLookup[pid] || {};
+                    byProduct[pid] = {
+                        id: pid,
+                        name: product.name || pid,
+                        icon: product.icon || 'product.png',
+                        brickCount: 0
+                    };
+                }
+                byProduct[pid].brickCount += 1;
+            });
+        });
+        return Object.values(byProduct).sort((left, right) => left.name.localeCompare(right.name));
+    }
+
+    function renderChip(iconPath, fallbackPath, title, copy, href) {
+        let html = '';
+        if (href) html += '<a href="' + href + '" target="_blank">';
+        html += '<div class="chip">';
+        html += '<img class="chip-icon" src="' + iconPath + '" alt="' + escapeHtml(title) + '" onerror="this.onerror=null;this.src=\'' + fallbackPath + '\'">';
+        html += '<div><div class="chip-title">' + escapeHtml(title) + '</div>';
+        if (copy) html += '<div class="chip-copy">' + escapeHtml(copy) + '</div>';
+        html += '</div></div>';
+        if (href) html += '</a>';
+        return html;
+    }
+
+    function renderNavAndHeader() {
+        const current = findCurrentRecord();
+        let navHtml = '<div class="channel-nav">';
+        buildDeploymentChannelRecords().forEach(record => {
+            const fileName = deploymentIconFile(record.channel, record.group);
+            const activeClass = record.ref === channelRef ? ' active' : '';
+            navHtml += '<a class="channel-nav-link' + activeClass + '" href="' + escapeHtml(record.channel.subChannelId || '') + '.html" title="' + escapeHtml(record.channel.subChannelName || record.channel.subChannelId || 'Deployment channel') + '">';
+            navHtml += '<img class="channel-nav-icon" src="../icons/deployment/' + fileName + '" alt="' + escapeHtml(record.channel.subChannelName || record.channel.subChannelId || 'Deployment channel') + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+            navHtml += '</a>';
+        });
+        navHtml += '</div>';
+        document.getElementById('ChannelNav').innerHTML = navHtml;
+
+        if (!current) {
+            document.getElementById('Header').innerHTML = '<div class="empty-state">Deployment channel not found.</div>';
+            return;
+        }
+
+        let header = '<div class="hero-header">';
+        header += '<img class="hero-icon" src="../icons/deployment/' + deploymentIconFile(current.channel, current.group) + '" alt="' + escapeHtml(current.channel.subChannelName || current.channel.subChannelId || 'Deployment channel') + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+        header += '<div>';
+        header += '<div class="page-type-badge" style="margin-top: 8px;">Deployment Channel</div>';
+        header += '<div class="chip-copy">' + escapeHtml(current.group.groupName || current.group.groupId || '') + ' · ' + escapeHtml(current.channel.channelType || 'channel') + '</div>';
+        header += '<div class="hero-title">' + escapeHtml(current.channel.subChannelName || current.channel.subChannelId || 'Deployment channel') + '</div>';
+        if (current.channel.description) {
+            header += '<div class="hero-subtitle">' + escapeHtml(current.channel.description) + '</div>';
+        }
+        header += '</div>';
+        header += '</div>';
+        document.getElementById('Header').innerHTML = header;
+    }
+
+    function renderHome() {
+        const current = findCurrentRecord();
+        const container = document.getElementById('tab_content_HomeTab');
+        if (!current) {
+            container.innerHTML = '<div class="empty-state">Deployment channel not found.</div>';
+            return;
+        }
+
+        const productUsage = buildChannelProductUsage(current);
+        const deployedBricks = channelDeployedBricks(current.channel);
+
+        let html = '';
+
+        const intro = [deployment.metadata && deployment.metadata.description, current.group.description, current.channel.description].filter(Boolean).join(' ');
+        if (intro) html += '<div class="deployment-copy">' + escapeHtml(intro) + '</div>';
+
+        html += '<div class="deployment-section-title">Deployed Bricks (' + deployedBricks.length + ')</div>';
+        if (deployedBricks.length) {
+            html += '<div class="chip-row">';
+            deployedBricks.forEach(brick => {
+                const productCount = (brick.usedInProducts || []).length;
+                const meta = [brick.deploymentRole || '', productCount ? 'Used in ' + productCount + (productCount === 1 ? ' product' : ' products') : ''].filter(Boolean).join(' · ');
+                html += renderChip('../../product-bricks/icons/' + escapeHtml(brick.brickId) + '.png', '../../product-bricks/icons/logo.png', brick.brickName || brick.brickId || 'Product brick', meta, '../../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html');
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty-state">No bricks deployed in this channel.</div>';
+        }
+
+        html += '<div class="deployment-section-title">Products Using This Channel (' + productUsage.length + ')</div>';
+        if (productUsage.length) {
+            html += '<div class="chip-row">';
+            productUsage.forEach(product => {
+                const meta = product.brickCount + (product.brickCount === 1 ? ' brick' : ' bricks');
+                html += renderChip('../icons/' + escapeHtml(product.icon), '../icons/product.png', product.name, meta, '../landing_pages/' + escapeHtml(product.id) + '.html');
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty-state">No products currently reference this channel.</div>';
+        }
+
+        html += '<div class="deployment-section-title">Brick to Product Dependencies</div>';
+        html += '<div class="bpd-layout">';
+        html += '<div class="bpd-controls" id="BpdControls"></div>';
+        html += '<div class="bpd-graph" id="BpdGraph"></div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+        renderBrickProductDependencies(current);
+    }
+
+    // --- Brick -> Product dependency diagram (mermaid) ---
+    let bpdSelected = null; // Set of selected node ids (null = all)
+
+    function bpdNodes(record) {
+        const productLookup = {};
+        ((products.portfolio || {}).products || []).forEach(product => { productLookup[product.id] = product; });
+        const bricks = [];
+        const productMap = {};
+        const edges = [];
+        channelDeployedBricks(record.channel).forEach(brick => {
+            const uses = (brick.usedInProducts || []).filter(use => productLookup[use.productId]);
+            if (!uses.length) return;
+            const brickNodeId = 'brick:' + brick.brickId;
+            bricks.push({id: brickNodeId, name: brick.brickName || brick.brickId, type: 'brick'});
+            uses.forEach(use => {
+                const product = productLookup[use.productId];
+                const productNodeId = 'product:' + product.id;
+                if (!productMap[productNodeId]) {
+                    productMap[productNodeId] = {id: productNodeId, name: product.name || product.id, type: 'product'};
+                }
+                edges.push({source: brickNodeId, target: productNodeId});
+            });
+        });
+        // dedupe brick nodes (a brick appears once)
+        const seen = {};
+        const brickNodes = bricks.filter(n => seen[n.id] ? false : (seen[n.id] = true));
+        return {bricks: brickNodes, products: Object.values(productMap), edges: edges};
+    }
+
+    function bpdAllNodeIds(model) {
+        return model.bricks.concat(model.products).map(n => n.id);
+    }
+
+    function bpdIsSelected(id) {
+        return bpdSelected === null || bpdSelected.has(id);
+    }
+
+    function renderBrickProductDependencies(record) {
+        const model = bpdNodes(record);
+        if (bpdSelected === null) {
+            bpdSelected = new Set(bpdAllNodeIds(model));
+        }
+        renderBpdControls(model);
+        renderBpdGraph(model);
+    }
+
+    function renderBpdControls(model) {
+        const groups = [
+            {label: 'Bricks', color: '#059669', nodes: model.bricks.slice().sort((a, b) => a.name.localeCompare(b.name))},
+            {label: 'Products', color: '#ea580c', nodes: model.products.slice().sort((a, b) => a.name.localeCompare(b.name))}
+        ];
+        let html = '<div class="bpd-actions">' +
+            '<button type="button" class="pdg-action" onclick="setAllBpdNodes(true)">Show all</button>' +
+            '<button type="button" class="pdg-action" onclick="setAllBpdNodes(false)">Hide all</button>' +
+            '</div><div class="bpd-checklist">';
+        groups.forEach(group => {
+            if (!group.nodes.length) return;
+            html += '<div class="pdg-type-header">' + escapeHtml(group.label) + ' (' + group.nodes.length + ')</div>';
+            group.nodes.forEach(node => {
+                html += '<label class="pdg-check-item node" title="' + escapeHtml(node.name) + '">' +
+                    '<input type="checkbox" value="' + escapeHtml(node.id) + '"' + (bpdIsSelected(node.id) ? ' checked' : '') + ' onchange="toggleBpdNode(this.value, this.checked)">' +
+                    '<span class="pdg-swatch" style="background-color:' + group.color + '"></span>' +
+                    '<span class="label">' + escapeHtml(node.name) + '</span>' +
+                    '</label>';
+            });
+        });
+        html += '</div>';
+        document.getElementById('BpdControls').innerHTML = html;
+    }
+
+    function toggleBpdNode(id, checked) {
+        if (bpdSelected === null) {
+            bpdSelected = new Set(bpdAllNodeIds(bpdNodes(findCurrentRecord())));
+        }
+        if (checked) { bpdSelected.add(id); } else { bpdSelected.delete(id); }
+        renderBpdGraph(bpdNodes(findCurrentRecord()));
+    }
+
+    function setAllBpdNodes(selected) {
+        const model = bpdNodes(findCurrentRecord());
+        bpdSelected = selected ? new Set(bpdAllNodeIds(model)) : new Set();
+        renderBpdControls(model);
+        renderBpdGraph(model);
+    }
+
+    function bpdMermaidId(value) {
+        return 'n_' + String(value).replace(/[^a-zA-Z0-9_]/g, '_');
+    }
+
+    function bpdMermaidLabel(value) {
+        return String(value || '')
+            .replaceAll('&', 'and').replaceAll('"', '').replaceAll("'", '')
+            .replaceAll('<', '').replaceAll('>', '')
+            .replaceAll('[', '(').replaceAll(']', ')')
+            .replaceAll('{', '(').replaceAll('}', ')').replaceAll('|', '/');
+    }
+
+    function renderBpdGraph(model) {
+        const container = document.getElementById('BpdGraph');
+        if (!container) return;
+        const bricks = model.bricks.filter(n => bpdIsSelected(n.id));
+        const productsSel = model.products.filter(n => bpdIsSelected(n.id));
+        const visible = new Set(bricks.concat(productsSel).map(n => n.id));
+        const edges = model.edges.filter(e => visible.has(e.source) && visible.has(e.target));
+
+        if (typeof mermaid === 'undefined') {
+            container.innerHTML = '<div class="empty-state">Diagram library failed to load.</div>';
+            return;
+        }
+        if (!bricks.length || !productsSel.length || !edges.length) {
+            container.innerHTML = '<div class="empty-state">Select bricks and products that share dependencies to render the diagram.</div>';
+            return;
+        }
+
+        let chart = 'flowchart LR\n\n';
+        // Bricks grouped in one unnamed subgraph.
+        chart += 'subgraph bpdBricks [" "]\n';
+        bricks.forEach(node => { chart += bpdMermaidId(node.id) + '["' + bpdMermaidLabel(node.name) + '"]\n'; });
+        chart += 'end\n';
+        productsSel.forEach(node => { chart += bpdMermaidId(node.id) + '["' + bpdMermaidLabel(node.name) + '"]\n'; });
+        edges.forEach(edge => { chart += bpdMermaidId(edge.source) + ' --> ' + bpdMermaidId(edge.target) + '\n'; });
+        chart += 'classDef brickCls fill:#dcfce7,stroke:#059669,color:#065f46,stroke-width:2px;\n';
+        chart += 'classDef productCls fill:#ffedd5,stroke:#ea580c,color:#7c2d12,stroke-width:2px;\n';
+        const brickIds = bricks.map(n => bpdMermaidId(n.id));
+        const productIds = productsSel.map(n => bpdMermaidId(n.id));
+        if (brickIds.length) chart += 'class ' + brickIds.join(',') + ' brickCls;\n';
+        if (productIds.length) chart += 'class ' + productIds.join(',') + ' productCls;\n';
+
+        const renderId = 'bpd-mermaid-' + (bpdRenderCounter++);
+        Promise.resolve(mermaid.render(renderId, chart)).then(result => {
+            container.innerHTML = result.svg;
+        }).catch(() => {
+            container.innerHTML = '<div class="empty-state">Unable to render the dependency diagram.</div>';
+        });
+    }
+    let bpdRenderCounter = 0;
+</script>
+<div id="ChannelNav"></div>
+<div class="hero" id="Header"></div>
+<div class="tab">
+    <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Channel</button>
+</div>
+<div id="tab_content_HomeTab" class="tabcontent"></div>
+<script>
+    if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({startOnLoad: false, securityLevel: 'loose', flowchart: {htmlLabels: false}});
+    }
+    renderNavAndHeader();
+    renderHome();
+</script>
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "Tour Operator ERP Platform Home"
+    },
+    {
+      "link": "../index.html",
+      "label": "Deployment Channels"
+    },
+    {
+      "label": "Traveler Portal Web"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+</body>
+</html>
