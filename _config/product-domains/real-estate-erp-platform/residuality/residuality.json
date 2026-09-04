@@ -1,0 +1,928 @@
+{
+  "metadata": {
+    "title": "Real Estate ERP Platform Residuality Stress Test",
+    "description": "Explore how a Dutch real estate ERP vendor serving 5,000+ users, 450,000+ rental units and about EUR 4 billion of annual rent invoiced with roughly 50 employees after the Informant acquisition would need to change when rent regulation rewrites running contracts mid-year, a bank-connectivity or accounting partner changes its terms, an interest-rate shock forces portfolio sales and entity restructuring, a large property manager fails and its owners move their mandates, a breach exposes tenant data through a shared supplier account, German expansion brings different tenancy, VAT and accounting rules, the Informant migration stalls before support ends, an automation robot posts wrong entries at scale, a global PropTech vendor bundles the ERP for free, or owners'-association law changes the rules on reserve funds.",
+    "modelVersion": "1.0",
+    "naiveArchitecture": "A real estate organisation subscribes to the ERP. Objects, units, entities and relations are loaded once; a lease contract is captured with one rent, one indexation clause and one service-charge advance; the monthly rent run invoices every contract, the bank feed reconciles payments, dunning chases arrears, supplier invoices are matched to work orders, the ledger closes per entity and reports go to investors and owners; tenants, owners and suppliers log in to portals; robots post the repetitive entries. The design assumes a contract has one rent that changes once a year by a formula, an object belongs to one entity and one manager for its life, the bank and accounting connections stay as contracted, a portal account belongs to one organisation, Dutch tenancy law, Dutch VAT and a Dutch chart of accounts are the only regime, the robot's postings are right, and Informant customers move to Bloxs on one date.",
+    "residualArchitecture": "The changed design separates regulation version and effective date, segment and points score, rent component and rent version, indexation rule, contract amendment, legal entity and ownership period, transfer event and cut-off allocation, management mandate, provider and integration contract version, bank connection, consent and reconciliation difference, portal account and organisation scope, purpose-bound record view, country regime (tenancy, VAT, chart of accounts, settlement rules), automation job run, posting batch, human approval and reversal, acquired product, migration state and capability parity, subscription plan and fee schedule, and association reserve rule and funding plan. A contract can be re-regulated, a portfolio can change owner or manager mid-year, a robot's batch can be reversed, and the platform can change provider, country, brand or acquired product without the organisation changing systems on one day.",
+    "note": "The stressors start in the Dutch real estate trade: the Wet betaalbare huur and annual indexation caps, Huurcommissie rules, PSD2 bank connectivity and SEPA direct debit, Vastgoedmanagement Nederland practice, VvE law, and the Vortex thesis of hyper automation plus buy-and-build acquisitions. They are not forecasts and assign no likelihood; each asks what must remain after the vendor is pushed into a different attractor. The rent-regulation, partner and interest-rate scenarios are recorded as residues the platform already carries; the property-manager failure is the loop that tests whether those residues hold without new structure.",
+    "source": {
+      "title": "Residues: Time, Change, and Uncertainty in Software Architecture",
+      "author": "Barry M. O'Reilly",
+      "year": "2024",
+      "url": "https://leanpub.com/residuality"
+    }
+  },
+  "stressors": [
+    {
+      "id": "huur",
+      "name": "The Wet betaalbare huur and annual indexation caps rewrite running lease contracts mid-year",
+      "group": "Rent regulation",
+      "detection": "Staatsblad publications and effective dates, Huurcommissie points-system (WWS) updates and the 186-point boundary, the yearly maximum indexation percentage per segment (CAO wage growth or inflation plus one percent), Huurprijscheck.app rule versions, municipal enforcement notices under the Wet goed verhuurderschap, tenant objections and Huurcommissie cases, the share of contracts whose rent exceeds the WWS maximum, and indexation-letter rejection rates.",
+      "attractor": "Units up to 186 points became regulated with a maximum rent on 1 July 2024, new mid-segment contracts are capped, annual indexation is capped by a percentage set per year and per segment, and liberalised contracts of tenants who object are re-rated. A contract captured once with one rent and one formula must now know its point score, its segment, the cap that applied on its start date and the cap that applies today, and produce an indexation letter that survives a Huurcommissie test. A landlord with thousands of units has days to re-rate, and a wrong letter means a rent reduction, a fine and a reputational mark for the manager who sent it.",
+      "businessReaction": "Model rent regulation as versioned rule sets with effective dates and segments, store the WWS score per unit with its evidence, compute the maximum rent and the permitted indexation per contract from the rules in force, run mass re-rating with review queues instead of contract-by-contract edits, generate indexation and rent-adjustment letters that cite their legal basis, put the rent check into the letting flow before a contract is signed, report regulated share and rent exposure per portfolio to asset managers and investors, and keep a history that answers the Huurcommissie question of which rent applied when.",
+      "residue": "Separate regulation version, effective date, segment, WWS score and evidence, rent component, rent version, indexation rule, permitted maximum, contract amendment, letter, objection and mass operation. Compliance becomes a computed property of the contract rather than a clause typed into it.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "prpm",
+          "effect": "Property managers run indexation and re-rating for thousands of units without a lawyer checking every letter."
+        },
+        {
+          "targetType": "job",
+          "targetId": "prpm/jtbd-prpm-2",
+          "effect": "Indexation, changes and termination apply the regulation version that governs each contract instead of one portfolio-wide formula."
+        },
+        {
+          "targetType": "job",
+          "targetId": "asmg/jtbd-asmg-2",
+          "effect": "Rental income growth is planned against the permitted maximum per unit, not against an unconstrained indexation percentage."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "prpm/co-prpm-top",
+          "effect": "Units managed per FTE holds through a mass re-rating year because re-rating is a batch operation with review, not manual contract edits."
+        },
+        {
+          "targetType": "product",
+          "targetId": "real-estate-erp-core",
+          "effect": "Adds regulation versioning, WWS scoring with evidence, permitted-rent computation and mass re-rating with letters."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "manage-leases-through-their-lifecycle",
+          "effect": "Carries the applicable regulation version and permitted maximum next to every indexation and amendment."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "let-units-and-sign-contracts",
+          "effect": "Checks the asking rent against the WWS maximum before the contract is generated and signed."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "indx",
+          "effect": "Computes indexation per contract from versioned rules with effective dates, segments and caps, and produces letters that cite the rule."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "cntr",
+          "effect": "Versions the contract so a re-rating, an objection outcome and the original agreement coexist."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "objt",
+          "effect": "Stores the WWS score, its evidence and its history per rental unit."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "vacm",
+          "effect": "Runs the rent-price compliance check on the listing and the candidate offer."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "rent",
+          "effect": "Invoices the rent version in force on the invoice date and corrects earlier runs after a re-rating."
+        },
+        {
+          "targetType": "team",
+          "targetId": "letting-and-contracts",
+          "effect": "Owns regulation versioning with portfolio and relations, rent and collection and customer success."
+        },
+        {
+          "targetType": "team",
+          "targetId": "portfolio-and-relations",
+          "effect": "Owns the unit-level points score and evidence that every rent computation depends on."
+        }
+      ]
+    },
+    {
+      "id": "psd2",
+      "name": "A PSD2 bank-connectivity provider or accounting partner changes API terms, pricing and consent rules",
+      "group": "Partner dependency",
+      "detection": "Deprecation notices and consent-renewal changes from account-information providers, bank API and CAMT.053 or SEPA direct-debit batch format changes, Exact Online, Twinfield and AFAS changelogs and price updates, price per connected bank account, failed statement imports and unmatched bank lines per organisation, direct-debit rejection rates, contract renewals with the partners, and finance controllers reporting missing statements on rent-run day.",
+      "attractor": "About EUR 4 billion of rent a year moves through direct-debit batches and bank feeds hard-wired to one provider's current API and current terms. When the provider raises its price per connected account, shortens the consent period so that hundreds of bank accounts drop out of the feed on the same day, drops a bank, or an accounting partner retires the endpoint the ledger sync uses, every organisation's collection and reconciliation stops at once and the period close cannot explain the gap. The naive integration has no place to express which provider, version, consent and fee apply to which bank account of which organisation.",
+      "businessReaction": "Negotiate as the aggregator of 5,000 users and EUR 4 billion of rent invoiced, add a second account-information provider and direct bank connections behind one interface, version the integration contracts per organisation and per bank account, track consent expiry with a re-consent workflow that warns before rent-run day, keep a manual CAMT.053 and MT940 import as the fallback path, model fee schedules per provider, treat reconciliation differences as first-class records, and abstract the accounting connectors with a ledger mapping per connector version so an organisation can change its accounting package without changing how rent is invoiced.",
+      "residue": "Separate provider, integration contract version, bank account connection, consent and expiry, credential, fee schedule, statement import run, bank line, match, reconciliation difference, ledger mapping, sync run and fallback path. An organisation can change provider, bank or accounting package without changing how a contract is invoiced or a period is closed.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "finc",
+          "effect": "Finance controllers keep collecting and closing when a partner changes the rules."
+        },
+        {
+          "targetType": "job",
+          "targetId": "finc/jtbd-finc-1",
+          "effect": "Rent collection survives a provider, consent or format change on rent-run day."
+        },
+        {
+          "targetType": "job",
+          "targetId": "finc/jtbd-finc-2",
+          "effect": "Daily reconciliation reports every difference with its provider, version and import run rather than a silent gap."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "finc/co-finc-top",
+          "effect": "Days to close the period holds because reconciliation differences and sync failures are explained per connection, not discovered at close."
+        },
+        {
+          "targetType": "product",
+          "targetId": "api-platform-and-integrations",
+          "effect": "Adds multi-provider bank connectivity, consent tracking, connector versioning and fallback imports."
+        },
+        {
+          "targetType": "product",
+          "targetId": "real-estate-erp-core",
+          "effect": "Shows consent, connection and reconciliation state per bank account inside the financial module."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "invoice-and-collect-rent",
+          "effect": "Treats bank connection and direct-debit batch as versioned steps with a manual fallback."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "automate-and-integrate-the-back-office",
+          "effect": "Versions partner contracts and migrates organisations between providers in waves with reconciliation checks."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bank",
+          "effect": "Connects bank accounts through a provider abstraction with consent, fee schedule, import run and difference records."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "apip",
+          "effect": "Versions provider and accounting connector contracts, credentials and deprecation dates per organisation connection."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ledg",
+          "effect": "Maps ledgers per connector version and reconciles every sync run."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "rent",
+          "effect": "Creates direct-debit batches against the provider abstraction and records batch and rejection state per invoice."
+        },
+        {
+          "targetType": "team",
+          "targetId": "rent-and-collection",
+          "effect": "Owns the bank provider abstraction with integration hub, real estate accounting and customer success."
+        },
+        {
+          "targetType": "team",
+          "targetId": "integration-hub",
+          "effect": "Owns partner contract versioning and provider migration waves."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-implementation",
+          "effect": "Communicates consent, fee and connector changes to organisations and runs the re-consent campaigns."
+        }
+      ]
+    },
+    {
+      "id": "rate",
+      "name": "An interest-rate shock forces portfolio sales, refinancing and entity restructuring mid-year",
+      "group": "Capital markets",
+      "detection": "ECB rate decisions and the Dutch ten-year swap rate, the refinancing calendar per legal entity, loan-to-value and interest-cover covenants in investor reporting, valuation write-downs, transaction announcements by investors such as the reference customers, requests to split, merge or create entities and funds, data-room and cut-off reporting requests, and changes to transfer tax on residential investment property.",
+      "attractor": "An investor sells 2,000 units in three tranches to two buyers on different dates while refinancing the rest of the portfolio. Objects move between legal entities with ownership periods, running contracts and service-charge advances must be split at the cut-off, deposits transferred, tenants informed of their new landlord, and the buyer's property manager needs the full history on day one. The naive design assumes an object belongs to one entity for its life and a contract to one landlord, so every transfer becomes a manual re-keying that loses the history the buyer and the auditor ask for.",
+      "businessReaction": "Model ownership periods and transfer events with effective dates, invoice and settle pro rata at the cut-off, produce data-room and transfer packs per tranche from the objects, contracts, invoices and tickets already recorded, support entity mergers, splits and new funds without renumbering objects or contracts, show covenants, refinancing dates and interest sensitivity on the asset manager's dashboard, and let a buyer that also runs on the platform receive the objects with their history instead of a spreadsheet.",
+      "residue": "Separate legal entity, ownership period, transfer event and effective date, landlord of record, contract assignment, cut-off allocation, deposit transfer, data-room pack, loan and covenant, and scenario. An object keeps its identity and history while its owner, financing and manager change.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "asmg",
+          "effect": "Asset managers execute a sale or restructuring from the same data they steer with, not from a reconstruction."
+        },
+        {
+          "targetType": "job",
+          "targetId": "asmg/jtbd-asmg-1",
+          "effect": "Portfolio performance includes covenant headroom, refinancing dates and interest sensitivity per entity."
+        },
+        {
+          "targetType": "job",
+          "targetId": "asmg/jtbd-asmg-3",
+          "effect": "Investor and lender reporting produces the data-room and cut-off statements for a transaction without a project."
+        },
+        {
+          "targetType": "job",
+          "targetId": "finc/jtbd-finc-3",
+          "effect": "Period close and service-charge settlement split correctly at an ownership cut-off inside the year."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "asmg/co-asmg-top",
+          "effect": "Net rental income growth is measured per ownership period so a sale mid-year does not distort the remaining portfolio."
+        },
+        {
+          "targetType": "product",
+          "targetId": "real-estate-erp-core",
+          "effect": "Adds ownership periods, transfer events, cut-off allocation and entity restructuring without renumbering."
+        },
+        {
+          "targetType": "product",
+          "targetId": "analytics-and-investor-reporting",
+          "effect": "Adds covenant, refinancing and interest-scenario views and transaction data-room packs."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "steer-portfolio-performance",
+          "effect": "Includes hold, sell and refinance decisions with their scenario and covenant evidence."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "close-books-and-report-to-investors",
+          "effect": "Closes per entity and per ownership period and explains the cut-off allocations."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "onboard-portfolio-and-entities",
+          "effect": "Receives a transferred portfolio with its history from a selling organisation on the same platform."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "objt",
+          "effect": "Records ownership periods, transfer events and landlord of record per object without changing its identity."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ledg",
+          "effect": "Allocates revenue, cost and balances at the cut-off and supports entity merger and split."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "valu",
+          "effect": "Keeps valuation history, covenant tests and interest scenarios per entity and portfolio."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ivrp",
+          "effect": "Generates data-room packs and cut-off statements per tranche and lender."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "svcc",
+          "effect": "Splits service-charge advances and settlements between seller and buyer at the transfer date."
+        },
+        {
+          "targetType": "team",
+          "targetId": "portfolio-and-relations",
+          "effect": "Owns ownership periods and transfer events with real estate accounting and reporting and analytics."
+        },
+        {
+          "targetType": "team",
+          "targetId": "real-estate-accounting",
+          "effect": "Owns cut-off allocation and entity restructuring in the ledger."
+        }
+      ]
+    },
+    {
+      "id": "mand",
+      "name": "A large property-management tenant fails and its owners move their mandates to other managers within weeks",
+      "group": "Tenant failure and mandate transfer",
+      "detection": "Subscription arrears and falling activity of a manager organisation, owner calls asking for their data, court filings and press reports, requests from the receiver for contract, deposit and rent data, owners asking for portfolio exports, and competing managers, some of them on the same platform, asking to onboard the same objects.",
+      "attractor": "A manager with 15,000 units under management fails. The units belong to hundreds of owners who need their statements, deposits, contracts and tenant data now, and who move to a dozen other managers over a few weeks, while rent must keep being collected into the right owner or escrow accounts and tenants must know whom to call about a leak. Treating the manager as a subscription that simply ends would lose the data exactly when the owners, the receiver and the tenants need it.",
+      "businessReaction": "Freeze the manager organisation in a read-only state, give the receiver and each owner scoped access to their own objects and money, produce owner-level transfer packs from the objects, contracts, invoices, deposits and tickets already recorded, transfer mandates with their history to the receiving organisations on the platform as ownership-period style transfer events, re-point bank connections and direct debits per owner account, inform tenants and suppliers through the portals, and archive the failed organisation under the retention rules.",
+      "residue": "No new structural change is required: the ownership period, transfer event and cut-off allocation from the interest-rate residue, the contract version and rent version from the rent-regulation residue, and the per-organisation bank connection and fallback path from the partner residue already express a management mandate that moves from one organisation to another with its history, money position and tenant relations intact.",
+      "status": "already-survived",
+      "reusesResidueIds": [
+        "huur",
+        "psd2",
+        "rate"
+      ],
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "ownr",
+          "effect": "Owners keep their property's history, statements and deposits when their manager fails."
+        },
+        {
+          "targetType": "job",
+          "targetId": "ownr/jtbd-ownr-3",
+          "effect": "Every document and statement stays reachable per owner even when the manager organisation is frozen."
+        },
+        {
+          "targetType": "job",
+          "targetId": "mdir/jtbd-mdir-2",
+          "effect": "A receiving manager wins the mandates by onboarding them with history in days instead of re-keying from spreadsheets."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "ownr/co-ownr-top",
+          "effect": "Owner statement timeliness holds through a mandate transfer because the transfer pack is produced from recorded data."
+        },
+        {
+          "targetType": "product",
+          "targetId": "real-estate-erp-core",
+          "effect": "Composes organisation freeze, owner-level transfer packs and mandate transfer from existing transfer and versioning capabilities."
+        },
+        {
+          "targetType": "product",
+          "targetId": "stakeholder-portals",
+          "effect": "Informs tenants, owners and suppliers of the manager's status and their new contact through the portals they already use."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "onboard-portfolio-and-entities",
+          "effect": "Onboards transferred mandates from a frozen organisation with contracts, deposits and tickets intact."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "serve-tenants-owners-and-partners-through-portals",
+          "effect": "Keeps owner and tenant self-service alive while the manager account is read-only."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "migr",
+          "effect": "Produces owner-level transfer packs and imports them into the receiving organisation with reconciliation."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Applies a read-only organisation state with scoped access for the receiver and each owner."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ownp",
+          "effect": "Shows owners their objects, money position and the status of the mandate transfer."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "objt",
+          "effect": "Records the mandate transfer as a transfer event so the object keeps its history across managers."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bank",
+          "effect": "Re-points direct debits and bank connections per owner account to the receiving organisation."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-implementation",
+          "effect": "Coordinates the freeze, owner communication and receiving-manager onboarding with platform core and portfolio and relations."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Owns the organisation freeze state and scoped access."
+        }
+      ]
+    },
+    {
+      "id": "brch",
+      "name": "A breach exposes tenant and owner data of several organisations through a shared maintenance-supplier portal account",
+      "group": "Security and privacy",
+      "detection": "Anomalous logins and bulk downloads on the supplier portal, credential-stuffing patterns and leaked-credential feeds, tenant and organisation reports, the 72-hour notification duty to the Autoriteit Persoonsgegevens, data classes in work orders (tenant name, phone, entry times, key-safe codes, notes such as elderly resident or care situation), data-processing agreements, NIS2 obligations of larger customers, and cyber-insurance conditions.",
+      "attractor": "Installers and handymen keep one login for the many managers they work for, and a work order carries the tenant's name, phone number, address, entry times and key-safe code. One compromised supplier account can pull work orders across dozens of organisations, turning a single incident into a multi-organisation notification to the regulator, hundreds of managers and thousands of tenants. The naive design treats the tenant record as a field on the work order and the supplier user as belonging to one organisation, while in practice suppliers share accounts across all of them.",
+      "businessReaction": "Contain and revoke the account, determine per organisation which tenants and attributes were exposed, notify the regulator and the organisations within the deadline with evidence, minimise work-order data by purpose and status so a completed order no longer shows entry codes, scope supplier accounts per organisation and per work order, add step-up authentication for exports and bulk views, expire and watermark work-order views, log every export, and rehearse the response with organisations and insurers.",
+      "residue": "Separate person, attribute class, purpose, recipient, portal account, organisation scope, role, work-order view, export event, retention rule, incident, affected-record set and notification. Work-order views are derived, expiring views over tenant records, and access is a relationship between a supplier account and a specific organisation and work order.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "supp",
+          "effect": "Suppliers keep one account for many managers without one breach exposing all of them."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "tena",
+          "effect": "Tenants report a fault knowing the supplier sees only what the visit needs."
+        },
+        {
+          "targetType": "job",
+          "targetId": "supp/jtbd-supp-1",
+          "effect": "Work orders arrive with the attributes the visit needs and expire when the job is closed."
+        },
+        {
+          "targetType": "job",
+          "targetId": "tecm/jtbd-tecm-1",
+          "effect": "Dispatch shares tenant contact and access details per work order and purpose, not per supplier relationship."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "supp/co-supp-top",
+          "effect": "Work order turnaround time is measured under scoped, expiring access rather than open supplier logins."
+        },
+        {
+          "targetType": "product",
+          "targetId": "stakeholder-portals",
+          "effect": "Adds per-organisation scoping, step-up authentication, expiring work-order views and export audit."
+        },
+        {
+          "targetType": "product",
+          "targetId": "technical-management-suite",
+          "effect": "Minimises tenant data on work orders by status and purpose."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "resolve-maintenance-requests",
+          "effect": "Produces supplier views as purpose-bound derived records instead of shared documents."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "serve-tenants-owners-and-partners-through-portals",
+          "effect": "Treats a portal account as a set of scoped relationships with organisations, not a single tenancy."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "sprp",
+          "effect": "Scopes supplier accounts per organisation and work order with step-up and export controls."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "work",
+          "effect": "Classifies work-order attributes by purpose and status and expires entry details after completion."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Records the account-to-organisation relationship, roles, step-up events and affected-record sets."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "docm",
+          "effect": "Watermarks, expires and logs documents shared with suppliers."
+        },
+        {
+          "targetType": "team",
+          "targetId": "stakeholder-portals",
+          "effect": "Owns scoped partner access with platform core and technical management."
+        },
+        {
+          "targetType": "team",
+          "targetId": "technical-management",
+          "effect": "Owns data minimisation on work orders and supplier dispatch."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Owns incident handling, affected-record sets and regulator notification evidence."
+        }
+      ]
+    },
+    {
+      "id": "germ",
+      "name": "German expansion brings different tenancy law, VAT, accounting and Betriebskosten rules onto one platform",
+      "group": "International expansion",
+      "detection": "Vortex buy-and-build targets in Germany and German customers already on Bloxs, Mietspiegel and Mietpreisbremse rules per city, the Betriebskostenverordnung twelve-month settlement deadline, Kaution rules with separate trust accounts, the VAT option per commercial unit, SKR03 and SKR04 charts of accounts, GoBD audit requirements, DATEV export demand, the Wohnungseigentumsgesetz for associations, and implementation partners asking for German legal texts.",
+      "attractor": "A German customer's contract is not a Dutch contract in another language: indexation is Indexmiete or Staffelmiete, service charges settle under the Betriebskostenverordnung within twelve months or the claim lapses, deposits sit in trust accounts, VAT is opted per unit, and the books go to DATEV on an SKR chart under GoBD. The naive design has Dutch tenancy law, Dutch VAT and a Dutch chart hard-coded into indexation, service-charge settlement, VAT and ledger, so the first German portfolio forks the code base.",
+      "businessReaction": "Introduce the country regime as a first-class dimension of the platform: tenancy rule set, indexation type, settlement rules and deadlines, deposit handling, VAT option per unit, chart-of-accounts template, legal text version and document language, add a certified DATEV export and local bank and e-signing integrations, work with a German implementation partner, price per country, and make the Netherlands the first regime rather than the only one.",
+      "residue": "Separate country regime, tenancy rule set, indexation type, settlement rule and deadline, deposit rule, VAT option, chart template, ledger mapping, legal text version, language and local integration. A contract, a settlement and a ledger carry the regime they live under, and a second country adds rules instead of code paths.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "mdir",
+          "effect": "Directors expand or acquire across the border on the same system of record."
+        },
+        {
+          "targetType": "job",
+          "targetId": "mdir/jtbd-mdir-3",
+          "effect": "Compliance is computed per country regime rather than assumed to be Dutch."
+        },
+        {
+          "targetType": "job",
+          "targetId": "finc/jtbd-finc-2",
+          "effect": "Multi-entity books stay reconciled when entities sit in different countries with different charts and VAT rules."
+        },
+        {
+          "targetType": "job",
+          "targetId": "prpm/jtbd-prpm-2",
+          "effect": "Lease lifecycle handles Indexmiete, Staffelmiete and Betriebskosten deadlines next to Dutch indexation."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "mdir/co-mdir-top",
+          "effect": "Revenue per FTE is tracked per country so expansion does not hide as lower productivity."
+        },
+        {
+          "targetType": "product",
+          "targetId": "real-estate-erp-core",
+          "effect": "Adds the country regime with German tenancy, settlement, deposit, VAT and chart rules."
+        },
+        {
+          "targetType": "product",
+          "targetId": "api-platform-and-integrations",
+          "effect": "Adds DATEV export and German bank, e-signing and market-data integrations."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "manage-leases-through-their-lifecycle",
+          "effect": "Applies the regime's indexation type and settlement deadline per contract."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "close-books-and-report-to-investors",
+          "effect": "Closes per entity under its own chart, VAT rules and audit requirements."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "indx",
+          "effect": "Supports Indexmiete, Staffelmiete and Mietpreisbremse checks as regime-specific indexation types."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "svcc",
+          "effect": "Settles under the Betriebskostenverordnung with its twelve-month deadline and allocation keys."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "vatx",
+          "effect": "Handles the VAT option per unit and German reverse-charge rules next to Dutch VAT."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ledg",
+          "effect": "Runs SKR03 and SKR04 chart templates and GoBD-compliant journals per entity."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "apip",
+          "effect": "Adds a certified DATEV connector and German partner integrations."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "docm",
+          "effect": "Versions legal texts and templates per regime and language."
+        },
+        {
+          "targetType": "team",
+          "targetId": "real-estate-accounting",
+          "effect": "Owns the country regime in ledger and VAT with letting and contracts and integration hub."
+        },
+        {
+          "targetType": "team",
+          "targetId": "letting-and-contracts",
+          "effect": "Owns regime-specific tenancy rules, indexation types and settlement deadlines."
+        },
+        {
+          "targetType": "team",
+          "targetId": "integration-hub",
+          "effect": "Owns DATEV and German local integrations."
+        }
+      ]
+    },
+    {
+      "id": "infm",
+      "name": "The Informant migration stalls as VvE administrators refuse to move before support ends on 31 December 2027",
+      "group": "Merger integration",
+      "detection": "Migration wave plan versus actual per quarter, parity gaps between Informant's VvE functions and the Bloxs VvE module, support ticket volume from the Informant base, renewal dates, competitor campaigns aimed at Informant customers, Informant staff attrition, migration effort per customer, reference-customer sentiment, and the number of organisations still on Informant at each quarter end before the support-end date.",
+      "attractor": "Hundreds of Informant customers, many of them small VvE administrators with decades of history in the product, see nothing to gain and a migration to fear, so the end-of-support date becomes a cliff. A company of about 50 people cannot migrate hundreds of organisations in the last two quarters of 2027 and keep both products alive, and competitors promise no migration at all. The naive plan of migrating organisation by organisation towards one cut-over date makes the migration itself the biggest churn event in the company's history.",
+      "businessReaction": "Keep Informant running with security and legal updates, unify identity, portals and the data model first, migrate capability by capability with parity gates and publish VvE parity before touching VvE administrators, build migration tooling with dry runs and reconciliation reports so an administrator sees its own associations reproduced before committing, give every account a named migration owner, keep migration free with training included, measure churn and satisfaction per wave, and decide on the support-end date from parity evidence rather than from the acquisition press release.",
+      "residue": "Separate acquired product, tenant migration state, capability parity, migration wave, data mapping, dry run and reconciliation report, cut-over checkpoint, rollback, account owner and support-end policy. An organisation can run on a mix of legacy and unified capabilities, and the brand can change without the administrator changing systems on one day.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "vvea",
+          "effect": "VvE administrators experience the acquisition as more capability, not as a forced system change."
+        },
+        {
+          "targetType": "job",
+          "targetId": "vvea/jtbd-vvea-1",
+          "effect": "Budgets, contributions and reserves are reproduced in a dry run before the administrator commits to moving."
+        },
+        {
+          "targetType": "job",
+          "targetId": "mdir/jtbd-mdir-1",
+          "effect": "Scaling on the platform survives the platform's own transition."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "vvea/co-vvea-top",
+          "effect": "Associations managed per FTE is tracked per migration wave so the migration does not hide lost productivity."
+        },
+        {
+          "targetType": "product",
+          "targetId": "owners-association-suite",
+          "effect": "Keeps Informant-level VvE administration as the parity bar for any unified release."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "onboard-portfolio-and-entities",
+          "effect": "Onboards from Informant capability by capability with dry runs, reconciliation and rollback."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "run-owners-association-administration",
+          "effect": "Is the first stream held to strict parity because it decides Informant-customer retention."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "migr",
+          "effect": "Runs data mapping, dry runs, reconciliation reports and rollback per organisation and wave."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "vveb",
+          "effect": "Reproduces Informant budgets, contributions and reserve histories to the cent."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "vvem",
+          "effect": "Carries meeting and decision history across the migration."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Records migration state, brand and capability entitlement per organisation."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "wflw",
+          "effect": "Drives migration tasks, checkpoints and owner follow-up per organisation."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-implementation",
+          "effect": "Owns named migration ownership and wave measurement with owners' association management and platform core."
+        },
+        {
+          "targetType": "team",
+          "targetId": "owners-association-management",
+          "effect": "Owns VvE parity gates against the Informant product."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Owns migration tooling, identity unification and rollback."
+        }
+      ]
+    },
+    {
+      "id": "robo",
+      "name": "A hyper-automation robot posts thousands of wrong entries across organisations before anyone notices",
+      "group": "Automation failure",
+      "detection": "Reversal rates per automation job type, drift in matching confidence, duplicate supplier invoices, bank lines matched to the wrong debtor, dunning letters to tenants who paid, month-end differences, support tickets that start with the robot did, rule or model version changes, and upstream format changes such as a bank altering its description layout or a supplier changing its invoice template.",
+      "attractor": "A bank changes the description format of its statements and the reconciliation robot matches thousands of payments to the wrong tenants across dozens of organisations overnight; the dunning robot then sends arrears letters to tenants who paid, and the accounting sync exports everything to the accounting package before the close. The testimonial's 100 percent time saving becomes a 100 percent correction project, and the naive design cannot tell a robot posting from a human one, has no batch identity and no way to reverse a run.",
+      "businessReaction": "Give every automation run an identity with its inputs, rule or model version and confidence, post through review thresholds with sampling and anomaly detection, hold downstream actions such as dunning and accounting sync for a cooling period after automated postings, require human approval on high-impact batches, reverse a whole batch with one action, inform affected organisations and tenants, and publish accuracy per job type so controllers can set their own thresholds.",
+      "residue": "Separate automation job, job run, rule or model version, input snapshot, confidence, posting batch, review threshold, human approval, reversal, downstream hold, anomaly signal and accuracy metric. Nothing a robot posts is indistinguishable from a human entry, and every run can be undone as a unit.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "finc",
+          "effect": "Finance controllers hand repetitive work to robots and keep the ability to undo any run."
+        },
+        {
+          "targetType": "job",
+          "targetId": "finc/jtbd-finc-2",
+          "effect": "Daily reconciliation shows which matches a robot made, at what confidence, and reverses a bad batch as a unit."
+        },
+        {
+          "targetType": "job",
+          "targetId": "tena/jtbd-tena-1",
+          "effect": "Tenants who paid do not receive arrears letters generated from a wrong automated match."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "finc/co-finc-top",
+          "effect": "Days to close the period holds because automated postings are reviewable batches, not entries found at close."
+        },
+        {
+          "targetType": "product",
+          "targetId": "hyper-automation-and-ai",
+          "effect": "Becomes supervised automation with run identity, thresholds, approval, reversal and accuracy reporting."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "automate-and-integrate-the-back-office",
+          "effect": "Includes review, hold, approval and reversal as explicit steps of every robot."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "invoice-and-collect-rent",
+          "effect": "Delays dunning after automated matching until the batch has passed its review window."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "auto",
+          "effect": "Runs jobs as identified batches with input snapshots, versions, confidence, holds and one-action reversal."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "aiag",
+          "effect": "Records model version, context and human approval for every AI-proposed coding or triage."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bank",
+          "effect": "Marks robot matches with batch and confidence and detects format drift in statement descriptions."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "dunn",
+          "effect": "Honours the downstream hold and cancels letters when the matching batch is reversed."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "payb",
+          "effect": "Flags duplicate and low-confidence supplier invoice codings for review before posting."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ledg",
+          "effect": "Posts and reverses automation batches as units and holds the accounting sync during the review window."
+        },
+        {
+          "targetType": "team",
+          "targetId": "automation-and-ai",
+          "effect": "Owns supervised automation with rent and collection, real estate accounting and platform core."
+        },
+        {
+          "targetType": "team",
+          "targetId": "rent-and-collection",
+          "effect": "Owns matching thresholds and the dunning hold."
+        },
+        {
+          "targetType": "team",
+          "targetId": "real-estate-accounting",
+          "effect": "Owns batch reversal and the sync hold in the ledger."
+        }
+      ]
+    },
+    {
+      "id": "glob",
+      "name": "A global PropTech vendor bundles property-management ERP free with payments, screening or listings in the Netherlands",
+      "group": "Competitive entry",
+      "detection": "Acquisitions and Dutch hires by international property-management platforms, pricing pages with bundled payment, screening or listing fees, sponsorships at Vastgoedmanagement Nederland and PROVADA, review-directory comparisons, win-loss notes from demos, prospects asking about total cost per unit, reference customers switching, and integration partners being courted by the newcomer.",
+      "attractor": "A well-funded vendor offers the ERP for zero subscription and earns on every rent payment, tenant screening, insurance policy or listing, so a manager with 3,000 units compares a per-unit subscription plus modules against free. The naive answer of matching price erodes the subscription model, while the real difference, Dutch rent-regulation and VvE depth, hyper automation, certified Dutch integrations and unlimited support, stays invisible in a feature list.",
+      "businessReaction": "Reposition around the integrated data model and Dutch compliance, offer a transparent start package for small managers with portals included, publish a total-cost comparison including transaction fees per unit, accelerate the portal, screening and automation roadmap where the newcomer is strongest, tighten reference-customer relationships, make switching in either direction measurable through import and export tools, and consider value-based transaction revenue only where the platform adds the value.",
+      "residue": "Separate subscription plan, module entitlement, per-unit pricing tier, fee schedule, total cost of ownership, packaged offer, switching cost and import-export contract. Pricing becomes a versioned commercial policy per organisation rather than a price list, and the platform can be sold as a start package or an enterprise contract on one code base.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "mdir",
+          "effect": "Directors keep choosing the platform for compliance depth and automation, not only for its price."
+        },
+        {
+          "targetType": "job",
+          "targetId": "mdir/jtbd-mdir-1",
+          "effect": "Scaling units per FTE is compared on total cost including what a free tool leaves manual: indexation letters, settlements, VvE accounts."
+        },
+        {
+          "targetType": "job",
+          "targetId": "mdir/jtbd-mdir-2",
+          "effect": "Client retention is defended with service quality and switching transparency rather than with lock-in."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "mdir/co-mdir-top",
+          "effect": "Revenue per FTE is tracked per plan so start packages do not silently reprice the enterprise base."
+        },
+        {
+          "targetType": "product",
+          "targetId": "real-estate-erp-core",
+          "effect": "Adds a packaged start offer with portals included for small managers."
+        },
+        {
+          "targetType": "product",
+          "targetId": "stakeholder-portals",
+          "effect": "Becomes standard attach rather than an add-on only larger organisations buy."
+        },
+        {
+          "targetType": "product",
+          "targetId": "hyper-automation-and-ai",
+          "effect": "Becomes the visible differentiator in demos against a free back office."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "serve-tenants-owners-and-partners-through-portals",
+          "effect": "Benchmarks tenant payment and self-service against the newcomer's flow and closes the gaps first."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "automate-and-integrate-the-back-office",
+          "effect": "Makes import and export contracts a measurable switching path in both directions."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Manages plan, entitlements and fee schedules per organisation as versioned commercial policy."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "tenp",
+          "effect": "Matches the entrant's tenant payment and self-service experience."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "apip",
+          "effect": "Publishes import and export contracts that make switching cost explicit."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "migr",
+          "effect": "Onboards small managers from the newcomer or a spreadsheet in days as part of the start package."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-implementation",
+          "effect": "Owns the packaged start offer and total-cost comparison with stakeholder portals and platform core."
+        },
+        {
+          "targetType": "team",
+          "targetId": "stakeholder-portals",
+          "effect": "Owns the portal roadmap that answers the entrant's strongest features."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Owns plan, entitlement and fee-schedule modelling."
+        }
+      ]
+    },
+    {
+      "id": "vvef",
+      "name": "A VvE legal change makes reserve-fund funding, maintenance plans and sustainability loans mandatory with owner-level disclosure",
+      "group": "Owners' association regulation",
+      "detection": "Amendments to the Wet verbetering functioneren verenigingen van eigenaars and the mandatory reserve fund based on rebuilding value or a maintenance plan, proposals for mandatory multi-year maintenance plan updates and energy-saving obligations following the EU buildings directive, Nationaal Warmtefonds VvE loan conditions, notary and Kadaster requirements on apartment transfer, bank requirements for the reserve statement at sale, and owner questions and disputes about contributions.",
+      "attractor": "A new rule requires reserves to be funded against a current multi-year maintenance plan that includes sustainability measures, with a disclosure statement per apartment on every sale. Associations with underfunded reserves must levy extra contributions, and an administrator with 800 associations must recompute every budget, adopt every change in a meeting and inform every owner. The naive design has the reserve as a ledger balance and the budget as a spreadsheet import, so the recomputation is a manual project per association.",
+      "businessReaction": "Model reserve rule versions and funding plans linked to maintenance-plan items, compute each owner's share from the splitting deed, version contributions and levy extra contributions with their decision, record sustainability loans and their repayment in the contributions, generate the disclosure statement per apartment from recorded data, let the meeting module carry the adoption decision, and show owners their share, the funding position and the statement in the owner portal.",
+      "residue": "Separate reserve rule version, funding plan, maintenance-plan item link, owner share, contribution version, extra levy, loan, disclosure statement, decision and adoption. The reserve becomes a funded plan with a legal basis rather than a balance.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "vvea",
+          "effect": "Administrators recompute and disclose reserves for hundreds of associations as a batch, not a project."
+        },
+        {
+          "targetType": "job",
+          "targetId": "vvea/jtbd-vvea-1",
+          "effect": "Budgets, contributions and reserves follow the reserve rule version and the funded maintenance plan."
+        },
+        {
+          "targetType": "job",
+          "targetId": "vvea/jtbd-vvea-2",
+          "effect": "Meetings carry the adoption of the new funding plan and extra levy as recorded decisions."
+        },
+        {
+          "targetType": "job",
+          "targetId": "ownr/jtbd-ownr-2",
+          "effect": "Owners approve the funding plan and levy with their share and the legal basis visible."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "vvea/co-vvea-top",
+          "effect": "Associations managed per FTE holds through a mandatory recomputation year."
+        },
+        {
+          "targetType": "product",
+          "targetId": "owners-association-suite",
+          "effect": "Adds reserve rule versioning, funding plans, owner shares, extra levies, loans and disclosure statements."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "run-owners-association-administration",
+          "effect": "Links the budget to a funded maintenance plan and the disclosure statement per apartment."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "plan-and-execute-periodic-maintenance",
+          "effect": "Feeds maintenance-plan items and sustainability measures into the reserve funding plan."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "vveb",
+          "effect": "Computes funding plans, owner shares, contribution versions, extra levies and disclosure statements under versioned reserve rules."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "vvem",
+          "effect": "Records adoption decisions and owner communication for the new funding plan."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mjop",
+          "effect": "Provides the maintenance-plan items and sustainability measures the reserve is funded against."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ownp",
+          "effect": "Shows each owner their share, the funding position and the disclosure statement."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ledg",
+          "effect": "Keeps association reserve and loan positions reconciled with the funding plan."
+        },
+        {
+          "targetType": "team",
+          "targetId": "owners-association-management",
+          "effect": "Owns reserve rules and funding plans with technical management, stakeholder portals and real estate accounting."
+        },
+        {
+          "targetType": "team",
+          "targetId": "technical-management",
+          "effect": "Owns the maintenance-plan items the funding plan depends on."
+        }
+      ]
+    }
+  ]
+}

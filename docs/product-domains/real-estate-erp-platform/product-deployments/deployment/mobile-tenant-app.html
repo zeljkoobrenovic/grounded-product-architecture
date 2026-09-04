@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Tenant App (iOS and Android) — Deployment (Real Estate ERP Platform)</title>
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #5b6472;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;
+    }
+</style>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 8px 28px 28px;
+            color: #202124;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .channel-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+            margin-bottom: 18px;
+        }
+
+        .channel-nav-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #f8fafc;
+        }
+
+        .channel-nav-link.active {
+            border-bottom: 2px solid blue;
+        }
+
+        .channel-nav-icon {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+            padding: 2px;
+        }
+
+        .hero {
+            margin-bottom: 18px;
+        }
+
+        .hero-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 14px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 8px;
+        }
+
+        .hero-title {
+            font-size: 44px;
+            line-height: 1.05;
+            margin-bottom: 4px;
+        }
+
+        .hero-subtitle {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 960px;
+            margin-top: 10px;
+        }
+
+        .deployment-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .deployment-stat {
+            display: inline-block;
+            min-width: 120px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .deployment-stat-value {
+            font-size: 28px;
+            color: #1d4ed8;
+        }
+
+        .deployment-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .deployment-copy {
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 18px;
+            max-width: 980px;
+        }
+
+        .deployment-section-title {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 20px 0 10px 0;
+        }
+
+        .deployment-environment {
+            padding: 10px 12px;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            background: #eff6ff;
+            margin-bottom: 10px;
+        }
+
+        .deployment-environment-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+
+        .deployment-environment-copy {
+            color: #4b5563;
+            font-size: 13px;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .deployment-link-row {
+            margin-top: 6px;
+        }
+
+        .deployment-link {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #1d4ed8;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .env-brick-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .env-brick-count {
+            color: #9ca3af;
+            font-weight: normal;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chip-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 2px;
+        }
+
+        .chip-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .chip-copy {
+            font-size: 12px;
+            color: #4b5563;
+            line-height: 1.35;
+            display: inline-block;
+        }
+
+        .empty-state {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .bpd-layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .bpd-controls {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            padding: 12px;
+        }
+
+        .bpd-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .pdg-action {
+            border: 1px solid #d1d5db;
+            background-color: white;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .pdg-action:hover {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .bpd-checklist {
+            max-height: 460px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdg-type-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6b7280;
+            margin: 10px 0 2px 0;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .pdg-type-header:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .pdg-check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #374151;
+            padding: 5px 2px;
+            cursor: pointer;
+        }
+
+        .pdg-check-item .label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pdg-swatch {
+            flex: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(17, 24, 39, 0.15);
+        }
+
+        .bpd-graph {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 14px;
+            overflow: auto;
+            min-height: 300px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body onload="initTab('HomeTab')" onhashchange="initTab('HomeTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html" class="active">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a><a href="../../residuality/index.html">Stress Test</a></nav>
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        setupTabAccessibility();
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+<script>
+    const products = {"portfolio": {"name": "Real Estate ERP Platform Portfolio", "version": "1.0", "products": [{"id": "real-estate-erp-core", "name": "Real Estate ERP Core", "icon": "asmg.png", "type": "B2B Vertical ERP SaaS", "description": "The Bloxs-style system of record for real estate organisations, bundling the Relaties, Objecten, Contracten, Financieel and Rapportages modules: one contact database for tenants, owners, investors, suppliers and accountants; portfolios, complexes and rental units of every type with valuations and market data; vacancy, letting and candidate screening with rent-price compliance checks; lease contracts captured once and signed digitally with automated indexation, renewals, terminations and service charge settlements; periodic rent runs, direct debit, bank reconciliation, debtor management and dunning; and a multi-entity real estate general ledger with accounts payable, VAT and period close. Sold as a subscription per organisation that scales with modules and portfolio size, with implementation, data migration, training and unlimited support.", "primaryCustomers": [{"id": "asmg", "name": "Asset and Portfolio Manager", "icon": "asmg.png"}, {"id": "finc", "name": "Real Estate Finance Controller", "icon": "finc.png"}, {"id": "prpm", "name": "Property Manager", "icon": "prpm.png"}, {"id": "mdir", "name": "Real Estate Company Director", "icon": "mdir.png"}]}, {"id": "technical-management-suite", "name": "Technical Management Suite", "icon": "tecm.png", "type": "B2B SaaS Module", "description": "The Techniek module for technical and maintenance managers: fault reports and tickets from tenants, portals and e-mail triaged into work orders; supplier dispatch with quotes, planning and completion reporting, including the Ziezodan and Proprli partner connectors for automated maintenance handling; installation registers with automatic supplier reminders for periodic inspections and maintenance; and multi-year maintenance plans (MJOP) with budgets per complex and unit. Extends the ERP core with a field app for inspections and on-site work and feeds supplier invoices straight into accounts payable.", "primaryCustomers": [{"id": "tecm", "name": "Technical and Maintenance Manager", "icon": "tecm.png"}, {"id": "supp", "name": "Maintenance Supplier", "icon": "supp.png"}]}, {"id": "owners-association-suite", "name": "Owners' Association (VvE) Suite", "icon": "vvea.png", "type": "B2B SaaS Module", "description": "The Informant-heritage administration module for owners' associations (VvE): association budgets, owner contributions and reserve funds per association; direct-debit collection and arrears follow-up of contributions; meeting preparation, agendas, decisions and minutes; owner communication and documents; and association accounts kept as separate legal entities in the multi-entity ledger. Gives VvE administrators one workspace for every association they manage and gives apartment owners a self-service VvE owner portal for statements, meetings and documents. Informant customers migrate onto this module free of charge under the phased integration plan.", "primaryCustomers": [{"id": "vvea", "name": "Owners' Association (VvE) Administrator", "icon": "vvea.png"}, {"id": "ownr", "name": "Private Property Owner", "icon": "ownr.png"}]}, {"id": "stakeholder-portals", "name": "Tenant, Owner and Supplier Portals and Apps", "icon": "tena.png", "type": "B2B2C Portal and Mobile", "description": "The Portalen add-on: branded self-service portals and apps with real-time information from the ERP. Tenants pay rent, see their contract, invoices and service charge statements, report faults and follow their ticket in the tenant portal and iOS/Android app; private owners see how their property performs, approve quotes and expenses, and download statements and documents in the owner portal; maintenance suppliers receive and accept work orders, submit quotes, plan visits, report completion and invoice in the supplier portal. Every portal action lands directly in the organisation's tickets, contracts and ledger, so both sides save handling time and avoid re-keying.", "primaryCustomers": [{"id": "tena", "name": "Tenant", "icon": "tena.png"}, {"id": "ownr", "name": "Private Property Owner", "icon": "ownr.png"}, {"id": "supp", "name": "Maintenance Supplier", "icon": "supp.png"}]}, {"id": "projects-and-development", "name": "Projects and Development Finance", "icon": "asmg.png", "type": "B2B SaaS Module", "description": "The Projecten module for the financial management of new-build, renovation and transformation projects: project budgets and phases, commitments and purchase orders against suppliers and contractors, cost tracking and forecasts against budget, project documents and milestone monitoring, and the hand-over of a delivered building into exploitation as objects and units in the portfolio. Keeps project costs in the same multi-entity ledger as the exploitation accounts so asset managers and controllers see capex and returns in one place.", "primaryCustomers": [{"id": "asmg", "name": "Asset and Portfolio Manager", "icon": "asmg.png"}, {"id": "finc", "name": "Real Estate Finance Controller", "icon": "finc.png"}]}, {"id": "analytics-and-investor-reporting", "name": "Data Analytics and Investor Reporting", "icon": "asmg.png", "type": "B2B SaaS Module", "description": "The Rapportages and data analytics layer on top of the integrated real estate data model: standard real-estate reports customised per employee, interactive dashboards on occupancy, rent growth, arrears, yield and maintenance, valuations and market analysis, forecasts and asset plans, and periodic investor, lender and owner reporting packs generated from the closed ledger. Includes Power BI connectors so investors and directors can steer on the same figures as the finance team without a reporting project.", "primaryCustomers": [{"id": "asmg", "name": "Asset and Portfolio Manager", "icon": "asmg.png"}, {"id": "mdir", "name": "Real Estate Company Director", "icon": "mdir.png"}]}, {"id": "api-platform-and-integrations", "name": "API Platform and Certified Integrations", "icon": "finc.png", "type": "API and Integration Add-on", "description": "The connectivity foundation sold as the API Platform add-on module: an open, standardised REST API with API keys, webhooks and developer documentation for the organisation's own systems and integrators, plus the catalogue of certified integrations - accounting packages, bank connections for direct debit and statement import, BI tools such as Power BI, e-mail with Gmail and Microsoft Outlook, e-signing, maintenance partners such as Ziezodan and Proprli, and rent-price compliance via Huurprijscheck.app. Lets finance controllers and directors keep their existing toolchain while the ERP remains the single source of truth.", "primaryCustomers": [{"id": "finc", "name": "Real Estate Finance Controller", "icon": "finc.png"}, {"id": "mdir", "name": "Real Estate Company Director", "icon": "mdir.png"}]}, {"id": "hyper-automation-and-ai", "name": "Hyper Automation and AI Assistants", "icon": "finc.png", "type": "AI Add-on", "description": "The hyper automation foundation - AI and robotics that fully process repetitive tasks under human supervision: robots that run rent invoicing, direct-debit batches, bank reconciliation, supplier invoice coding and indexation letters on schedule, and AI assistants that draft correspondence and documents, code incoming invoices, triage the shared inbox and fault reports, and answer tenant and owner questions from the record. One published testimonial reports 100% time savings on repetitive financial processes; the add-on is the lever behind units-per-FTE growth for property managers and controllers.", "primaryCustomers": [{"id": "finc", "name": "Real Estate Finance Controller", "icon": "finc.png"}, {"id": "prpm", "name": "Property Manager", "icon": "prpm.png"}, {"id": "tecm", "name": "Technical and Maintenance Manager", "icon": "tecm.png"}]}], "deploymentModelRef": "deployment.json"}};
+    const deployment = {"metadata": {"title": "Real Estate ERP Platform Deployment Channels", "description": "Product bricks are deployed to the organisation's back-office web app, the branded tenant, owner, supplier and VvE owner portals, the tenant and technical field mobile apps, the open REST API and certified integration connectors (accounting, banking, BI, e-mail, e-signing, maintenance partners, rent-price check), the hyper automation and AI runtime, and the internal tenant-administration, migration and support back office. All runtimes are hosted in the European Union with EU data residency for Dutch and German tenants. Each deployed brick records the products that use it.", "modelVersion": "4.0"}, "channels": [{"groupId": "web-applications", "groupName": "Web Applications", "groupType": "runtime", "description": "Browser-based workspaces for organisation staff, tenants, owners, apartment owners and maintenance suppliers, one sub-channel per major web application; hosted in EU data centres with data residency in the European Union.", "channels": [{"subChannelId": "web-back-office", "subChannelName": "Back-Office Web App", "channelType": "web-application", "description": "The organisation's browser-based ERP workspace covering the Relaties, Objecten, Projecten, Contracten, Financieel, Techniek, VvE and Rapportages modules for asset managers, property managers, controllers, technical managers and VvE administrators. Hosted in EU data centres with data residency in the European Union for Dutch and German tenants.", "deployedBricks": [{"brickId": "objt", "brickName": "Objects, Complexes and Units", "deploymentRole": "Portfolio, complex, building and rental unit master-data UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "The object register every contract, invoice, ticket and report hangs off, for residential, commercial, retail, logistics, healthcare and parking units."}, {"productId": "projects-and-development", "description": "Receives delivered buildings and units from projects into exploitation."}]}, {"brickId": "valu", "brickName": "Valuations and Market Data", "deploymentRole": "Valuation register and market data UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Records appraisals, WOZ values and market rents per object for hold/sell and indexation decisions."}, {"productId": "analytics-and-investor-reporting", "description": "Supplies valuation and market inputs to yield, return and market analysis."}]}, {"brickId": "proj", "brickName": "Development and Transformation Projects", "deploymentRole": "Project budget, commitment, cost tracking and milestone UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "projects-and-development", "description": "The Projecten workspace for new-build, renovation and transformation projects from budget to hand-over."}]}, {"brickId": "rela", "brickName": "Relations and CRM", "deploymentRole": "Relations, contact and CRM UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "One contact database for tenants, owners, investors, suppliers, brokers and accountants with roles and history."}]}, {"brickId": "docm", "brickName": "Documents and Correspondence", "deploymentRole": "Document, template and correspondence UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Generates and files letters, contracts, statements and e-mails against relations, objects and contracts."}, {"productId": "owners-association-suite", "description": "Stores meeting packs, minutes and association correspondence per owners' association."}]}, {"brickId": "vacm", "brickName": "Vacancy, Letting and Candidate Screening", "deploymentRole": "Vacancy, listing, viewing and candidate screening UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Lets property managers publish vacancies, screen candidates and run rent-price compliance checks before a lease is offered."}]}, {"brickId": "cntr", "brickName": "Lease Contracts and E-Signing", "deploymentRole": "Lease contract creation, special terms and e-signing UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Captures every lease once, with break options and special terms, and sends it for digital signature."}]}, {"brickId": "indx", "brickName": "Rent Indexation, Renewals and Terminations", "deploymentRole": "Indexation, renewal and termination run UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Runs annual rent indexation, renewals, notice periods and deposit settlement across the whole portfolio."}]}, {"brickId": "svcc", "brickName": "Service Charges and Settlements", "deploymentRole": "Service charge budgeting, allocation and settlement UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Calculates advance service charges and settles them per unit and tenant at period end."}]}, {"brickId": "rent", "brickName": "Rent Invoicing and Billing Runs", "deploymentRole": "Rent run configuration, invoicing and billing UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Produces the periodic rent invoices and direct-debit batches from active contracts."}]}, {"brickId": "bank", "brickName": "Bank Integration and Reconciliation", "deploymentRole": "Bank statement import, matching and reconciliation UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Matches incoming payments to rent invoices and shows the reconciliation queue to the controller."}]}, {"brickId": "dunn", "brickName": "Debtor Management and Dunning", "deploymentRole": "Debtor overview, arrears workflow and dunning UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Follows up arrears with reminder sequences, payment plans and hand-over to collection agencies."}]}, {"brickId": "ledg", "brickName": "Multi-Entity General Ledger and Period Close", "deploymentRole": "Multi-entity general ledger, journals, consolidation and period-close UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "The real estate accounting platform for every legal entity, fund and portfolio company."}, {"productId": "owners-association-suite", "description": "Keeps each association's accounts as a separate entity with its own balance and reserve fund."}, {"productId": "projects-and-development", "description": "Books project costs and commitments in the same ledger as exploitation accounts."}]}, {"brickId": "payb", "brickName": "Accounts Payable and Supplier Invoices", "deploymentRole": "Supplier invoice intake, approval and accounts payable UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Registers, approves and pays supplier and contractor invoices per entity and object."}, {"productId": "projects-and-development", "description": "Matches contractor invoices to project commitments and budget lines."}]}, {"brickId": "vatx", "brickName": "VAT and Tax Handling", "deploymentRole": "VAT coding, returns and tax handling UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Applies Dutch and German VAT rules to rent, service charges and supplier invoices and prepares returns."}]}, {"brickId": "tick", "brickName": "Fault Reports and Tickets", "deploymentRole": "Fault report intake, triage and ticket UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "technical-management-suite", "description": "The technical manager's ticket queue for fault reports from portals, e-mail and phone."}]}, {"brickId": "work", "brickName": "Work Orders and Supplier Dispatch", "deploymentRole": "Work order creation, supplier dispatch and completion UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Turns tickets into work orders, dispatches suppliers and tracks quotes, planning and completion."}]}, {"brickId": "inst", "brickName": "Installations and Periodic Maintenance", "deploymentRole": "Installation register and periodic maintenance schedule UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Keeps installations and their inspection cycles with automatic supplier reminders."}]}, {"brickId": "mjop", "brickName": "Multi-Year Maintenance Planning and Budgets", "deploymentRole": "Multi-year maintenance plan and budget UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Plans and budgets multi-year maintenance per complex and rolls it into capex forecasts."}]}, {"brickId": "vveb", "brickName": "Association Budgets, Contributions and Reserve Funds", "deploymentRole": "Association budget, contribution and reserve fund UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "owners-association-suite", "description": "Sets budgets, calculates owner contributions and manages reserve funds per association."}]}, {"brickId": "vvem", "brickName": "Meetings, Decisions and Owner Communication", "deploymentRole": "Meeting, decision and owner communication UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "owners-association-suite", "description": "Prepares agendas, records decisions and votes, and communicates outcomes to owners."}]}, {"brickId": "dash", "brickName": "Dashboards and Data Analytics", "deploymentRole": "Embedded dashboards, standard reports and analytics UI deployed to the back-office web app.", "usedInProducts": [{"productId": "analytics-and-investor-reporting", "description": "Interactive dashboards on occupancy, rent growth, arrears, yield and maintenance per employee role."}, {"productId": "real-estate-erp-core", "description": "Standard real-estate reports customised per employee inside the ERP screens."}, {"productId": "projects-and-development", "description": "Budget-versus-actual and forecast views for running projects."}]}, {"brickId": "ivrp", "brickName": "Investor and Owner Reporting", "deploymentRole": "Investor, lender and owner reporting pack UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "analytics-and-investor-reporting", "description": "Assembles periodic investor and lender reporting from the closed ledger and portfolio data."}]}, {"brickId": "auto", "brickName": "Hyper Automation and Robots", "deploymentRole": "Robot configuration, schedule and run-log UI deployed to the back-office web app.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Lets controllers configure which repetitive financial processes robots run and review their results."}]}, {"brickId": "aiag", "brickName": "AI Assistants", "deploymentRole": "AI assistant panels embedded in correspondence, invoice coding, inbox and ticket screens deployed to the back-office web app.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Drafts letters, codes invoices and proposes ticket triage inside the back-office screens under human review."}]}, {"brickId": "iden", "brickName": "Identity, Tenants and Access", "deploymentRole": "Tenant login, single sign-on, roles and user management deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Authenticates staff and enforces role-based access per organisation, entity and portfolio."}]}, {"brickId": "wflw", "brickName": "Workflow, Tasks and Notifications", "deploymentRole": "Task lists, approvals, notifications and workflow UI and backing services deployed to the back-office web app.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Routes approvals, deadlines and to-dos across letting, finance, technical and VvE processes."}, {"productId": "hyper-automation-and-ai", "description": "Provides the task and event fabric that robots and assistants hand work back into."}]}]}, {"subChannelId": "web-tenant-portal", "subChannelName": "Tenant Portal Web", "channelType": "web-application", "description": "The organisation-branded tenant portal linked from invoices and welcome letters: rent and invoices, contract and service charge documents, fault reporting and ticket status, and tenancy changes.", "deployedBricks": [{"brickId": "tenp", "brickName": "Tenant Portal and App", "deploymentRole": "Tenant self-service portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "The tenant's home for rent, invoices, documents, fault reports and messages with the manager."}]}, {"brickId": "tick", "brickName": "Fault Reports and Tickets", "deploymentRole": "Fault report submission and ticket status view deployed to the tenant portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Lets tenants report a fault with photos and follow it to resolution."}, {"productId": "technical-management-suite", "description": "Feeds tenant-reported faults straight into the technical ticket queue."}]}, {"brickId": "rent", "brickName": "Rent Invoicing and Billing Runs", "deploymentRole": "Invoice, payment status and payment-link view deployed to the tenant portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Shows open rent invoices and lets the tenant pay or set up direct debit."}]}, {"brickId": "svcc", "brickName": "Service Charges and Settlements", "deploymentRole": "Service charge statement and settlement view deployed to the tenant portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Explains advance charges and annual settlements without a call to the office."}]}, {"brickId": "docm", "brickName": "Documents and Correspondence", "deploymentRole": "Contract and correspondence download deployed to the tenant portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Gives self-service access to the lease, addenda, letters and statements."}]}]}, {"subChannelId": "web-owner-portal", "subChannelName": "Owner Portal Web", "channelType": "web-application", "description": "The owner portal for private owners and small investors whose property is managed by a property manager: performance, statements, approvals of quotes and expenses, and documents.", "deployedBricks": [{"brickId": "ownp", "brickName": "Owner Portal", "deploymentRole": "Owner self-service portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "The owner's view of rent received, costs, statements, approvals and documents per property."}]}, {"brickId": "ivrp", "brickName": "Investor and Owner Reporting", "deploymentRole": "Owner statement and performance report view deployed to the owner portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Publishes periodic owner statements and net-return views the moment the period closes."}, {"productId": "analytics-and-investor-reporting", "description": "Reuses the reporting packs so owners and investors see the same governed figures."}]}, {"brickId": "work", "brickName": "Work Orders and Supplier Dispatch", "deploymentRole": "Quote and expense approval flow deployed to the owner portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Lets owners approve maintenance quotes and expenses above their mandate with one click."}, {"productId": "technical-management-suite", "description": "Unblocks work orders waiting on owner approval without phone calls."}]}, {"brickId": "docm", "brickName": "Documents and Correspondence", "deploymentRole": "Document and statement download deployed to the owner portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Keeps every management agreement, statement and letter in one place for the owner."}]}]}, {"subChannelId": "web-supplier-portal", "subChannelName": "Supplier Portal Web", "channelType": "web-application", "description": "The maintenance-partner portal where contractors, installers and handymen receive work orders, submit quotes, plan visits, report completion and invoice the organisation.", "deployedBricks": [{"brickId": "sprp", "brickName": "Supplier and Partner Portal", "deploymentRole": "Supplier and partner portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "The supplier's workspace for open work orders, quotes, planning, completion and invoices."}]}, {"brickId": "work", "brickName": "Work Orders and Supplier Dispatch", "deploymentRole": "Work order acceptance, quote, planning and completion exchange behind the supplier portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Lets suppliers accept, plan and close work orders without phone calls."}, {"productId": "technical-management-suite", "description": "Keeps the technical manager's work order status live from the supplier side."}]}, {"brickId": "inst", "brickName": "Installations and Periodic Maintenance", "deploymentRole": "Inspection checklist and installation update view deployed to the supplier portal.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Lets installers record inspections and installation changes at the source."}]}, {"brickId": "payb", "brickName": "Accounts Payable and Supplier Invoices", "deploymentRole": "Supplier invoice upload and matching deployed to the supplier portal.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Lets suppliers submit invoices against completed work orders."}, {"productId": "real-estate-erp-core", "description": "Feeds matched supplier invoices into accounts payable for approval and payment."}]}]}, {"subChannelId": "web-vve-owner-portal", "subChannelName": "VvE Owner Portal Web", "channelType": "web-application", "description": "The owners' association portal for apartment owners: contributions and statements, meeting invitations, agendas, decisions and minutes, and association documents - the Informant-heritage owner self-service brought onto the platform.", "deployedBricks": [{"brickId": "ownp", "brickName": "Owner Portal", "deploymentRole": "Association owner portal UI and backing services deployed to the web.", "usedInProducts": [{"productId": "owners-association-suite", "description": "Serves apartment owners with their contribution status, meetings and documents."}, {"productId": "stakeholder-portals", "description": "Shares the owner portal foundation between managed-property and VvE owners."}]}, {"brickId": "vveb", "brickName": "Association Budgets, Contributions and Reserve Funds", "deploymentRole": "Contribution overview, payment status and reserve fund view deployed to the VvE owner portal.", "usedInProducts": [{"productId": "owners-association-suite", "description": "Shows each owner their contributions, arrears and the association's reserve position."}]}, {"brickId": "vvem", "brickName": "Meetings, Decisions and Owner Communication", "deploymentRole": "Meeting invitation, agenda, voting and minutes view deployed to the VvE owner portal.", "usedInProducts": [{"productId": "owners-association-suite", "description": "Lets owners read agendas, vote or give proxies, and find decisions afterwards."}]}, {"brickId": "docm", "brickName": "Documents and Correspondence", "deploymentRole": "Association document download deployed to the VvE owner portal.", "usedInProducts": [{"productId": "owners-association-suite", "description": "Keeps deeds, regulations, minutes and annual accounts available to every owner."}]}]}]}, {"groupId": "mobile-apps", "groupName": "Mobile Apps", "groupType": "distribution", "description": "Mobile app store distribution: the organisation-branded tenant app and the technical field app, shipped to both the iOS App Store and Android Play Store.", "channels": [{"subChannelId": "mobile-tenant-app", "subChannelName": "Tenant App (iOS and Android)", "channelType": "mobile-app-store", "description": "Organisation-branded tenant app distributed through the iOS App Store and Android Play Store: rent and invoices, fault reporting with photos, ticket updates, documents and push notifications.", "deployedBricks": [{"brickId": "tenp", "brickName": "Tenant Portal and App", "deploymentRole": "Tenant mobile app build distributed through the app stores.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "The tenant's pocket version of the portal with push notifications on tickets and invoices."}]}, {"brickId": "tick", "brickName": "Fault Reports and Tickets", "deploymentRole": "Mobile fault reporting with photos and ticket tracking embedded in the tenant app.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Makes reporting a fault a one-minute job from the phone."}, {"productId": "technical-management-suite", "description": "Delivers photo-rich fault reports that improve first-time-fix rates."}]}, {"brickId": "rent", "brickName": "Rent Invoicing and Billing Runs", "deploymentRole": "Mobile invoice view and payment link embedded in the tenant app.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Lets tenants see and pay open rent invoices on the go."}]}, {"brickId": "wflw", "brickName": "Workflow, Tasks and Notifications", "deploymentRole": "Push notification delivery services behind the tenant app.", "usedInProducts": [{"productId": "stakeholder-portals", "description": "Delivers ticket updates, payment reminders and announcements to the tenant's phone."}]}]}, {"subChannelId": "mobile-technical-field-app", "subChannelName": "Technical Field App (iOS and Android)", "channelType": "mobile-app-store", "description": "Mobile build for technical managers, inspectors and in-house maintenance staff on site, distributed through the app stores: tickets, work orders, installation inspections and photo evidence.", "deployedBricks": [{"brickId": "tick", "brickName": "Fault Reports and Tickets", "deploymentRole": "Mobile ticket queue and on-site triage embedded in the field app.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Lets the technical manager assess and prioritise tickets at the property."}]}, {"brickId": "work", "brickName": "Work Orders and Supplier Dispatch", "deploymentRole": "Mobile work order execution, photo evidence and completion embedded in the field app.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Closes work orders on site with photos and time so invoices match reality."}]}, {"brickId": "inst", "brickName": "Installations and Periodic Maintenance", "deploymentRole": "Mobile installation inspection checklists and register updates embedded in the field app.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Records periodic inspections and installation changes where the installation is."}]}]}]}, {"groupId": "apis-and-integrations", "groupName": "APIs and Integrations", "groupType": "integration", "description": "Machine-to-machine channels: the open REST API sold as the API Platform add-on and the certified integrations with accounting packages, banks, BI tools, e-mail, e-signing, maintenance partners and the rent-price compliance check.", "channels": [{"subChannelId": "api-open-rest", "subChannelName": "Open REST API and API Platform", "channelType": "public-api", "description": "The open, standardised REST API with API keys, webhooks and developer documentation, sold as the API Platform add-on: the organisation's own systems, integrators and partner apps read objects, relations, contracts, invoices and tickets and create or update them system-to-system.", "deployedBricks": [{"brickId": "apip", "brickName": "Open API and Certified Integrations", "deploymentRole": "API gateway, credentials, webhooks and developer documentation exposed on the open API.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "The product surface of the API Platform add-on: keys, scopes, webhooks and documentation."}, {"productId": "stakeholder-portals", "description": "Backs portal integrations that organisations embed in their own websites and apps."}]}, {"brickId": "iden", "brickName": "Identity, Tenants and Access", "deploymentRole": "OAuth tokens, API keys and organisation scoping behind the open API.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Authenticates and scopes every API call to one organisation and its entitled modules."}]}, {"brickId": "objt", "brickName": "Objects, Complexes and Units", "deploymentRole": "Object, complex and unit endpoints exposed on the open API.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Lets external systems read and update the portfolio structure."}]}, {"brickId": "rela", "brickName": "Relations and CRM", "deploymentRole": "Relation and contact endpoints exposed on the open API.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Synchronises tenants, owners and suppliers with external CRM and marketing tools."}]}, {"brickId": "cntr", "brickName": "Lease Contracts and E-Signing", "deploymentRole": "Lease contract endpoints exposed on the open API.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Exposes contract terms, rent and status to asset-management and valuation tools."}]}, {"brickId": "rent", "brickName": "Rent Invoicing and Billing Runs", "deploymentRole": "Rent invoice and payment status endpoints exposed on the open API.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Lets treasury and investor systems read invoicing and collection data."}]}, {"brickId": "tick", "brickName": "Fault Reports and Tickets", "deploymentRole": "Fault report and ticket endpoints and webhooks exposed on the open API.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Allows partner apps and smart-building systems to create tickets and follow status."}]}]}, {"subChannelId": "api-accounting-connectors", "subChannelName": "Accounting Connectors", "channelType": "integration", "description": "Certified connectors that exchange journals, sales and purchase invoices, VAT and master data with external accounting packages and auditors' tooling for organisations that keep a statutory ledger outside the ERP, in the Netherlands and Germany.", "deployedBricks": [{"brickId": "ledg", "brickName": "Multi-Entity General Ledger and Period Close", "deploymentRole": "Journal export, chart-of-accounts mapping and period synchronisation deployed to the accounting integration.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Posts every entity's journals to the external accounting package without re-keying."}, {"productId": "real-estate-erp-core", "description": "Keeps the ERP ledger and the statutory ledger identical at period close."}]}, {"brickId": "payb", "brickName": "Accounts Payable and Supplier Invoices", "deploymentRole": "Purchase invoice and payment synchronisation deployed to the accounting integration.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Exchanges supplier invoices and payment status with accounting and e-invoicing networks."}]}, {"brickId": "vatx", "brickName": "VAT and Tax Handling", "deploymentRole": "VAT return data and tax code mapping deployed to the accounting integration.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Aligns Dutch and German VAT codes and returns between the ERP and the accounting package."}]}, {"brickId": "apip", "brickName": "Open API and Certified Integrations", "deploymentRole": "Connector framework, mappings, retry handling and monitoring for accounting integrations.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Provides the shared connector plumbing certified accounting integrations run on."}]}]}, {"subChannelId": "api-bank-connectors", "subChannelName": "Bank Connectors", "channelType": "integration", "description": "Bank connections for SEPA direct-debit batches, payment files and automated statement import (CAMT, MT940 and PSD2 account access) with Dutch and German banks.", "deployedBricks": [{"brickId": "bank", "brickName": "Bank Integration and Reconciliation", "deploymentRole": "Statement import, PSD2 account access and payment file exchange deployed to the bank integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Imports bank statements daily and matches them to rent invoices automatically."}, {"productId": "api-platform-and-integrations", "description": "Runs the certified bank connections as part of the integration catalogue."}]}, {"brickId": "rent", "brickName": "Rent Invoicing and Billing Runs", "deploymentRole": "SEPA direct-debit batch submission deployed to the bank integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Submits the direct-debit batch produced by each rent run to the bank."}]}, {"brickId": "dunn", "brickName": "Debtor Management and Dunning", "deploymentRole": "Payment status feedback and reversal handling deployed to the bank integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Feeds rejected direct debits and reversals into arrears follow-up the same day."}]}, {"brickId": "vveb", "brickName": "Association Budgets, Contributions and Reserve Funds", "deploymentRole": "Contribution direct-debit batch submission deployed to the bank integration.", "usedInProducts": [{"productId": "owners-association-suite", "description": "Collects owner contributions per association through the same bank connections."}]}]}, {"subChannelId": "api-bi-connectors", "subChannelName": "BI Connectors (Power BI)", "channelType": "integration", "description": "Governed data sets and connectors for business-intelligence tools such as Power BI, so organisations and their investors analyse portfolio, contract, finance and maintenance data in their own dashboards.", "deployedBricks": [{"brickId": "dash", "brickName": "Dashboards and Data Analytics", "deploymentRole": "Data mart, scheduled extracts and Power BI connector services deployed to the analytics integration.", "usedInProducts": [{"productId": "analytics-and-investor-reporting", "description": "Feeds Power BI and other BI tools with the same governed data model as the built-in dashboards."}, {"productId": "api-platform-and-integrations", "description": "Published as a certified integration in the connectivity catalogue."}]}, {"brickId": "ivrp", "brickName": "Investor and Owner Reporting", "deploymentRole": "Investor and owner reporting data sets deployed to the analytics integration.", "usedInProducts": [{"productId": "analytics-and-investor-reporting", "description": "Lets investors and lenders pull reporting packs into their own reporting environment."}]}, {"brickId": "apip", "brickName": "Open API and Certified Integrations", "deploymentRole": "Connector credentials, scopes and monitoring for BI integrations.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Governs which data sets each BI connection may read per organisation."}]}]}, {"subChannelId": "api-email-connectors", "subChannelName": "E-mail Connectors (Gmail, Microsoft Outlook)", "channelType": "integration", "description": "Mailbox integrations with Gmail and Microsoft Outlook that file inbound and outbound e-mail against relations, objects, contracts and tickets and send correspondence from the user's own mailbox.", "deployedBricks": [{"brickId": "docm", "brickName": "Documents and Correspondence", "deploymentRole": "Mailbox synchronisation, e-mail filing and send-from-mailbox services deployed to the e-mail integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Files every tenant, owner and supplier e-mail on the right relation and dossier."}, {"productId": "api-platform-and-integrations", "description": "Delivered as the certified Gmail and Outlook integrations."}]}, {"brickId": "rela", "brickName": "Relations and CRM", "deploymentRole": "Contact and calendar synchronisation deployed to the e-mail integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Keeps contacts consistent between the ERP and the mail client."}]}, {"brickId": "aiag", "brickName": "AI Assistants", "deploymentRole": "Inbox triage assistant services running on synchronised mail.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Classifies inbound mail into fault reports, invoices, questions and contract changes and proposes the next action."}]}]}, {"subChannelId": "api-e-signing", "subChannelName": "E-Signing Integration", "channelType": "integration", "description": "Digital signature provider integration for lease contracts, addenda, management agreements and association decisions with legally valid audit trails.", "deployedBricks": [{"brickId": "cntr", "brickName": "Lease Contracts and E-Signing", "deploymentRole": "Signature request, status webhook and signed-document retrieval deployed to the e-signing integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Sends every lease and addendum for digital signature and files the signed copy automatically."}, {"productId": "api-platform-and-integrations", "description": "Runs as a certified e-signing integration in the catalogue."}]}, {"brickId": "docm", "brickName": "Documents and Correspondence", "deploymentRole": "Signed document archiving and audit trail deployed to the e-signing integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Keeps the signed original and its audit trail on the contract dossier."}]}]}, {"subChannelId": "api-maintenance-partners", "subChannelName": "Maintenance Partner Connectors (Ziezodan, Proprli)", "channelType": "integration", "description": "Connectors to maintenance-handling and technical-management partners such as Ziezodan (automated maintenance handling) and Proprli (technical and financial management) that exchange tickets, work orders, planning, completion and invoices.", "deployedBricks": [{"brickId": "work", "brickName": "Work Orders and Supplier Dispatch", "deploymentRole": "Work order exchange, planning and completion synchronisation deployed to the maintenance partner integration.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Dispatches work orders to partner platforms and receives planning and completion back."}, {"productId": "api-platform-and-integrations", "description": "Delivered as the certified Ziezodan and Proprli integrations."}]}, {"brickId": "tick", "brickName": "Fault Reports and Tickets", "deploymentRole": "Ticket hand-off and status synchronisation deployed to the maintenance partner integration.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Keeps ticket status in sync when a partner handles the fault end to end."}]}, {"brickId": "inst", "brickName": "Installations and Periodic Maintenance", "deploymentRole": "Installation and inspection data exchange deployed to the maintenance partner integration.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Shares installation registers and inspection outcomes with partner platforms."}]}, {"brickId": "payb", "brickName": "Accounts Payable and Supplier Invoices", "deploymentRole": "Partner invoice intake and matching deployed to the maintenance partner integration.", "usedInProducts": [{"productId": "technical-management-suite", "description": "Matches partner invoices to completed work orders before they reach accounts payable."}]}]}, {"subChannelId": "api-rent-price-check", "subChannelName": "Rent-Price Check Integration (Huurprijscheck.app)", "channelType": "integration", "description": "Integration with Huurprijscheck.app for rent-price compliance checks under Dutch rent regulation (points system and maximum rent) before a unit is let or a rent is changed.", "deployedBricks": [{"brickId": "vacm", "brickName": "Vacancy, Letting and Candidate Screening", "deploymentRole": "Rent-price compliance check request and result storage deployed to the rent-price check integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Checks the intended rent of a vacant unit against the regulated maximum before listing."}, {"productId": "api-platform-and-integrations", "description": "Delivered as the certified Huurprijscheck.app integration."}]}, {"brickId": "cntr", "brickName": "Lease Contracts and E-Signing", "deploymentRole": "Contract rent validation against the compliance check deployed to the rent-price check integration.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Blocks a lease whose rent exceeds the checked maximum unless overridden with a reason."}]}, {"brickId": "valu", "brickName": "Valuations and Market Data", "deploymentRole": "Market rent reference data intake deployed to the rent-price check integration.", "usedInProducts": [{"productId": "analytics-and-investor-reporting", "description": "Adds regulated and market rent references to valuation and rent-growth analysis."}]}]}]}, {"groupId": "automation-runtime", "groupName": "Automation Runtime", "groupType": "runtime", "description": "The scheduled and event-driven runtime for hyper automation robots and AI jobs that process repetitive financial, contract and technical tasks across organisations under human supervision.", "channels": [{"subChannelId": "automation-robots-and-ai-scheduler", "subChannelName": "Hyper Automation Robots and AI Job Scheduler", "channelType": "platform-runtime", "description": "The scheduled and event-driven runtime where hyper automation robots and AI jobs execute repetitive processes across all organisations - rent runs, direct-debit batches, reconciliation, invoice coding, indexation letters, dunning and ticket triage - with run logs, exception queues and human approval gates. Runs in the same EU data residency as the web applications.", "deployedBricks": [{"brickId": "auto", "brickName": "Hyper Automation and Robots", "deploymentRole": "Robot scheduler, run orchestration, exception queue and audit log deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Executes the configured robots on schedule and hands exceptions to people."}]}, {"brickId": "aiag", "brickName": "AI Assistants", "deploymentRole": "AI assistant model services, prompts, guardrails and evaluation deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Runs invoice coding, document drafting, inbox and ticket triage models with human supervision."}]}, {"brickId": "wflw", "brickName": "Workflow, Tasks and Notifications", "deploymentRole": "Event bus, task creation and notification services deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Turns robot and assistant outputs into tasks, approvals and notifications for staff."}]}, {"brickId": "rent", "brickName": "Rent Invoicing and Billing Runs", "deploymentRole": "Automated rent run and direct-debit batch jobs deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Runs the periodic rent invoicing fully automatically for organisations that enable it."}, {"productId": "real-estate-erp-core", "description": "Provides the scheduled rent run behind the back-office rent module."}]}, {"brickId": "bank", "brickName": "Bank Integration and Reconciliation", "deploymentRole": "Automated bank statement matching jobs deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Matches the daily statement lines to invoices and leaves only exceptions for the controller."}]}, {"brickId": "payb", "brickName": "Accounts Payable and Supplier Invoices", "deploymentRole": "Automated supplier invoice recognition and coding jobs deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Reads incoming supplier invoices, codes them and routes them for approval."}]}, {"brickId": "indx", "brickName": "Rent Indexation, Renewals and Terminations", "deploymentRole": "Automated indexation calculation and letter generation jobs deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Calculates annual indexation per contract and generates the letters in bulk."}]}, {"brickId": "dunn", "brickName": "Debtor Management and Dunning", "deploymentRole": "Automated reminder and dunning sequence jobs deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Sends reminders and escalates arrears on schedule without manual follow-up."}]}, {"brickId": "svcc", "brickName": "Service Charges and Settlements", "deploymentRole": "Automated service charge settlement calculation jobs deployed to the automation runtime.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Runs the annual service charge settlement across all units and produces the statements."}]}]}]}, {"groupId": "internal-operations", "groupName": "Internal Operations", "groupType": "backoffice", "description": "Internal tooling for the platform operator: organisation administration, subscription and module management, data migration (including Informant customers), integration and robot configuration, support and platform operations.", "channels": [{"subChannelId": "backoffice-tenant-admin", "subChannelName": "Tenant Administration, Migration and Support Back Office", "channelType": "backoffice", "description": "The platform operator's internal workspace for onboarding organisations, managing subscriptions and module entitlements, migrating data from spreadsheets, legacy systems and Informant, configuring integrations and robots, supporting customers and operating the platform for Dutch and German tenants.", "deployedBricks": [{"brickId": "iden", "brickName": "Identity, Tenants and Access", "deploymentRole": "Organisation provisioning, module entitlement and user administration UI for the platform operator.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Onboards new organisations, activates modules and manages access per entity."}, {"productId": "api-platform-and-integrations", "description": "Issues and revokes API Platform credentials per organisation."}]}, {"brickId": "migr", "brickName": "Data Migration and Onboarding Tooling", "deploymentRole": "Data migration pipelines, mapping tooling, validation reports and Informant import UI for the implementation team.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Brings portfolios, relations, contracts and opening balances from spreadsheets, legacy systems and Informant into the ERP."}, {"productId": "owners-association-suite", "description": "Migrates Informant associations, owners, budgets and history free of charge under the integration plan."}]}, {"brickId": "apip", "brickName": "Open API and Certified Integrations", "deploymentRole": "Integration configuration, connector monitoring and API key administration for support staff.", "usedInProducts": [{"productId": "api-platform-and-integrations", "description": "Configures and monitors certified integrations and API usage per organisation."}]}, {"brickId": "auto", "brickName": "Hyper Automation and Robots", "deploymentRole": "Robot catalogue, per-organisation enablement and run monitoring for the platform operator.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Rolls out robots to organisations and watches run health and exception rates."}]}, {"brickId": "aiag", "brickName": "AI Assistants", "deploymentRole": "AI assistant model configuration, guardrails and usage monitoring for the platform operator.", "usedInProducts": [{"productId": "hyper-automation-and-ai", "description": "Controls prompts, guardrails and per-organisation enablement of the assistants."}]}, {"brickId": "wflw", "brickName": "Workflow, Tasks and Notifications", "deploymentRole": "Platform-wide workflow templates and notification configuration administered by consultants.", "usedInProducts": [{"productId": "real-estate-erp-core", "description": "Ships best-practice process templates to new organisations during onboarding."}]}, {"brickId": "dash", "brickName": "Dashboards and Data Analytics", "deploymentRole": "Cross-organisation platform analytics for the platform operator (anonymised usage and adoption).", "usedInProducts": [{"productId": "analytics-and-investor-reporting", "description": "Gives the platform operator usage and adoption insight to steer the roadmap."}]}]}]}]};
+    const channelRef = "mobile-apps/mobile-tenant-app";
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function deploymentIconFile(channel, group) {
+        const text = [
+            group && group.groupId,
+            group && group.groupName,
+            channel && channel.subChannelId,
+            channel && channel.subChannelName,
+            channel && channel.channelType
+        ].join(' ').toLowerCase();
+
+        if (text.includes('ios')) return 'app_store_ios.png';
+        if (text.includes('android') || text.includes('play store') || text.includes('play-store')) return 'app_store_android.png';
+        if (text.includes('private cloud') || text.includes('private-cloud')) return 'private_cloud.png';
+        if (text.includes('cloud') || text.includes('runtime') || text.includes('edge') || text.includes('cdn')) return 'public_cloud.png';
+        if (text.includes('saas') || text.includes('analytics') || text.includes('crm') || text.includes('datadog') || text.includes('snowflake') || text.includes('databricks') || text.includes('salesforce')) return 'saas.png';
+        return 'deployment.png';
+    }
+
+    function interfaceIconFile(iface) {
+        const text = [iface && iface.type, iface && iface.name].join(' ').toLowerCase();
+        if (text.includes('partner_api')) return 'partner_api.png';
+        if (text.includes('public_api') || text.includes('public api')) return 'public_api.png';
+        if (text.includes('api')) return 'api.png';
+        if (text.includes('mobile web')) return 'mobile_web.png';
+        if (text.includes('mobile') || text.includes('app')) return 'mobile_app.png';
+        if (text.includes('dashboard') || text.includes('cockpit')) return 'dashboard.png';
+        if (text.includes('notification')) return 'notification.png';
+        if (text.includes('search')) return 'search_engine.png';
+        if (text.includes('social')) return 'social_media.png';
+        return 'web.png';
+    }
+
+    function buildDeploymentChannelRecords() {
+        const records = [];
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                records.push({
+                    ref: (group.groupId || '') + '/' + (channel.subChannelId || ''),
+                    group: group,
+                    channel: channel
+                });
+            });
+        });
+        return records;
+    }
+
+    function findCurrentRecord() {
+        return buildDeploymentChannelRecords().find(record => record.ref === channelRef) || null;
+    }
+
+    // Bricks live directly on a channel (subchannel): channel.deployedBricks.
+    function channelDeployedBricks(channel) {
+        return (channel && channel.deployedBricks) || [];
+    }
+
+    function buildChannelProductUsage(record) {
+        // Derive products from this channel's deployedBricks[].usedInProducts.
+        const productLookup = {};
+        ((products.portfolio || {}).products || []).forEach(product => {
+            productLookup[product.id] = product;
+        });
+        const byProduct = {};
+        channelDeployedBricks(record.channel).forEach(brick => {
+            (brick.usedInProducts || []).forEach(use => {
+                const pid = use.productId;
+                if (!pid) return;
+                if (!byProduct[pid]) {
+                    const product = productLookup[pid] || {};
+                    byProduct[pid] = {
+                        id: pid,
+                        name: product.name || pid,
+                        icon: product.icon || 'product.png',
+                        brickCount: 0
+                    };
+                }
+                byProduct[pid].brickCount += 1;
+            });
+        });
+        return Object.values(byProduct).sort((left, right) => left.name.localeCompare(right.name));
+    }
+
+    function renderChip(iconPath, fallbackPath, title, copy, href) {
+        let html = '';
+        if (href) html += '<a href="' + href + '" target="_blank">';
+        html += '<div class="chip">';
+        html += '<img class="chip-icon" src="' + iconPath + '" alt="' + escapeHtml(title) + '" onerror="this.onerror=null;this.src=\'' + fallbackPath + '\'">';
+        html += '<div><div class="chip-title">' + escapeHtml(title) + '</div>';
+        if (copy) html += '<div class="chip-copy">' + escapeHtml(copy) + '</div>';
+        html += '</div></div>';
+        if (href) html += '</a>';
+        return html;
+    }
+
+    function renderNavAndHeader() {
+        const current = findCurrentRecord();
+        let navHtml = '<div class="channel-nav">';
+        buildDeploymentChannelRecords().forEach(record => {
+            const fileName = deploymentIconFile(record.channel, record.group);
+            const activeClass = record.ref === channelRef ? ' active' : '';
+            navHtml += '<a class="channel-nav-link' + activeClass + '" href="' + escapeHtml(record.channel.subChannelId || '') + '.html" title="' + escapeHtml(record.channel.subChannelName || record.channel.subChannelId || 'Deployment channel') + '">';
+            navHtml += '<img class="channel-nav-icon" src="../icons/deployment/' + fileName + '" alt="' + escapeHtml(record.channel.subChannelName || record.channel.subChannelId || 'Deployment channel') + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+            navHtml += '</a>';
+        });
+        navHtml += '</div>';
+        document.getElementById('ChannelNav').innerHTML = navHtml;
+
+        if (!current) {
+            document.getElementById('Header').innerHTML = '<div class="empty-state">Deployment channel not found.</div>';
+            return;
+        }
+
+        let header = '<div class="hero-header">';
+        header += '<img class="hero-icon" src="../icons/deployment/' + deploymentIconFile(current.channel, current.group) + '" alt="' + escapeHtml(current.channel.subChannelName || current.channel.subChannelId || 'Deployment channel') + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+        header += '<div>';
+        header += '<div class="page-type-badge" style="margin-top: 8px;">Deployment Channel</div>';
+        header += '<div class="chip-copy">' + escapeHtml(current.group.groupName || current.group.groupId || '') + ' · ' + escapeHtml(current.channel.channelType || 'channel') + '</div>';
+        header += '<div class="hero-title">' + escapeHtml(current.channel.subChannelName || current.channel.subChannelId || 'Deployment channel') + '</div>';
+        if (current.channel.description) {
+            header += '<div class="hero-subtitle">' + escapeHtml(current.channel.description) + '</div>';
+        }
+        header += '</div>';
+        header += '</div>';
+        document.getElementById('Header').innerHTML = header;
+    }
+
+    function renderHome() {
+        const current = findCurrentRecord();
+        const container = document.getElementById('tab_content_HomeTab');
+        if (!current) {
+            container.innerHTML = '<div class="empty-state">Deployment channel not found.</div>';
+            return;
+        }
+
+        const productUsage = buildChannelProductUsage(current);
+        const deployedBricks = channelDeployedBricks(current.channel);
+
+        let html = '';
+
+        const intro = [deployment.metadata && deployment.metadata.description, current.group.description, current.channel.description].filter(Boolean).join(' ');
+        if (intro) html += '<div class="deployment-copy">' + escapeHtml(intro) + '</div>';
+
+        html += '<div class="deployment-section-title">Deployed Bricks (' + deployedBricks.length + ')</div>';
+        if (deployedBricks.length) {
+            html += '<div class="chip-row">';
+            deployedBricks.forEach(brick => {
+                const productCount = (brick.usedInProducts || []).length;
+                const meta = [brick.deploymentRole || '', productCount ? 'Used in ' + productCount + (productCount === 1 ? ' product' : ' products') : ''].filter(Boolean).join(' · ');
+                html += renderChip('../../product-bricks/icons/' + escapeHtml(brick.brickId) + '.png', '../../product-bricks/icons/logo.png', brick.brickName || brick.brickId || 'Product brick', meta, '../../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html');
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty-state">No bricks deployed in this channel.</div>';
+        }
+
+        html += '<div class="deployment-section-title">Products Using This Channel (' + productUsage.length + ')</div>';
+        if (productUsage.length) {
+            html += '<div class="chip-row">';
+            productUsage.forEach(product => {
+                const meta = product.brickCount + (product.brickCount === 1 ? ' brick' : ' bricks');
+                html += renderChip('../icons/' + escapeHtml(product.icon), '../icons/product.png', product.name, meta, '../landing_pages/' + escapeHtml(product.id) + '.html');
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty-state">No products currently reference this channel.</div>';
+        }
+
+        html += '<div class="deployment-section-title">Brick to Product Dependencies</div>';
+        html += '<div class="bpd-layout">';
+        html += '<div class="bpd-controls" id="BpdControls"></div>';
+        html += '<div class="bpd-graph" id="BpdGraph"></div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+        renderBrickProductDependencies(current);
+    }
+
+    // --- Brick -> Product dependency diagram (mermaid) ---
+    let bpdSelected = null; // Set of selected node ids (null = all)
+
+    function bpdNodes(record) {
+        const productLookup = {};
+        ((products.portfolio || {}).products || []).forEach(product => { productLookup[product.id] = product; });
+        const bricks = [];
+        const productMap = {};
+        const edges = [];
+        channelDeployedBricks(record.channel).forEach(brick => {
+            const uses = (brick.usedInProducts || []).filter(use => productLookup[use.productId]);
+            if (!uses.length) return;
+            const brickNodeId = 'brick:' + brick.brickId;
+            bricks.push({id: brickNodeId, name: brick.brickName || brick.brickId, type: 'brick'});
+            uses.forEach(use => {
+                const product = productLookup[use.productId];
+                const productNodeId = 'product:' + product.id;
+                if (!productMap[productNodeId]) {
+                    productMap[productNodeId] = {id: productNodeId, name: product.name || product.id, type: 'product'};
+                }
+                edges.push({source: brickNodeId, target: productNodeId});
+            });
+        });
+        // dedupe brick nodes (a brick appears once)
+        const seen = {};
+        const brickNodes = bricks.filter(n => seen[n.id] ? false : (seen[n.id] = true));
+        return {bricks: brickNodes, products: Object.values(productMap), edges: edges};
+    }
+
+    function bpdAllNodeIds(model) {
+        return model.bricks.concat(model.products).map(n => n.id);
+    }
+
+    function bpdIsSelected(id) {
+        return bpdSelected === null || bpdSelected.has(id);
+    }
+
+    function renderBrickProductDependencies(record) {
+        const model = bpdNodes(record);
+        if (bpdSelected === null) {
+            bpdSelected = new Set(bpdAllNodeIds(model));
+        }
+        renderBpdControls(model);
+        renderBpdGraph(model);
+    }
+
+    function renderBpdControls(model) {
+        const groups = [
+            {label: 'Bricks', color: '#059669', nodes: model.bricks.slice().sort((a, b) => a.name.localeCompare(b.name))},
+            {label: 'Products', color: '#ea580c', nodes: model.products.slice().sort((a, b) => a.name.localeCompare(b.name))}
+        ];
+        let html = '<div class="bpd-actions">' +
+            '<button type="button" class="pdg-action" onclick="setAllBpdNodes(true)">Show all</button>' +
+            '<button type="button" class="pdg-action" onclick="setAllBpdNodes(false)">Hide all</button>' +
+            '</div><div class="bpd-checklist">';
+        groups.forEach(group => {
+            if (!group.nodes.length) return;
+            html += '<div class="pdg-type-header">' + escapeHtml(group.label) + ' (' + group.nodes.length + ')</div>';
+            group.nodes.forEach(node => {
+                html += '<label class="pdg-check-item node" title="' + escapeHtml(node.name) + '">' +
+                    '<input type="checkbox" value="' + escapeHtml(node.id) + '"' + (bpdIsSelected(node.id) ? ' checked' : '') + ' onchange="toggleBpdNode(this.value, this.checked)">' +
+                    '<span class="pdg-swatch" style="background-color:' + group.color + '"></span>' +
+                    '<span class="label">' + escapeHtml(node.name) + '</span>' +
+                    '</label>';
+            });
+        });
+        html += '</div>';
+        document.getElementById('BpdControls').innerHTML = html;
+    }
+
+    function toggleBpdNode(id, checked) {
+        if (bpdSelected === null) {
+            bpdSelected = new Set(bpdAllNodeIds(bpdNodes(findCurrentRecord())));
+        }
+        if (checked) { bpdSelected.add(id); } else { bpdSelected.delete(id); }
+        renderBpdGraph(bpdNodes(findCurrentRecord()));
+    }
+
+    function setAllBpdNodes(selected) {
+        const model = bpdNodes(findCurrentRecord());
+        bpdSelected = selected ? new Set(bpdAllNodeIds(model)) : new Set();
+        renderBpdControls(model);
+        renderBpdGraph(model);
+    }
+
+    function bpdMermaidId(value) {
+        return 'n_' + String(value).replace(/[^a-zA-Z0-9_]/g, '_');
+    }
+
+    function bpdMermaidLabel(value) {
+        return String(value || '')
+            .replaceAll('&', 'and').replaceAll('"', '').replaceAll("'", '')
+            .replaceAll('<', '').replaceAll('>', '')
+            .replaceAll('[', '(').replaceAll(']', ')')
+            .replaceAll('{', '(').replaceAll('}', ')').replaceAll('|', '/');
+    }
+
+    function renderBpdGraph(model) {
+        const container = document.getElementById('BpdGraph');
+        if (!container) return;
+        const bricks = model.bricks.filter(n => bpdIsSelected(n.id));
+        const productsSel = model.products.filter(n => bpdIsSelected(n.id));
+        const visible = new Set(bricks.concat(productsSel).map(n => n.id));
+        const edges = model.edges.filter(e => visible.has(e.source) && visible.has(e.target));
+
+        if (typeof mermaid === 'undefined') {
+            container.innerHTML = '<div class="empty-state">Diagram library failed to load.</div>';
+            return;
+        }
+        if (!bricks.length || !productsSel.length || !edges.length) {
+            container.innerHTML = '<div class="empty-state">Select bricks and products that share dependencies to render the diagram.</div>';
+            return;
+        }
+
+        let chart = 'flowchart LR\n\n';
+        // Bricks grouped in one unnamed subgraph.
+        chart += 'subgraph bpdBricks [" "]\n';
+        bricks.forEach(node => { chart += bpdMermaidId(node.id) + '["' + bpdMermaidLabel(node.name) + '"]\n'; });
+        chart += 'end\n';
+        productsSel.forEach(node => { chart += bpdMermaidId(node.id) + '["' + bpdMermaidLabel(node.name) + '"]\n'; });
+        edges.forEach(edge => { chart += bpdMermaidId(edge.source) + ' --> ' + bpdMermaidId(edge.target) + '\n'; });
+        chart += 'classDef brickCls fill:#dcfce7,stroke:#059669,color:#065f46,stroke-width:2px;\n';
+        chart += 'classDef productCls fill:#ffedd5,stroke:#ea580c,color:#7c2d12,stroke-width:2px;\n';
+        const brickIds = bricks.map(n => bpdMermaidId(n.id));
+        const productIds = productsSel.map(n => bpdMermaidId(n.id));
+        if (brickIds.length) chart += 'class ' + brickIds.join(',') + ' brickCls;\n';
+        if (productIds.length) chart += 'class ' + productIds.join(',') + ' productCls;\n';
+
+        const renderId = 'bpd-mermaid-' + (bpdRenderCounter++);
+        Promise.resolve(mermaid.render(renderId, chart)).then(result => {
+            container.innerHTML = result.svg;
+        }).catch(() => {
+            container.innerHTML = '<div class="empty-state">Unable to render the dependency diagram.</div>';
+        });
+    }
+    let bpdRenderCounter = 0;
+</script>
+<div id="ChannelNav"></div>
+<div class="hero" id="Header"></div>
+<div class="tab">
+    <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Channel</button>
+</div>
+<div id="tab_content_HomeTab" class="tabcontent"></div>
+<script>
+    if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({startOnLoad: false, securityLevel: 'loose', flowchart: {htmlLabels: false}});
+    }
+    renderNavAndHeader();
+    renderHome();
+</script>
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "Real Estate ERP Platform Home"
+    },
+    {
+      "link": "../index.html",
+      "label": "Deployment Channels"
+    },
+    {
+      "label": "Tenant App (iOS and Android)"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+</body>
+</html>
