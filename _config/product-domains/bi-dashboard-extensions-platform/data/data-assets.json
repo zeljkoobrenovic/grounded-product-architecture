@@ -1,0 +1,1796 @@
+{
+  "metadata": {
+    "title": "BI Dashboard Extensions Platform Data Assets",
+    "description": "Catalog of the configuration, dashboard, write-back, distribution, adoption, licensing, deployment, trust, partner and support data assets behind a premium BI-extensions vendor modeled on Infotopics | Apps for Tableau, with classification, GDPR and ISO 27001 governance, backing stores and team ownership. The catalog separates two deployment realities: in Enterprise (self-hosted) deployments write-back records, comments, audit logs, process event logs, saved views and rendered reports live in the customer's own databases and file shares and the vendor has no access; in SaaS deployments extension configuration lives inside the Tableau workbook and the vendor hosts only license, usage, account and support data.",
+    "modelVersion": "1.0"
+  },
+  "rootGroups": [
+    {
+      "name": "Extension Configuration and Dashboard Data",
+      "description": "What an extension needs at runtime: its configuration persisted in the workbook by the Tableau Extensions API, the worksheet data it reads from the dashboard, and the per-user views and event logs that self-service discovery extensions build on top of it. This data belongs to the customer organisation; the vendor's extension code only processes it in the user's browser or on the customer's extension server.",
+      "subGroups": [
+        {
+          "name": "Extension Configuration and Runtime State",
+          "description": "Settings stored inside the Tableau, Power BI or Looker Studio artefact and the transient dashboard data an extension holds while it runs.",
+          "assets": [
+            {
+              "id": "extension-configuration",
+              "name": "Extension Configuration",
+              "kind": "logical-object",
+              "description": "The configuration of one extension instance placed on one dashboard: which worksheet feeds it, column mapping, pivot and grouping defaults, conditional formatting, formulas, KPI definitions, chart type, hierarchy levels, DashboardGuide step order, theme and language, the extension URL and version pinned in the .trex manifest, and the license context. Persisted through the Tableau Extensions API settings namespace inside the workbook (or as custom-visual properties in a Power BI report and Looker Studio community-visual config), so it travels with the workbook when it is published, downloaded or migrated between servers. Written by the dashboard creator in the configuration UI of Extension Framework and Shared UI Kit (xfrm) and read by every product extension at render time; TrexReplacer (xmgr) rewrites the extension URL part across workbooks during upgrades.",
+              "businessMeaning": "The reusable design work of a dashboard creator: one saved configuration is one interactive dashboard that does not have to be rebuilt as ten variants.",
+              "status": "active",
+              "tags": [
+                "extension-runtime",
+                "dashboard-building"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "medium",
+              "accessScope": "dashboard creators and BI platform administrators of the customer organisation with edit rights on the workbook; read by the extension for every viewer of the published dashboard; never readable by the vendor",
+              "systemOfRecordBrickId": "xfrm",
+              "ownerTeamId": "extension-runtime",
+              "stewardTeamIds": [
+                "tables-and-discovery",
+                "visual-storytelling",
+                "deployment-and-licensing"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "tableau-workbook-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "extension-session-cache",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "extension settings api",
+                  "description": "Save and load of the configuration through the Tableau Extensions API settings namespace (and the Power BI and Looker Studio property equivalents), wrapped by the shared framework so every extension uses the same versioned settings schema and migration path."
+                },
+                {
+                  "type": "file",
+                  "name": "trex manifest and workbook export",
+                  "description": "The .trex manifest and the configuration embedded in the exported .twb/.twbx workbook, which TrexReplacer and ExtensionsManager read and rewrite when extension URLs or versions change."
+                }
+              ],
+              "governance": {
+                "retention": "lives as long as the workbook lives on the customer's Tableau Server or Cloud site; deleted with the workbook; the vendor keeps no copy",
+                "residency": "customer-controlled",
+                "sharingPolicy": "stays inside the customer's BI platform; shared with the vendor only when a customer voluntarily attaches a workbook to a support ticket; never used by the vendor for analytics"
+              }
+            },
+            {
+              "id": "dashboard-data-snapshot",
+              "name": "Dashboard Data Snapshot",
+              "kind": "operational-state",
+              "description": "The rows, columns, filters and parameter values an extension fetches from the underlying worksheet at render time through the Dashboard Data Connector (dcon): the summary or underlying data of the selected sheet, applied filter and parameter state, marks selection, and for SuperTables in server-side row-model mode the paged result set kept on the extension server for millions-of-rows grids. The content is whatever the customer's dashboard shows, from public sales figures to patient-level or payroll data, so the extension treats it as the most sensitive thing it touches: it is held in browser memory or in a short-lived server-side cache, never written to vendor storage, and disappears when the dashboard is closed or the session expires.",
+              "businessMeaning": "The numbers the business user is looking at; every pivot, chart, KPI, export, write-back suggestion and AI request starts from this snapshot.",
+              "status": "active",
+              "tags": [
+                "extension-runtime",
+                "self-service"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "customer-user",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "dpa"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "the authenticated dashboard viewer within the row-level security the customer's BI platform already enforces; the extension never widens access beyond what the worksheet exposes; the vendor has no access in Enterprise deployments and only transient in-memory processing in SaaS",
+              "systemOfRecordBrickId": "dcon",
+              "ownerTeamId": "extension-runtime",
+              "stewardTeamIds": [
+                "security-and-compliance",
+                "tables-and-discovery"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "tableau-workbook-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "extension-session-cache",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "dashboard data connector api",
+                  "description": "Framework-internal interface that reads worksheet summary and underlying data, filter and parameter state and selection through the Tableau Extensions API (and Power BI dataView / Looker Studio data objects), normalises it into one row model and streams pages to the extension UI."
+                },
+                {
+                  "type": "event",
+                  "name": "dashboard state change events",
+                  "description": "Filter changed, parameter changed, selection changed and data refreshed events that make extensions re-render and that trigger write-back pre-fill, KPI recalculation and AI insight refresh."
+                }
+              ],
+              "governance": {
+                "retention": "transient: browser memory for the duration of the dashboard session; server-side row-model pages expire within minutes of the last request; never persisted by the vendor; exports the user triggers become rendered report artifacts under the customer's own retention",
+                "residency": "customer-controlled",
+                "sharingPolicy": "never leaves the customer's environment in Enterprise deployments; in SaaS it is processed transiently by the vendor-hosted extension web app under the data processing agreement and never stored, logged or used for model training"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Self-Service Discovery Data",
+          "description": "Data that self-service tables and discovery extensions create or consume on top of the dashboard: personalised saved views and the process event logs ProcessMining visualises.",
+          "assets": [
+            {
+              "id": "saved-view",
+              "name": "Saved View",
+              "kind": "logical-object",
+              "description": "A named, personalised view of a SuperTables grid saved by a business user: column order and visibility, pivot and grouping state, sort, filters, conditional formatting overrides, formulas and column widths, plus whether the view is private, shared with the dashboard's audience, or the default the creator publishes for everyone. Keyed to the anonymous user token and the extension instance rather than to a named account, so the vendor cannot tie a view to a person. In Enterprise deployments saved views are stored in the customer's extension server database; in SaaS they are stored in the vendor's EU extension-state database keyed by the same anonymous token.",
+              "businessMeaning": "The moment a viewer stops asking for a new dashboard and keeps their own answer: saved views are the most direct evidence of self-service adoption.",
+              "status": "active",
+              "tags": [
+                "self-service",
+                "adoption"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [
+                "customer-user"
+              ],
+              "legalTags": [
+                "dpa"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "the owning viewer for private views; the dashboard's audience for shared views; dashboard creators may publish default views; the vendor's support staff see only view counts, never view contents",
+              "systemOfRecordBrickId": "sptb",
+              "ownerTeamId": "tables-and-discovery",
+              "stewardTeamIds": [
+                "extension-runtime"
+              ],
+              "derivedFromAssetIds": [
+                "extension-configuration",
+                "dashboard-data-snapshot"
+              ],
+              "stores": [
+                {
+                  "storeId": "saas-extension-state-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "wbx-metadata-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "extension-session-cache",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "saved-view api",
+                  "description": "Create, list, apply, share and delete saved views for one extension instance, addressed by anonymous user token and extension configuration id; served by the SaaS extension state service or the customer's self-hosted extension server."
+                }
+              ],
+              "governance": {
+                "retention": "kept while the extension instance exists on the dashboard; private views of tokens inactive for 12 months are purged; deleted with the workbook or on tenant off-boarding; customer-hosted copies follow the customer's own retention",
+                "residency": "customer-controlled-or-eu",
+                "sharingPolicy": "shared only within the dashboard's audience as configured by the user or creator; never shared between customer organisations; the vendor uses only aggregated counts of saved views for adoption analytics"
+              }
+            },
+            {
+              "id": "process-event-log",
+              "name": "Process Event Log",
+              "kind": "event",
+              "description": "The event log ProcessMining Visualizer (prcm) turns into a process graph: one row per case step with case id, activity name, timestamp, resource and optional cost or duration attributes, sourced from the customer's ERP, CRM, ticketing or claims systems into their data warehouse and exposed to the dashboard as a worksheet. The extension discovers variants, bottlenecks, rework loops and throughput times from it. Case ids and resources are frequently pseudonymous identifiers for employees or customers of the customer organisation, so the log is personal data under the customer's controllership; it never leaves the customer's environment and the extension holds only the in-session snapshot it aggregates.",
+              "businessMeaning": "The customer's actual process as executed, in contrast to the process as designed; the basis for operational improvement decisions taken inside the dashboard.",
+              "status": "active",
+              "tags": [
+                "self-service",
+                "process-mining"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "process owners, operations analysts and dashboard creators of the customer organisation within the row-level security of the source worksheet; the vendor has no access",
+              "systemOfRecordBrickId": "prcm",
+              "ownerTeamId": "tables-and-discovery",
+              "stewardTeamIds": [
+                "extension-runtime"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "customer-data-warehouse",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "tableau-workbook-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "extension-session-cache",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "process-event worksheet feed",
+                  "description": "Read of the case-activity-timestamp worksheet through the Dashboard Data Connector, with the column mapping (case, activity, timestamp, resource) stored in the extension configuration."
+                },
+                {
+                  "type": "file",
+                  "name": "process graph export",
+                  "description": "Export of the discovered process graph and variant statistics as image or CSV through the rendering service for reports and presentations."
+                }
+              ],
+              "governance": {
+                "retention": "owned and retained by the customer according to its own data warehouse policy; the extension keeps nothing beyond the dashboard session",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation; exported graphs follow the customer's report distribution rules; never shared with the vendor"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Write-back, Planning and Collaboration Data",
+      "description": "The data that WriteBackExtreme, InputTables and FinanceTables create: forecasts, budgets, targets, corrections, comments and approvals entered inside the dashboard, the schemas that govern them, the audit trail that proves who changed which number when, and the financial statement models built on top. All of it lives in the customer's own databases on the customer's servers or private cloud; WriteBackExtreme is Enterprise-only and installs without internet access, so the vendor never sees a single record.",
+      "subGroups": [
+        {
+          "name": "Write-back Records and Schemas",
+          "description": "Entered values, the schemas that validate them, and the comments and annotations attached to numbers.",
+          "assets": [
+            {
+              "id": "write-back-record",
+              "name": "Write-back Record",
+              "kind": "financial-record",
+              "description": "A value entered or changed inside a dashboard through WriteBackExtreme (wbxt) or InputTables (inpt): forecast and budget amounts per account, cost centre, product and period, targets, price and planning parameters, what-if scenario inputs, data corrections, survey answers, task-list items and approval decisions, each with the dimension keys that pin it to the dashboard row, the entry timestamp, the entering user's identity from SSO, the scenario or version it belongs to and its workflow status (draft, submitted, approved, rejected, locked). Rows are written by the Write-back Data Store and Database Connectors (wbdb) to tables in the customer's own SQL Server, PostgreSQL, MySQL, Oracle or Snowflake database, in the schema the customer configured, so the values flow straight back into the customer's data model and the next dashboard refresh. Financial plans, headcount and pricing assumptions make this the most business-sensitive asset the products handle.",
+              "businessMeaning": "The plan, the correction or the decision the business made in the dashboard instead of in a spreadsheet: the reason customers buy WriteBackExtreme.",
+              "status": "active",
+              "tags": [
+                "write-back",
+                "planning"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "planners, budget owners and approvers of the customer organisation according to the write-back role model and the customer's database grants; read by the customer's BI platform for the next refresh; the vendor has no access",
+              "systemOfRecordBrickId": "wbdb",
+              "ownerTeamId": "write-back-and-planning",
+              "stewardTeamIds": [
+                "security-and-compliance"
+              ],
+              "derivedFromAssetIds": [
+                "write-back-schema",
+                "dashboard-data-snapshot"
+              ],
+              "stores": [
+                {
+                  "storeId": "customer-target-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "wbx-metadata-database",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "customer-data-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "write-back rest api",
+                  "description": "Authenticated REST API of the self-hosted WriteBackExtreme server for creating, updating, bulk-importing and reading write-back records per schema, used by the extension UI, by customer integrations and by the workflow engine."
+                },
+                {
+                  "type": "event",
+                  "name": "write-back committed events",
+                  "description": "Record created, updated, submitted, approved and rolled-back events emitted by the write-back server to the audit trail, to notification hooks and to optional customer webhooks that trigger extract refreshes."
+                },
+                {
+                  "type": "file",
+                  "name": "bulk import and export",
+                  "description": "CSV and Excel bulk import of planning data into a schema and export of a scenario for offline review, both governed by the same role model."
+                }
+              ],
+              "governance": {
+                "retention": "the customer decides: typically kept for the full planning history so prior forecasts remain comparable, with rollback versions kept per the customer's audit policy; the product ships default retention settings but never deletes on its own",
+                "residency": "customer-controlled",
+                "sharingPolicy": "strictly internal to the customer organisation; visible only through the customer's dashboards and database grants; never transmitted to the vendor; WriteBackExtreme runs without internet access so no telemetry carries record content"
+              }
+            },
+            {
+              "id": "write-back-schema",
+              "name": "Write-back Schema",
+              "kind": "master-data",
+              "description": "The governed definition of what may be written back: for each write-back configuration the target database connection, table and column mapping, field types and validation rules, allowed values and lookup lists, required fields, default values, dynamic columns for InputTables, key dimensions that link a record to a dashboard row, the scenario and version model, locking rules per period, and the role assignments that decide who may enter, submit, approve or administer. Created by the dashboard creator or IT administrator in the WriteBackExtreme admin console and stored in the WriteBackExtreme metadata database on the customer's server; the schema is what makes write-back governed rather than a free-form spreadsheet.",
+              "businessMeaning": "The rules of the planning process encoded once, so every entered number is validated, attributable and lands in the right place.",
+              "status": "active",
+              "tags": [
+                "write-back",
+                "governance"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "high",
+              "accessScope": "write-back administrators and dashboard creators of the customer organisation; database connection secrets stored encrypted on the customer server and visible to IT administrators only",
+              "systemOfRecordBrickId": "wbdb",
+              "ownerTeamId": "write-back-and-planning",
+              "stewardTeamIds": [
+                "deployment-and-licensing"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "wbx-metadata-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "customer-target-database",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "write-back schema admin api",
+                  "description": "Admin API and console for defining schemas, connections, validation rules, dynamic columns, roles and period locks, and for generating or migrating the target tables in the customer database."
+                },
+                {
+                  "type": "file",
+                  "name": "schema export and import",
+                  "description": "JSON export of a schema for promotion from test to production servers and for version control by the customer's IT team."
+                }
+              ],
+              "governance": {
+                "retention": "kept with version history while the write-back configuration exists so historical records can be interpreted against the schema they were entered under; removed by the customer when a configuration is retired",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation; may be shared with the vendor's support staff as an anonymised export when troubleshooting; connection secrets are never exported"
+              }
+            },
+            {
+              "id": "comment-and-annotation",
+              "name": "Comment and Annotation",
+              "kind": "logical-object",
+              "description": "Free-text comments, cell-level notes, explanations of variances, @-mentions, attachments and status flags that planners and reviewers attach to a number, a row or a dashboard through InputTables (inpt) and the write-back workflow (wbwf): who wrote it, when, on which record and dimension keys, in which thread, and whether it was resolved. Comments frequently name colleagues and explain business decisions, so they are personal data of the customer's employees and confidential business content; they are stored next to the write-back records in the customer's own database and surface in the dashboard, in approval notifications and in exported reports.",
+              "businessMeaning": "The conversation about the numbers, captured where the numbers live instead of in email threads and spreadsheet margins.",
+              "status": "active",
+              "tags": [
+                "write-back",
+                "collaboration"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "users of the customer organisation with access to the underlying dashboard row and write-back role; visible to approvers in the workflow; the vendor has no access",
+              "systemOfRecordBrickId": "wbwf",
+              "ownerTeamId": "write-back-and-planning",
+              "stewardTeamIds": [
+                "tables-and-discovery"
+              ],
+              "derivedFromAssetIds": [
+                "write-back-schema"
+              ],
+              "stores": [
+                {
+                  "storeId": "customer-target-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "wbx-metadata-database",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "comment api",
+                  "description": "Create, reply, resolve and list comments per record or dashboard row, served by the self-hosted write-back server and rendered inline in InputTables and SuperTables cells."
+                },
+                {
+                  "type": "event",
+                  "name": "comment and mention notifications",
+                  "description": "Events raised when a user is mentioned or a thread on their record is resolved, delivered through the messaging gateway to email, Teams or Slack."
+                }
+              ],
+              "governance": {
+                "retention": "follows the retention of the record it annotates; the customer can purge comments of departed employees while keeping the numbers; the product never deletes on its own",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation; included in exports and scheduled reports only when the report author enables comment columns; never transmitted to the vendor"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Audit Trail and Financial Models",
+          "description": "The immutable record of every change and the financial statement structures built from dashboard and write-back data.",
+          "assets": [
+            {
+              "id": "write-back-audit-log",
+              "name": "Write-back Audit Log",
+              "kind": "event",
+              "description": "The append-only trail of every write-back action: who (SSO identity and role) changed which field on which record from which value to which value, when, from which dashboard and extension version, through the UI, bulk import or API, plus workflow transitions (submitted, approved, rejected, locked, rolled back), comment events and administrative actions on schemas, roles and connections. Produced by the Write-back Workflow, Approvals and Audit Trail (wbwf) service and written to audit tables in the customer's own database, it is what lets a planner roll back a version, lets an internal auditor answer 'who changed this number and when', and gives the security reviewer the evidence that write-back is governed. Retained under the customer's audit policy and never accessible to the vendor.",
+              "businessMeaning": "Proof to auditors and management that every number in the plan is attributable and reversible; the difference between governed write-back and a shared spreadsheet.",
+              "status": "active",
+              "tags": [
+                "write-back",
+                "audit",
+                "compliance"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "write-back administrators, internal auditors and security reviewers of the customer organisation; append-only for the write-back server; not editable through any product UI; the vendor has no access",
+              "systemOfRecordBrickId": "wbwf",
+              "ownerTeamId": "write-back-and-planning",
+              "stewardTeamIds": [
+                "security-and-compliance"
+              ],
+              "derivedFromAssetIds": [
+                "write-back-record",
+                "comment-and-annotation",
+                "identity-and-role"
+              ],
+              "stores": [
+                {
+                  "storeId": "customer-target-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "wbx-metadata-database",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "customer-data-warehouse",
+                  "role": "archive"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "audit trail query api",
+                  "description": "Read-only API and admin-console view for filtering the audit trail by record, user, period and action, and for driving rollback of a version to a prior state."
+                },
+                {
+                  "type": "event",
+                  "name": "audit events",
+                  "description": "Append-only audit events emitted for every write-back, workflow and administrative action, optionally forwarded to the customer's SIEM."
+                },
+                {
+                  "type": "file",
+                  "name": "audit export",
+                  "description": "CSV export of the trail for internal and external audits and for inclusion in security-review evidence packs."
+                }
+              ],
+              "governance": {
+                "retention": "append-only; kept for the audit retention period the customer defines for its financial planning data (commonly the full life of the plan plus the customer's statutory audit window); never deleted by the product",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation and its auditors; may be forwarded to the customer's SIEM; never transmitted to the vendor; referenced but not copied in the vendor's security evidence"
+              }
+            },
+            {
+              "id": "financial-statement-model",
+              "name": "Financial Statement Model",
+              "kind": "master-data",
+              "description": "The structure FinanceTables (fint) uses to turn dashboard rows into a P&L, balance sheet, cash-flow, budget-versus-actual or management statement: the account hierarchy and roll-up rules, sign conventions, subtotal and calculated lines (gross margin, EBITDA, variance and variance percentage), period and comparison definitions (actual, budget, forecast, prior year), currency and scaling, number formats and the layout template. The model references write-back scenarios for budgets and forecasts and the dashboard data snapshot for actuals; it is configured by the finance dashboard creator, stored with the extension configuration in the workbook and, for reusable hierarchies, in the customer's data warehouse.",
+              "businessMeaning": "The finance team's chart of accounts and reporting logic applied inside the dashboard, so management statements come from live data rather than a monthly spreadsheet build.",
+              "status": "active",
+              "tags": [
+                "finance",
+                "planning"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "high",
+              "accessScope": "finance dashboard creators and FP&A analysts of the customer organisation; the resulting statements are visible to whoever may see the dashboard; the vendor has no access",
+              "systemOfRecordBrickId": "fint",
+              "ownerTeamId": "write-back-and-planning",
+              "stewardTeamIds": [
+                "visual-storytelling"
+              ],
+              "derivedFromAssetIds": [
+                "dashboard-data-snapshot",
+                "write-back-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "tableau-workbook-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "customer-data-warehouse",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "statement model api",
+                  "description": "Framework settings interface for defining account hierarchies, roll-up rules, calculated lines and comparison periods, and for importing a hierarchy from a worksheet."
+                },
+                {
+                  "type": "file",
+                  "name": "statement export",
+                  "description": "Excel, PDF and VizSlides export of the rendered statement with formatting preserved, produced by the rendering service."
+                }
+              ],
+              "governance": {
+                "retention": "kept with the workbook and versioned with the extension configuration; the customer keeps historical models to reproduce past statements; the vendor keeps no copy",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation; rendered statements distributed under the customer's report distribution rules; never shared with the vendor"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Distribution, Adoption and AI Data",
+      "description": "Data created when dashboards leave the BI platform and reach people where they work, when users are guided and measured, and when AI services are asked for help: schedules, delivery logs and rendered reports of MailScheduler, onboarding overlays and usage events of DashboardGuide and DashboardUsage, and the AI request log. MailScheduler is Enterprise-only, so schedules, logs and reports live on the customer's servers, file shares and mail systems; usage events and AI logs are split between customer-hosted and vendor-hosted stores depending on the deployment model.",
+      "subGroups": [
+        {
+          "name": "Report Distribution",
+          "description": "What gets sent, to whom, when, and what was actually delivered.",
+          "assets": [
+            {
+              "id": "report-schedule",
+              "name": "Report Schedule",
+              "kind": "master-data",
+              "description": "A MailScheduler (mlsc) distribution definition: the workbook and views to render, output formats (PDF, PNG, CSV, Excel), page and layout options, the recipient list with per-recipient filter values and parameters so each person receives only their region, cost centre or customer set, subject and body templates with placeholders, the delivery channel (email, Microsoft Teams, Slack, network drive, REST callback), the cron-style timing or data-driven trigger (send when a threshold is crossed or an extract refreshes), owner, approval state and enabled flag. Recipient lists contain names, email addresses and Teams or Slack identities of executives and external stakeholders who may not have a Tableau licence. Stored in the MailScheduler server database on the customer's infrastructure.",
+              "businessMeaning": "The promise that the right report reaches the right person at the right time without anyone logging in to the BI platform.",
+              "status": "active",
+              "tags": [
+                "distribution",
+                "reporting"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "report owners and BI platform administrators of the customer organisation; recipients see only their own deliveries; the vendor has no access",
+              "systemOfRecordBrickId": "mlsc",
+              "ownerTeamId": "distribution-and-adoption",
+              "stewardTeamIds": [
+                "deployment-and-licensing"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "mailscheduler-server-database",
+                  "role": "system-of-record"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "mailscheduler rest api",
+                  "description": "Authenticated REST API of the self-hosted MailScheduler server to create, update, enable, run and list schedules and recipient lists, used by the admin UI and by customer automation that maintains recipient lists from HR or CRM systems."
+                },
+                {
+                  "type": "file",
+                  "name": "recipient list import",
+                  "description": "CSV import of recipients with per-recipient filter values, and a data-driven mode that reads the recipient list from a worksheet at run time."
+                }
+              ],
+              "governance": {
+                "retention": "kept while the schedule is active; disabled schedules and their recipient lists removed by the customer per its own policy; recipients removed on request of the customer's privacy officer",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation; recipient identities passed only to the customer's own mail server, Teams or Slack tenant; never transmitted to the vendor"
+              }
+            },
+            {
+              "id": "report-delivery-log",
+              "name": "Report Delivery Log",
+              "kind": "event",
+              "description": "One entry per attempted delivery of a scheduled report by the Messaging Delivery Gateway (msgd): schedule id, run id, recipient, channel, applied filter values, rendered artifact reference, render duration, delivery timestamp, provider response (accepted, bounced, rejected by Teams or Slack, file-share write failed), retry count and final status, plus schedule-level run summaries and administrator actions on schedules. It is the audit trail MailScheduler advertises: it proves which numbers went to whom and when, drives the on-time delivery and report open metrics, and feeds alerting when a delivery fails. Stored in the MailScheduler server database on the customer's infrastructure.",
+              "businessMeaning": "Evidence of delivery for executives and auditors, and the operational signal that keeps report distribution reliable.",
+              "status": "active",
+              "tags": [
+                "distribution",
+                "audit"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "report owners and BI platform administrators of the customer organisation; read-only; the vendor has no access",
+              "systemOfRecordBrickId": "msgd",
+              "ownerTeamId": "distribution-and-adoption",
+              "stewardTeamIds": [
+                "security-and-compliance"
+              ],
+              "derivedFromAssetIds": [
+                "report-schedule",
+                "rendered-report-artifact"
+              ],
+              "stores": [
+                {
+                  "storeId": "mailscheduler-server-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "customer-data-warehouse",
+                  "role": "archive"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "delivery log api",
+                  "description": "Query interface for run history, per-recipient delivery status and failure reasons, used by the MailScheduler admin console and by customer monitoring."
+                },
+                {
+                  "type": "event",
+                  "name": "delivery status events",
+                  "description": "Delivered, bounced and failed events raised per recipient, used for retries, administrator alerts and optional forwarding to the customer's monitoring stack."
+                }
+              ],
+              "governance": {
+                "retention": "kept for the audit window the customer configures (default 12 months of delivery history), then purged by the MailScheduler server; artifact references outlive the artifacts they point to",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation; never transmitted to the vendor; anonymised counts may be shared by the customer in success reviews"
+              }
+            },
+            {
+              "id": "rendered-report-artifact",
+              "name": "Rendered Report Artifact",
+              "kind": "document",
+              "description": "A file produced by the Dashboard Rendering and Export Service (rndr) from a dashboard or extension: the PDF, PNG, CSV or Excel output of a MailScheduler run filtered for one recipient, the Excel export a viewer triggers from SuperTables, the PowerPoint deck VizSlides (vzsl) generates, or a FinanceTables statement export, with metadata about source workbook, filters, format, size, generating user or schedule and creation time. The content is a frozen copy of whatever the dashboard showed, so it inherits the sensitivity of the dashboard data. Rendered on the customer's extension or MailScheduler server, placed on the customer's network drive or attached to a message, and cached briefly for retries; the vendor stores none of it.",
+              "businessMeaning": "The numbers taken out of the dashboard into an inbox, a meeting or a slide: the format executives and Excel-minded users actually consume.",
+              "status": "active",
+              "tags": [
+                "distribution",
+                "export"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the addressed recipient or the exporting user; administrators of the customer's file share; the vendor has no access",
+              "systemOfRecordBrickId": "rndr",
+              "ownerTeamId": "distribution-and-adoption",
+              "stewardTeamIds": [
+                "visual-storytelling"
+              ],
+              "derivedFromAssetIds": [
+                "dashboard-data-snapshot",
+                "report-schedule"
+              ],
+              "stores": [
+                {
+                  "storeId": "customer-network-file-share",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "enterprise-extension-server-storage",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "render and export api",
+                  "description": "Internal rendering interface that takes a workbook, view, filter set and format and returns a PDF, PNG, CSV, Excel or PowerPoint file, used by MailScheduler, SuperTables export, VizSlides and FinanceTables."
+                },
+                {
+                  "type": "file",
+                  "name": "delivered report files",
+                  "description": "The files written to network drives, attached to emails or posted to Teams and Slack, named and foldered by placeholder rules in the schedule."
+                }
+              ],
+              "governance": {
+                "retention": "temporary render cache purged within 24 hours on the customer's server; delivered files live under the customer's file-share and mailbox retention; the vendor keeps nothing",
+                "residency": "customer-controlled",
+                "sharingPolicy": "shared with the addressed recipients only; onward sharing governed by the customer's information classification; never transmitted to the vendor"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Guidance, Adoption and AI Services",
+          "description": "Onboarding content, usage telemetry and AI request logs that help creators guide users and prove adoption.",
+          "assets": [
+            {
+              "id": "dashboard-usage-event",
+              "name": "Dashboard Usage Event",
+              "kind": "event",
+              "description": "A telemetry event recorded by DashboardUsage Analytics (dbus) and the shared framework when someone interacts with a dashboard extension: dashboard and extension instance, event type (view opened, filter applied, pivot changed, drill-down, export, saved view applied, guide step completed, write-back submitted), timestamp, session id and the same anonymous unique user token the license service uses, plus coarse client context (browser, BI platform and version). It contains no names, no email addresses and no dashboard data values. In Enterprise deployments the events are written to the customer's extension server database or data warehouse for the BI platform lead's adoption dashboards; in SaaS they are written to the vendor's EU extension-state database, aggregated into adoption analytics per customer in the product analytics warehouse, and shown back to the customer as adoption evidence.",
+              "businessMeaning": "The evidence BI platform leads use to justify the renewal and dashboard creators use to prove a dashboard is used: monthly active users, adoption rate and self-service answer rate come from here.",
+              "status": "active",
+              "tags": [
+                "adoption",
+                "analytics"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [
+                "customer-user"
+              ],
+              "legalTags": [
+                "dpa"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "BI platform leads and dashboard creators of the customer organisation for their own tenant's events; the vendor's product and customer-success teams for SaaS tenants in aggregated form",
+              "systemOfRecordBrickId": "dbus",
+              "ownerTeamId": "distribution-and-adoption",
+              "stewardTeamIds": [
+                "extension-runtime",
+                "support-and-enablement"
+              ],
+              "derivedFromAssetIds": [
+                "extension-configuration",
+                "usage-token-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "saas-extension-state-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "customer-data-warehouse",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "product-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "event",
+                  "name": "usage event stream",
+                  "description": "Batched, anonymised interaction events emitted by the framework from the browser to the customer's extension server (Enterprise) or the vendor's SaaS collector; opt-out per tenant."
+                },
+                {
+                  "type": "api",
+                  "name": "adoption analytics api",
+                  "description": "Aggregated adoption metrics per dashboard, extension and period (active users, sessions, feature usage, guide completion) served to the DashboardUsage dashboard and to the customer-success account-health view."
+                }
+              ],
+              "governance": {
+                "retention": "raw events kept 13 months so rolling 12-month active-user views are complete, then reduced to monthly aggregates; customer-hosted copies follow the customer's own policy; SaaS raw events deleted on tenant off-boarding",
+                "residency": "customer-controlled-or-eu",
+                "sharingPolicy": "each customer sees only its own tenant's events and aggregates; the vendor uses SaaS aggregates for product analytics and account health under the data processing agreement; never shared between customers; never contains dashboard data values"
+              }
+            },
+            {
+              "id": "dashboard-guide-content",
+              "name": "Dashboard Guide Content",
+              "kind": "document",
+              "description": "The authored onboarding content DashboardGuide (dbgd) overlays on a dashboard: ordered steps with anchored highlights, titles and explanatory text, images, video links, callouts and tooltips, triggers (first visit, on demand, after a filter change), audience targeting per Tableau group, language variants and completion tracking settings. Authored by the dashboard creator, stored with the extension configuration in the workbook and, for shared step libraries and media, in the SaaS extension-state database or the customer's extension server. The content itself is business documentation rather than data, but completion events feed dashboard usage analytics.",
+              "businessMeaning": "The guidance that turns a published dashboard into one people actually understand and use, without a training session for every release.",
+              "status": "active",
+              "tags": [
+                "adoption",
+                "onboarding"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "medium",
+              "accessScope": "dashboard creators of the customer organisation for authoring; every viewer of the dashboard for display; the vendor's SaaS hosting sees the content only as an opaque stored blob",
+              "systemOfRecordBrickId": "dbgd",
+              "ownerTeamId": "distribution-and-adoption",
+              "stewardTeamIds": [
+                "extension-runtime"
+              ],
+              "derivedFromAssetIds": [
+                "extension-configuration"
+              ],
+              "stores": [
+                {
+                  "storeId": "tableau-workbook-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "saas-extension-state-database",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "enterprise-extension-server-storage",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "guide content api",
+                  "description": "Authoring and playback interface for guide steps, media references, audience targeting and completion state, backed by the framework settings API and the extension-state service."
+                },
+                {
+                  "type": "file",
+                  "name": "guide template export",
+                  "description": "JSON export and import of guides for reuse across workbooks and for the vendor's gallery of guide templates."
+                }
+              ],
+              "governance": {
+                "retention": "lives with the workbook; shared libraries kept while the tenant is active and deleted on off-boarding; the customer keeps its own copies in Enterprise deployments",
+                "residency": "customer-controlled-or-eu",
+                "sharingPolicy": "internal to the customer organisation; customers may voluntarily contribute anonymised guide templates to the vendor gallery; never shared between customers otherwise"
+              }
+            },
+            {
+              "id": "ai-request-log",
+              "name": "AI Request Log",
+              "kind": "event",
+              "description": "The record of each call to the AI Insight and Generative Fill Services (aiin): which extension and feature asked (generative fill in SuperTables, narrative insight in PowerKPIs, AI-assisted configuration, write-back validation suggestion), the anonymous user token, timestamp, model and provider used, token counts, latency, the prompt template version, whether the user accepted or rejected the suggestion, and safety and error outcomes. Prompt and response bodies contain excerpts of the dashboard data snapshot, so by default only metadata is logged; content is retained for a short debugging window only with explicit tenant opt-in. In Enterprise deployments the log stays on the customer's server and the customer chooses the model endpoint (their own Azure OpenAI or a private model); in SaaS the vendor's AI gateway logs metadata in the EU and forwards content to the model provider under a no-retention, no-training contract.",
+              "businessMeaning": "The audit and quality signal for AI features: what the AI was asked, whether users trusted it, and what it cost, without turning customer data into a training set.",
+              "status": "active",
+              "tags": [
+                "ai",
+                "audit"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "customer-user",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr",
+                "dpa"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the customer's AI and security administrators for their tenant; the vendor's AI enablement team sees metadata only for SaaS tenants; content logs visible only during an opted-in debugging window",
+              "systemOfRecordBrickId": "aiin",
+              "ownerTeamId": "ai-enablement",
+              "stewardTeamIds": [
+                "security-and-compliance",
+                "extension-runtime"
+              ],
+              "derivedFromAssetIds": [
+                "dashboard-data-snapshot"
+              ],
+              "stores": [
+                {
+                  "storeId": "ai-gateway-log-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "enterprise-extension-server-storage",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "product-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "ai gateway api",
+                  "description": "Internal gateway through which extensions request completions, insights and fills; enforces tenant model settings, prompt templates, data-minimisation rules and logging policy, and records the request metadata."
+                },
+                {
+                  "type": "event",
+                  "name": "ai suggestion feedback events",
+                  "description": "Accepted, edited and rejected events for AI suggestions, used to measure feature quality and to tune prompt templates without storing content."
+                }
+              ],
+              "governance": {
+                "retention": "metadata kept 12 months for cost, quality and audit purposes; prompt and response content, when opted in, kept a maximum of 30 days; model providers contractually retain nothing; customer-hosted logs follow the customer's policy",
+                "residency": "customer-controlled-or-eu",
+                "sharingPolicy": "request content shared only with the model provider chosen by the tenant under a no-retention, no-training agreement; metadata aggregated per tenant for the vendor's product analytics; never shared between customers"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Licensing, Accounts and Deployment Data",
+      "description": "The data the vendor itself is responsible for: license entitlements and the anonymous usage tokens that meter active users over a rolling 12 months, subscriptions and invoices, customer accounts in the Enterprise Customer Portal, the identities and roles the extensions rely on, the release artifacts customers download, and the record of where each tenant runs which version. This is the only category the vendor hosts for every customer, SaaS or Enterprise, and it is deliberately kept free of dashboard content.",
+      "subGroups": [
+        {
+          "name": "Licensing and Usage Metering",
+          "description": "Plans, entitlements, anonymous active-user tokens, subscriptions and invoices.",
+          "assets": [
+            {
+              "id": "license-entitlement",
+              "name": "License Entitlement",
+              "kind": "master-data",
+              "description": "What a customer organisation is allowed to run: the plan (Free 1 to 5 users, Professional up to 100 users, Enterprise unlimited; student licences), the products and extensions covered (WriteBackExtreme and MailScheduler are Enterprise-only), the deployment model (SaaS or on-premises), the number of licensed active users, the contract term and renewal date, the licence keys issued for self-hosted servers with their bound host fingerprints, trial status and expiry (30-day WriteBackExtreme trial), the supported Tableau licence type (OEM, Core, Enterprise), feature flags, SLA tier and the current active-user count computed from usage token records against the plan limit. Maintained by the License Service, Usage Metering and Billing (lics) and surfaced to customers in the Enterprise Customer Portal (eprt); the extensions check it at load time (online for SaaS, via the local licence key for Enterprise).",
+              "businessMeaning": "The commercial contract in machine-readable form: it decides what runs, what is over the seat limit, and what is up for renewal.",
+              "status": "active",
+              "tags": [
+                "licensing",
+                "commercial"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [],
+              "securityCriticality": "critical",
+              "accessScope": "the vendor's licensing, sales and customer-success staff; the customer's BI platform lead and IT administrator for their own organisation through the portal; partners for the accounts they registered",
+              "systemOfRecordBrickId": "lics",
+              "ownerTeamId": "deployment-and-licensing",
+              "stewardTeamIds": [
+                "growth-and-partners",
+                "support-and-enablement"
+              ],
+              "derivedFromAssetIds": [
+                "usage-token-record",
+                "subscription-and-invoice"
+              ],
+              "stores": [
+                {
+                  "storeId": "license-service-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "customer-portal-database",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "extensionsmanager-local-config",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "product-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "license validation api",
+                  "description": "Called by SaaS-hosted extensions at load time and by ExtensionsManager during activation to validate the entitlement, return feature flags and report the active-user count; Enterprise servers validate a signed licence key offline."
+                },
+                {
+                  "type": "api",
+                  "name": "entitlement management api",
+                  "description": "Back-office and portal interface for creating plans, issuing and revoking licence keys, extending trials and adjusting seat limits."
+                },
+                {
+                  "type": "event",
+                  "name": "entitlement change events",
+                  "description": "Plan upgraded, seat limit approached or exceeded, trial expiring, renewal due and key revoked events consumed by billing, customer success and the customer portal."
+                }
+              ],
+              "governance": {
+                "retention": "kept for the contract lifetime plus 7 years as part of the vendor's commercial and fiscal records; expired trial entitlements without conversion deleted after 24 months",
+                "residency": "eu",
+                "sharingPolicy": "visible to the customer organisation for its own entitlement and to the registering partner; never shared with other customers; seat counts derived from anonymous tokens only, never per-person lists"
+              }
+            },
+            {
+              "id": "usage-token-record",
+              "name": "Usage Token Record",
+              "kind": "operational-state",
+              "description": "The anonymous unique token that represents one person interacting with a published dashboard that contains an extension, whether creator, explorer or viewer: a random identifier generated by the extension framework in the user's browser, the customer tenant it belongs to, the first-seen and last-seen timestamps, the extensions and BI platforms it was seen on, and monthly activity flags. No name, email, IP address or Tableau username is stored, which is what lets the vendor meter active users for pricing without processing personal data. A token inactive for 12 months drops out of the rolling 12-month active-user count and is purged. Enterprise servers compute the count locally and report only the aggregate through ExtensionsManager (or by the customer's own declaration when the deployment has no internet access).",
+              "businessMeaning": "The pricing meter: seats are counted as anonymous active people over a rolling year, which is both the revenue basis and a privacy design choice.",
+              "status": "active",
+              "tags": [
+                "licensing",
+                "metering"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [
+                "customer-user"
+              ],
+              "legalTags": [
+                "dpa"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the license service itself; aggregated counts to the vendor's licensing and customer-success staff and to the customer's BI platform lead; individual tokens are never exposed in any UI",
+              "systemOfRecordBrickId": "lics",
+              "ownerTeamId": "deployment-and-licensing",
+              "stewardTeamIds": [
+                "extension-runtime",
+                "security-and-compliance"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "license-service-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "usage-metering-event-stream",
+                  "role": "event-source"
+                },
+                {
+                  "storeId": "extensionsmanager-local-config",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "product-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "event",
+                  "name": "usage heartbeat",
+                  "description": "Lightweight, batched heartbeat sent by the framework containing the token, tenant and extension id; Enterprise servers collect it locally and forward only the aggregate active-user count."
+                },
+                {
+                  "type": "api",
+                  "name": "active-user count api",
+                  "description": "Returns the rolling 12-month active-user count per tenant, per extension and per month for the license entitlement, the customer portal and adoption analytics."
+                }
+              ],
+              "governance": {
+                "retention": "a token is deleted after 12 months without activity; monthly aggregate counts kept 7 years as the basis for invoiced seats",
+                "residency": "customer-controlled-or-eu",
+                "sharingPolicy": "aggregates shared with the customer organisation and, for partner-managed accounts, with the partner; raw tokens never shared or exported; never joined with named accounts or support tickets"
+              }
+            },
+            {
+              "id": "subscription-and-invoice",
+              "name": "Subscription and Invoice",
+              "kind": "financial-record",
+              "description": "The commercial record behind an entitlement: the subscription with plan, term, price, currency, billing frequency (annual for Professional; annual or multi-year for Enterprise), payment method (card for Professional; bank transfer and purchase orders for Enterprise), partner attribution and margin split, discount and student-licence flags, the purchase order reference and vendor onboarding data supplied by the customer's procurement, the issued invoices and credit notes with VAT treatment, payment status and dunning state, and the renewal quote. Created through the website checkout (webt) or the sales team, maintained by the License Service, Usage Metering and Billing (lics) and mirrored to the vendor's CRM and invoicing system.",
+              "businessMeaning": "Recurring subscription revenue per organisation and the paper trail procurement and finance on both sides need.",
+              "status": "active",
+              "tags": [
+                "commercial",
+                "finance"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr",
+                "fiscal-retention-nl"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the vendor's finance, sales and customer-success staff; the customer's procurement and BI platform lead through the portal for their own invoices; partners for deals they registered; card data held only by the payment provider",
+              "systemOfRecordBrickId": "lics",
+              "ownerTeamId": "deployment-and-licensing",
+              "stewardTeamIds": [
+                "growth-and-partners"
+              ],
+              "derivedFromAssetIds": [
+                "license-entitlement",
+                "customer-account"
+              ],
+              "stores": [
+                {
+                  "storeId": "license-service-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "crm-and-invoicing-saas",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "customer-portal-database",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "subscription and billing api",
+                  "description": "Checkout, plan change, renewal-quote and invoice retrieval interface used by the website, the customer portal and the sales back office; payment tokens handled by the payment provider."
+                },
+                {
+                  "type": "file",
+                  "name": "invoice and purchase-order documents",
+                  "description": "PDF invoices, credit notes and received purchase orders exchanged with customer procurement and stored with the invoicing system."
+                },
+                {
+                  "type": "event",
+                  "name": "billing events",
+                  "description": "Subscription created, renewed, upgraded, cancelled, invoice issued and payment received events consumed by the license service, CRM and customer success."
+                }
+              ],
+              "governance": {
+                "retention": "7 years after the fiscal year of the invoice under Dutch fiscal retention; invoices immutable once issued, corrections only by credit note; contact persons removed from closed accounts after the retention period",
+                "residency": "eu",
+                "sharingPolicy": "shared with the invoiced customer, the registering partner for its own deals, the vendor's accountant and payment provider; never shared between customers"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Accounts, Identity and Deployments",
+          "description": "Customer organisations and their users in the vendor's portal, the identities and roles the extensions authorise against, the release artifacts customers download, and where each tenant runs which version.",
+          "assets": [
+            {
+              "id": "customer-account",
+              "name": "Customer Account",
+              "kind": "master-data",
+              "description": "A customer organisation and its named contacts in the Enterprise Customer Portal (eprt) and the vendor's CRM: company name, industry, country and region, BI platforms in use, plan and deployment model, the named users of the portal (BI platform leads, IT administrators, procurement and security contacts) with email addresses, portal roles and login credentials, the assigned customer success manager and partner, notification preferences, the licence keys and downloads the account may access, and the account-health indicators customer success derives from active-user trends, ticket volume and renewal proximity. Free-plan and trial signups from the website (webt) start here; Enterprise accounts are enriched by sales and the partner network.",
+              "businessMeaning": "Who the customer is and who at the customer the vendor talks to: the anchor for licences, invoices, support and renewals.",
+              "status": "active",
+              "tags": [
+                "accounts",
+                "customer-success"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the vendor's sales, customer-success, support and licensing staff; each customer's own portal users for their organisation; partners for the accounts they manage; credentials stored hashed and never visible",
+              "systemOfRecordBrickId": "eprt",
+              "ownerTeamId": "deployment-and-licensing",
+              "stewardTeamIds": [
+                "support-and-enablement",
+                "growth-and-partners"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "customer-portal-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "crm-and-invoicing-saas",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "helpdesk-saas",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "product-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "customer account api",
+                  "description": "Portal and back-office interface for organisation and user management, self-service signup, invitation of colleagues, role assignment and access to licence keys and downloads."
+                },
+                {
+                  "type": "event",
+                  "name": "account lifecycle events",
+                  "description": "Signed up, trial started, converted, user added or removed, churned and health-score changed events consumed by CRM, customer success and the license service."
+                }
+              ],
+              "governance": {
+                "retention": "kept while the organisation holds a licence and 7 years after the last invoice as part of commercial records; free-plan accounts inactive for 24 months deleted after notice; portal users removed 90 days after deactivation; erasure requests honoured except for data locked by fiscal retention",
+                "residency": "eu",
+                "sharingPolicy": "internal to the vendor; the managing partner sees its own accounts; synchronised to the CRM, invoicing and helpdesk systems under processor agreements; never sold or shared with other customers"
+              }
+            },
+            {
+              "id": "identity-and-role",
+              "name": "Identity and Role",
+              "kind": "master-data",
+              "description": "The identities and authorisations the extensions and self-hosted servers rely on: for Enterprise deployments the SSO configuration (SAML or OpenID Connect against the customer's Microsoft Entra ID, Okta, ADFS or Tableau Server identity), the mapping from identity-provider groups to write-back and MailScheduler roles (viewer, contributor, approver, administrator) managed by Identity, SSO and Role Management (idnt), service accounts and API keys for integrations, and session records; for SaaS deployments the trust in the Tableau session established through the Extensions API and the extension's own role settings. Roles decide who may enter, approve, administer or schedule; identities in the audit trail come from here. The identity provider itself stays with the customer; the vendor's servers store only the configuration, group mappings and API keys, on the customer's infrastructure in Enterprise deployments.",
+              "businessMeaning": "Who is allowed to do what inside the extensions, tied to the customer's own identity provider so security reviewers do not have to trust a second user directory.",
+              "status": "active",
+              "tags": [
+                "identity",
+                "security"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-user"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "IT administrators and write-back administrators of the customer organisation; the extension servers for authorisation decisions; the vendor has no access to customer identities in Enterprise deployments; API keys and client secrets stored encrypted",
+              "systemOfRecordBrickId": "idnt",
+              "ownerTeamId": "deployment-and-licensing",
+              "stewardTeamIds": [
+                "write-back-and-planning",
+                "security-and-compliance"
+              ],
+              "derivedFromAssetIds": [
+                "customer-account"
+              ],
+              "stores": [
+                {
+                  "storeId": "customer-identity-provider",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "wbx-metadata-database",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "mailscheduler-server-database",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "sso and role admin api",
+                  "description": "Admin-console interface for configuring SAML and OpenID Connect providers, mapping groups to roles, issuing and rotating API keys and reviewing sessions on self-hosted servers."
+                },
+                {
+                  "type": "event",
+                  "name": "authentication and authorisation events",
+                  "description": "Login, logout, role change and denied-access events written to the audit trail and optionally forwarded to the customer's SIEM."
+                }
+              ],
+              "governance": {
+                "retention": "role mappings kept while the deployment exists; session records and authentication events kept per the customer's security log policy (commonly 12 months); user identities live in the customer's identity provider and are never copied by the vendor",
+                "residency": "customer-controlled",
+                "sharingPolicy": "internal to the customer organisation; never transmitted to the vendor in Enterprise deployments; in SaaS the extension relies on the Tableau session and stores no identities"
+              }
+            },
+            {
+              "id": "release-artifact",
+              "name": "Release Artifact",
+              "kind": "document",
+              "description": "A versioned, signed deliverable the vendor publishes: the hosted extension bundle and its .trex manifest for SaaS, the Windows one-click installer and Linux packages for WriteBackExtreme, MailScheduler and ExtensionsManager, Docker images, the Power BI custom-visual package listed on Microsoft AppSource and the Looker Studio community-visual manifest, release notes and changelogs, compatibility matrix per Tableau, Power BI and Looker Studio version, Tableau safelisting metadata and Exchange listing content, checksums and code-signing certificates, demo workbooks and gallery templates (gall) and the documentation set (docs) that accompanies each release. Produced by the SaaS Hosting and Release Pipeline (saas), downloaded by IT administrators through the Enterprise Customer Portal and pulled by ExtensionsManager during upgrades.",
+              "businessMeaning": "The product as shipped: what customers install, what Tableau safelists, and the version every workbook must eventually point at.",
+              "status": "active",
+              "tags": [
+                "deployment",
+                "release"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [],
+              "securityCriticality": "high",
+              "accessScope": "the vendor's engineering and release staff for publishing; licensed customers and partners for download through the portal; SaaS bundles served publicly to safelisted Tableau sites; installers signed so integrity can be verified offline",
+              "systemOfRecordBrickId": "saas",
+              "ownerTeamId": "deployment-and-licensing",
+              "stewardTeamIds": [
+                "extension-runtime",
+                "support-and-enablement",
+                "growth-and-partners"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "release-artifact-repository",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "customer-portal-database",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "extensionsmanager-local-config",
+                  "role": "serving"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "file",
+                  "name": "installer and bundle downloads",
+                  "description": "Signed installers, packages, manifests and demo workbooks downloadable from the Enterprise Customer Portal, docs.infotopics.com and the gallery, and pulled by ExtensionsManager."
+                },
+                {
+                  "type": "api",
+                  "name": "release catalog api",
+                  "description": "Lists available versions, compatibility, checksums and release notes per product for the portal, ExtensionsManager update checks and TrexReplacer URL rewriting."
+                },
+                {
+                  "type": "event",
+                  "name": "release published events",
+                  "description": "New version, security patch and end-of-support events that notify subscribed customers, partners and customer success."
+                }
+              ],
+              "governance": {
+                "retention": "every released version kept indefinitely with its checksums so any customer installation can be reproduced and audited; end-of-support versions remain downloadable for licensed customers with a warning",
+                "residency": "eu",
+                "sharingPolicy": "available to licensed customers and partners; SaaS bundles public by design; listing content shared with Tableau Exchange and Microsoft AppSource; source code never shared"
+              }
+            },
+            {
+              "id": "tenant-deployment-record",
+              "name": "Tenant Deployment Record",
+              "kind": "operational-state",
+              "description": "Where and how a customer runs the extensions: for SaaS tenants the Tableau Cloud or Server site identifiers safelisted for the hosted extensions, region and enabled products; for Enterprise deployments the servers registered by ExtensionsManager (xmgr) with host fingerprint, operating system, installed products and versions, database connector types in use, SSO mode, last update check, health and backup status, the extension URLs in use across workbooks as scanned by TrexReplacer, and the licence keys bound to each host. Enterprise deployments without internet access keep the record locally in ExtensionsManager and share it with the vendor only when the IT administrator exports it into a support ticket. Maintained by the vendor in the customer portal database for what it is told, and by the customer's ExtensionsManager for the full picture.",
+              "businessMeaning": "The map of the installed base: which version each customer is on, what an upgrade or a security patch has to reach, and what support needs to know before answering.",
+              "status": "active",
+              "tags": [
+                "deployment",
+                "operations"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [
+                "customer"
+              ],
+              "legalTags": [],
+              "securityCriticality": "high",
+              "accessScope": "the customer's IT administrators for their own deployments; the vendor's support, customer-success and release staff for what customers report; host names and network details never leave air-gapped deployments unless exported by the customer",
+              "systemOfRecordBrickId": "xmgr",
+              "ownerTeamId": "deployment-and-licensing",
+              "stewardTeamIds": [
+                "support-and-enablement"
+              ],
+              "derivedFromAssetIds": [
+                "license-entitlement",
+                "release-artifact"
+              ],
+              "stores": [
+                {
+                  "storeId": "extensionsmanager-local-config",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "customer-portal-database",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "product-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "extensionsmanager admin api",
+                  "description": "Local admin-console and CLI interface for registering servers, installing and upgrading products, scanning and rewriting extension URLs in workbooks, and exporting a deployment report."
+                },
+                {
+                  "type": "event",
+                  "name": "deployment check-in events",
+                  "description": "Optional update-check and activation events sent to the vendor with product, version and aggregate active-user count, used for end-of-support notices and account health."
+                }
+              ],
+              "governance": {
+                "retention": "kept while the deployment is active and 24 months after decommissioning for support history; local records follow the customer's own policy",
+                "residency": "customer-controlled-or-eu",
+                "sharingPolicy": "the vendor sees only what check-ins or customer exports contain; never shared between customers; network topology and host details stay with the customer"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trust, Partner and Support Data",
+      "description": "The data that lets security reviewers approve the vendor, partners sell and deliver, and customers get help: ISO 27001 and penetration-test evidence, partner profiles and registered deals, and support tickets. Owned and hosted by the vendor, with careful sharing rules because evidence documents are confidential and tickets sometimes contain customer screenshots.",
+      "subGroups": [
+        {
+          "name": "Security and Compliance Evidence",
+          "description": "The evidence pack security and vendor-risk reviewers ask for.",
+          "assets": [
+            {
+              "id": "security-evidence-document",
+              "name": "Security Evidence Document",
+              "kind": "document",
+              "description": "The controlled documents the Security, Audit and Compliance Evidence (sect) function maintains for customer assessments: the ISO/IEC 27001:2022 certificate and statement of applicability, annual penetration-test reports and remediation status, data-flow and architecture diagrams per deployment model (showing that Enterprise deployments need no internet and give the vendor no data access), the data processing agreement and sub-processor list, security questionnaire answers (SIG, CAIQ and customer-specific), business-continuity and incident-response summaries, secure-development and release-signing policies, and the trust-centre versions of each with their NDA status and validity dates. Shared with security and compliance reviewers and procurement of customers and prospects, usually under NDA, and referenced by partners during deals.",
+              "businessMeaning": "The paperwork that shortens the vendor assessment from months to weeks and unblocks Enterprise deals in banking, pharma and government.",
+              "status": "active",
+              "tags": [
+                "security",
+                "compliance",
+                "sales-enablement"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "iso-27001-control",
+                "nda"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the vendor's security lead, leadership and sales staff; customer and prospect security reviewers under NDA through the trust centre; partners for active deals; penetration-test detail restricted to remediation owners",
+              "systemOfRecordBrickId": "sect",
+              "ownerTeamId": "security-and-compliance",
+              "stewardTeamIds": [
+                "growth-and-partners",
+                "deployment-and-licensing"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "trust-centre-document-store",
+                  "role": "system-of-record"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "file",
+                  "name": "trust centre downloads",
+                  "description": "NDA-gated download of certificates, pentest summaries, DPA, questionnaires and data-flow diagrams, with access logging per requesting organisation."
+                },
+                {
+                  "type": "api",
+                  "name": "evidence request api",
+                  "description": "Portal workflow for requesting evidence, accepting the NDA, tracking questionnaire responses and linking the evidence pack to a deal or support case."
+                }
+              ],
+              "governance": {
+                "retention": "current versions kept while valid; superseded certificates, reports and questionnaire answers kept 7 years as audit history of the ISO 27001 management system",
+                "residency": "eu",
+                "sharingPolicy": "shared with reviewing customers, prospects and partners under NDA with access logging; full penetration-test reports shared only on request and with redaction of unresolved findings; never published"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Partner and Support Records",
+          "description": "Partner firms, registered deals and the tickets customers and partners raise.",
+          "assets": [
+            {
+              "id": "partner-profile-and-deal",
+              "name": "Partner Profile and Deal",
+              "kind": "master-data",
+              "description": "A consulting or reseller partner firm in the Partner Network Portal and Deal Registration (part) and the deals it works: company, tier, regions and languages served, certified consultants with their contact details and enablement status, demo and NFR licences issued, marketing assets downloaded, and each registered deal with the end-customer organisation, opportunity size, products, expected close date, registration approval, protection period, joint delivery plan, closed-won attribution and the resulting margin or referral fee. Links to the customer account when the deal converts and to the subscription for margin settlement. The 32 partner firms include Slalom, Biztory, USEReady and Big X Data.",
+              "businessMeaning": "The channel that lets a 30-person company serve 150+ countries in the local language, and the record that decides who gets credit and margin for a deal.",
+              "status": "active",
+              "tags": [
+                "partners",
+                "commercial"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "partner",
+                "customer"
+              ],
+              "legalTags": [
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "the vendor's partner manager, sales and finance staff; each partner for its own profile, consultants and deals; end-customer details visible only to the registering partner and the vendor",
+              "systemOfRecordBrickId": "part",
+              "ownerTeamId": "growth-and-partners",
+              "stewardTeamIds": [
+                "deployment-and-licensing"
+              ],
+              "derivedFromAssetIds": [
+                "customer-account"
+              ],
+              "stores": [
+                {
+                  "storeId": "partner-portal-database",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "crm-and-invoicing-saas",
+                  "role": "projection"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "partner portal api",
+                  "description": "Partner onboarding, consultant management, demo-licence requests, deal registration, approval and status tracking, and access to enablement and marketing assets."
+                },
+                {
+                  "type": "event",
+                  "name": "deal lifecycle events",
+                  "description": "Deal registered, approved, expired, closed-won and closed-lost events consumed by CRM, the license service and partner margin settlement."
+                }
+              ],
+              "governance": {
+                "retention": "partner profiles kept while the partnership agreement is active plus 7 years for commission records; lost or expired deal registrations deleted 24 months after closure; consultant contact details removed when the partner reports their departure",
+                "residency": "eu",
+                "sharingPolicy": "each partner sees only its own data; end-customer names in deals are never shared with other partners; deal data synchronised to the vendor's CRM under a processor agreement"
+              }
+            },
+            {
+              "id": "support-ticket",
+              "name": "Support Ticket",
+              "kind": "logical-object",
+              "description": "A question, incident or feature request raised through the Support Portal, SLAs and Ticketing (supp) by a customer, partner or free-plan user: requester name and email, organisation and plan (which sets SLA and priority: live chat and email for Professional, priority support and a dedicated customer success manager for Enterprise), product, extension and BI platform version, deployment model, description, reproduction steps, attached screenshots, logs, exported schemas and occasionally workbooks that may contain customer dashboard data, the conversation thread, linked documentation articles, escalation to engineering, prioritised feature-request status for Enterprise customers, resolution and satisfaction score. Hosted in the vendor's helpdesk SaaS and linked to the customer account, tenant deployment record and release artifacts.",
+              "businessMeaning": "The conversation that keeps a customer successful and renewing; also the main channel through which customer data can accidentally reach the vendor, hence the attachment rules.",
+              "status": "active",
+              "tags": [
+                "support",
+                "customer-success"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer",
+                "partner",
+                "customer-user"
+              ],
+              "legalTags": [
+                "gdpr",
+                "dpa"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the vendor's support, customer-success and engineering staff; the requester and their organisation's portal users for their own tickets; partners for tickets they raised on behalf of clients; attachments containing dashboard data purged after resolution",
+              "systemOfRecordBrickId": "supp",
+              "ownerTeamId": "support-and-enablement",
+              "stewardTeamIds": [
+                "deployment-and-licensing",
+                "security-and-compliance"
+              ],
+              "derivedFromAssetIds": [
+                "customer-account",
+                "tenant-deployment-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "helpdesk-saas",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "product-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "support ticket api",
+                  "description": "Portal, email and live-chat intake, ticket updates, SLA timers, escalation to engineering and feature-request voting, integrated with the helpdesk SaaS and the customer portal."
+                },
+                {
+                  "type": "event",
+                  "name": "ticket lifecycle events",
+                  "description": "Created, escalated, SLA-breach-warning, resolved and rated events consumed by customer success for account health and by product management for feature prioritisation."
+                }
+              ],
+              "governance": {
+                "retention": "tickets kept 3 years after resolution for support history and product analytics; attachments that may contain customer dashboard data deleted 30 days after resolution; requester identities removed on erasure request",
+                "residency": "eu",
+                "sharingPolicy": "visible to the requesting organisation and the vendor; partner-raised tickets visible to the partner and the end customer; ticket content never used beyond support and anonymised product analytics; helpdesk provider bound by a processor agreement"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stores": [
+    {
+      "id": "tableau-workbook-store",
+      "name": "Tableau Workbook and Report Store",
+      "kind": "operational-database",
+      "description": "The customer's own Tableau Server or Tableau Cloud content repository (and the Power BI service or Looker Studio report equivalents) that holds published workbooks, their embedded extension settings and the worksheet data the extensions read; entirely customer-controlled.",
+      "technology": "tableau-server-or-cloud",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "extension-session-cache",
+      "name": "Extension Session Cache",
+      "kind": "cache",
+      "description": "Transient in-browser state of a running extension plus the short-lived server-side row-model cache SuperTables uses for very large grids; hosted on the customer's extension server in Enterprise deployments and in the vendor's EU SaaS runtime otherwise; nothing survives the session.",
+      "technology": "browser-memory-and-in-memory-cache",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "customer-target-database",
+      "name": "Customer Write-back Target Database",
+      "kind": "operational-database",
+      "description": "The customer's own SQL Server, PostgreSQL, MySQL, Oracle or Snowflake database, on-premises or in the customer's private cloud, into which WriteBackExtreme and InputTables write records, comments and audit rows in the schema the customer configured; the vendor has no connection to it.",
+      "technology": "customer-managed-relational-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "wbx-metadata-database",
+      "name": "WriteBackExtreme Server Database",
+      "kind": "operational-database",
+      "description": "The application database of the self-hosted WriteBackExtreme server installed by ExtensionsManager on the customer's Windows or Linux host: write-back schemas, connections (secrets encrypted), role mappings, workflow state, saved views and a projection of records and audit rows; customer-hosted, no internet required.",
+      "technology": "postgresql-or-sql-server-on-customer-host",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "customer-data-warehouse",
+      "name": "Customer Data Warehouse",
+      "kind": "analytics-warehouse",
+      "description": "The customer's analytics warehouse (Snowflake, BigQuery, SQL Server, Databricks) that sources dashboards, holds process event logs and account hierarchies, and receives write-back results, audit archives and usage events for the customer's own reporting; entirely customer-controlled.",
+      "technology": "customer-managed-warehouse",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "mailscheduler-server-database",
+      "name": "MailScheduler Server Database",
+      "kind": "operational-database",
+      "description": "The application database of the self-hosted MailScheduler server on the customer's infrastructure: schedules, recipient lists with filter values, delivery logs, channel credentials (encrypted) and role mappings; Enterprise-only and customer-hosted.",
+      "technology": "postgresql-or-sql-server-on-customer-host",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "customer-network-file-share",
+      "name": "Customer Network File Share",
+      "kind": "data-files",
+      "description": "SMB or NFS network drives and SharePoint document libraries inside the customer's network where MailScheduler drops rendered PDF, PNG, CSV and Excel reports and where bulk import files are picked up; governed by the customer's own file permissions.",
+      "technology": "smb-nfs-sharepoint",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "enterprise-extension-server-storage",
+      "name": "Enterprise Extension Server Storage",
+      "kind": "blob-store",
+      "description": "Local disk or object storage attached to the customer's self-hosted extension servers for temporary render output, guide media, export files and AI request logs; purged on the schedule the customer configures.",
+      "technology": "local-disk-or-object-storage-on-customer-host",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "extensionsmanager-local-config",
+      "name": "ExtensionsManager Local Configuration",
+      "kind": "data-files",
+      "description": "Configuration and state files of ExtensionsManager on the customer's host: registered servers, installed versions, licence keys, local active-user counts, update-check history and TrexReplacer scan results; the system of record for air-gapped deployments.",
+      "technology": "encrypted-configuration-files",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "customer-identity-provider",
+      "name": "Customer Identity Provider",
+      "kind": "integration-mirror",
+      "description": "The customer's own Microsoft Entra ID, Okta, ADFS or Tableau Server identity store reached over SAML or OpenID Connect; identities and group memberships are read at login and never copied by the vendor.",
+      "technology": "saml-oidc-identity-provider",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "saas-extension-state-database",
+      "name": "SaaS Extension State Database",
+      "kind": "operational-database",
+      "description": "Vendor-hosted EU database behind the SaaS extension web apps holding per-tenant saved views, guide libraries and anonymised usage events keyed by anonymous user token; never holds dashboard data values.",
+      "technology": "postgresql-eu-region",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "license-service-database",
+      "name": "License Service Database",
+      "kind": "operational-database",
+      "description": "Vendor-hosted EU database of plans, entitlements, licence keys, subscriptions, invoices and the anonymous usage tokens with their activity flags; the pricing meter for all tenants.",
+      "technology": "postgresql-eu-region",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "usage-metering-event-stream",
+      "name": "Usage Metering Event Stream",
+      "kind": "event-topic",
+      "description": "Vendor-hosted ingestion topic for batched anonymous usage heartbeats from SaaS extensions and aggregate check-ins from Enterprise servers, feeding the license service and product analytics.",
+      "technology": "managed-message-queue-eu-region",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "customer-portal-database",
+      "name": "Enterprise Customer Portal Database",
+      "kind": "operational-database",
+      "description": "Vendor-hosted EU database of the my-appsfortableau customer portal: organisations, portal users and roles, licence keys, download entitlements, reported deployments, invoices projection and account-health flags.",
+      "technology": "postgresql-eu-region",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "crm-and-invoicing-saas",
+      "name": "CRM and Invoicing SaaS",
+      "kind": "integration-mirror",
+      "description": "The vendor's CRM and invoicing systems (EU-hosted SaaS under processor agreements) mirroring customer accounts, partner deals, subscriptions, invoices and renewal pipeline for sales and finance.",
+      "technology": "crm-and-accounting-saas",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "release-artifact-repository",
+      "name": "Release Artifact Repository and CDN",
+      "kind": "blob-store",
+      "description": "Vendor object storage plus CDN for signed installers, extension bundles, .trex manifests, custom-visual packages, Docker images, checksums, release notes, demo workbooks and documentation builds.",
+      "technology": "object-storage-with-cdn",
+      "status": "active",
+      "classification": "internal"
+    },
+    {
+      "id": "ai-gateway-log-store",
+      "name": "AI Gateway Log Store",
+      "kind": "document-database",
+      "description": "Vendor-hosted EU store for AI request metadata (and short-lived opted-in content) from the SaaS AI gateway, with per-tenant model settings and retention policy.",
+      "technology": "document-database-eu-region",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "trust-centre-document-store",
+      "name": "Trust Centre Document Store",
+      "kind": "blob-store",
+      "description": "Access-controlled, access-logged document repository behind the trust centre and the ISO 27001 management system: certificates, penetration-test reports, DPAs, questionnaires and data-flow diagrams with NDA gating.",
+      "technology": "managed-document-repository-eu-region",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "partner-portal-database",
+      "name": "Partner Portal Database",
+      "kind": "operational-database",
+      "description": "Vendor-hosted EU database of partner firms, certified consultants, demo licences, enablement progress and registered deals with approval and attribution state.",
+      "technology": "postgresql-eu-region",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "helpdesk-saas",
+      "name": "Helpdesk and Live Chat SaaS",
+      "kind": "integration-mirror",
+      "description": "The vendor's helpdesk and live-chat SaaS (EU data residency, processor agreement) holding support tickets, chat transcripts, attachments and SLA timers, linked to customer accounts.",
+      "technology": "helpdesk-saas",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "product-analytics-warehouse",
+      "name": "Product Analytics Warehouse",
+      "kind": "analytics-warehouse",
+      "description": "Vendor-hosted EU warehouse combining anonymised usage aggregates, entitlement and deployment facts, ticket statistics and AI metadata for adoption analytics, account health, renewal forecasting and product decisions; never contains dashboard data.",
+      "technology": "cloud-data-warehouse-eu-region",
+      "status": "active",
+      "classification": "internal"
+    }
+  ]
+}
