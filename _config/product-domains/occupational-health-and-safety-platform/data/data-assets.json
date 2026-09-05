@@ -1,0 +1,3152 @@
+{
+  "metadata": {
+    "title": "Occupational Health and Safety Platform Data Assets",
+    "description": "Catalog of the workforce and exposure, occupational health, workplace safety, accident and occupational disease, portal and insight, and platform and service data assets that power the occupational health and safety lifecycle (Know the workforce, Plan surveillance, Examine and advise, Keep the medical file, Assess and control risks, Handle events, Serve employees and managers, Prove compliance) on the Kitry platform, with classification, GDPR Article 9 health data and medical secrecy governance, French DMST and DUERP retention, Belgian Code on well-being at work rules, social security and insurer declaration obligations, HDS and ISO 27001 hosting controls, backing stores and team ownership.",
+    "modelVersion": "1.0"
+  },
+  "rootGroups": [
+    {
+      "name": "Workforce and Exposure Data",
+      "description": "The register of workers, contracts, assignments, sites and workstations synchronised from customers' HR systems, the exposure and risk profiles attached to every workstation, and the surveillance schedules the rules engine derives from them per country. This is the anchor of the integrated model: a worker, a workstation and its exposures are one connected record shared by the physician, the prevention adviser and HR, and Kitry tracks more than 4 million employee records this way.",
+      "subGroups": [
+        {
+          "name": "Workforce Master Data",
+          "description": "Workers, contracts and assignments, the organisational structure and workstation catalogue, and the HRIS import batches through which they enter and stay current.",
+          "assets": [
+            {
+              "id": "worker-record",
+              "name": "Worker Record",
+              "kind": "master-data",
+              "description": "The identity and employment context of one person followed by the occupational health service of a customer organisation: civil identity and national identifier where the country allows it (NIR in France, NISS in Belgium, matricule in Luxembourg, BSN in the Netherlands), contact channels and language, employment contract type (permanent, fixed-term, apprentice, temporary agency, external contractor followed on site), employer legal entity and site, current and historical assignments to workstations and organisational units with dates, working-time pattern including night work, hire and departure dates, absence periods relevant to surveillance (long absence triggering a return-to-work visit) and the identifier of the occupational health service and physician who follow the worker. Maintained by Worker, Contract and Assignment Registry (wrkr) from HRIS Synchronisation and Import (hris) deltas, corrected manually by HR administrators, and read by every surveillance, safety, accident and portal brick. Kitry tracks more than 4 million such records across its customers.",
+              "businessMeaning": "The anchor of the integrated health-and-safety model: a worker who is missing, duplicated or assigned to the wrong workstation is a worker whose examinations are never triggered and whose accident cannot be declared.",
+              "status": "active",
+              "tags": [
+                "workforce-and-exposure-data"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-employee-data",
+                "hris-provenance",
+                "labour-law-health-surveillance",
+                "iso-27001"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "HR administrators of the owning tenant for their scope of sites; occupational health service staff for the workers they follow; managers see name, workstation and assignment of their own team only; the worker sees their own record in the portal; Kitry implementation consultants during migration and support under a logged ticket",
+              "systemOfRecordBrickId": "wrkr",
+              "usedByBrickIds": [
+                "acci",
+                "hris",
+                "orgs",
+                "vacc",
+                "wrkr"
+              ],
+              "ownerTeamId": "workforce-and-surveillance",
+              "stewardTeamIds": [
+                "integrations",
+                "medical-records-and-confidentiality"
+              ],
+              "derivedFromAssetIds": [
+                "hris-import-batch",
+                "organisation-unit-and-workstation"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "integration-staging-zone",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "worker-record api",
+                  "description": "Create, read, update, merge, deactivate and assignment-history API with site- and role-scoped filters used by the registry, HRIS synchronisation, surveillance rules, scheduling, campaigns, accident declaration, portals and the migration workspace."
+                },
+                {
+                  "type": "file",
+                  "name": "worker import and export files",
+                  "description": "Accepted HRIS extract formats (CSV, SAP SuccessFactors, Workday and national public-sector HR exports) and the GDPR subject-access export of a worker's own record."
+                },
+                {
+                  "type": "event",
+                  "name": "worker lifecycle events",
+                  "description": "Hired, assignment changed, workstation changed, night-work status changed, long absence started or ended, departed and merged events consumed by surveillance rules, scheduling, the medical file (transfer trigger), safety and dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "identity and assignment history kept for as long as the occupational medical file that anchors on it must be retained (40 years after the last visit or end of exposure in France, 15 to 40 years in Belgium); HR-only attributes such as contact details and contract references purged 5 years after departure; exposure-relevant assignment history never shortened",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; assignment and exposure history transferred with the medical file to a successor occupational health service; identity fields sent to national declaration bodies and insurers only inside accident and disease declarations; never shared between tenants"
+              }
+            },
+            {
+              "id": "organisation-unit-and-workstation",
+              "name": "Organisation Unit and Workstation",
+              "kind": "master-data",
+              "description": "The structure of the customer organisation as the occupational health and prevention services see it: legal entities and establishments (SIRET in France, establishment unit in Belgium), sites and buildings with addresses and the competent occupational health service, organisational units and cost centres synchronised from the HRIS, and the workstation catalogue (poste de travail / werkpost) with job title, department, similar-exposure group, safety-critical flag, required training and personal protective equipment, and links to the exposure and risk profile, the risk assessment unit and the chemicals used. Maintained by Organisation, Sites and Workstations (orgs) with HRIS input, and the reference every risk assessment, exposure profile, inspection and fitness opinion attaches to.",
+              "businessMeaning": "The bridge between the physician's view and the prevention adviser's view: because both attach to the same workstation, a changed exposure updates the DUERP and the surveillance category in one move.",
+              "status": "active",
+              "tags": [
+                "workforce-and-exposure-data",
+                "workplace-safety"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr",
+                "hris-provenance",
+                "labour-law-health-surveillance",
+                "fr-duerp",
+                "be-code-well-being-at-work"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "HR administrators and HSE managers of the owning tenant for their sites; occupational health staff read all sites they serve; managers see their own units; Kitry consultants during configuration and migration",
+              "systemOfRecordBrickId": "orgs",
+              "usedByBrickIds": [
+                "expo",
+                "orgs",
+                "wrkr"
+              ],
+              "ownerTeamId": "workforce-and-surveillance",
+              "stewardTeamIds": [
+                "risk-and-prevention",
+                "integrations"
+              ],
+              "derivedFromAssetIds": [
+                "hris-import-batch"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "integration-staging-zone",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "organisation-and-workstation api",
+                  "description": "Tree navigation, workstation catalogue, similar-exposure-group, establishment and site-service assignment API used by the registry, exposure register, risk assessment, inspections, chemicals, scheduling capacity and reports."
+                },
+                {
+                  "type": "event",
+                  "name": "organisation change events",
+                  "description": "Site created, unit moved, workstation created, workstation exposure profile linked, safety-critical flag changed and establishment reorganised events consumed by exposure and surveillance rules, risk assessment versioning and dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "effective-dated versions kept for as long as any risk assessment, exposure record or medical file that references them (40 years in France for the DUERP and DMST); closed sites and retired workstations archived, never physically deleted",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; workstation and exposure structure shared with the external prevention service or SPSTI where the customer delegates part of surveillance; never shared between tenants"
+              }
+            },
+            {
+              "id": "hris-import-batch",
+              "name": "HRIS Import Batch",
+              "kind": "operational-state",
+              "description": "One synchronisation run between a customer's HR information system and the platform: the source connector or uploaded file, extraction timestamp and scope (full or delta), records received, mapping profile and transformation rules applied, validation findings per row (unknown site, missing hire date, duplicate national identifier, workstation not in catalogue), matching decisions between HR employee ids and worker records, accepted, rejected and held rows, reconciliation report, operator approvals and the resulting worker and organisation changes. Also carries legacy data migration batches from previous occupational health software during implementation. Produced by HRIS Synchronisation and Import (hris) and reviewed in the Implementation, Migration and Training Workspace (impl).",
+              "businessMeaning": "Where employee data sync accuracy is won or lost: every rejected row is a worker whose surveillance may silently stop, so batches are auditable, replayable and approved by a human when in doubt.",
+              "status": "active",
+              "tags": [
+                "workforce-and-exposure-data",
+                "platform-and-services"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-employee-data",
+                "hris-provenance",
+                "iso-27001"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "HR administrators with integration rights and Kitry integration and implementation consultants for the tenant; raw files readable only inside the staging zone by the import service; occupational health staff see the resulting worker changes, not the batch",
+              "systemOfRecordBrickId": "hris",
+              "usedByBrickIds": [
+                "hris",
+                "impl"
+              ],
+              "ownerTeamId": "integrations",
+              "stewardTeamIds": [
+                "implementation-and-migration",
+                "workforce-and-surveillance"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "integration-staging-zone",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "hris-import api",
+                  "description": "Batch submission, mapping profile, validation result, row disposition, approval, replay and reconciliation report API used by the HRIS connector, the migration workspace, HR administrators' import screen and support."
+                },
+                {
+                  "type": "file",
+                  "name": "hris extracts and migration exports",
+                  "description": "Scheduled SFTP or API extracts from the customer HRIS and one-off legacy migration exports (workers, assignments, exposures, appointment history, scanned medical documents) accepted into the staging zone."
+                },
+                {
+                  "type": "event",
+                  "name": "import batch events",
+                  "description": "Batch received, validated, approved, applied, partially rejected and failed events consumed by the worker registry, surveillance rule evaluation, implementation project tracking, support alerts and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "raw extract files purged 30 days after the batch is applied or rejected; batch metadata, validation findings and reconciliation reports kept 3 years as evidence of data provenance; migration batches kept for the life of the implementation project plus 5 years",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation and Kitry's integration and implementation staff; row-level content never leaves the tenant; batch statistics visible in implementation project status"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exposure and Surveillance Rules",
+          "description": "Exposure and risk profiles per workstation and worker, and the surveillance obligations computed from them and from FR/BE/LU/NL regulation content.",
+          "assets": [
+            {
+              "id": "exposure-and-risk-profile",
+              "name": "Exposure and Risk Profile",
+              "kind": "master-data",
+              "description": "The exposures and special surveillance categories attached to a workstation or, by exception, to an individual worker: chemical agents with CMR classification and exposure level, biological agents, physical agents (noise, vibration, ionising radiation, extreme temperatures), ergonomic and psychosocial factors, night work, work at height, driving and safety-critical posts, asbestos and other agents with specific post-exposure follow-up, exposure start and end dates, measurement references and the resulting surveillance category (in France: suivi individuel simple, adapté or renforcé; in Belgium: the health-surveillance categories of the Code on well-being at work). Maintained in the Exposure and Risk Profile Register (expo), fed by the chemical inventory and reviewed against the risk assessment, and the input from which surveillance rules derive examination type and periodicity and from which the prevention passport and collective health monitoring read.",
+              "businessMeaning": "The single exposure truth shared by prevention and medicine: it decides which examinations the law requires, feeds the DUERP, and must survive 40 years for post-exposure follow-up and disease recognition.",
+              "status": "active",
+              "tags": [
+                "workforce-and-exposure-data",
+                "workplace-safety",
+                "occupational-health"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr",
+                "labour-law-health-surveillance",
+                "fr-code-du-travail-dmst",
+                "fr-duerp",
+                "be-code-well-being-at-work",
+                "reach-clp"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "HSE managers and prevention advisers for their sites; occupational physicians and nurses for the workers they follow; HR administrators see the surveillance category, not the medical consequences; managers see the exposure list of their workstations; the worker sees their own exposure history",
+              "systemOfRecordBrickId": "expo",
+              "usedByBrickIds": [
+                "chem",
+                "cohm",
+                "cons",
+                "expo",
+                "risk",
+                "surv"
+              ],
+              "ownerTeamId": "workforce-and-surveillance",
+              "stewardTeamIds": [
+                "risk-and-prevention",
+                "clinical-consultation"
+              ],
+              "derivedFromAssetIds": [
+                "organisation-unit-and-workstation",
+                "chemical-product-and-sds"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "exposure-profile api",
+                  "description": "Workstation and worker exposure history, surveillance-category derivation, exposure group and post-exposure follow-up API used by the surveillance engine, risk assessment, chemicals, consultation workspace, collective health monitoring and the prevention passport export."
+                },
+                {
+                  "type": "file",
+                  "name": "exposure and prevention passport extracts",
+                  "description": "Individual exposure history extracts for the French prevention passport, post-exposure attestations and transfers to a successor occupational health service."
+                },
+                {
+                  "type": "event",
+                  "name": "exposure change events",
+                  "description": "Exposure added, level changed, CMR classification changed, exposure ended, surveillance category recalculated and post-exposure follow-up due events consumed by surveillance rules, scheduling, the medical file, risk assessment and dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "full exposure history kept at least 40 years after the end of exposure (French DMST and post-exposure follow-up rules; Belgian 40-year rule for carcinogenic, mutagenic and reprotoxic agents); effective-dated, never overwritten",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; individual exposure history transferred with the medical file and, in France, contributed to the worker's prevention passport; aggregated exposure groups shared with the works council and health and safety committee; never shared between tenants"
+              }
+            },
+            {
+              "id": "surveillance-schedule",
+              "name": "Surveillance Schedule",
+              "kind": "derived-dataset",
+              "description": "The computed obligation set for every worker: which examinations and visits are required (initial visit, periodic visit, enhanced follow-up examination, return-to-work visit, pre-return visit, post-exposure visit, night-worker visit, mid-career visit, Belgian periodic health assessment and supplementary acts), the legal periodicity and the next due date, the professional who must perform it (physician or delegated nurse), the country rule and profile version that produced it, tolerance windows, overdue status and the reason a rule fired or was waived. Recomputed by the Surveillance Rules and Periodicity Engine (surv) whenever the worker record, exposure profile or country regulation content changes, and consumed by scheduling, capacity planning, dashboards and the annual activity report.",
+              "businessMeaning": "The number that runs the service: the north star of physicians and coordinators, medical surveillance compliance rate, is nothing but this dataset compared with completed examinations.",
+              "status": "active",
+              "tags": [
+                "workforce-and-exposure-data",
+                "occupational-health"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr",
+                "labour-law-health-surveillance",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-at-work",
+                "lu-code-du-travail",
+                "nl-arbowet"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "occupational health service staff and coordinators for the workers they follow; HR administrators see due and overdue status without examination content; managers see the due status of their own team; the worker sees their own upcoming obligations",
+              "systemOfRecordBrickId": "surv",
+              "usedByBrickIds": [
+                "dash",
+                "regc",
+                "schd",
+                "surv"
+              ],
+              "ownerTeamId": "workforce-and-surveillance",
+              "stewardTeamIds": [
+                "regulatory-content",
+                "clinical-consultation"
+              ],
+              "derivedFromAssetIds": [
+                "worker-record",
+                "exposure-and-risk-profile",
+                "country-regulation-rule"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "surveillance-schedule api",
+                  "description": "Per-worker obligation list, due-date calculation, rule explanation, waiver, overdue query and capacity projection API used by scheduling, the consultation workspace, dashboards, the annual report and the country regulation content back office for rule simulation."
+                },
+                {
+                  "type": "event",
+                  "name": "surveillance obligation events",
+                  "description": "Obligation created, due date changed, examination satisfied, waived and overdue events consumed by convocation scheduling, reminders, portals, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "computed obligations and their rule explanations kept for the life of the worker's medical file so that the reason for every examination can be reconstructed; superseded computations kept 10 years",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; obligation status without medical content shared with HR and managers; aggregated compliance shared with the employer, works council and labour inspectorate through the annual report; never shared between tenants"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Occupational Health",
+      "description": "Everything the occupational health service produces and protects: convocations, appointments and reminders, the clinical consultation with its questionnaires, device measurements and teleconsultations, the fitness opinion that leaves the medical perimeter, vaccinations and campaigns, and the occupational medical file under medical secrecy on HDS-certified hosting with its documents and access grants. Kitry counts more than 2.5 million medical files.",
+      "subGroups": [
+        {
+          "name": "Scheduling and Notifications",
+          "description": "Convocations, appointments, capacity plans and the SMS, e-mail and portal messages that fill the consultation day without exposing medical content.",
+          "assets": [
+            {
+              "id": "convocation-and-appointment",
+              "name": "Convocation and Appointment",
+              "kind": "operational-state",
+              "description": "A planned contact between a worker and the occupational health service: the obligation it satisfies, the examination type, the physician or nurse and the medical centre, room or teleconsultation channel, the slot, the convocation letter or e-mail generated in the worker's language, employer release request to the manager, confirmation, rescheduling and no-show history, check-in on the day, waiting-room order and the status chain from planned to completed or cancelled, plus the capacity plan of consultation days per professional and site that the slots are cut from. Managed by Convocation and Appointment Scheduling (schd), self-served by workers through the Employee Portal (epor), and the trigger for Reminders, SMS and E-mail Notifications (noti).",
+              "businessMeaning": "Where medical capacity meets legal obligation: a well-filled consultation day with few no-shows is how a small service keeps thousands of workers compliant.",
+              "status": "active",
+              "tags": [
+                "occupational-health"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "occupational-health-professional"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-employee-data",
+                "labour-law-health-surveillance"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "occupational health service staff for their centres; HR administrators and managers see date, time and place of visits of their scope without the examination reason beyond its legal type; the worker manages their own appointments; Kitry support sees scheduling metadata only",
+              "systemOfRecordBrickId": "schd",
+              "usedByBrickIds": [
+                "epor",
+                "noti",
+                "schd"
+              ],
+              "ownerTeamId": "workforce-and-surveillance",
+              "stewardTeamIds": [
+                "portals-and-self-service"
+              ],
+              "derivedFromAssetIds": [
+                "surveillance-schedule",
+                "worker-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "notification-message-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "appointment api",
+                  "description": "Slot search, booking, rescheduling, cancellation, capacity planning, check-in, waiting-room and convocation generation API used by the scheduler, the employee and manager portals, reminders, the consultation workspace and dashboards."
+                },
+                {
+                  "type": "file",
+                  "name": "convocation letters and calendar files",
+                  "description": "Convocation letters in PDF, employer release notices and iCalendar files sent to workers and managers and attached to the notification."
+                },
+                {
+                  "type": "event",
+                  "name": "appointment events",
+                  "description": "Planned, convoked, confirmed, rescheduled, reminded, checked-in, completed, no-show and cancelled events consumed by notifications, the surveillance schedule, the consultation workspace, portals and KPIs."
+                }
+              ],
+              "governance": {
+                "retention": "kept 5 years after the visit date as evidence of the service's activity and of the employer's compliance with convocation duties, then reduced to counts in the warehouse; the link from a completed visit to its consultation record kept with the medical file",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; date and place shared with the employer for release from work; confirmation and reminders sent to the worker via SMS and e-mail; never shared between tenants"
+              }
+            },
+            {
+              "id": "notification-message",
+              "name": "Notification Message",
+              "kind": "operational-state",
+              "description": "Every outbound message the platform sends: convocation letters, SMS reminders through the Cegedim gateway, e-mails, portal notifications, teleconsultation invitations, questionnaire requests, hazardous-situation acknowledgements, corrective-action assignments, declaration deadline alerts and system notices, with template and language version, rendered content, recipient channel and consent, scheduling rule, delivery, bounce and read status, opt-out handling and the triggering event. Produced by Reminders, SMS and E-mail Notifications (noti) and delivered through Ecosystem Integrations (intg); messages carry logistics and links to the portal and never medical content.",
+              "businessMeaning": "The mechanism behind self-service adoption and low no-show rates; because it leaves the certified perimeter, its content is deliberately limited to what a postal envelope could reveal.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "portals-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "manager",
+                "occupational-health-professional"
+              ],
+              "legalTags": [
+                "gdpr",
+                "eprivacy-electronic-communications"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "notification administrators and occupational health assistants of the tenant for their scope; the recipient sees their own messages in the portal; Kitry support sees delivery status and errors without content; the SMS and e-mail providers process content as processors under contract",
+              "systemOfRecordBrickId": "noti",
+              "usedByBrickIds": [
+                "intg",
+                "noti"
+              ],
+              "ownerTeamId": "workforce-and-surveillance",
+              "stewardTeamIds": [
+                "integrations"
+              ],
+              "derivedFromAssetIds": [
+                "convocation-and-appointment",
+                "corrective-action",
+                "hazardous-situation-report"
+              ],
+              "stores": [
+                {
+                  "storeId": "notification-message-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "notification api",
+                  "description": "Template management, send, schedule, cancel, delivery-status, opt-out and per-recipient history API used by scheduling, questionnaires, teleconsultation, safety actions, declarations, portals and the SMS and e-mail connectors."
+                },
+                {
+                  "type": "event",
+                  "name": "message delivery events",
+                  "description": "Queued, sent, delivered, bounced, read and opted-out events consumed by scheduling (no-show risk), portals, integration health monitoring and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "rendered message content kept 12 months; delivery log and consent or opt-out evidence kept 3 years; templates versioned for the life of the tenant",
+                "residency": "eea",
+                "sharingPolicy": "content transmitted to the SMS gateway and e-mail provider as processors inside the EEA; never shared between tenants; medical content is excluded by design"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clinical Consultation",
+          "description": "The consultation record and everything that feeds it or derives from it: questionnaire responses, device measurements, teleconsultation sessions, vaccinations and campaigns, and the fitness opinion.",
+          "assets": [
+            {
+              "id": "consultation-record",
+              "name": "Consultation Record",
+              "kind": "medical-record",
+              "description": "The clinical record of one contact between a worker and the occupational health service: reason and legal type of the examination, interview and occupational history, symptoms and complaints, clinical examination findings, review of questionnaire answers and device measurements, exposure review, conclusions, prescriptions of complementary examinations, referrals to the treating physician, advice to the worker, the fitness conclusion the physician reaches, follow-up actions and the professional who signed it, with structured fields configured per country and per examination type and free-text notes. Written in the Consultation Workspace and Fitness Opinions (cons) by physicians and, for delegated visits, nurses; fed by Questionnaires and Pre-visit Intake (ques), Medical Device Measurement Capture (devs) and Secure Teleconsultation (tele); filed into the Occupational Medical File. Contains diagnoses and health data and is the most sensitive object on the platform.",
+              "businessMeaning": "The physician's working memory and the source of both the individual fitness opinion and the collective prevention advice; documenting it fast, without leaving the workspace, is the core value of the occupational health module.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-medical-dossier",
+                "hds-hosting",
+                "iso-27001"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "occupational physicians of the service that follows the worker and, under their responsibility, occupational health nurses and medical assistants; the worker for their own data; never the employer, HR, managers or Kitry staff (support access only through a logged, time-limited break-glass procedure approved by the physician)",
+              "systemOfRecordBrickId": "cons",
+              "usedByBrickIds": [
+                "cons",
+                "devs",
+                "ques",
+                "tele"
+              ],
+              "ownerTeamId": "clinical-consultation",
+              "stewardTeamIds": [
+                "medical-records-and-confidentiality"
+              ],
+              "derivedFromAssetIds": [
+                "convocation-and-appointment",
+                "questionnaire-response",
+                "device-measurement",
+                "teleconsultation-session",
+                "exposure-and-risk-profile"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "device-measurement-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "consultation-record api",
+                  "description": "Create, structured-field, note, complementary-examination, referral, fitness-conclusion, sign and amend API used by the consultation workspace, questionnaires, device capture, teleconsultation, the fitness opinion generator and the medical file; every call authorised by medical role and logged."
+                },
+                {
+                  "type": "event",
+                  "name": "consultation events",
+                  "description": "Consultation opened, measurement attached, questionnaire reviewed, complementary examination prescribed, signed and amended events, carrying identifiers only, consumed by the medical file, the fitness opinion workflow, the surveillance schedule and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept as part of the occupational medical file (DMST): in France at least 40 years from the last visit or the end of the worker's exposure as set by decree 2022-1434 of 15 November 2022 on the DMST, longer where special-agent rules (ionising radiation, asbestos, CMR agents) require it; in Belgium at least 15 years after the worker leaves the employer and 40 years after the end of exposure to carcinogenic, mutagenic or reprotoxic agents under the Code on well-being at work; never deleted at contract end but handed over to the successor service or archive",
+                "residency": "eea-hds",
+                "sharingPolicy": "medical secrecy: never shared with the employer, HR, managers, insurers or works council; transferred to the receiving occupational health service when the worker changes employer or service, with the worker informed; communicated to the worker's treating physician at the worker's request; disclosed to a health inspector physician only within the law; never used to train models"
+              }
+            },
+            {
+              "id": "fitness-opinion",
+              "name": "Fitness Opinion",
+              "kind": "document",
+              "description": "The formal conclusion of an examination communicated outside the medical service: fitness for the workstation (fit, fit with restrictions or accommodations, temporarily unfit, unfit; Belgian evaluation form and French avis d'aptitude or attestation de suivi), the restrictions, adaptations and proposed measures worded for the employer, validity period and next examination, the physician's electronic signature (Goodflag), the worker's acknowledgement, appeal window and status, and the manager and HR distribution record. Generated from the Consultation Record by the Consultation Workspace and Fitness Opinions (cons), rendered and signed in Medical Documents, Certificates and E-signature (mdoc), and the only medical-derived item the Manager Portal (mpor) shows. By construction it contains no diagnosis, symptom or measurement.",
+              "businessMeaning": "The legal handshake between medicine and the employer: it tells the manager what to do without telling them why, and its turnaround time is a supporting KPI of physicians and managers alike.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "portals-and-insight"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee",
+                "occupational-health-professional"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-at-work",
+                "eidas",
+                "hds-hosting"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "occupational physicians and nurses of the service; the worker for their own opinions; the worker's HR administrator and direct manager for the current opinion and its restrictions only; the employer's copy held outside the medical file; Kitry support never sees content",
+              "systemOfRecordBrickId": "cons",
+              "usedByBrickIds": [
+                "cons",
+                "mdoc",
+                "mpor"
+              ],
+              "ownerTeamId": "clinical-consultation",
+              "stewardTeamIds": [
+                "medical-records-and-confidentiality",
+                "portals-and-self-service"
+              ],
+              "derivedFromAssetIds": [
+                "consultation-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "fitness-opinion api",
+                  "description": "Generation from a signed consultation, restriction wording, e-signature, worker acknowledgement, employer release, appeal and validity query API used by the consultation workspace, documents, the employee and manager portals, HR return-to-work flows and dashboards."
+                },
+                {
+                  "type": "file",
+                  "name": "signed fitness opinion documents",
+                  "description": "Country-specific PDF forms (French avis d'aptitude and attestation de suivi, Belgian health assessment form) signed electronically and delivered to the worker and the employer, with the Goodflag signature evidence."
+                },
+                {
+                  "type": "event",
+                  "name": "fitness opinion events",
+                  "description": "Issued, signed, acknowledged, released to employer, restriction applied, appealed and expired events consumed by the manager portal, HR restriction application, the surveillance schedule, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "the medical copy follows the medical file's retention (40 years in France under the DMST decree, 15 to 40 years in Belgium); the employer's copy retained by the employer for as long as labour law requires the aptitude record to be produced, in practice 5 years after departure; restriction status projected to the warehouse as counts only",
+                "residency": "eea-hds",
+                "sharingPolicy": "the only medical-derived item shared with the employer, HR and the direct manager; contains conclusions and restrictions but no diagnosis; shared with the labour inspectorate physician in an appeal; never shared between tenants"
+              }
+            },
+            {
+              "id": "questionnaire-response",
+              "name": "Questionnaire Response",
+              "kind": "medical-record",
+              "description": "A worker's answers to a pre-visit or campaign questionnaire: health and lifestyle questions, symptom checklists, exposure self-assessment, psychosocial risk instruments, night-work and driving questionnaires, return-to-work readiness and vaccination status, completed privately in the Employee Portal or on a tablet at the medical centre, with questionnaire template and version, language, completion progress, timestamps, scoring, flags that the nurse or physician must review and the worker's consent to include the answers in the file. Collected by Questionnaires and Pre-visit Intake (ques) and reviewed inside the Consultation Record.",
+              "businessMeaning": "Preparation that turns a 30-minute visit into a focused one; completion before the visit is a supporting KPI of the nursing team, and privacy of the answers is what makes workers fill them in honestly.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-medical-dossier",
+                "hds-hosting",
+                "iso-27001"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "the worker while completing; occupational physicians and nurses of the service once submitted; scoring flags visible to the nurse preparing the visit; never the employer, HR or managers; anonymised scores only in campaign statistics",
+              "systemOfRecordBrickId": "ques",
+              "usedByBrickIds": [
+                "ques"
+              ],
+              "ownerTeamId": "clinical-consultation",
+              "stewardTeamIds": [
+                "portals-and-self-service"
+              ],
+              "derivedFromAssetIds": [
+                "convocation-and-appointment"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "questionnaire-response api",
+                  "description": "Assignment, progressive save, submit, scoring, review-flag and consent API used by the employee portal, the tablet intake application, the consultation workspace and campaign management."
+                },
+                {
+                  "type": "event",
+                  "name": "questionnaire events",
+                  "description": "Assigned, started, submitted, flagged for review and reviewed events consumed by scheduling reminders, the consultation workspace, campaign tracking and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept as part of the occupational medical file (DMST): in France at least 40 years from the last visit or the end of the worker's exposure as set by decree 2022-1434 of 15 November 2022 on the DMST, longer where special-agent rules (ionising radiation, asbestos, CMR agents) require it; in Belgium at least 15 years after the worker leaves the employer and 40 years after the end of exposure to carcinogenic, mutagenic or reprotoxic agents under the Code on well-being at work; never deleted at contract end but handed over to the successor service or archive",
+                "residency": "eea-hds",
+                "sharingPolicy": "medical secrecy: never shared with the employer, HR, managers, insurers or works council; transferred to the receiving occupational health service when the worker changes employer or service, with the worker informed; communicated to the worker's treating physician at the worker's request; disclosed to a health inspector physician only within the law; never used to train models"
+              }
+            },
+            {
+              "id": "device-measurement",
+              "name": "Device Measurement",
+              "kind": "medical-record",
+              "description": "Results captured from connected medical measurement devices during a visit or screening campaign: audiometry (thresholds per frequency and ear, audiogram), spirometry (FEV1, FVC, curves, interpretation), vision tests (acuity, colour, field), ECG traces, blood pressure, weight, height and other biometrics, with device make and model (Eolys, FIM, Essilor, JLM Medical, Siemens), calibration and serial number, operator, timestamp, raw payload, normalised values, reference ranges and abnormality flags, linked to the consultation and the worker. Captured by Medical Device Measurement Capture (devs) through Ecosystem Integrations (intg) and attached to the Consultation Record.",
+              "businessMeaning": "Capture without retyping is the nurse's biggest time saver and error remover, and decades of comparable audiograms per worker are what makes early detection of occupational hearing loss possible.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-medical-dossier",
+                "hds-hosting",
+                "iso-27001",
+                "eu-mdr-device-data"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "occupational physicians and nurses of the service; the worker sees their own results and trends in the portal once the physician releases them; device connectors write only; never the employer, HR or managers",
+              "systemOfRecordBrickId": "devs",
+              "usedByBrickIds": [
+                "devs",
+                "intg"
+              ],
+              "ownerTeamId": "clinical-consultation",
+              "stewardTeamIds": [
+                "integrations"
+              ],
+              "derivedFromAssetIds": [
+                "convocation-and-appointment"
+              ],
+              "stores": [
+                {
+                  "storeId": "device-measurement-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "integration-staging-zone",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "device-measurement api",
+                  "description": "Device registration, capture session, raw and normalised result, trend and abnormality-flag API used by device connectors, the consultation workspace, the employee portal and collective health monitoring aggregates."
+                },
+                {
+                  "type": "file",
+                  "name": "device export files",
+                  "description": "Manufacturer export formats (audiometry, spirometry and vision test files) imported when a device is not connected live, and standardised measurement exports for a successor service."
+                },
+                {
+                  "type": "event",
+                  "name": "measurement events",
+                  "description": "Captured, normalised, abnormality flagged, attached to consultation and released to worker events consumed by the consultation workspace, the medical file, collective health monitoring and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept as part of the occupational medical file (DMST): in France at least 40 years from the last visit or the end of the worker's exposure as set by decree 2022-1434 of 15 November 2022 on the DMST, longer where special-agent rules (ionising radiation, asbestos, CMR agents) require it; in Belgium at least 15 years after the worker leaves the employer and 40 years after the end of exposure to carcinogenic, mutagenic or reprotoxic agents under the Code on well-being at work; never deleted at contract end but handed over to the successor service or archive",
+                "residency": "eea-hds",
+                "sharingPolicy": "medical secrecy: never shared with the employer, HR, managers, insurers or works council; transferred to the receiving occupational health service when the worker changes employer or service, with the worker informed; communicated to the worker's treating physician at the worker's request; disclosed to a health inspector physician only within the law; never used to train models"
+              }
+            },
+            {
+              "id": "teleconsultation-session",
+              "name": "Teleconsultation Session",
+              "kind": "operational-state",
+              "description": "A secure video consultation between a worker and an occupational physician or nurse run through the integrated Vonage telehealth service: the appointment it fulfils, invitation links and identity checks for both parties, the worker's consent to teleconsultation and location, session start and end, connection quality, participants, the professional's assessment that the examination could be completed remotely or must be converted to an in-person visit, and the link to the Consultation Record written during the session. No audio or video is recorded. Managed by Secure Teleconsultation (tele) and joined from the Employee Portal.",
+              "businessMeaning": "Remote visits extend a scarce physician across sites and countries; the session object proves consent and identity while the clinical content stays in the file.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee",
+                "occupational-health-professional"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-telehealth-rules",
+                "hds-hosting",
+                "iso-27001"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "the physician or nurse running the session and the worker; scheduling staff see slot and status only; the telehealth provider processes the media stream as a processor without retention; never the employer or managers",
+              "systemOfRecordBrickId": "tele",
+              "usedByBrickIds": [
+                "tele"
+              ],
+              "ownerTeamId": "clinical-consultation",
+              "stewardTeamIds": [
+                "integrations",
+                "portals-and-self-service"
+              ],
+              "derivedFromAssetIds": [
+                "convocation-and-appointment"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "teleconsultation api",
+                  "description": "Session creation from an appointment, invitation, consent capture, join token, status and conversion-to-in-person API used by the consultation workspace, the employee portal, scheduling and the telehealth connector."
+                },
+                {
+                  "type": "event",
+                  "name": "teleconsultation events",
+                  "description": "Invited, consent given, joined, completed, dropped and converted events consumed by scheduling, the consultation record, notifications, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "session metadata and consent evidence kept 5 years; no media recording exists; the clinical content lives in the consultation record and follows the medical file's retention",
+                "residency": "eea-hds",
+                "sharingPolicy": "media stream handled by the telehealth provider inside the EEA as a processor; session facts never shared with the employer beyond visit completion; never shared between tenants"
+              }
+            },
+            {
+              "id": "vaccination-and-campaign-record",
+              "name": "Vaccination and Campaign Record",
+              "kind": "medical-record",
+              "description": "Vaccinations administered or recorded by the occupational health service (hepatitis B for healthcare and laboratory staff, tetanus, influenza and travel vaccines for expatriated workers, occupational vaccination obligations per country), with product, batch, dose, site, administering professional, adverse reactions and next dose due, plus the health and prevention campaigns the service runs at scale (flu campaigns, cardiovascular screening, hearing conservation, psychosocial risk surveys, smoking cessation), with target population, invitations, participation, individual results and anonymised campaign statistics. Managed by Vaccination and Health Campaigns (vacc) and filed into the Occupational Medical File.",
+              "businessMeaning": "Campaigns are how a nursing team reaches thousands of workers beyond the mandatory visits; individual records are medical data, campaign statistics are the collective story told to the employer.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-medical-dossier",
+                "hds-hosting",
+                "iso-27001"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "occupational physicians and nurses of the service; the worker sees their own vaccination record and certificates; campaign statistics without individual data visible to the service manager and the employer; never individual data to HR or managers",
+              "systemOfRecordBrickId": "vacc",
+              "usedByBrickIds": [
+                "vacc"
+              ],
+              "ownerTeamId": "clinical-consultation",
+              "stewardTeamIds": [
+                "medical-records-and-confidentiality",
+                "analytics-and-reporting"
+              ],
+              "derivedFromAssetIds": [
+                "worker-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "vaccination-and-campaign api",
+                  "description": "Vaccination entry, batch traceability, due-dose query, campaign definition, target population, invitation and participation tracking and anonymised statistics API used by the nursing workspace, the employee portal, scheduling, notifications and reports."
+                },
+                {
+                  "type": "file",
+                  "name": "vaccination certificates and campaign reports",
+                  "description": "Vaccination certificates for the worker and anonymised campaign reports for the employer and works council."
+                },
+                {
+                  "type": "event",
+                  "name": "vaccination and campaign events",
+                  "description": "Dose administered, dose due, campaign launched, worker invited, participated and campaign closed events consumed by the medical file, scheduling, notifications, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept as part of the occupational medical file (DMST): in France at least 40 years from the last visit or the end of the worker's exposure as set by decree 2022-1434 of 15 November 2022 on the DMST, longer where special-agent rules (ionising radiation, asbestos, CMR agents) require it; in Belgium at least 15 years after the worker leaves the employer and 40 years after the end of exposure to carcinogenic, mutagenic or reprotoxic agents under the Code on well-being at work; never deleted at contract end but handed over to the successor service or archive; campaign statistics kept anonymised for 10 years",
+                "residency": "eea-hds",
+                "sharingPolicy": "medical secrecy: never shared with the employer, HR, managers, insurers or works council; transferred to the receiving occupational health service when the worker changes employer or service, with the worker informed; communicated to the worker's treating physician at the worker's request; disclosed to a health inspector physician only within the law; never used to train models; only anonymised campaign statistics above the minimum group size are shared with the employer"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Medical Records and Confidentiality",
+          "description": "The occupational medical file (DMST / medical dossier), the medical documents and certificates it holds, and the consents and access grants that keep everyone but the medical service outside it.",
+          "assets": [
+            {
+              "id": "occupational-medical-file",
+              "name": "Occupational Medical File",
+              "kind": "medical-record",
+              "description": "The complete, confidential health-at-work file of one worker (dossier médical en santé au travail, DMST, in France; the health dossier of the Belgian Code on well-being at work; the equivalent file in Luxembourg and the Netherlands): file identity and the service that holds it, the chronological register of all consultation records, fitness opinions, questionnaire responses, device measurements, vaccinations, complementary examination results and medical documents, the exposure history and the professionals authorised, transfers between occupational health services when the worker changes employer, the worker's access and rectification requests, sealing at departure and the interoperability envelope for exchange with national health records and other occupational health information systems under French law 2021-1018. Kept by the Occupational Medical File (dmst) brick, protected by Medical Confidentiality and Access Segregation (conf), and the object Kitry counts more than 2.5 million of.",
+              "businessMeaning": "Kitry's strategic asset and its heaviest obligation: a file that follows the worker across decades, sites and services, under medical secrecy, on certified hosting, and that migration expertise brings across from legacy systems intact.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-medical-dossier",
+                "hds-hosting",
+                "iso-27001",
+                "fr-law-2021-1018-interoperability"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "occupational physicians of the service that follows the worker and, under their responsibility, occupational health nurses and medical assistants; the worker for their own data; never the employer, HR, managers or Kitry staff (support access only through a logged, time-limited break-glass procedure approved by the physician)",
+              "systemOfRecordBrickId": "dmst",
+              "usedByBrickIds": [
+                "audt",
+                "conf",
+                "cons",
+                "dmst"
+              ],
+              "ownerTeamId": "medical-records-and-confidentiality",
+              "stewardTeamIds": [
+                "platform-core-and-security",
+                "clinical-consultation"
+              ],
+              "derivedFromAssetIds": [
+                "consultation-record",
+                "fitness-opinion",
+                "questionnaire-response",
+                "device-measurement",
+                "vaccination-and-campaign-record",
+                "medical-document",
+                "teleconsultation-session",
+                "exposure-and-risk-profile"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "device-measurement-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "medical-file api",
+                  "description": "File open, chronological register, add-item, seal, transfer, worker access request, break-glass and interoperability envelope API used by the consultation workspace, documents, confidentiality controls, the employee portal and the audit trail; every access authorised by medical role and written to the audit log."
+                },
+                {
+                  "type": "file",
+                  "name": "medical file transfer and export bundles",
+                  "description": "Structured transfer bundles to a successor occupational health service, worker subject-access exports and the interoperability format for exchange with national health records and other occupational health information systems."
+                },
+                {
+                  "type": "event",
+                  "name": "medical file events",
+                  "description": "File opened, item added, sealed, transfer requested, transfer completed, access requested and break-glass opened events, carrying identifiers only, consumed by scheduling, confidentiality monitoring, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept as part of the occupational medical file (DMST): in France at least 40 years from the last visit or the end of the worker's exposure as set by decree 2022-1434 of 15 November 2022 on the DMST, longer where special-agent rules (ionising radiation, asbestos, CMR agents) require it; in Belgium at least 15 years after the worker leaves the employer and 40 years after the end of exposure to carcinogenic, mutagenic or reprotoxic agents under the Code on well-being at work; never deleted at contract end but handed over to the successor service or archive",
+                "residency": "eea-hds",
+                "sharingPolicy": "medical secrecy: never shared with the employer, HR, managers, insurers or works council; transferred to the receiving occupational health service when the worker changes employer or service, with the worker informed; communicated to the worker's treating physician at the worker's request; disclosed to a health inspector physician only within the law; never used to train models"
+              }
+            },
+            {
+              "id": "medical-document",
+              "name": "Medical Document",
+              "kind": "document",
+              "description": "Documents held in or issued from the medical file: fitness opinions and attestations in their signed form, medical certificates and sick-leave related attestations issued by the service, specialist and laboratory reports received, imaging results, vaccination certificates, questionnaire PDFs, consultation summaries for the treating physician, scanned legacy paper files migrated from previous systems, and the document metadata (type, author, date, language, signature evidence from Goodflag, version, retention class, worker visibility flag). Managed by Medical Documents, Certificates and E-signature (mdoc), stored in the encrypted object store and served to workers through the Employee Portal.",
+              "businessMeaning": "Certificates delivered electronically to the worker's portal, signed once by the physician, remove the printed-and-posted paperwork from every consultation day.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee",
+                "occupational-health-professional"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-medical-dossier",
+                "hds-hosting",
+                "iso-27001",
+                "eidas"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "occupational physicians and nurses of the service; the worker downloads documents flagged as visible to them; fitness opinion copies reach the employer through the fitness-opinion process only; scanned legacy documents readable by Kitry migration consultants only during controlled migration under supervision",
+              "systemOfRecordBrickId": "mdoc",
+              "usedByBrickIds": [
+                "dmst",
+                "epor",
+                "mdoc"
+              ],
+              "ownerTeamId": "medical-records-and-confidentiality",
+              "stewardTeamIds": [
+                "clinical-consultation",
+                "portals-and-self-service"
+              ],
+              "derivedFromAssetIds": [
+                "consultation-record",
+                "fitness-opinion"
+              ],
+              "stores": [
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "integration-staging-zone",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "medical-document api",
+                  "description": "Upload, generate from template, e-sign, version, classify, release-to-worker, secure-download and OCR-index API used by the consultation workspace, the medical file, the employee portal, the e-signature connector and migration."
+                },
+                {
+                  "type": "file",
+                  "name": "signed documents and legacy scans",
+                  "description": "Signed PDF outputs with embedded signature evidence, worker downloads through expiring links and bulk legacy scan imports during migration."
+                },
+                {
+                  "type": "event",
+                  "name": "medical document events",
+                  "description": "Created, signed, versioned, released to worker, downloaded and archived events consumed by the medical file, the employee portal, notifications and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept as part of the occupational medical file (DMST): in France at least 40 years from the last visit or the end of the worker's exposure as set by decree 2022-1434 of 15 November 2022 on the DMST, longer where special-agent rules (ionising radiation, asbestos, CMR agents) require it; in Belgium at least 15 years after the worker leaves the employer and 40 years after the end of exposure to carcinogenic, mutagenic or reprotoxic agents under the Code on well-being at work; never deleted at contract end but handed over to the successor service or archive",
+                "residency": "eea-hds",
+                "sharingPolicy": "medical secrecy: never shared with the employer, HR, managers, insurers or works council; transferred to the receiving occupational health service when the worker changes employer or service, with the worker informed; communicated to the worker's treating physician at the worker's request; disclosed to a health inspector physician only within the law; never used to train models"
+              }
+            },
+            {
+              "id": "consent-and-access-grant",
+              "name": "Consent and Access Grant",
+              "kind": "operational-state",
+              "description": "The evidence of who may see what in the medical perimeter: the worker's consents (teleconsultation, inclusion of questionnaire answers, communication to the treating physician, portal notifications, campaign participation), the assignment of a worker's file to a service and its physicians and nurses, delegations between professionals during absences, cross-site and cross-service reading rights, time-limited break-glass grants with justification and approver, the segregation rules that keep HR, managers, prevention advisers and Kitry staff outside the medical schema, and the worker's subject-access, rectification and restriction requests with their handling. Managed by Medical Confidentiality and Access Segregation (conf) and enforced by Identity, SSO, Roles and Consent (iden).",
+              "businessMeaning": "Medical secrecy made operational: the grant model is what allows one platform to serve physicians, HR and managers without a single wrongful read.",
+              "status": "active",
+              "tags": [
+                "occupational-health",
+                "platform-and-services",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "occupational-health-professional"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "hds-hosting",
+                "iso-27001"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "the chief occupational physician or service manager for grants within the service; the worker for their own consents and requests; tenant security administrators for the segregation rules but not the medical content; Kitry security officers for break-glass approval review",
+              "systemOfRecordBrickId": "conf",
+              "usedByBrickIds": [
+                "conf",
+                "iden"
+              ],
+              "ownerTeamId": "medical-records-and-confidentiality",
+              "stewardTeamIds": [
+                "platform-core-and-security"
+              ],
+              "derivedFromAssetIds": [
+                "user-account-and-role",
+                "worker-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "consent-and-access-grant api",
+                  "description": "Consent capture and withdrawal, file assignment, delegation, break-glass request and approval, segregation rule evaluation and subject-request handling API used by identity, the medical file, the consultation workspace, teleconsultation, the employee portal and the audit trail."
+                },
+                {
+                  "type": "event",
+                  "name": "consent and grant events",
+                  "description": "Consent given or withdrawn, grant created, delegation started or ended, break-glass opened or closed and subject request received or completed events consumed by identity enforcement, confidentiality monitoring, notifications and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "consents and grants kept for the life of the medical file plus 5 years as proof of lawful access; break-glass records kept 10 years; withdrawn consents kept as evidence of withdrawal",
+                "residency": "eea-hds",
+                "sharingPolicy": "internal to the tenant's medical service and security administration; grant and break-glass facts reported to the customer's data protection officer; never shared between tenants"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Workplace Safety",
+      "description": "The prevention adviser's living risk assessment (DUERP in France, global prevention plan and annual action plan in Belgium), hazardous situations reported from the floor, inspections and audits with ISO 45001 evidence, corrective actions followed to closure, and the chemical inventory with safety data sheets whose classification feeds the exposure profiles the physician relies on.",
+      "subGroups": [
+        {
+          "name": "Risk Management",
+          "description": "Risk assessments, hazardous situation reports, inspection and audit records and the corrective actions that close them.",
+          "assets": [
+            {
+              "id": "risk-assessment",
+              "name": "Risk Assessment",
+              "kind": "master-data",
+              "description": "The living risk assessment of the organisation per site, unit and workstation: hazards identified, exposed population, evaluation method and scoring (probability, severity, exposure, control), existing prevention measures, residual risk, priority and proposed measures, the mapping to exposure profiles and chemicals, the French DUERP (document unique d'évaluation des risques professionnels) with its annual update, dematerialised deposit and prevention programme, the Belgian dynamic risk management system with its five-year global prevention plan and annual action plan, ISO 45001 hazard identification evidence, versions and approvals by the employer, prevention adviser and works council. Maintained in Risk Assessment and Prevention Plan (risk), fed by the Exposure and Risk Profile Register and the chemical inventory, and the source of prevention actions in Action Plan Management (actn).",
+              "businessMeaning": "The prevention adviser's north star, risk assessment currency, is measured on this object; sharing workstations with the medical side keeps it current without a second data entry.",
+              "status": "active",
+              "tags": [
+                "workplace-safety"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "fr-duerp",
+                "fr-law-2021-1018-prevention",
+                "be-code-well-being-at-work",
+                "eu-directive-89-391",
+                "iso-45001",
+                "gdpr"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "HSE managers and prevention advisers of the tenant for their sites; occupational physicians read all; managers read the assessment of their own units and propose measures; works council and health and safety committee members read approved versions; the labour inspectorate on request through the employer",
+              "systemOfRecordBrickId": "risk",
+              "usedByBrickIds": [
+                "actn",
+                "risk"
+              ],
+              "ownerTeamId": "risk-and-prevention",
+              "stewardTeamIds": [
+                "workforce-and-surveillance",
+                "analytics-and-reporting"
+              ],
+              "derivedFromAssetIds": [
+                "exposure-and-risk-profile",
+                "organisation-unit-and-workstation",
+                "chemical-product-and-sds",
+                "inspection-and-audit-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "risk-assessment api",
+                  "description": "Hazard register, evaluation, measure, version, approval, DUERP and global prevention plan generation and prevention programme API used by risk management, action plans, exposures, chemicals, inspections, dashboards and the annual report."
+                },
+                {
+                  "type": "file",
+                  "name": "duerp and prevention plan documents",
+                  "description": "Versioned DUERP PDF and dematerialised deposit format, Belgian global prevention plan and annual action plan, and ISO 45001 hazard identification evidence exports."
+                },
+                {
+                  "type": "event",
+                  "name": "risk assessment events",
+                  "description": "Hazard added, evaluation changed, measure proposed, version approved, annual update due and DUERP deposited events consumed by action plans, exposure profiles, surveillance rules, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "every DUERP version and its updates kept at least 40 years from creation under French law 2021-1018 and article L4121-3-1 of the Labour Code, available to workers and former workers; Belgian global prevention plans and annual action plans kept for the five-year cycle plus 10 years; versions immutable once approved",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; approved versions shared with the works council, the health and safety committee and the occupational health service; provided to the labour inspectorate and to former workers on request; never shared between tenants"
+              }
+            },
+            {
+              "id": "hazardous-situation-report",
+              "name": "Hazardous Situation Report",
+              "kind": "operational-state",
+              "description": "A report raised from the floor about a dangerous situation, near miss, unsafe condition or safety concern: reporter (worker, manager, contractor or anonymous where allowed), site and location, date, description, photos, immediate measures taken, category and hazard type, severity estimate, the triage by the prevention adviser, link to the workstation and risk assessment, the corrective actions created, the feedback given to the reporter and the resolution status. Captured through the Employee Portal and the Manager Portal on mobile and in Hazardous Situation Reporting (hazs), and closed through Action Plan Management.",
+              "businessMeaning": "The signal from the field that a mature safety culture depends on; workers keep reporting only if they see the response, which is why reporter feedback and resolution time are tracked KPIs.",
+              "status": "active",
+              "tags": [
+                "workplace-safety",
+                "portals-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "manager"
+              ],
+              "legalTags": [
+                "gdpr",
+                "be-code-well-being-at-work",
+                "eu-directive-89-391",
+                "iso-45001",
+                "eu-whistleblowing-where-applicable"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "HSE managers and prevention advisers of the tenant; site and line managers for their sites; the reporter for their own reports; occupational physicians read reports linked to health; anonymous reporter identity hidden from everyone but the platform",
+              "systemOfRecordBrickId": "hazs",
+              "usedByBrickIds": [
+                "hazs"
+              ],
+              "ownerTeamId": "risk-and-prevention",
+              "stewardTeamIds": [
+                "portals-and-self-service"
+              ],
+              "derivedFromAssetIds": [
+                "organisation-unit-and-workstation"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "hazardous-situation api",
+                  "description": "Report submission with photos, triage, categorisation, link to workstation and risk, action creation, feedback and closure API used by the portals, the safety workspace, action plans, notifications and dashboards."
+                },
+                {
+                  "type": "event",
+                  "name": "hazardous situation events",
+                  "description": "Reported, triaged, action created, feedback sent, resolved and closed events consumed by action plans, notifications, portals, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept 10 years after closure as safety evidence; reporter identity pseudonymised 2 years after closure unless the report is linked to an accident or a legal proceeding; photos follow the same schedule",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; aggregated reports shared with the works council and the health and safety committee; reports linked to an accident attached to the accident event; never shared between tenants"
+              }
+            },
+            {
+              "id": "inspection-and-audit-record",
+              "name": "Inspection and Audit Record",
+              "kind": "operational-state",
+              "description": "Planned and executed safety inspections, compliance checks and audits: inspection programme and checklist templates per site type (workshop, laboratory, office, warehouse, construction), scheduled and ad hoc inspections with inspector, date and scope, checklist answers, observations, non-conformities, photos and evidence, scoring, regulatory verification records (periodic checks of equipment, electrical installations, lifting gear, pressure vessels), internal and external ISO 45001 audits with findings and management review inputs, and the corrective actions raised. Managed in Inspections, Audits and Compliance Checks (insp) and followed to closure in Action Plan Management.",
+              "businessMeaning": "The evidence trail that makes the safety system inspection-ready and ISO 45001-certifiable; findings that never become closed actions are the gap the audit report exposes.",
+              "status": "active",
+              "tags": [
+                "workplace-safety"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "manager"
+              ],
+              "legalTags": [
+                "be-code-well-being-at-work",
+                "fr-code-du-travail-periodic-checks",
+                "eu-directive-89-391",
+                "iso-45001",
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "HSE managers, prevention advisers and internal auditors of the tenant for their sites; managers see inspections of their own areas; occupational physicians read; external auditors through time-limited guest access",
+              "systemOfRecordBrickId": "insp",
+              "usedByBrickIds": [
+                "insp"
+              ],
+              "ownerTeamId": "risk-and-prevention",
+              "stewardTeamIds": [
+                "risk-and-prevention"
+              ],
+              "derivedFromAssetIds": [
+                "organisation-unit-and-workstation"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "inspection-and-audit api",
+                  "description": "Programme, checklist template, inspection execution on mobile, finding, evidence, scoring, regulatory verification and audit management API used by the safety workspace, action plans, the manager portal, dashboards and the annual report."
+                },
+                {
+                  "type": "file",
+                  "name": "inspection reports and audit evidence",
+                  "description": "Inspection reports, regulatory verification certificates and ISO 45001 audit reports in PDF with attached evidence."
+                },
+                {
+                  "type": "event",
+                  "name": "inspection events",
+                  "description": "Scheduled, performed, finding raised, action created, verification due and audit closed events consumed by action plans, notifications, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "inspection and audit records kept at least 10 years and for the life of the equipment for regulatory verification records; ISO 45001 evidence kept across at least two certification cycles",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; findings shared with the health and safety committee; regulatory verification records produced to the labour inspectorate; audit reports shared with the certification body; never shared between tenants"
+              }
+            },
+            {
+              "id": "corrective-action",
+              "name": "Corrective Action",
+              "kind": "operational-state",
+              "description": "A prevention or corrective measure to be carried out: origin (risk assessment measure, hazardous situation, inspection finding, audit non-conformity, accident analysis, physician's collective advice, annual action plan), description, site and workstation, owner and assignee, priority, due date, budget and cost, progress notes, evidence of completion, verification of effectiveness, escalation and reminders, and the status chain from open to verified and closed, consolidated into the annual prevention programme (France) or annual action plan (Belgium). Managed in Action Plan Management (actn), assigned to site and line managers through the Manager Portal and reminded through notifications.",
+              "businessMeaning": "Where prevention becomes real: the corrective action closure rate is the HSE manager's supporting KPI and the line manager's concrete responsibility on the floor.",
+              "status": "active",
+              "tags": [
+                "workplace-safety",
+                "portals-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "manager"
+              ],
+              "legalTags": [
+                "be-code-well-being-at-work",
+                "fr-duerp",
+                "eu-directive-89-391",
+                "iso-45001",
+                "gdpr"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "HSE managers and prevention advisers of the tenant; assignees and their managers for their own actions; occupational physicians read actions from their collective advice; works council members read the annual programme; the reporter of a hazardous situation sees the action status",
+              "systemOfRecordBrickId": "actn",
+              "usedByBrickIds": [
+                "actn",
+                "hazs",
+                "insp",
+                "mpor"
+              ],
+              "ownerTeamId": "risk-and-prevention",
+              "stewardTeamIds": [
+                "portals-and-self-service"
+              ],
+              "derivedFromAssetIds": [
+                "hazardous-situation-report",
+                "inspection-and-audit-record",
+                "risk-assessment",
+                "event-analysis-and-statistic"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "notification-message-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "corrective-action api",
+                  "description": "Action creation from any origin, assignment, due-date, progress, evidence, verification, escalation and annual programme consolidation API used by risk management, hazardous situations, inspections, accident analysis, the manager portal, notifications and dashboards."
+                },
+                {
+                  "type": "event",
+                  "name": "action events",
+                  "description": "Created, assigned, due soon, overdue, completed, verified and closed events consumed by notifications, the manager portal, the originating record, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept 10 years after closure and as long as the risk assessment version it belongs to; actions arising from an accident kept with the accident event",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; annual programme shared with the works council and the health and safety committee; never shared between tenants"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chemicals",
+          "description": "Chemical products, safety data sheets, CLP classification and workstation usage feeding exposure tracking.",
+          "assets": [
+            {
+              "id": "chemical-product-and-sds",
+              "name": "Chemical Product and Safety Data Sheet",
+              "kind": "master-data",
+              "description": "The inventory of chemical products used on each site: product identity and supplier, safety data sheet versions in the site languages, CLP hazard classification, pictograms and H and P statements, CMR status, occupational exposure limits, quantities and storage locations, workstations and tasks where the product is used, exposure groups and the workers concerned, substitution studies, and the link from the SDS to the exposure profile and the risk assessment. Maintained in Chemical Product Inventory and Safety Data Sheets (chem); SDS files are stored in the encrypted object store and the classification feeds the Exposure and Risk Profile Register.",
+              "businessMeaning": "Chemical inventory completeness is the HSE manager's supporting KPI; a product with an outdated SDS is a workstation with an unknown exposure and a worker with the wrong surveillance category.",
+              "status": "active",
+              "tags": [
+                "workplace-safety",
+                "workforce-and-exposure-data"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "reach-clp",
+                "fr-code-du-travail-chemical-risk",
+                "be-code-well-being-at-work",
+                "eu-directive-89-391",
+                "iso-45001"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "HSE managers, prevention advisers and chemical safety officers of the tenant; occupational physicians and nurses read classification and exposure links; managers and workers read SDS and pictograms of the products at their workstations; suppliers' SDS received as files",
+              "systemOfRecordBrickId": "chem",
+              "usedByBrickIds": [
+                "chem"
+              ],
+              "ownerTeamId": "risk-and-prevention",
+              "stewardTeamIds": [
+                "workforce-and-surveillance"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "chemical-inventory api",
+                  "description": "Product, SDS version, classification, exposure limit, storage location, workstation use, CMR tracking and substitution API used by the chemicals module, the exposure register, risk assessment, the portals and inspection checklists."
+                },
+                {
+                  "type": "file",
+                  "name": "safety data sheets",
+                  "description": "Supplier safety data sheets in PDF per language and version, chemical labels and the inventory export requested by the labour inspectorate or the fire service."
+                },
+                {
+                  "type": "event",
+                  "name": "chemical inventory events",
+                  "description": "Product added, SDS updated, classification changed, CMR flagged, workstation use added and product withdrawn events consumed by exposure profiles, surveillance rules, risk assessment and dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "product records and SDS versions kept at least 40 years after the product's last use where CMR agents are involved (exposure evidence for the DMST and disease recognition) and at least 10 years otherwise, matching REACH record-keeping duties",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; SDS and inventory produced to the labour inspectorate, the fire service and the occupational health service; exposure groups shared with collective health monitoring; never shared between tenants"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Accidents and Occupational Diseases",
+      "description": "Work accidents and occupational disease cases from event to declaration on national forms (CERFA/Ameli in France, insurers and Fedris in Belgium), root-cause analysis and frequency and severity statistics, and follow-up to recognition and return-to-work, with injury and disease content handled as health data.",
+      "subGroups": [
+        {
+          "name": "Events and Cases",
+          "description": "Work accident events with witnesses, injuries and circumstances, and occupational disease cases linked to exposure history and the medical file.",
+          "assets": [
+            {
+              "id": "work-accident-event",
+              "name": "Work Accident Event",
+              "kind": "operational-state",
+              "description": "A work accident, commuting accident or serious near miss: the victim and their worker record, date, time and place, activity and workstation, circumstances and description, nature and location of injuries, first aid and care given, witnesses and their statements, third parties, immediate measures, manager's and HSE's statements, the employer's reservations, absence and its evolution, return-to-work steps, classification (with or without lost time, fatal, serious), the declaration deadline computed per country (48 hours to the CPAM in France, 8 days to the insurer in Belgium) and the link to the national declaration form and the analysis. Declared in Work Accident and Occupational Disease Declaration (acci) by HR administrators with HSE input, analysed in Event Analysis and Statistics (rcaa) and transmitted through National Reporting Forms and Connectors (nreg).",
+              "businessMeaning": "The event whose on-time declaration is the HR administrator's north star and whose analysis feeds the prevention plan; injury details make it sensitive even though it lives outside the medical file.",
+              "status": "active",
+              "tags": [
+                "accidents-and-occupational-diseases"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee",
+                "witness"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-art-9-health-data",
+                "fr-social-security-code-accident-declaration",
+                "fr-ameli-cerfa",
+                "be-work-accident-law-1971",
+                "be-fedris",
+                "insurer-declaration",
+                "eu-directive-89-391"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "HR administrators and HSE managers of the tenant for their sites; the victim's manager for the circumstances and follow-up; occupational physicians read all; the victim sees their own declaration; witnesses' statements visible to declarants only; insurers and national bodies receive the declaration content",
+              "systemOfRecordBrickId": "acci",
+              "usedByBrickIds": [
+                "acci",
+                "nreg",
+                "rcaa"
+              ],
+              "ownerTeamId": "accidents-and-occupational-diseases",
+              "stewardTeamIds": [
+                "risk-and-prevention",
+                "workforce-and-surveillance"
+              ],
+              "derivedFromAssetIds": [
+                "worker-record",
+                "organisation-unit-and-workstation",
+                "hazardous-situation-report"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "work-accident api",
+                  "description": "Event capture with witnesses and injuries, classification, deadline calculation, absence and return-to-work follow-up, document attachment and link-to-declaration API used by the declaration module, the manager portal, national connectors, analysis, notifications and dashboards."
+                },
+                {
+                  "type": "file",
+                  "name": "accident attachments and registers",
+                  "description": "Medical certificates of injury received, witness statements, photos, and the register of minor accidents (registre des accidents bénins) and Belgian accident register exports."
+                },
+                {
+                  "type": "event",
+                  "name": "accident events",
+                  "description": "Declared internally, classified, declaration due, declared to national body, absence updated, return-to-work planned and case closed events consumed by national connectors, analysis, notifications, the manager portal, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept at least 10 years after closure of the case and as long as any recognition, absence, revision or litigation stays open (accident consequences can be revised for decades); the register of minor accidents kept 5 years in France; events cross-referenced from a medical file follow the file's retention",
+                "residency": "eea",
+                "sharingPolicy": "declared to the national social security body (CPAM via Ameli in France) or the work accident insurer and Fedris in Belgium, and to the labour inspectorate for serious accidents; shared with the works council and health and safety committee without injury details; never shared between tenants"
+              }
+            },
+            {
+              "id": "occupational-disease-case",
+              "name": "Occupational Disease Case",
+              "kind": "medical-record",
+              "description": "A suspected, declared or recognised occupational disease: the worker and their exposure history, the disease and the national table or open-system criteria (French tableaux des maladies professionnelles, Belgian Fedris list and open system), the physician's medical certificate and opinion, the worker's declaration to the CPAM or the request to Fedris, the employer's statement, the recognition procedure and its decisions, appeals, compensation and reclassification outcomes, post-recognition surveillance and the collective consequences (exposure review, risk assessment update). Opened in Work Accident and Occupational Disease Declaration (acci), transmitted through National Reporting Forms and Connectors (nreg) and linked to the Occupational Medical File under medical secrecy.",
+              "businessMeaning": "The case where 40 years of exposure records prove their worth; its medical content belongs to the physician while its administrative course belongs to HR, and the platform keeps the two apart.",
+              "status": "active",
+              "tags": [
+                "accidents-and-occupational-diseases",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr-art-9-health-data",
+                "medical-secrecy",
+                "fr-code-sante-publique",
+                "fr-code-du-travail-dmst",
+                "be-code-well-being-medical-dossier",
+                "hds-hosting",
+                "iso-27001",
+                "fr-social-security-code-occupational-disease",
+                "be-fedris",
+                "insurer-declaration"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "occupational physicians of the service for the medical content; HR administrators for the administrative procedure, deadlines and decisions without diagnosis details beyond what the declaration form requires; the worker for their own case; Fedris, the CPAM and insurers receive the declaration content",
+              "systemOfRecordBrickId": "acci",
+              "usedByBrickIds": [
+                "acci",
+                "nreg"
+              ],
+              "ownerTeamId": "accidents-and-occupational-diseases",
+              "stewardTeamIds": [
+                "medical-records-and-confidentiality",
+                "workforce-and-surveillance"
+              ],
+              "derivedFromAssetIds": [
+                "worker-record",
+                "exposure-and-risk-profile"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "occupational-disease-case api",
+                  "description": "Case opening, exposure history compilation, medical certificate, declaration preparation, procedure and decision tracking, appeal and post-recognition follow-up API used by the declaration module, national connectors, the medical file, the consultation workspace and statistics."
+                },
+                {
+                  "type": "file",
+                  "name": "disease declaration documents",
+                  "description": "Medical certificates and exposure attestations in the national formats, Fedris request forms and recognition decisions received."
+                },
+                {
+                  "type": "event",
+                  "name": "occupational disease events",
+                  "description": "Case opened, certificate issued, declared, decision received, appealed, recognised and closed events, carrying identifiers only, consumed by national connectors, the medical file, exposure review, statistics and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept as part of the occupational medical file (DMST): in France at least 40 years from the last visit or the end of the worker's exposure as set by decree 2022-1434 of 15 November 2022 on the DMST, longer where special-agent rules (ionising radiation, asbestos, CMR agents) require it; in Belgium at least 15 years after the worker leaves the employer and 40 years after the end of exposure to carcinogenic, mutagenic or reprotoxic agents under the Code on well-being at work; never deleted at contract end but handed over to the successor service or archive; the administrative procedure records kept at least 10 years after the final decision",
+                "residency": "eea-hds",
+                "sharingPolicy": "medical content under medical secrecy; the declaration content transmitted to the CPAM (France) or Fedris and the insurer (Belgium) and to the worker; recognition decisions shared with HR for absence and compensation; never shared between tenants"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Declarations and Analysis",
+          "description": "Country-specific declaration forms with their submissions and acknowledgements, and the analyses and statistics built from events.",
+          "assets": [
+            {
+              "id": "national-declaration-form",
+              "name": "National Declaration Form",
+              "kind": "document",
+              "description": "The country-specific declaration generated from an accident event or disease case and its submission: the French CERFA work accident declaration (DAT) filed on net-entreprises or Ameli with the employer's reservations, the attestation de salaire and the feuille d'accident, the Belgian work accident declaration to the insurer through the Portal of Social Security or the insurer's connector and the Fedris occupational disease request, Luxembourg AAA and Dutch inspectorate notifications, with form version, prefilled and completed fields, validation errors, submission channel, timestamp, acknowledgement and reference number received, correction and follow-up submissions, and the deadline compliance record. Generated and transmitted by National Reporting Forms and Connectors (nreg) using the Country Regulation Rule content.",
+              "businessMeaning": "The moment of truth for the HR administrator's north star: a correct form, submitted inside the legal delay, with the acknowledgement stored as proof.",
+              "status": "active",
+              "tags": [
+                "accidents-and-occupational-diseases",
+                "platform-and-services"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "sensitive",
+              "dataSubjects": [
+                "employee",
+                "witness"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-art-9-health-data",
+                "fr-ameli-cerfa",
+                "fr-social-security-code-accident-declaration",
+                "be-work-accident-law-1971",
+                "be-fedris",
+                "insurer-declaration"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "HR administrators with declaration rights for their establishments; HSE managers read; occupational physicians read; the worker receives a copy of their own declaration; national bodies and insurers receive the submitted content",
+              "systemOfRecordBrickId": "nreg",
+              "usedByBrickIds": [
+                "nreg"
+              ],
+              "ownerTeamId": "accidents-and-occupational-diseases",
+              "stewardTeamIds": [
+                "regulatory-content",
+                "integrations"
+              ],
+              "derivedFromAssetIds": [
+                "work-accident-event",
+                "occupational-disease-case",
+                "worker-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "integration-staging-zone",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "national-declaration api",
+                  "description": "Form prefill from event and worker data, validation against the current national form version, submission through connector or download, acknowledgement capture, correction and deadline status API used by the declaration module, national connectors, the manager portal and dashboards."
+                },
+                {
+                  "type": "file",
+                  "name": "declaration forms and acknowledgements",
+                  "description": "Generated CERFA and Belgian declaration forms in the official PDF or structured formats, submission payloads and the acknowledgements and reference numbers returned by Ameli, the Portal of Social Security, insurers and Fedris."
+                },
+                {
+                  "type": "event",
+                  "name": "declaration events",
+                  "description": "Prefilled, validated, submitted, acknowledged, rejected, corrected and deadline-missed events consumed by the accident event, notifications, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "submitted forms and acknowledgements kept at least 10 years after submission (social security and insurer limitation periods) and for the life of any litigation; form versions kept with the country regulation content",
+                "residency": "eea",
+                "sharingPolicy": "transmitted to the national social security body, the insurer or Fedris through official channels; a copy provided to the worker; never shared between tenants"
+              }
+            },
+            {
+              "id": "event-analysis-and-statistic",
+              "name": "Event Analysis and Statistic",
+              "kind": "derived-dataset",
+              "description": "The analysis and statistics built from accidents, occupational diseases and hazardous situations: root-cause analysis (Ishikawa, five whys, causal tree per the French INRS method), contributing factors, lessons learned and preventive measures created as corrective actions, plus the frequency rate (Tf), severity rate (Tg), lost-time days, accidents per site, unit, workstation, hour and age band, commuting versus work accidents, disease cases per table and exposure group, and the Belgian annual accident statistics and French social indicators, computed as periodic snapshots and comparable with sector references. Produced by Event Analysis and Statistics (rcaa) and read by dashboards, the annual report and the works council pack.",
+              "businessMeaning": "Turning events into prevention: the causal tree feeds the action plan and the frequency and severity rates are the numbers the employer, the works council and the insurer steer on.",
+              "status": "active",
+              "tags": [
+                "accidents-and-occupational-diseases",
+                "portals-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "witness"
+              ],
+              "legalTags": [
+                "gdpr",
+                "be-code-well-being-at-work",
+                "fr-code-du-travail-cse-reporting",
+                "eu-directive-89-391",
+                "iso-45001"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "HSE managers, prevention advisers and HR administrators of the tenant; occupational physicians read; managers see analyses of their own sites; works council and health and safety committee members see anonymised statistics; individual analyses hidden from anyone outside the investigation team",
+              "systemOfRecordBrickId": "rcaa",
+              "usedByBrickIds": [
+                "rcaa"
+              ],
+              "ownerTeamId": "accidents-and-occupational-diseases",
+              "stewardTeamIds": [
+                "analytics-and-reporting",
+                "risk-and-prevention"
+              ],
+              "derivedFromAssetIds": [
+                "work-accident-event",
+                "occupational-disease-case",
+                "hazardous-situation-report"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "event-analysis api",
+                  "description": "Analysis workspace, causal tree, contributing factor, lesson learned, action creation and statistics computation and comparison API used by the analysis module, action plans, dashboards, the annual report and the works council pack."
+                },
+                {
+                  "type": "file",
+                  "name": "analysis reports and statistics exports",
+                  "description": "Root-cause analysis reports and frequency and severity statistics exports for the works council, the insurer and the certification body."
+                },
+                {
+                  "type": "event",
+                  "name": "analysis events",
+                  "description": "Analysis opened, cause identified, action created, analysis closed and statistics period computed events consumed by action plans, dashboards, the annual report and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "individual analyses kept 10 years after closure with the accident event; anonymised statistics kept indefinitely for trend analysis",
+                "residency": "eea",
+                "sharingPolicy": "individual analyses internal to the investigation team; anonymised statistics shared with the works council, the health and safety committee, the insurer and the certification body; never shared between tenants"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Portals and Insight",
+      "description": "The self-service activity of employees and managers in the portals, and the cross-module insight layer: KPI snapshots behind every persona's dashboard, regulatory and annual activity reports, and anonymised collective health indicators released by the physician as collective prevention advice.",
+      "subGroups": [
+        {
+          "name": "Portals",
+          "description": "Sessions and requests from the employee and manager portals, routed to the responsible module without exposing medical content to managers.",
+          "assets": [
+            {
+              "id": "portal-session-and-request",
+              "name": "Portal Session and Request",
+              "kind": "operational-state",
+              "description": "The self-service activity of employees and managers in the portals: authenticated sessions with device and language, the requests a worker makes (book or reschedule a visit, complete a questionnaire, download a document, join a teleconsultation, ask the medical service a question, report a hazardous situation, update contact preferences) and the actions a manager takes (view team fitness status and restrictions, release a worker for a visit, acknowledge a corrective action, start an accident pre-declaration), with request status, routing to the responsible brick and response time. Managed by the Employee Portal (epor) and the Manager Portal (mpor); more than half of the workers at Kitry's customers in France, Belgium and Luxembourg use the self-service features.",
+              "businessMeaning": "Self-service is Kitry's adoption story and the employee's north star metric; the request object is what routes each click to the right module while keeping the manager view free of medical content.",
+              "status": "active",
+              "tags": [
+                "portals-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "manager"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-employee-data",
+                "eprivacy-electronic-communications",
+                "iso-27001"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "the user for their own sessions and requests; occupational health assistants for requests addressed to the service; HSE for hazardous-situation requests; tenant administrators for adoption statistics; Kitry support for session diagnostics without content",
+              "systemOfRecordBrickId": "epor",
+              "usedByBrickIds": [
+                "epor",
+                "mpor"
+              ],
+              "ownerTeamId": "portals-and-self-service",
+              "stewardTeamIds": [
+                "platform-core-and-security"
+              ],
+              "derivedFromAssetIds": [
+                "user-account-and-role"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "portal-request api",
+                  "description": "Session context, request submission, status, routing and response API used by the employee and manager portals, scheduling, questionnaires, documents, teleconsultation, hazardous situations and adoption dashboards."
+                },
+                {
+                  "type": "event",
+                  "name": "portal activity events",
+                  "description": "Session started, request submitted, routed, answered and closed events consumed by scheduling, notifications, the safety workspace, adoption KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "session logs kept 12 months; requests kept 3 years after closure; adoption statistics kept aggregated",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation; adoption statistics shared with the service manager and Kitry account management; never shared between tenants"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analytics and Reporting",
+          "description": "KPI snapshots, annual and regulatory reports and collective health indicators computed from governed, pseudonymised or anonymised copies of module data.",
+          "assets": [
+            {
+              "id": "kpi-snapshot",
+              "name": "KPI Snapshot",
+              "kind": "derived-dataset",
+              "description": "Periodic (daily, monthly, yearly) computed indicators across modules per tenant, site, unit and population: medical surveillance compliance and workforce coverage rates, overdue examinations, examinations per nurse day and capacity utilisation, fitness clearance rate and active restrictions, questionnaire completion, no-show rate, self-service rate, risk assessment currency, corrective action closure and overdue counts, chemical inventory completeness, hazardous situation resolution time, accident frequency and severity rates, declaration on-time rate and return-to-work coordination time, with definitions, calculation version, comparison periods and targets. Computed by Dashboards and KPIs (dash) from governed warehouse copies and read by the Regulatory and Annual Reports (rept) and by every persona's dashboard.",
+              "businessMeaning": "One agreed set of numbers for physicians, coordinators, HSE, HR and Kitry's account managers; every north star in this domain is a row in this dataset.",
+              "status": "active",
+              "tags": [
+                "portals-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee"
+              ],
+              "legalTags": [
+                "gdpr",
+                "iso-27001"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "role-scoped dashboards: occupational health staff and coordinators see medical activity indicators, HSE sees safety indicators, HR sees declaration and absence indicators, managers see their own team, the employer's leadership sees site-level aggregates; medical indicators only above the minimum group size",
+              "systemOfRecordBrickId": "dash",
+              "usedByBrickIds": [
+                "dash",
+                "rept"
+              ],
+              "ownerTeamId": "analytics-and-reporting",
+              "stewardTeamIds": [
+                "workforce-and-surveillance",
+                "risk-and-prevention"
+              ],
+              "derivedFromAssetIds": [
+                "surveillance-schedule",
+                "convocation-and-appointment",
+                "fitness-opinion",
+                "questionnaire-response",
+                "risk-assessment",
+                "corrective-action",
+                "hazardous-situation-report",
+                "chemical-product-and-sds",
+                "work-accident-event",
+                "event-analysis-and-statistic",
+                "national-declaration-form",
+                "portal-session-and-request"
+              ],
+              "stores": [
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "kpi api",
+                  "description": "Indicator catalogue, snapshot query by period and scope, target and comparison API used by dashboards, the annual report, the works council pack, portals and Kitry account reviews."
+                },
+                {
+                  "type": "event",
+                  "name": "kpi events",
+                  "description": "Snapshot computed, target breached and definition changed events consumed by dashboards, notifications to coordinators and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "snapshots kept 10 years for trend analysis; calculation definitions versioned for the life of the tenant; pseudonymised in the warehouse",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer organisation by role; site-level aggregates shared with the employer's leadership and the works council; benchmark aggregates shared across tenants only after anonymisation and customer consent"
+              }
+            },
+            {
+              "id": "annual-activity-report",
+              "name": "Annual Activity Report",
+              "kind": "document",
+              "description": "The regulatory and periodic reports the service and the employer must produce: the annual report of the occupational health service in France (rapport annuel d'activité du médecin du travail) with examination counts, fitness conclusions, collective actions and time distribution, the Belgian annual report of the internal prevention service and the health surveillance statistics for the health and safety committee, the Luxembourg and Dutch equivalents, the DUERP prevention programme summary, the social and safety indicators for the works council and the ISO 45001 management review inputs, with report period, template version, generated tables and narrative, reviewer sign-off and the submitted or presented version. Generated by Regulatory and Annual Reports (rept) from KPI snapshots and module facts.",
+              "businessMeaning": "The proof of the service's activity to the employer, the works council and the authorities, whose preparation time is the coordinator's supporting KPI; generated in hours instead of assembled over weeks.",
+              "status": "active",
+              "tags": [
+                "portals-and-insight"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "fr-code-du-travail-annual-report",
+                "be-code-well-being-annual-report",
+                "fr-code-du-travail-cse-reporting",
+                "iso-45001"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "the occupational health service manager and chief physician, the HSE manager and HR of the tenant; the employer's leadership, the works council and the health and safety committee receive the presented version; the labour inspectorate and regional authorities receive the submitted version",
+              "systemOfRecordBrickId": "rept",
+              "usedByBrickIds": [
+                "rept"
+              ],
+              "ownerTeamId": "analytics-and-reporting",
+              "stewardTeamIds": [
+                "regulatory-content"
+              ],
+              "derivedFromAssetIds": [
+                "kpi-snapshot",
+                "event-analysis-and-statistic",
+                "risk-assessment",
+                "surveillance-schedule",
+                "vaccination-and-campaign-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "analytics-warehouse"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "annual-report api",
+                  "description": "Report template, period, generation, narrative editing, review, sign-off and export API used by the reporting module, dashboards, the country regulation content back office and account management."
+                },
+                {
+                  "type": "file",
+                  "name": "annual and regulatory report documents",
+                  "description": "Generated reports in PDF and the official formats required by French, Belgian, Luxembourg and Dutch authorities and the ISO 45001 management review pack."
+                },
+                {
+                  "type": "event",
+                  "name": "report events",
+                  "description": "Generated, reviewed, signed off, submitted and presented events consumed by notifications, KPIs and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "kept at least 10 years and in practice permanently as the service's archive; submitted versions immutable",
+                "residency": "eea",
+                "sharingPolicy": "presented to the employer, the works council and the health and safety committee; submitted to the labour inspectorate and regional authorities; contains only aggregated data; never shared between tenants"
+              }
+            },
+            {
+              "id": "collective-health-indicator",
+              "name": "Collective Health Indicator",
+              "kind": "derived-dataset",
+              "description": "Anonymised population-level health and exposure indicators built under the physician's responsibility: prevalence of abnormal audiometry, spirometry or vision results per exposure group, psychosocial risk questionnaire scores per unit, fitness restriction patterns per workstation, vaccination coverage, sentinel events and epidemiological alerts, exposure and health cross-tabulations for the prevention plan, with the aggregation rules, minimum group-size thresholds, cohort definitions and the physician's release decision. Produced by Collective Health Monitoring (cohm) from medical data and exposure profiles and shared with prevention as collective advice.",
+              "businessMeaning": "The physician's third job, turning individual findings into collective prevention, expressed as data that can leave the medical perimeter because no individual can be recognised in it.",
+              "status": "active",
+              "tags": [
+                "portals-and-insight",
+                "occupational-health"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "gdpr-anonymisation",
+                "medical-secrecy",
+                "fr-code-du-travail-collective-prevention",
+                "be-code-well-being-at-work"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "occupational physicians define and release; the service manager, HSE manager and the health and safety committee read released indicators; alerts below threshold visible to physicians only; Kitry data specialists support cohort definition without seeing individual data",
+              "systemOfRecordBrickId": "cohm",
+              "usedByBrickIds": [
+                "cohm"
+              ],
+              "ownerTeamId": "analytics-and-reporting",
+              "stewardTeamIds": [
+                "clinical-consultation",
+                "risk-and-prevention"
+              ],
+              "derivedFromAssetIds": [
+                "consultation-record",
+                "device-measurement",
+                "questionnaire-response",
+                "vaccination-and-campaign-record",
+                "exposure-and-risk-profile",
+                "fitness-opinion"
+              ],
+              "stores": [
+                {
+                  "storeId": "prevention-analytics-warehouse",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "collective-health api",
+                  "description": "Cohort definition, aggregation rule, threshold check, indicator computation, physician release and alert API used by collective health monitoring, dashboards, the annual report and risk assessment."
+                },
+                {
+                  "type": "event",
+                  "name": "collective health events",
+                  "description": "Indicator computed, threshold alert raised, released and withdrawn events consumed by risk assessment, dashboards, the annual report and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "released indicators kept indefinitely as anonymised data; cohort definitions and release decisions kept 10 years; indicators below the minimum group size never persisted outside the medical perimeter",
+                "residency": "eea",
+                "sharingPolicy": "released indicators shared with the employer, the works council and the health and safety committee as collective prevention advice; anonymised sector benchmarks shared across tenants only with customer consent; underlying individual data never leaves the medical perimeter"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Platform and Services",
+      "description": "The foundation and the service arm: accounts and roles with medical segregation, tenant configuration for shared and dedicated HDS SaaS, the immutable audit trail required by HDS and ISO 27001, the FR/BE/LU/NL regulation content Kitry maintains, ecosystem integration connections, and the implementation projects and support tickets through which Kitry's consultants deploy, migrate, train and support every customer.",
+      "subGroups": [
+        {
+          "name": "Identity, Configuration and Audit",
+          "description": "User accounts and roles, tenant configuration, audit trail entries and the country regulation rules that parameterise the platform.",
+          "assets": [
+            {
+              "id": "user-account-and-role",
+              "name": "User Account and Role",
+              "kind": "master-data",
+              "description": "Every account on the platform and what it may do: occupational physicians, nurses, medical assistants, service coordinators, HSE managers and prevention advisers, HR administrators, managers, employees, works council guest readers, external auditors and Kitry staff, with the tenant, the role profiles configured per customer, medical and non-medical role separation, site and unit scopes, SSO federation with the customer's identity provider (SAML, OpenID Connect), MFA enrolment, professional registration numbers for physicians, sessions, invitations, delegations and deactivation. Managed by Identity, SSO, Roles and Consent (iden) and the basis of every authorisation decision, including the medical segregation enforced with Consent and Access Grant.",
+              "businessMeaning": "The gate that makes one platform safe for physicians, HR, managers and 6,000+ active users at once; a role misconfiguration is the fastest route to a medical secrecy breach.",
+              "status": "active",
+              "tags": [
+                "platform-and-services"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "occupational-health-professional",
+                "manager",
+                "kitry-staff"
+              ],
+              "legalTags": [
+                "gdpr",
+                "gdpr-employee-data",
+                "iso-27001",
+                "hds-hosting",
+                "medical-secrecy"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "tenant security administrators for their own users and roles; the service manager for medical role assignments; the user for their own profile; Kitry platform operations for support and tenant provisioning under logged access",
+              "systemOfRecordBrickId": "iden",
+              "usedByBrickIds": [
+                "iden"
+              ],
+              "ownerTeamId": "platform-core-and-security",
+              "stewardTeamIds": [
+                "medical-records-and-confidentiality"
+              ],
+              "derivedFromAssetIds": [
+                "worker-record"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "identity api",
+                  "description": "Authentication, SSO federation, MFA, role profile, scope, delegation, session and deactivation API used by every module, the portals, the confidentiality controls and the audit trail."
+                },
+                {
+                  "type": "event",
+                  "name": "account events",
+                  "description": "Created, role changed, scope changed, SSO federated, MFA enrolled, logged in, delegation started, deactivated and locked events consumed by confidentiality enforcement, notifications, portals and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "accounts kept for the life of the user plus 3 years after deactivation for audit; login and session logs 12 months; role change history kept 10 years",
+                "residency": "eea",
+                "sharingPolicy": "internal to the tenant; identity attributes exchanged with the customer's identity provider under SSO; never shared between tenants"
+              }
+            },
+            {
+              "id": "tenant-configuration",
+              "name": "Tenant Configuration",
+              "kind": "master-data",
+              "description": "The configured shape of one customer's platform: enabled modules and hosting tier (shared or dedicated HDS SaaS), languages (FR, NL, EN), countries and establishments in scope, sector pre-configuration applied, configured forms and fields for consultations, questionnaires, risk assessment and accident capture, workflows and business rules, role profiles, document templates and corporate identity, notification templates and channels, surveillance rule overrides within the country content, numbering schemes, integration parameters and release-train status, with versions, change requests and the consultant who applied them. Managed by the Configuration Engine (cfgr), operated on the hosting tier by HDS/ISO 27001 Hosting and Tenant Isolation (host), built during implementation and changed by support.",
+              "businessMeaning": "Configurable to each customer's needs without code is the promise of Kitry as a Service; the configuration object is the product each implementation consultant actually delivers.",
+              "status": "active",
+              "tags": [
+                "platform-and-services"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "iso-27001",
+                "hds-hosting"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "tenant administrators of the customer for their own configuration; Kitry implementation, support and platform staff under change control; medical form configuration reviewed by the chief physician; never visible across tenants",
+              "systemOfRecordBrickId": "cfgr",
+              "usedByBrickIds": [
+                "cfgr",
+                "host",
+                "impl",
+                "supp"
+              ],
+              "ownerTeamId": "platform-core-and-security",
+              "stewardTeamIds": [
+                "implementation-and-migration",
+                "support-and-account-management"
+              ],
+              "derivedFromAssetIds": [
+                "country-regulation-rule"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "tenant-configuration api",
+                  "description": "Module, hosting tier, language, form, workflow, rule, role profile, template and integration parameter configuration API with versioning and change requests used by the configuration engine, hosting operations, implementation, support and every module at runtime."
+                },
+                {
+                  "type": "file",
+                  "name": "configuration packages",
+                  "description": "Exportable configuration packages and sector pre-configurations moved between test and production tenants and reused across implementations."
+                },
+                {
+                  "type": "event",
+                  "name": "configuration events",
+                  "description": "Module enabled, form changed, workflow changed, rule overridden, template published, hosting tier changed and release applied events consumed by every module, implementation project tracking, support and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "versions kept for the life of the tenant and 5 years after contract end; configuration in effect at any date reconstructible for audit",
+                "residency": "eea",
+                "sharingPolicy": "internal to the customer and Kitry; sector pre-configurations shared across tenants as Kitry intellectual property without customer data; never customer-specific content across tenants"
+              }
+            },
+            {
+              "id": "audit-trail-entry",
+              "name": "Audit Trail Entry",
+              "kind": "logical-object",
+              "description": "An immutable record of an auditable action: who (account, role, tenant, session, IP range), what (read, create, update, sign, release, export, download, transfer, break-glass, configuration change, role change, declaration submission), on which object (with special tagging for every access to health data in the medical schema), when, from which module and integration, with before and after references for changes, justification for break-glass, and the retention class applied. Written by every brick through Audit Trail and Data Retention (audt), stored in the append-only audit log, required by HDS certification, ISO 27001 and the medical secrecy accountability of the customer's physicians, and used to answer worker access requests and security investigations.",
+              "businessMeaning": "The evidence that medical secrecy and tenant isolation actually hold; the first thing a data protection officer, an HDS auditor or a physician asks for when access is questioned.",
+              "status": "active",
+              "tags": [
+                "platform-and-services",
+                "medical-secrecy"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "employee",
+                "occupational-health-professional",
+                "manager",
+                "kitry-staff"
+              ],
+              "legalTags": [
+                "gdpr",
+                "iso-27001",
+                "hds-hosting",
+                "medical-secrecy",
+                "audit-logging"
+              ],
+              "securityCriticality": "critical",
+              "accessScope": "tenant security administrators and the data protection officer for their tenant; the chief physician for accesses to the medical schema; Kitry security and platform operations for cross-tenant security monitoring; HDS and ISO 27001 auditors; never editable by anyone",
+              "systemOfRecordBrickId": "audt",
+              "usedByBrickIds": [
+                "audt",
+                "host"
+              ],
+              "ownerTeamId": "platform-core-and-security",
+              "stewardTeamIds": [
+                "medical-records-and-confidentiality"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "audit-log-store",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "audit-trail api",
+                  "description": "Append, query by actor, object, period and category, medical-access report, worker access-request report and retention execution API used by every module, confidentiality monitoring, hosting operations, the data protection officer's tooling and auditors."
+                },
+                {
+                  "type": "file",
+                  "name": "audit extracts",
+                  "description": "Signed audit extracts for HDS and ISO 27001 audits, customer security reviews and worker access requests."
+                },
+                {
+                  "type": "event",
+                  "name": "audit events",
+                  "description": "Entry appended, medical access detected outside grant, break-glass opened, export performed and retention executed events consumed by confidentiality monitoring, security alerting and hosting operations."
+                }
+              ],
+              "governance": {
+                "retention": "entries kept at least 10 years and, for accesses to health data, for the retention period of the medical file concerned so that any access can be explained over the file's life; immutable, tamper-evident, replicated per tenant",
+                "residency": "eea",
+                "sharingPolicy": "internal to the tenant and Kitry's security function; extracts provided to HDS and ISO 27001 auditors, the customer's data protection officer and the worker for their own file; never shared between tenants"
+              }
+            },
+            {
+              "id": "country-regulation-rule",
+              "name": "Country Regulation Rule",
+              "kind": "master-data",
+              "description": "The regulatory content Kitry maintains for France, Belgium, Luxembourg and the Netherlands: examination types and surveillance categories, periodicities and their triggers per exposure and worker attribute, professionals authorised per act, fitness opinion forms and wording, medical file retention rules (French DMST decree 2022-1434, Belgian Code on well-being at work), DUERP and prevention plan requirements, accident and disease declaration deadlines, forms and connectors, occupational disease tables, annual report templates and the effective dates, legal references, change notes and versions of each rule, with the sector and customer overrides allowed. Maintained in Country Regulation Content (regc) by occupational health lawyers and content specialists, consumed by the surveillance engine, declarations, reports and the configuration engine, and released with the regulatory release train.",
+              "businessMeaning": "Thirty-five years of regulatory know-how encoded as rules; keeping every customer current with FR/BE/LU/NL change without disruption is the implementation team's promise and this content is how it is kept.",
+              "status": "active",
+              "tags": [
+                "platform-and-services",
+                "workforce-and-exposure-data"
+              ],
+              "classification": "internal",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "fr-code-du-travail-dmst",
+                "fr-duerp",
+                "fr-social-security-code-accident-declaration",
+                "be-code-well-being-at-work",
+                "be-fedris",
+                "lu-code-du-travail",
+                "nl-arbowet",
+                "eu-directive-89-391"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "Kitry regulatory content specialists edit and release; implementation and support consultants read; customers' physicians, HSE and HR read the rules applicable to them with legal references; customers may override only where the rule allows",
+              "systemOfRecordBrickId": "regc",
+              "usedByBrickIds": [
+                "cfgr",
+                "regc",
+                "surv"
+              ],
+              "ownerTeamId": "regulatory-content",
+              "stewardTeamIds": [
+                "workforce-and-surveillance",
+                "accidents-and-occupational-diseases"
+              ],
+              "derivedFromAssetIds": [],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "regulation-content api",
+                  "description": "Effective-dated rule query per country, examination type, exposure and worker attribute, form and deadline lookup, rule simulation and release management API used by the surveillance engine, declarations, reports, the configuration engine and the content back office."
+                },
+                {
+                  "type": "file",
+                  "name": "regulatory release notes",
+                  "description": "Release notes and legal reference packs published to customers with every regulatory release."
+                },
+                {
+                  "type": "event",
+                  "name": "regulation content events",
+                  "description": "Rule published, rule superseded, form version changed and release applied events consumed by the surveillance engine (recomputation), declarations, configuration and support notifications."
+                }
+              ],
+              "governance": {
+                "retention": "effective-dated versions kept permanently so that the rule in force at any past date can be reproduced for a file, a declaration or a report",
+                "residency": "eea",
+                "sharingPolicy": "Kitry intellectual property shared with all customers as product content; legal references public; never contains customer data"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Integrations and Services",
+          "description": "Integration connections to HRIS, SSO, e-signature, telehealth, SMS, devices and national bodies, and the implementation projects and support tickets of Kitry's service teams.",
+          "assets": [
+            {
+              "id": "integration-connection",
+              "name": "Integration Connection",
+              "kind": "operational-state",
+              "description": "A configured link between the platform and an external system for one tenant: HRIS connectors (SAP SuccessFactors, Workday, ADP, national public-sector HR systems, file-based feeds), SSO identity providers, the Goodflag electronic signature service, the Vonage telehealth service, the Cegedim SMS gateway, connected measurement devices (Eolys, FIM, Essilor, JLM Medical, Siemens) and their drivers, national reporting connectors (Ameli and net-entreprises, Belgian Portal of Social Security, insurers, Fedris) and outbound webhooks, with endpoint, protocol, field mappings, schedule, credentials referenced by vault id, health status, error log and volume statistics. Managed by Ecosystem Integrations (intg) and HRIS Synchronisation and Import (hris) and set up during implementation.",
+              "businessMeaning": "The plumbing that makes the platform the hub of the customer's HR, medical device and public-body ecosystem; its health decides whether data flows without an IT project on the customer side.",
+              "status": "active",
+              "tags": [
+                "platform-and-services"
+              ],
+              "classification": "restricted",
+              "personalDataLevel": "none",
+              "dataSubjects": [],
+              "legalTags": [
+                "iso-27001",
+                "hds-hosting",
+                "gdpr-processor-contracts"
+              ],
+              "securityCriticality": "high",
+              "accessScope": "Kitry integration engineers and implementation consultants; tenant integration administrators for their own connections; credentials never readable, referenced by vault id; connection health visible in support",
+              "systemOfRecordBrickId": "intg",
+              "usedByBrickIds": [
+                "intg"
+              ],
+              "ownerTeamId": "integrations",
+              "stewardTeamIds": [
+                "implementation-and-migration",
+                "platform-core-and-security"
+              ],
+              "derivedFromAssetIds": [
+                "tenant-configuration"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "integration-staging-zone",
+                  "role": "data-files"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "integration-connection api",
+                  "description": "Connection setup, mapping, schedule, credential reference, test, health, error log and volume API used by the integration hub, HRIS import, device capture, e-signature, telehealth, SMS, national connectors, implementation and support."
+                },
+                {
+                  "type": "event",
+                  "name": "integration health events",
+                  "description": "Connection created, run succeeded, run failed, credential expiring, mapping changed and disabled events consumed by support alerting, implementation project tracking, dashboards and the audit trail."
+                }
+              ],
+              "governance": {
+                "retention": "connection definitions kept for the life of the connection plus 3 years; error and run logs kept 3 years; payloads in the staging zone purged on the staging schedule",
+                "residency": "eea",
+                "sharingPolicy": "internal to the tenant and Kitry integration staff; endpoints and mappings shared with the customer's IT and the external provider under the integration agreement; never shared between tenants"
+              }
+            },
+            {
+              "id": "implementation-project",
+              "name": "Implementation Project",
+              "kind": "logical-object",
+              "description": "One customer deployment or major change run by Kitry's implementation and customer success consultants through the four phases (functional assessment, configuration, project management, training): scope and modules, countries and establishments, sites and user populations, workshop outputs and decisions, configuration backlog, data migration plan from the legacy system with mapping, test loads, defect list and sign-off, HRIS and SSO integration tasks, training sessions and attendance, change management actions, go-live readiness checklist, milestone dates against the contracted schedule, risks and issues, and the hand-over to support and account management. Managed in the Implementation, Migration and Training Workspace (impl) and linked to the tenant configuration, the HRIS import batches and the migration batches it produces.",
+              "businessMeaning": "Go-live on schedule and migration defect rate are the consultants' KPIs; the project object is where 35 years of deployment method become a repeatable plan.",
+              "status": "active",
+              "tags": [
+                "platform-and-services"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "kitry-staff",
+                "customer-admin"
+              ],
+              "legalTags": [
+                "gdpr",
+                "iso-27001"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "Kitry implementation, migration, training and account management staff for their projects; the customer's project team for their own project status, decisions and checklists; medical content of migrated files never visible in the project",
+              "systemOfRecordBrickId": "impl",
+              "usedByBrickIds": [
+                "impl"
+              ],
+              "ownerTeamId": "implementation-and-migration",
+              "stewardTeamIds": [
+                "support-and-account-management",
+                "integrations"
+              ],
+              "derivedFromAssetIds": [
+                "tenant-configuration",
+                "hris-import-batch"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "medical-document-object-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "implementation-project api",
+                  "description": "Project, phase, workshop, backlog, migration plan, test load, defect, training session, readiness checklist, milestone and hand-over API used by the implementation workspace, configuration, HRIS import, support and account management."
+                },
+                {
+                  "type": "file",
+                  "name": "project deliverables",
+                  "description": "Functional assessment reports, configuration specifications, migration mapping and sign-off documents, training materials and go-live reports."
+                },
+                {
+                  "type": "event",
+                  "name": "project events",
+                  "description": "Phase started, workshop held, migration load completed, defect raised or closed, training delivered, go-live approved and handed over events consumed by configuration, support, account management and Kitry delivery dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "kept for the life of the customer relationship plus 5 years; migration sign-off and defect records kept as evidence for the same period",
+                "residency": "eea",
+                "sharingPolicy": "internal to Kitry and the customer's project team; delivery statistics aggregated across customers for Kitry's own steering; never customer-specific content across tenants"
+              }
+            },
+            {
+              "id": "support-ticket",
+              "name": "Support Ticket",
+              "kind": "operational-state",
+              "description": "A support request, incident or account interaction between a customer and Kitry: requester and role, tenant and module, category (question, incident, configuration change, regulatory question, data correction, integration failure, security), priority and service level, description and attachments with medical content forbidden by policy, diagnosis and resolution, the logged and time-limited access used to investigate, linked configuration changes and release items, satisfaction feedback, plus account management records (regulatory update communications, quarterly reviews, module and user growth, renewal and expansion opportunities). Managed in Support and Account Management (supp) by reactive support teams and the dedicated account managers assigned to each customer.",
+              "businessMeaning": "Support ticket resolution time is a consultant's KPI and the account record is where module and workforce growth per customer is won; the ticket is also the boundary that keeps Kitry staff out of medical content.",
+              "status": "active",
+              "tags": [
+                "platform-and-services"
+              ],
+              "classification": "confidential",
+              "personalDataLevel": "personal",
+              "dataSubjects": [
+                "customer-admin",
+                "occupational-health-professional",
+                "kitry-staff"
+              ],
+              "legalTags": [
+                "gdpr",
+                "iso-27001",
+                "medical-secrecy"
+              ],
+              "securityCriticality": "medium",
+              "accessScope": "Kitry support, account management and, when escalated, engineering and regulatory content staff; the requester and the customer's tenant administrators for their own tickets; investigation access to tenant data logged and time-limited; medical content excluded",
+              "systemOfRecordBrickId": "supp",
+              "usedByBrickIds": [
+                "supp"
+              ],
+              "ownerTeamId": "support-and-account-management",
+              "stewardTeamIds": [
+                "implementation-and-migration",
+                "platform-core-and-security"
+              ],
+              "derivedFromAssetIds": [
+                "tenant-configuration"
+              ],
+              "stores": [
+                {
+                  "storeId": "hds-shared-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "hds-dedicated-tenant-db",
+                  "role": "system-of-record"
+                },
+                {
+                  "storeId": "notification-message-store",
+                  "role": "projection"
+                },
+                {
+                  "storeId": "audit-log-store",
+                  "role": "archive"
+                },
+                {
+                  "storeId": "domain-event-bus",
+                  "role": "event-source"
+                }
+              ],
+              "interfaces": [
+                {
+                  "type": "api",
+                  "name": "support-ticket api",
+                  "description": "Ticket creation from the application and portals, categorisation, service-level timer, investigation access request, resolution, linked change and account record API used by support, account management, configuration, notifications and Kitry delivery dashboards."
+                },
+                {
+                  "type": "event",
+                  "name": "ticket events",
+                  "description": "Opened, prioritised, investigation access granted, resolved, reopened, closed and account review logged events consumed by notifications, configuration, the audit trail and Kitry service dashboards."
+                }
+              ],
+              "governance": {
+                "retention": "tickets kept 5 years after closure; investigation access records kept 10 years with the audit trail; account records for the life of the customer relationship plus 5 years",
+                "residency": "eea",
+                "sharingPolicy": "internal to Kitry and the customer's requesters and administrators; service statistics reported to the customer in account reviews; never shared between tenants"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stores": [
+    {
+      "id": "hds-shared-tenant-db",
+      "name": "HDS Shared Tenant DB",
+      "kind": "operational-database",
+      "description": "Multi-tenant PostgreSQL cluster on Kitry's HDS-certified (Hébergeur de Données de Santé) and ISO 27001-certified shared SaaS environment inside the EEA, with row-level tenant keys and a separate, physician-only medical schema per tenant for workers, organisations, exposures, surveillance schedules, appointments, consultations, fitness opinions, medical files, risk assessments, actions, chemicals, accidents, declarations, portal requests and the platform's identity, configuration and country regulation content schemas; encrypted at rest with per-tenant keys, no access from outside the EEA.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "hds-dedicated-tenant-db",
+      "name": "HDS Dedicated Tenant DB",
+      "kind": "operational-database",
+      "description": "Single-tenant PostgreSQL cluster provisioned for customers on the Dedicated HDS SaaS tier (large public bodies, transport operators, groups that require physical isolation or a named French HDS hosting region), running the same schemas, migrations and medical-schema segregation as the shared cluster with customer-specific backup windows, key custody and network peering; still operated exclusively inside the EEA under HDS and ISO 27001.",
+      "technology": "relational-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "medical-document-object-store",
+      "name": "Encrypted Medical Document Object Store",
+      "kind": "blob-store",
+      "description": "Encrypted, versioned object storage on HDS-certified infrastructure for medical documents (fitness opinions and their signed PDFs, certificates, specialist reports, imaging and lab results attached to the file, vaccination certificates, questionnaire PDFs), safety data sheets and chemical labels, inspection and audit evidence photos, accident attachments and generated regulatory and annual reports; envelope encryption per tenant, immutable once signed or finalised, retention class attached to every object.",
+      "technology": "object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "device-measurement-store",
+      "name": "Medical Device Measurement Store",
+      "kind": "time-series-store",
+      "description": "Store for raw and normalised outputs of connected measurement devices (Eolys, FIM, Essilor, JLM Medical, Siemens): audiograms, spirometry curves and flow-volume loops, vision test results, ECG traces, biometric readings and device calibration metadata, keyed by consultation and worker and retained alongside the medical file so trends can be compared across decades of surveillance; HDS-hosted, physician-scope access only.",
+      "technology": "time-series-database",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "prevention-analytics-warehouse",
+      "name": "Prevention Analytics Warehouse",
+      "kind": "analytics-warehouse",
+      "description": "Per-tenant analytical warehouse behind dashboards, KPIs, regulatory and annual reports and collective health monitoring, holding governed copies of workforce, exposure, surveillance, appointment, fitness-status, risk, action, chemical, accident and declaration facts with daily snapshots; medical content never lands here except as physician-approved aggregates that meet a minimum group-size threshold, and worker identifiers are pseudonymised at load.",
+      "technology": "analytics-warehouse",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "notification-message-store",
+      "name": "Notification and Message Store",
+      "kind": "message-queue",
+      "description": "Queue and delivery log for convocation letters, SMS reminders (Cegedim gateway), e-mails, portal notifications and teleconsultation invitations, with template version, rendered content, channel, delivery and read status, opt-out and bounce handling; message bodies carry appointment logistics only and never medical content.",
+      "technology": "message-queue",
+      "status": "active",
+      "classification": "confidential"
+    },
+    {
+      "id": "audit-log-store",
+      "name": "Audit Log Store",
+      "kind": "append-only-log",
+      "description": "Append-only, tamper-evident store for every read and write of health data, access grants and break-glass openings of medical files, fitness-opinion releases to employers, declarations submitted to national bodies, configuration and role changes, exports, downloads and administrative events across all tenants, retained to satisfy HDS, ISO 27001 and medical-secrecy accountability and to answer worker access requests.",
+      "technology": "append-only-log-store",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "integration-staging-zone",
+      "name": "Integration Staging Zone",
+      "kind": "data-files",
+      "description": "Secure, access-logged landing zone for HRIS extracts and API deltas (SAP SuccessFactors, Workday, ADP, national public-sector HR systems), legacy migration exports from previous occupational health software, device export files, e-signature envelopes and national-connector payloads and acknowledgements (Ameli, Fedris, insurers), held with checksums and validation results until accepted into the tenant database or rejected, then purged on a short schedule.",
+      "technology": "sftp-object-storage",
+      "status": "active",
+      "classification": "restricted"
+    },
+    {
+      "id": "domain-event-bus",
+      "name": "Domain Event Bus",
+      "kind": "event-topic",
+      "description": "Platform-wide, tenant-scoped event bus carrying workforce, exposure, surveillance, appointment, consultation, fitness-opinion, file, consent, risk, hazardous-situation, inspection, action, chemical, accident, declaration, portal, account, configuration and audit events to scheduling, notifications, portals, dashboards, the warehouse, integrations and the audit trail; medical events carry identifiers and state, never clinical content.",
+      "technology": "message-bus",
+      "status": "active",
+      "classification": "confidential"
+    }
+  ]
+}
