@@ -307,6 +307,25 @@ Use a scoped workflow:
 3. Run the needed generator scripts
 4. Restore the original config in a `finally` block
 
+## Source Image Generation
+
+Product-domain image generators live under `_config/scripts/image-generation/`. They write media files into the relevant domain source folders and may update JSON `media` references; they do not regenerate `docs/`.
+
+Use an individual generator with `--dry-run` before calling an image API when scope or cost is uncertain. The Gemini wrapper can run all image generators for one domain:
+
+```bash
+export GEMINI_API_KEY=...
+_config/scripts/image-generation/run.sh <domain-id>
+```
+
+For overview-only JTBD and customer-journey imagery, pass `--lightweight`. This skips new individual step/stage targets and media references while preserving any detailed media already present. Omitting the flag retains full overview-plus-detail generation:
+
+```bash
+_config/scripts/image-generation/run.sh <domain-id> --lightweight
+```
+
+See `_config/scripts/image-generation/README.md` for provider-specific commands and option details.
+
 ## Generators Commonly Used
 
 From `_wiring/product-domains/`:
