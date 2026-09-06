@@ -32,6 +32,25 @@ Generator order matters and is fixed in `run.sh`: `generate-start-docs` -> `cust
 
 There is no test suite, linter config, or package manifest. Validation is: run the generator and inspect the produced HTML under `docs/`.
 
+## Generating product-domain images
+
+Source image generators live under `_config/scripts/image-generation/`. Unlike the static-site generators, they write images into the relevant `_config/product-domains/<domain>/.../media/` folders and may update source JSON `media` references; they do not regenerate `docs/`.
+
+The domain wrapper uses Gemini for JTBD, journey, customer-relation, domain-icon, and residuality images:
+
+```bash
+export GEMINI_API_KEY=...
+_config/scripts/image-generation/run.sh <domain-id>
+```
+
+Pass `--lightweight` to generate only one overview per JTBD and customer journey, skipping new per-step and per-stage targets and media references. Existing detailed images and references are preserved, and omitting the flag retains full generation:
+
+```bash
+_config/scripts/image-generation/run.sh <domain-id> --lightweight
+```
+
+Prefer an individual generator with `--dry-run` when validating scope. See `_config/scripts/image-generation/README.md` for provider-specific commands and all supported options.
+
 ## Adding or registering a domain
 
 1. Create `_config/product-domains/<lowercase-slug>/` following an existing domain (use `ride-sharing-marketplace` as the structural reference).

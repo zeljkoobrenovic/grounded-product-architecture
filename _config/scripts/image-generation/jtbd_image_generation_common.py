@@ -78,6 +78,11 @@ def build_argument_parser(
         action="store_true",
         help="Update JSON media references only, without calling the API.",
     )
+    parser.add_argument(
+        "--lightweight",
+        action="store_true",
+        help="Generate only one overview image per job, without per-step images.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print actions without writing files.")
     parser.add_argument(
         "--sleep-seconds",
@@ -312,6 +317,7 @@ def build_targets_for_file(
     path: Path,
     inspiration: str,
     output_format: str,
+    lightweight: bool = False,
 ) -> tuple[list[GenerationTarget], Any]:
     payload = load_json(path)
     domain_id = path.parent.parent.name
@@ -360,6 +366,9 @@ def build_targets_for_file(
                         level="job",
                     )
                 )
+
+                if lightweight:
+                    continue
 
                 steps = job.get("steps") or []
                 for step_index, step in enumerate(steps, start=1):
@@ -483,7 +492,12 @@ def run_generation(
     for customer_file in customer_files:
         original_payload = load_json(customer_file)
         original_text = payload_text(original_payload)
-        targets, payload = build_targets_for_file(customer_file, inspiration, args.output_format)
+        targets, payload = build_targets_for_file(
+            customer_file,
+            inspiration,
+            args.output_format,
+            lightweight=args.lightweight,
+        )
         json_changed = payload_text(payload) != original_text
 
         for target in targets:

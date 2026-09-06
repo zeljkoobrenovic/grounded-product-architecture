@@ -42,6 +42,8 @@ There is no frontend framework, build system, or external JavaScript runtime dep
   Python generation scripts that wire `_config/` and `_templates/` into `docs/`.
 - `_config/_prompts/`
   Prompt assets used to create or extend strategic and customer models.
+- `_config/scripts/image-generation/`
+  Source-first generators for customer, JTBD, journey, relationship, domain-icon, and residuality imagery.
 
 ## Main Modeling Areas
 
@@ -187,6 +189,25 @@ Other generators live under:
 
 - `_wiring/evidence-explorer/generate-evidence-explorer-docs.py` (run via `_evidence/run.sh`)
 - `_wiring/generate-start-apps-docs.py`
+
+### Product-Domain Images
+
+Image generation is a separate, source-first workflow under `_config/scripts/image-generation/`. It writes image assets beside the relevant product-domain JSON and updates source `media` references; it does not regenerate `docs/`.
+
+Run all image generators for one domain with Gemini:
+
+```bash
+export GEMINI_API_KEY=...
+_config/scripts/image-generation/run.sh <domain-id>
+```
+
+The default JTBD and journey behavior creates both overview and individual step/stage images. For a lower-cost run that creates only one overview per JTBD and journey, while preserving any existing detailed images and references, use:
+
+```bash
+_config/scripts/image-generation/run.sh <domain-id> --lightweight
+```
+
+See `_config/scripts/image-generation/README.md` for individual provider commands, dry runs, retries, overwrite behavior, and JSON-only updates.
 
 ## Editing Guidance
 

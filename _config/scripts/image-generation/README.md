@@ -16,6 +16,7 @@ This folder contains source-first scripts that scan product-domain models, gener
 - calls either the OpenAI Images API or the Gemini Nano Banana image API for JTBD images, and the Gemini Nano Banana image API for journey images
 - writes image files into `customers/media/`
 - patches `media` entries in JSON if missing or stale
+- supports `--lightweight` JTBD and journey runs that create only job/journey overviews, without creating step/stage targets or media references
 - generates one Gemini Nano Banana illustration for every residuality stressor, writes it into `residuality/media/`, and patches the stressor's `media` entry
 
 ## Requirements
@@ -36,6 +37,7 @@ JTBD images via OpenAI Images API:
 ```bash
 export OPENAI_API_KEY=...
 python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --dry-run
+python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --domain food-and-nutrition-product-platform --lightweight
 python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --domain food-and-nutrition-product-platform --limit 4
 python3 _config/scripts/image-generation/generate_jtbd_images_openai_images_api.py --domain food-and-nutrition-product-platform --overwrite
 ```
@@ -45,6 +47,7 @@ JTBD images via Gemini Nano Banana API:
 ```bash
 export GEMINI_API_KEY=...
 python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --dry-run
+python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --lightweight
 python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --limit 4
 python3 _config/scripts/image-generation/generate_jtbd_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --overwrite
 ```
@@ -54,9 +57,16 @@ Customer journey images via Gemini Nano Banana API:
 ```bash
 export GEMINI_API_KEY=...
 python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --dry-run
+python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --lightweight
 python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain bike-mobility --json-only
 python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --limit 4
 python3 _config/scripts/image-generation/generate_journey_images_gemini_nanobanana_api.py --domain food-and-nutrition-product-platform --overwrite
+```
+
+Run all image generators for a domain, using lightweight JTBD and journey generation:
+
+```bash
+_config/scripts/image-generation/run.sh food-and-nutrition-product-platform --lightweight
 ```
 
 Residuality stressor images via Gemini Nano Banana API:
@@ -75,6 +85,7 @@ Useful flags:
 - `--skip-existing` avoids regenerating files already on disk
 - `--overwrite` regenerates image files even if they already exist
 - `--json-only` updates missing `media` references without calling the API
+- `--lightweight` makes the JTBD and journey generators create only job/journey overview images; it skips individual JTBD steps and journey stages and does not add media references for them
 - `--dry-run` prints planned actions only
 - `--model` defaults to `gpt-image-1.5` for OpenAI and `gemini-3-pro-image-preview` for Gemini
 - `--api-key-env` on the Gemini script lets you switch between `GEMINI_API_KEY` and `GOOGLE_API_KEY`
@@ -98,5 +109,6 @@ Useful flags:
 
 - Image scripts update only their source JSON files. They do not regenerate `docs/`.
 - Existing non-image media entries are preserved.
+- Lightweight runs preserve any existing step/stage images and media references; omitting `--lightweight` retains full overview plus detail generation.
 - Existing user changes elsewhere in the worktree are untouched.
 - A safe first run is `--dry-run` or `--json-only` on one domain before doing full image generation.

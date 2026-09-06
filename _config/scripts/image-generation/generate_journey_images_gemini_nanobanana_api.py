@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-format",
         default=DEFAULT_OUTPUT_FORMAT,
-        choices=("png"),
+        choices=("png",),
         help="Image output format or preferred file extension.",
     )
     parser.add_argument("--background", default="opaque", help="Image background mode, if supported.")
@@ -86,6 +86,11 @@ def parse_args() -> argparse.Namespace:
         "--json-only",
         action="store_true",
         help="Update JSON media references only, without calling the API.",
+    )
+    parser.add_argument(
+        "--lightweight",
+        action="store_true",
+        help="Generate only one overview image per journey, without per-stage images.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Print actions without writing files.")
     parser.add_argument(
@@ -343,6 +348,7 @@ def build_targets_for_file(
     path: Path,
     inspiration: str,
     output_format: str,
+    lightweight: bool = False,
 ) -> tuple[list[JourneyGenerationTarget], Any]:
     payload = load_json(path)
     domain_id = path.parent.parent.name
@@ -391,6 +397,9 @@ def build_targets_for_file(
                         level="journey",
                     )
                 )
+
+                if lightweight:
+                    continue
 
                 stages = journey.get("stages") or []
                 for stage_index, stage in enumerate(stages, start=1):
@@ -580,7 +589,12 @@ def run_generation(args: argparse.Namespace, api_key: str) -> int:
     for customer_file in customer_files:
         original_payload = load_json(customer_file)
         original_text = payload_text(original_payload)
-        targets, payload = build_targets_for_file(customer_file, inspiration, args.output_format)
+        targets, payload = build_targets_for_file(
+            customer_file,
+            inspiration,
+            args.output_format,
+            lightweight=args.lightweight,
+        )
         json_changed = payload_text(payload) != original_text
 
         for target in targets:

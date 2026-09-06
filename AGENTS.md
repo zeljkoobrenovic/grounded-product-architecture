@@ -44,6 +44,8 @@ All generated HTML files are intended to be self-contained and easy to publish a
   - Generated static website output.
 - `_config/_prompts/`
   - Prompt assets used to create or extend strategic/customer JSON models.
+- `_config/scripts/image-generation/`
+  - Source-first image generators that write product-domain media assets and update their source JSON references.
 
 ## Key Modeling Areas
 
@@ -109,6 +111,12 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 
 `_wiring/evidence-explorer/generate-evidence-explorer-docs.py` renders `_templates/evidence-explorer/index.html` into `docs/evidence-explorer/index.html`, inlining `all-evidence.json` directly into the page and copying evidence-db plus template icons. The explorer shows one tab per evidence `type`; in iframe-embed mode (`?embed=1` / `?ids=<glob patterns>`), `?useTabs=false` renders stacked sections instead of tabs. To change which facts appear, edit the source fragment files (e.g. `database/evidence-files/aws-accounts.json`) and re-run `run.sh`.
 
+### 5. Source image generation
+
+`_config/scripts/image-generation/` contains API-backed generators for JTBD, customer journey, customer-relation, domain-icon, and residuality images. These scripts write into `_config/product-domains/**` and may update source JSON media references; they do not regenerate `docs/`.
+
+The domain wrapper accepts `_config/scripts/image-generation/run.sh <domain-id> --lightweight`. In lightweight mode, JTBD and journey generation creates only one overview per job/journey and does not create new targets or media references for individual steps/stages. Existing detailed media is preserved. Without the flag, the full overview-plus-detail behavior remains the default.
+
 ## Working Rules For Agents
 
 - Treat `_config/**` and `_templates/**` as the primary editable sources.
@@ -127,6 +135,7 @@ These scripts read from `_config/...` and `_templates/...` and write generated p
 - If the user asks to regenerate the website, run the relevant Python generators from `_wiring/**`.
 - Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first. Generators `shutil.rmtree` their target docs folder before rebuilding, so never hand-edit files under `docs/product-domains/`.
 - Before regenerating, verify the current generator expects the same source file names present in the domain folder; the per-domain layout has evolved (e.g. `product-deployments/`, `product-bricks/product-stream.json`) and older domains may lag.
+- Before calling image APIs, use the relevant generator's `--dry-run` when scope or cost is uncertain. Use `--lightweight` when the requested output is limited to JTBD and journey overview images.
 
 ## Practical Mental Model
 
