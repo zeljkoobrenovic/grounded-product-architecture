@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Collect and Validate Meter Data — Stream (Energy Market Operations Platform)</title>
+
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #5b6472;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;
+    }
+</style>
+
+    <style>
+
+        .links-group {
+            margin-bottom: 20px;
+            padding: 16px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .links-group-title {
+            font-size: 12px;
+            color: #1d4ed8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+
+        .links-group-description {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .link-entry { margin-bottom: 16px; }
+        .link-entry:last-child { margin-bottom: 0; }
+
+        .link-entry-title {
+            color: #1d4ed8;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .link-entry-title:hover { text-decoration: underline; }
+
+        .link-entry-copy {
+            color: #4b5563;
+            font-size: 13px;
+            margin: 4px 0 8px;
+            line-height: 1.45;
+        }
+
+        .link-embed {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            margin-top: 4px;
+        }
+
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .page {
+            margin: 20px;
+        }
+
+        .nav-strip {
+            margin: 2px 20px 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+
+        .nav-link {
+            padding: 2px;
+            font-size: 12px;
+        }
+
+        .nav-link.active {
+            border-bottom: 4px solid blue;
+        }
+
+        .tab-image {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+        }
+
+        .tab-image-selected {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+            border-bottom: 4px solid blue;
+        }
+
+        .header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .header-icon {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+        }
+
+        .header-meta {
+            font-size: 90%;
+            color: grey;
+        }
+
+        .header-title {
+            font-size: 50px;
+            line-height: 1.05;
+        }
+
+        .header-copy {
+            font-size: 16px;
+            color: grey;
+            margin-top: 6px;
+            max-width: 950px;
+        }
+
+        .activity-summary {
+            margin: 0;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .activity-stat {
+            display: inline-block;
+            margin-right: 18px;
+            min-width: 110px;
+        }
+
+        .activity-stat-value {
+            font-size: 30px;
+            color: #1d4ed8;
+        }
+
+        .activity-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .group {
+            margin-top: 2px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            overflow: hidden;
+            border: 1px solid lightgrey;
+            background: #fff;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: blue;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            background: #fff;
+            color: inherit;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card-icon {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid #dbe2ea;
+            padding: 4px;
+            flex: 0 0 auto;
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #315b7c;
+            line-height: 1.4;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        .card-copy {
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+
+        .list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .list li {
+            margin-bottom: 6px;
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            color: #374151;
+            font-size: 12px;
+        }
+
+        .pill img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 90%;
+        }
+
+        .dependency-diagram {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+            overflow-x: auto;
+        }
+
+        .flow-title {
+            font-size: 24px;
+            color: #315b7c;
+            margin-bottom: 6px;
+        }
+
+        .flow-description {
+            color: #6b7280;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .flow-timeline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .flow-step-card {
+            border: 1px solid #dbe2ea;
+            border-radius: 10px;
+            padding: 12px 14px;
+            background: #fbfdff;
+        }
+
+        .flow-step-number {
+            font-size: 11px;
+            color: #1d4ed8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .flow-step-title {
+            font-size: 18px;
+            color: #315b7c;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .flow-step-copy {
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+
+        .flow-step-meta {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .flow-step-meta-item {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+        }
+
+        .flow-step-meta-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 3px;
+        }
+
+        .flow-step-dependencies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .flow-matrix-wrap {
+            overflow-x: auto;
+        }
+
+        .flow-matrix {
+            width: 100%;
+            min-width: 1080px;
+            border-collapse: collapse;
+            background: #fff;
+            font-size: 90%;
+        }
+
+        .flow-matrix th,
+        .flow-matrix td {
+            border: 1px solid #dbe2ea;
+            vertical-align: top;
+            padding: 10px 12px;
+        }
+
+        .flow-matrix th {
+            background: #f8fafc;
+            text-align: left;
+        }
+
+        .flow-dependency-col {
+            min-width: 250px;
+            width: 250px;
+        }
+
+        .flow-dependency-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .flow-dependency-icon {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex: 0 0 auto;
+            border: 1px solid #dbe2ea;
+            border-radius: 8px;
+            background: white;
+            padding: 4px;
+        }
+
+        .flow-step-col {
+            min-width: 220px;
+        }
+
+        .flow-step-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .flow-dependency-name {
+            font-weight: bold;
+            color: #315b7c;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .flow-insight-row th {
+            background: #f1f5f9;
+            color: #315b7c;
+        }
+
+        .flow-insight-row td {
+            background: #f8fafc;
+        }
+
+        .flow-insight-list {
+            margin: 0;
+            padding-left: 16px;
+            line-height: 1.45;
+        }
+
+        .flow-insight-list li {
+            margin-bottom: 5px;
+        }
+
+        .flow-cell-empty {
+            background: #fbfdff;
+            color: #9ca3af;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .flow-cell-active {
+            background: #eef6ff;
+        }
+
+        .flow-cell-copy {
+            color: #374151;
+            line-height: 1.45;
+            margin-bottom: 8px;
+        }
+
+        .flow-cell-copy:last-child {
+            margin-bottom: 0;
+        }
+
+        .flow-cell-bricks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .flow-cell-brick {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 11px;
+        }
+
+        .flow-cell-brick-icon {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+
+    <script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        setupTabAccessibility();
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+
+</head>
+
+<body onload="initTab('home')" onhashchange="initTab()">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html" class="active">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a><a href="../../residuality/index.html">Stress Test</a></nav>
+
+<div id="breadcrumbs" style="margin-left: 20px"></div>
+
+<script src="../shared_data.js"></script>
+<script>
+    const config = {"domains": [{"id": "energy-market-operations-platform", "name": "Energy Market Operations Platform", "description": "Covers the software and expertise-services platform that European energy suppliers, balance responsible parties, traders, portfolio operators and large consumers run their core market operations on: launching energy propositions and tariffs, onboarding and switching customers through market communication, collecting and validating meter data, billing and reconciliation, payments and debtor management, white-label customer self-service, sourcing, pricing and hedging, portfolio forecasting, TSO nominations and position management, intraday steering and imbalance settlement, customer trading, Dutch and Iberian market messaging, regulatory reporting, an open API, and market-entry, BRP-as-a-service and academy services across the Netherlands, Spain, Portugal and wider Europe."}]};
+    const all_bricks = window.SHARED_DOMAIN_DATA.allBricks;
+    const allStreams = window.SHARED_DOMAIN_DATA.allStreams;
+    const currentStream = {"id": "collect-and-validate-meter-data", "name": "Collect and Validate Meter Data", "icon": "collect-and-validate-meter-data.png", "type": "outcome-based-stream", "description": "Turn smart-meter P4 reads, telemetry streams, clustered site data and customer-submitted readings into validated, estimated and plausibility-checked volumes per connection and interval, ready for billing, allocation and consumption analysis; the platform's software validates over 90% of Dutch energy consumption data.", "group": "Supplier Journeys", "rootGroup": "Supplier Journeys", "flows": [{"id": "collect-and-validate-interval-data-for-a-billing-period", "title": "Collect and Validate Interval Data for a Billing Period", "description": "The Billing and Operations Manager (bilo) oversees the automated collection, matching, validation and estimation of meter data for a period, with the Household or Business Energy Customer (endc) submitting readings for non-smart connections.", "primaryActor": "Billing and Operations Manager", "trigger": "The billing calendar reaches the data-collection deadline for a period.", "successSignal": "Validated volumes are released for every billable connection and interval with estimations and exceptions documented.", "steps": [{"id": "receive-smart-meter-and-telemetry-data", "title": "Receive smart-meter and telemetry data", "actor": "Billing and Operations Manager", "keyFacts": ["Daily standard readings arrive through the grid operators' P4 channel for every smart meter; household interval data (15-minute electricity, hourly gas) only where the customer has consented, which dynamic and time-of-use contracts require; telemetry streams cover large-consumer, production and flex-asset meters.", "The largest implementation on the platform processes more than 25 million connections, so ingestion is stream-based and idempotent."], "painPoints": ["Files delivered late or twice corrupt the period's volumes when ingestion is not idempotent.", "Each provider's format handled by its own script breaks on every format change."], "dependencies": [{"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Ingests reads and streams into the meter-data model."}, {"type": "brick", "id": "apip", "name": "Open API and Integration Connectors", "description": "Open API and connectors to ERP, payment, meter-data and market systems.", "how": "Runs the provider connectors and monitors delivery."}]}, {"id": "match-readings-to-connections-and-contracts", "title": "Match readings to connections and contracts", "actor": "Billing and Operations Manager", "keyFacts": ["Every reading is matched to its connection point, meter, register and the contract active on that date.", "Meter changes and contract switches within the period split the readings correctly."], "painPoints": ["A meter change not reflected in the register attributes the new meter's reads to the old contract.", "Readings that cannot be matched pile up outside the process until someone notices."], "dependencies": [{"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Links reads to meters and registers."}, {"type": "brick", "id": "cntr", "name": "Contracts and Connections Register", "description": "Supply contracts, connection points (EAN/CUPS) and their components.", "how": "Provides the connection, meter and contract history for matching."}]}, {"id": "run-plausibility-and-gap-checks", "title": "Run plausibility and gap checks", "actor": "Billing and Operations Manager", "keyFacts": ["Rules check for gaps, spikes, negative consumption, register rollovers and profile deviations per connection and interval.", "Exceptions carry the rule that fired, the affected intervals and the historical profile for review."], "painPoints": ["Plausibility rules that fire on every solar household flood operators with false alarms.", "Real anomalies hidden in thousands of alerts are billed and disputed later."], "dependencies": [{"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Applies validation rules and flags exceptions."}, {"type": "brick", "id": "wflw", "name": "Workflow, Exceptions and Notifications", "description": "Exception queues, approvals, tasks and notifications.", "how": "Queues exceptions by rule and priority."}]}, {"id": "estimate-missing-intervals-and-profile-non-smart", "title": "Estimate missing intervals and profile non-smart connections", "actor": "Billing and Operations Manager", "keyFacts": ["Missing intervals are estimated from the connection's history; non-interval connections are profiled with the market's standard profile categories (E1A-E1C households, E2-E4 business, G1A-G2C gas) and published profile factors.", "Estimated values are marked as such so billing, allocation and the customer portal can show them distinctly."], "painPoints": ["Estimates that are indistinguishable from measured values cannot be corrected when the real read arrives.", "Profiling rules maintained per tenant diverge from the market's rules."], "dependencies": [{"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Estimates and marks intervals per rule."}, {"type": "brick", "id": "allo", "name": "Allocation and Reconciliation", "description": "Allocation and reconciliation volumes per connection and interval under Allocation 2.0.", "how": "Supplies profile categories and allocation rules used for estimation."}]}, {"id": "accept-customer-submitted-readings", "title": "Accept customer-submitted meter readings", "actor": "Household or Business Energy Customer", "keyFacts": ["Customers submit readings in the portal or app with a photo, and the reading is validated against the expected range immediately.", "Accepted readings enter the same validation flow as provider data."], "painPoints": ["Readings taken by phone and typed by an agent are the main source of transposed digits.", "Customers who get no feedback on a rejected reading assume it was accepted."], "dependencies": [{"type": "brick", "id": "port", "name": "White-Label Customer Portal and App", "description": "Branded web and mobile self-service on the operational backbone.", "how": "Captures readings with immediate range validation."}, {"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Validates and stores the customer reading."}]}, {"id": "release-validated-volumes", "title": "Release validated volumes to billing and allocation", "actor": "Billing and Operations Manager", "keyFacts": ["Once exceptions are resolved or accepted, the period's volumes are released with a completeness and estimation report per segment.", "Billing, the shadow allocation and the customer portal consume the same released volumes with their quality flags, so invoice, settlement check and self-service never disagree on the measured quantity."], "painPoints": ["Billing that starts before validation is done bills provisional data and corrects it later.", "Volumes released without a completeness report hide how much of the period was estimated."], "dependencies": [{"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Releases the validated volumes and the completeness report."}, {"type": "brick", "id": "bill", "name": "Billing Runs and Invoicing", "description": "Periodic, annual and final billing runs with VAT, guarantees of origin and split invoicing.", "how": "Consumes the released volumes for the billing run."}, {"type": "brick", "id": "dash", "name": "Operational Dashboards and Analytics", "description": "Operational and 15-minute financial insight per segment.", "how": "Shows completeness and estimation rates per segment."}]}]}, {"id": "process-clustered-data-for-a-multi-site-business-customer", "title": "Process Clustered Data for a Multi-Site Business Customer", "description": "The Billing and Operations Manager (bilo) and the Industrial Energy Manager (indm) set up and reconcile clustered site data with sub-metering, so that consumption analysis and billing work per site and per cluster.", "primaryActor": "Industrial Energy Manager", "trigger": "A multi-site business customer connects telemetry and sub-metering for its sites.", "successSignal": "Cluster totals reconcile with grid-meter volumes and per-site consumption analysis is available to the customer.", "steps": [{"id": "register-site-cluster-and-meter-hierarchy", "title": "Register the site cluster and meter hierarchy", "actor": "Billing and Operations Manager", "keyFacts": ["Sites, grid connections, sub-meters and assets are modelled as a hierarchy under the framework contract.", "The hierarchy defines which meters are billable, which are informational and how totals roll up."], "painPoints": ["Sub-meters registered as billable double-count consumption.", "Hierarchies kept in the customer's spreadsheet are never in sync with the platform."], "dependencies": [{"type": "brick", "id": "cntr", "name": "Contracts and Connections Register", "description": "Supply contracts, connection points (EAN/CUPS) and their components.", "how": "Registers sites and connections under the contract."}, {"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Stores the meter hierarchy and roll-up rules."}]}, {"id": "ingest-telemetry-and-sub-metering", "title": "Ingest telemetry and sub-metering data", "actor": "Industrial Energy Manager", "keyFacts": ["Telemetry from the customer's systems and clustered data from providers arrive through the open API in near real time.", "Asset-level data (battery, CHP, curtailable load) is captured with the same model as consumption."], "painPoints": ["Telemetry pushed in a customer-specific format needs a bespoke parser per site.", "Gaps in telemetry are invisible until the monthly analysis."], "dependencies": [{"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Ingests telemetry and sub-metering streams."}, {"type": "brick", "id": "apip", "name": "Open API and Integration Connectors", "description": "Open API and connectors to ERP, payment, meter-data and market systems.", "how": "Provides the open API endpoints and connector monitoring."}]}, {"id": "reconcile-cluster-totals-with-grid-meter", "title": "Reconcile cluster totals with the grid meter", "actor": "Billing and Operations Manager", "keyFacts": ["Sub-meter totals are compared with the grid-meter volume per interval and deviations beyond tolerance are flagged.", "The grid-meter volume remains the billable and allocated quantity; sub-metering informs analysis and internal allocation."], "painPoints": ["Billing from sub-meter totals creates disputes with allocation and the grid operator.", "Tolerances set too tight flag every measurement drift."], "dependencies": [{"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Runs the cluster reconciliation and flags deviations."}, {"type": "brick", "id": "allo", "name": "Allocation and Reconciliation", "description": "Allocation and reconciliation volumes per connection and interval under Allocation 2.0.", "how": "Confirms the grid-meter volume used for allocation."}]}, {"id": "publish-consumption-analysis", "title": "Publish consumption analysis per site", "actor": "Industrial Energy Manager", "keyFacts": ["Per-site profiles, base load, peak analysis and comparisons across sites are published to the customer's self-service.", "The same validated data feeds forecasts and click-trade decisions."], "painPoints": ["Monthly PDF reports arrive too late to act on a running deviation.", "Analysis on unvalidated data leads to wrong decisions on asset operation."], "dependencies": [{"type": "brick", "id": "cons", "name": "Consumption Analysis and Forecast Self-Service", "description": "Per-site consumption analysis, forecast management and flexibility registration.", "how": "Provides consumption analysis and forecast self-service per site."}, {"type": "brick", "id": "dash", "name": "Operational Dashboards and Analytics", "description": "Operational and 15-minute financial insight per segment.", "how": "Shows the cluster and site analytics."}]}, {"id": "correct-and-re-release-on-dispute", "title": "Correct and re-release volumes on dispute", "actor": "Customer Service Lead", "keyFacts": ["A disputed volume is traced to the reads, rules and estimations behind it and corrected with a documented reason.", "Corrected volumes are re-released to billing and allocation so that credit notes and settlement use the same numbers."], "painPoints": ["Corrections applied in billing but not in meter data resurface at the next run.", "Disputes without traceability are settled commercially rather than factually."], "dependencies": [{"type": "brick", "id": "care", "name": "Customer Service Case Management", "description": "Queries, disputes and service requests with full customer context.", "how": "Handles the dispute case with full context."}, {"type": "brick", "id": "mdat", "name": "Meter Data Collection and Validation", "description": "Smart-meter, telemetry and clustered data collection, validation and estimation.", "how": "Applies and documents the correction."}, {"type": "brick", "id": "recn", "name": "Billing Reconciliation and Corrections", "description": "Billed-versus-allocated reconciliation, corrections and exception handling.", "how": "Triggers the billing correction from the re-released volumes."}]}]}], "outcomes": ["Validated, estimated and plausibility-checked volumes exist for every connection and interval before billing and allocation need them", "Smart-meter P4, telemetry and clustered data land in one meter-data model regardless of source", "Missing or implausible readings are estimated by rule and flagged, never billed silently", "Validation keeps its reliability as interval granularity moves to 15-minute blocks"], "brickDependencies": [{"targetBrickId": "mdat", "type": "composition"}, {"targetBrickId": "mcom", "type": "composition"}, {"targetBrickId": "cntr", "type": "composition"}, {"targetBrickId": "allo", "type": "composition"}, {"targetBrickId": "wflw", "type": "composition"}, {"targetBrickId": "cons", "type": "composition"}, {"targetBrickId": "apip", "type": "composition"}, {"targetBrickId": "port", "type": "composition"}], "externalSystemsThisStreamDependsOn": [{"system": "Grid-Operator P4 Channel and Telemetry Data Providers", "type": "data-provider", "interface": "P4 data requests, telemetry streams and clustered data files", "description": "The grid operators' P4 channel through which suppliers and data-service providers request daily standard readings and, with the customer's consent, 15-minute electricity and hourly gas interval data, plus telemetry providers for large-consumer, production and flex-asset meters in the Netherlands and Iberia."}], "externalSystemsDependingOnThisStream": [], "owningTeams": []};
+    const related_bricks = [{"id": "mdat", "name": "Meter Data Collection and Validation", "type": "full-stack", "status": "sustaining", "description": "Collects, validates, estimates and stores consumption and production data for every connection: smart-meter data requested from the grid operators through the P4 channel (daily standard readings for every smart meter; 15-minute electricity and hourly gas interval data for households only with the customer's explicit consent), telemetry feeds from large-consumer and production meters, monthly and annual readings from the grid operators, hourly curves from Spanish and Portuguese distributors, customer-submitted readings, telemetry from batteries, EV chargers and solar inverters, and clustered profile data for non-interval connections. Applies plausibility checks, gap-filling and estimation rules per market, keeps the full reading and volume history per interval, and publishes validated volumes to billing, allocation, forecasting, portal and analytics. Eneve\u2019s software validates over 90% of Dutch energy consumption data on this foundation.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-mdat-web", "name": "Meter Data Monitor", "type": "web-component", "description": "Operations screens to monitor feed completeness per grid operator and provider, review validation failures and estimates, and correct or re-request readings.", "dependencies": {"modules": [{"moduleId": "module-mdat-api", "type": "uses", "description": "Monitor calls the Meter Data API."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-mdat-api", "name": "Meter Data API", "type": "api", "description": "Serves readings, interval volumes, estimates and validation status per connection and period to billing, allocation, forecasting, portal, consumption analysis and the open API; accepts customer readings.", "dependencies": {"modules": [{"moduleId": "module-mdat-store", "type": "delegates", "description": "Interface delegates time-series persistence to the meter data store."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-mdat-ingest", "name": "Meter Data Ingestion Consumer", "type": "message-consumer", "description": "Consumes P4, telemetry, grid-operator reading messages and file drops at 20-million-connection scale, normalises units and intervals and queues validation.", "dependencies": {"modules": [{"moduleId": "module-mdat-validation", "type": "uses", "description": "Ingestion hands normalised data to validation."}]}}, {"id": "module-mdat-events", "name": "Validated Volume Events", "type": "message-queue", "description": "Topic publishing validated and revised volumes per connection and interval so billing, allocation and forecasting react without polling.", "dependencies": {"modules": [{"moduleId": "module-mdat-store", "type": "processes", "description": "Events are emitted from committed volume revisions."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-mdat-validation", "name": "Validation, Estimation and Profiling Service", "type": "service", "description": "Runs plausibility checks, gap detection, estimation and standard-profile clustering per market rule set and versions each volume revision.", "dependencies": {"modules": [{"moduleId": "module-mdat-store", "type": "uses", "description": "Service writes validated volumes and estimates to the store."}]}}, {"id": "module-mdat-store", "name": "Meter Reading and Volume Store", "type": "stateful-service", "description": "Owns readings, interval volumes, estimates, validation flags and revision history per connection with long retention."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-mdat-feeds", "name": "Smart-Meter and Telemetry Provider Adapter", "type": "integration", "description": "Connects the grid operators' P4 channel and metering-party interval deliveries, telemetry platforms for batteries, EV chargers and inverters, and the Iberian distributors' measurement files.", "dependencies": {"modules": [{"moduleId": "module-mdat-ingest", "type": "uses", "description": "Adapter feeds the ingestion consumer."}]}}]}], "dataDependencies": [{"assetId": "meter-reading", "moduleIds": ["module-mdat-store", "module-mdat-validation", "module-mdat-ingest", "module-mdat-events"], "role": "own", "description": "System of record for the Meter Reading asset and validated interval volumes."}, {"assetId": "connection-point", "moduleIds": ["module-mdat-validation"], "role": "read", "description": "Reads connection attributes to validate and profile readings."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-mdat-api", "type": "identity", "description": "Scopes every reading and interval series to the tenant that supplies or balances the connection and applies the customer's P4 consent status before household 15-minute data is exposed to any consumer."}, {"targetBrickId": "wflw", "moduleId": "module-wflw-api", "sourceModuleId": "module-mdat-api", "type": "workflow", "description": "Queues validation failures per rule with the affected intervals and historical profile, tracks missing P4 and distributor deliveries per grid operator and their re-request deadlines, and escalates gaps ahead of the billing and allocation cut-offs."}, {"targetBrickId": "cntr", "moduleId": "module-cntr-api", "sourceModuleId": "module-mdat-api", "type": "master-data", "description": "Reads connection points, meter and profile attributes to validate and assign readings."}, {"targetBrickId": "mcom", "moduleId": "module-mcom-api", "sourceModuleId": "module-mdat-api", "type": "integration", "description": "Receives Dutch metering and master-data messages via the messaging hub."}, {"targetBrickId": "imcm", "moduleId": "module-imcm-api", "sourceModuleId": "module-mdat-api", "type": "integration", "description": "Receives Iberian distributor measurement files via the Iberian communication brick."}], "externalSystemsThisBrickDependsOn": [{"system": "Grid-operator P4 channel and telemetry data providers", "type": "data", "interface": "P4 data requests and telemetry feeds", "description": "Daily standard readings and, with consent, 15-minute electricity and hourly gas interval data from smart meters via the grid operators' P4 channel; telemetry from batteries, EV chargers and inverters.", "sourceModuleId": "module-mdat-feeds"}, {"system": "Grid operators and Iberian distributors", "type": "data", "interface": "Reading messages and measurement files", "description": "Monthly, annual and interval readings from Dutch grid operators and Iberian distributors.", "sourceModuleId": "module-mdat-feeds"}], "externalSystemsDependingOnThisBrick": [{"system": "Grid-operator and market data consumers", "type": "channel-consumer", "interface": "Meter Data API", "description": "Validated consumption data supplied to grid operators and market parties under data-sharing agreements.", "moduleId": "module-mdat-api"}], "domain": "Balancing and Shipping Suite", "group": "Meter Data and Allocation"}, {"id": "mcom", "name": "Dutch Market Messaging Hub", "type": "integration", "status": "sustaining", "description": "The EBASE heritage since 2002: sends, receives, validates and archives every Dutch market message with EDSN, the C-AR central connection register, grid operators, metering companies and the TenneT MMC-Hub \u2014 switch and move processes, master-data changes, metering and reading messages, P4 data requests, allocation and reconciliation publications, and BRP-change messages. Nominations to TenneT and GTS are not EDSN traffic and are submitted by the nomination brick's own TSO adapter. Implements the message specifications and their versions once for every tenant, tracks acknowledgements and rejections per message, and shields the process bricks from format and protocol change so compliance with market-rule releases arrives as a platform update.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-mcom-web", "name": "Message Traffic Monitor", "type": "web-component", "description": "Operations screens showing message flows per counterparty and type, rejection reasons, backlog, replay and specification version in force.", "dependencies": {"modules": [{"moduleId": "module-mcom-api", "type": "uses", "description": "Monitor calls the Market Message API."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-mcom-api", "name": "Market Message API", "type": "api", "description": "Accepts outbound market messages from switching, contracts, meter data and allocation, and exposes inbound messages, acknowledgements and archive search.", "dependencies": {"modules": [{"moduleId": "module-mcom-router", "type": "delegates", "description": "Interface delegates message routing and validation."}, {"moduleId": "module-mcom-archive", "type": "delegates", "description": "Interface delegates archive persistence."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-mcom-inbound", "name": "Inbound Message Consumer", "type": "message-consumer", "description": "Receives and validates inbound EDSN, C-AR, grid-operator and MMC-Hub messages, correlates them and publishes typed events to the process bricks.", "dependencies": {"modules": [{"moduleId": "module-mcom-router", "type": "uses", "description": "Consumer validates and routes through the router."}]}}, {"id": "module-mcom-outbound", "name": "Outbound Message Queue", "type": "message-queue", "description": "Queues outbound messages with retry, ordering and gate-time guarantees per counterparty channel.", "dependencies": {"modules": [{"moduleId": "module-mcom-edsn", "type": "processes", "description": "Queue is drained by the EDSN and MMC-Hub adapters."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-mcom-router", "name": "Message Validation and Routing Service", "type": "service", "description": "Validates messages against the current specification version, enriches with connection master data, correlates requests and responses and routes to the owning process.", "dependencies": {"modules": [{"moduleId": "module-mcom-archive", "type": "uses", "description": "Router writes every message and status to the archive."}]}}, {"id": "module-mcom-archive", "name": "Market Message Archive", "type": "stateful-service", "description": "Owns every sent and received market message, acknowledgement, rejection and correlation per tenant with regulatory retention."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-mcom-edsn", "name": "EDSN, C-AR and TenneT MMC-Hub Adapter", "type": "integration", "description": "Implements the transport, security and format specifications of EDSN, the C-AR connection register and the TenneT MMC-Hub."}]}], "dataDependencies": [{"assetId": "market-message", "moduleIds": ["module-mcom-archive", "module-mcom-router", "module-mcom-inbound", "module-mcom-outbound"], "role": "own", "description": "System of record for the Market Message asset in the Dutch market."}, {"assetId": "connection-point", "moduleIds": ["module-mcom-router"], "role": "read", "description": "Reads connection attributes to validate and correlate messages."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-mcom-api", "type": "identity", "description": "Resolves the tenant's market-party identifier, EDSN mailbox and message-signing certificate for every outbound message and restricts replay and manual re-submission to market-communication operators."}, {"targetBrickId": "wflw", "moduleId": "module-wflw-api", "sourceModuleId": "module-mcom-api", "type": "workflow", "description": "Raises exceptions for rejected or unacknowledged messages, backlog beyond threshold per counterparty and specification-version mismatches, with replay actions attached."}, {"targetBrickId": "cntr", "moduleId": "module-cntr-api", "sourceModuleId": "module-mcom-router", "type": "master-data", "description": "Enriches and validates messages with connection master data."}], "externalSystemsThisBrickDependsOn": [{"system": "EDSN and C-AR central connection register", "type": "integration", "interface": "EDSN message flows", "description": "Switch, move, master-data and metering message exchange with the Dutch central market facilitator.", "sourceModuleId": "module-mcom-edsn"}, {"system": "TenneT MMC-Hub", "type": "integration", "interface": "Market-to-market communication hub", "description": "Allocation 2.0 reconciliation and BRP message exchange with TenneT.", "sourceModuleId": "module-mcom-edsn"}], "externalSystemsDependingOnThisBrick": [{"system": "Grid operators and metering companies", "type": "channel", "interface": "Market message channels", "description": "Grid operators and metering companies send messages to the supplier and BRP through EDSN.", "moduleId": "module-mcom-inbound"}], "domain": "Market and Data Foundation", "group": "Market Communication"}, {"id": "cntr", "name": "Contracts and Connections Register", "type": "full-stack", "status": "sustaining", "description": "System of record for who is supplied what, where and on which terms: customer accounts, connection points (EAN in the Netherlands, CUPS in Iberia) with their grid-operator, meter, profile and capacity attributes, and supply contracts of every type \u2014 fixed, variable, dynamic, EV, battery, bundled, and complex multi-site B2B framework agreements with tranche and click terms. Effective-dated contract versions, tariff assignments, price-change notices and end-of-term renewals keep billing, portal, forecasting and settlement working from one truth. Every other brick keys on the identifiers this register publishes.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-cntr-web", "name": "Contract and Connection Register", "type": "web-component", "description": "Back-office screens to maintain customers, connections and contracts, apply tariff and price changes, manage renewals, terminations and B2B site lists.", "dependencies": {"modules": [{"moduleId": "module-cntr-api", "type": "uses", "description": "Register screens call the Contract API."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-cntr-api", "name": "Contract and Connection API", "type": "api", "description": "CRUD, search and as-of-date read API for customer accounts, connection points and supply contracts, used by intake, billing, portal, forecasting, trading and the open API.", "dependencies": {"modules": [{"moduleId": "module-cntr-store", "type": "delegates", "description": "Interface delegates persistence and effective-dating to the register store."}, {"moduleId": "module-cntr-renewal", "type": "delegates", "description": "Interface delegates renewal and price-change rules to the lifecycle service."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-cntr-events", "name": "Contract Change Events", "type": "message-queue", "description": "Topic carrying customer, connection and contract created, changed, renewed and ended events so billing, forecasting, allocation, portal and dashboards refresh without polling.", "dependencies": {"modules": [{"moduleId": "module-cntr-store", "type": "processes", "description": "Events are emitted from committed register transactions."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-cntr-renewal", "name": "Contract Lifecycle and Renewal Service", "type": "service", "description": "Applies end-of-term renewal rules, price-change notice periods, cooling-off and termination fees per market regulation and contract type, and schedules the resulting versions.", "dependencies": {"modules": [{"moduleId": "module-cntr-store", "type": "uses", "description": "Service reads and writes contract versions in the register store."}]}}, {"id": "module-cntr-store", "name": "Register Store", "type": "stateful-service", "description": "Owns customer accounts, connection points, supply contracts, contract versions, tariff assignments and site lists per tenant."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-cntr-car-sync", "name": "Connection Register Sync Adapter", "type": "integration", "description": "Keeps connection attributes aligned with the C-AR central connection register and Iberian SIPS master data, and reconciles differences.", "dependencies": {"modules": [{"moduleId": "module-cntr-store", "type": "uses", "description": "Adapter writes reconciled connection attributes to the register store."}]}}]}], "dataDependencies": [{"assetId": "supply-contract", "moduleIds": ["module-cntr-store", "module-cntr-renewal", "module-cntr-events"], "role": "own", "description": "System of record for the Supply Contract asset and its versions."}, {"assetId": "connection-point", "moduleIds": ["module-cntr-store", "module-cntr-car-sync", "module-cntr-events"], "role": "own", "description": "System of record for the Connection Point asset (EAN, CUPS) and its attributes."}, {"assetId": "customer-account", "moduleIds": ["module-cntr-store", "module-cntr-events"], "role": "own", "description": "System of record for the Customer Account asset."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-cntr-api", "type": "identity", "description": "Applies tenant isolation to every register read and write, masks fields by role (IBAN, vulnerability flags, identity-check evidence) and records who changed a contract version, which is the audit trail ACM, CNMC and auditors ask for."}, {"targetBrickId": "wflw", "moduleId": "module-wflw-api", "sourceModuleId": "module-cntr-api", "type": "workflow", "description": "Raises tasks for register conflicts (C-AR or SIPS attributes differing from the local record), price-change notices coming due and renewals that need a decision."}, {"targetBrickId": "prod", "moduleId": "module-prod-api", "sourceModuleId": "module-cntr-api", "type": "master-data", "description": "Assigns published proposition and tariff versions to contracts and validates eligibility."}, {"targetBrickId": "comm", "moduleId": "module-comm-api", "sourceModuleId": "module-cntr-api", "type": "notification", "description": "Issues price-change, renewal and termination notices via customer communication."}, {"targetBrickId": "mcom", "moduleId": "module-mcom-api", "sourceModuleId": "module-cntr-car-sync", "type": "integration", "description": "Receives C-AR master-data mutations (meter replacement, capacity or profile-category change, supplier and BRP assignment) as typed events from the EDSN flows."}], "externalSystemsThisBrickDependsOn": [{"system": "C-AR central connection register and Iberian SIPS", "type": "data", "interface": "Connection master-data sync", "description": "Connection attributes, grid-operator and meter data reconciled against the central registers.", "sourceModuleId": "module-cntr-car-sync"}], "externalSystemsDependingOnThisBrick": [{"system": "Customer ERP, CRM and BI systems", "type": "channel-consumer", "interface": "Contract Change Events", "description": "Supplier ERP, CRM and BI systems receive contract and connection changes through the open API relay.", "moduleId": "module-cntr-events"}], "domain": "Supplier Suite", "group": "Contract and Billing"}, {"id": "allo", "name": "Allocation and Reconciliation", "type": "service", "status": "invest", "description": "Processes allocation and reconciliation for electricity and gas under Allocation 2.0: receives the grid operators' allocation per BRP, supplier and grid area for each 15-minute imbalance settlement period (hourly for gas) through EDSN and the TenneT MMC-Hub, runs a shadow allocation from the tenant's own validated interval and profiled volumes to verify it, and handles the reconciliation that corrects profiled and smart-meter-allocated volumes once measured data is in, including the reconciliation for SMA and TMT connections exchanged through the MMC-Hub since tranche 3 on 1 January 2025. Under Allocation 2.0 every connection is allocated by method (TMT telemetered, SMA smart-meter interval data, PRO profiled). Provides the settlement-grade volumes that billing reconciliation, imbalance settlement and portfolio reporting compare against, with full lineage per revision.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-allo-web", "name": "Allocation Monitor", "type": "web-component", "description": "Operations screens per grid area, BRP and day showing allocation status, reconciliation rounds, deltas against nominations and unresolved connections.", "dependencies": {"modules": [{"moduleId": "module-allo-api", "type": "uses", "description": "Monitor calls the Allocation API."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-allo-api", "name": "Allocation and Reconciliation API", "type": "api", "description": "Serves allocation and reconciliation volumes and status per connection, portfolio, grid area and period to reconciliation, settlement, dashboards and the open API.", "dependencies": {"modules": [{"moduleId": "module-allo-store", "type": "delegates", "description": "Interface delegates persistence to the allocation store."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-allo-runs", "name": "Allocation and Reconciliation Run Daemon", "type": "daemon", "description": "Schedules the daily shadow-allocation run and the monthly reconciliation rounds per market and grid area, processes MMC-Hub and EDSN allocation publications as they arrive and re-runs on revised volumes.", "dependencies": {"modules": [{"moduleId": "module-allo-calc", "type": "uses", "description": "Daemon drives the calculation engine per run."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-allo-calc", "name": "Shadow Allocation and Reconciliation Engine", "type": "service", "description": "Recomputes allocation per connection, allocation method (TMT, SMA, PRO), grid area and BRP from the tenant's own volumes and profile factors, compares it with the grid operators' published allocation, and applies the Allocation 2.0 reconciliation rules with revision lineage.", "dependencies": {"modules": [{"moduleId": "module-allo-store", "type": "uses", "description": "Engine writes computed volumes to the store."}]}}, {"id": "module-allo-store", "name": "Allocation Volume Store", "type": "stateful-service", "description": "Owns allocation and reconciliation volumes, run history, revisions and MMC-Hub exchange records per tenant and BRP."}]}], "dataDependencies": [{"assetId": "allocation-volume", "moduleIds": ["module-allo-store", "module-allo-calc", "module-allo-runs"], "role": "own", "description": "System of record for the Allocation Volume asset."}, {"assetId": "reconciliation-volume", "moduleIds": ["module-allo-store", "module-allo-calc", "module-allo-runs"], "role": "own", "description": "System of record for the Reconciliation Volume asset under Allocation 2.0."}, {"assetId": "meter-reading", "moduleIds": ["module-allo-calc"], "role": "read", "description": "Reads validated volumes as allocation input."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-allo-api", "type": "identity", "description": "Resolves the BRP or supplier tenant with its EAN party code and EIC for each allocation run, and scopes the platform's BRP-as-a-Service operators to the managed portfolios they operate."}, {"targetBrickId": "wflw", "moduleId": "module-wflw-api", "sourceModuleId": "module-allo-api", "type": "workflow", "description": "Raises tasks for deltas between the shadow allocation and the grid operators' or MMC-Hub figures per grid area and period, tracks dispute windows and requires approval before a re-run after corrections."}, {"targetBrickId": "mdat", "moduleId": "module-mdat-api", "sourceModuleId": "module-allo-api", "type": "data", "description": "Reads validated interval volumes and profiled readings as allocation input."}, {"targetBrickId": "cntr", "moduleId": "module-cntr-api", "sourceModuleId": "module-allo-api", "type": "master-data", "description": "Reads connection-to-BRP and supplier assignments per day."}, {"targetBrickId": "mcom", "moduleId": "module-mcom-api", "sourceModuleId": "module-allo-api", "type": "integration", "description": "Receives the grid operators' allocation and reconciliation publications through EDSN and exchanges the Allocation 2.0 reconciliation data with the TenneT MMC-Hub."}], "externalSystemsThisBrickDependsOn": [{"system": "TenneT MMC-Hub and grid operators", "type": "transaction", "interface": "Allocation and reconciliation exchange", "description": "Allocation and reconciliation volumes exchanged via the market-to-market communication hub and grid-operator channels.", "sourceModuleId": "module-allo-runs"}], "externalSystemsDependingOnThisBrick": [], "domain": "Balancing and Shipping Suite", "group": "Meter Data and Allocation"}, {"id": "wflw", "name": "Workflow, Exceptions and Notifications", "type": "service", "status": "sustaining", "description": "Shared engine for everything that cannot run straight through: exception cases from billing, switching, meter data, allocation, nominations and payments, approval tasks for corrections, quotes and hedges, SLA timers and escalations, operator work queues per tenant and team, and internal notifications by e-mail, chat and in-app. Gives operations one inbox with the originating context and lets the platform measure and reduce manual work per process \u2014 the foundation for AI-assisted exception triage under human supervision.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-wflw-web", "name": "Work Inbox and Task Console", "type": "web-component", "description": "Operator inbox with queues per process and team, task detail with originating context, bulk actions, approvals and SLA views.", "dependencies": {"modules": [{"moduleId": "module-wflw-api", "type": "uses", "description": "Inbox calls the Workflow API."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-wflw-api", "name": "Workflow and Task API", "type": "api", "description": "Creates, assigns, updates and completes tasks and exceptions; exposes queues, SLA state and notifications to every brick and the open API.", "dependencies": {"modules": [{"moduleId": "module-wflw-engine", "type": "delegates", "description": "Interface delegates workflow execution."}, {"moduleId": "module-wflw-store", "type": "delegates", "description": "Interface delegates task persistence."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-wflw-events", "name": "Task and Notification Events", "type": "message-queue", "description": "Topic carrying task created, assigned, escalated and completed events and internal notifications for dashboards, communication and chat integrations.", "dependencies": {"modules": [{"moduleId": "module-wflw-store", "type": "processes", "description": "Events are emitted from committed task transactions."}]}}, {"id": "module-wflw-sla", "name": "SLA and Escalation Daemon", "type": "daemon", "description": "Advances SLA timers, escalates overdue tasks, reassigns on absence and triggers reminders.", "dependencies": {"modules": [{"moduleId": "module-wflw-engine", "type": "uses", "description": "Daemon drives escalation transitions."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-wflw-engine", "name": "Workflow Definition and Execution Engine", "type": "service", "description": "Executes configurable workflow definitions per process type with steps, approvals, routing rules and auto-resolution patterns per tenant.", "dependencies": {"modules": [{"moduleId": "module-wflw-store", "type": "uses", "description": "Engine reads and writes task state."}]}}, {"id": "module-wflw-store", "name": "Task and Workflow Store", "type": "stateful-service", "description": "Owns workflow definitions, tasks, exceptions, assignments, SLA timers and resolution history per tenant."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-wflw-chat", "name": "Chat and Internal Notification Adapter", "type": "integration", "description": "Delivers internal notifications to Microsoft Teams, Slack and e-mail and accepts approvals from chat.", "dependencies": {"modules": [{"moduleId": "module-wflw-events", "type": "uses", "description": "Adapter subscribes to task events."}]}}]}], "dataDependencies": [{"assetId": "workflow-task", "moduleIds": ["module-wflw-store", "module-wflw-engine", "module-wflw-sla", "module-wflw-events"], "role": "own", "description": "System of record for the Workflow Task asset."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-wflw-api", "type": "identity", "description": "Resolves operators, teams, tenant scope and entitlements for queue assignment."}], "externalSystemsThisBrickDependsOn": [{"system": "Microsoft Teams, Slack and e-mail providers", "type": "channel", "interface": "Notification and approval webhooks", "description": "Internal notifications and chat-based approvals.", "sourceModuleId": "module-wflw-chat"}], "externalSystemsDependingOnThisBrick": [{"system": "All process bricks", "type": "channel-consumer", "interface": "Workflow and Task API", "description": "Every process brick raises exceptions and approval tasks here.", "moduleId": "module-wflw-api"}], "domain": "Market and Data Foundation", "group": "Platform Core"}, {"id": "cons", "name": "Consumption Analysis and Forecast Self-Service", "type": "full-stack", "status": "sustaining", "description": "Self-service energy insight for industrial and multi-site customers on their supplier\u2019s platform: consumption and production per site, meter and 15-minute interval, benchmarks against production output, budgets and forecast deviation, customer-maintained forecasts and production plans that feed the supplier\u2019s portfolio forecast, flexibility potential of batteries, CHP and curtailable load, and export to the customer\u2019s energy-management and finance systems. What the industrial energy manager uses to understand energy cost per unit of production.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-cons-web", "name": "Consumption Insight Portal", "type": "web-component", "description": "Customer screens with site and meter consumption, budgets, forecast deviation, production-plan upload, flex-potential views and exports.", "dependencies": {"modules": [{"moduleId": "module-cons-api", "type": "uses", "description": "Portal calls the Consumption API."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-cons-api", "name": "Consumption and Forecast API", "type": "api", "description": "Serves consumption profiles, analyses and customer forecasts per site and period; accepts production plans and forecast updates from customers, quoting, trading and the open API.", "dependencies": {"modules": [{"moduleId": "module-cons-analysis", "type": "delegates", "description": "Interface delegates analysis computation."}, {"moduleId": "module-cons-store", "type": "delegates", "description": "Interface delegates profile persistence."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-cons-refresh", "name": "Profile Refresh Consumer", "type": "message-consumer", "description": "Consumes validated volume events and rebuilds consumption profiles, benchmarks and deviation metrics per site.", "dependencies": {"modules": [{"moduleId": "module-cons-analysis", "type": "uses", "description": "Consumer runs analysis on new volumes."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-cons-analysis", "name": "Consumption Analysis Service", "type": "service", "description": "Builds site profiles, peak and base-load analysis, budget and forecast deviation, production-normalised metrics and flex potential from volumes and customer plans.", "dependencies": {"modules": [{"moduleId": "module-cons-store", "type": "uses", "description": "Service writes profiles and metrics."}]}}, {"id": "module-cons-store", "name": "Consumption Profile Store", "type": "stateful-service", "description": "Owns consumption profiles, customer forecasts, production plans, budgets and benchmarks per site and customer."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-cons-ems-export", "name": "Energy Management and Finance System Adapter", "type": "integration", "description": "Exports profiles and analyses to customer energy-management, sustainability and finance systems and imports production plans.", "dependencies": {"modules": [{"moduleId": "module-cons-api", "type": "uses", "description": "Adapter exchanges data through the Consumption API."}]}}]}], "dataDependencies": [{"assetId": "consumption-profile", "moduleIds": ["module-cons-store", "module-cons-analysis", "module-cons-refresh"], "role": "own", "description": "System of record for the Consumption Profile asset and customer forecasts."}, {"assetId": "meter-reading", "moduleIds": ["module-cons-analysis"], "role": "read", "description": "Reads validated volumes to build profiles."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-cons-api", "type": "identity", "description": "Resolves which sites, meters and assets a business user or its mandated consultant may see, and keeps household profiles visible only to the household itself."}, {"targetBrickId": "wflw", "moduleId": "module-wflw-api", "sourceModuleId": "module-cons-api", "type": "workflow", "description": "Raises tasks to the account team when a site's forecast deviation exceeds its contractual tolerance or an anomaly (stuck meter, leak, unexpected base load) is detected."}, {"targetBrickId": "mdat", "moduleId": "module-mdat-api", "sourceModuleId": "module-cons-analysis", "type": "data", "description": "Reads validated interval volumes per site and meter."}, {"targetBrickId": "cntr", "moduleId": "module-cntr-api", "sourceModuleId": "module-cons-api", "type": "master-data", "description": "Reads site lists and contract volumes per customer."}], "externalSystemsThisBrickDependsOn": [{"system": "Customer energy-management, sustainability and finance systems", "type": "integration", "interface": "Export and plan import interface", "description": "Profiles and analyses exported; production plans imported.", "sourceModuleId": "module-cons-ems-export"}], "externalSystemsDependingOnThisBrick": [], "domain": "Trade and Portfolio Suite", "group": "Customer Trading"}, {"id": "apip", "name": "Open API and Integration Connectors", "type": "integration", "status": "invest", "description": "The platform\u2019s open API and certified-integration catalogue: a versioned REST and event API over contracts, connections, invoices, payments, readings, forecasts, positions and cases with tenant-scoped credentials, rate limits and webhooks; connectors for accounting and ERP (Exact, AFAS, SAP, Twinfield), CRM and marketing platforms, payment providers, data warehouses and customer energy-management systems; and connection health monitoring per tenant. It is what lets suppliers keep their own CRM or ERP while the platform runs the operation, and what the Year-3 certified-integration catalogue grows from.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-apip-web", "name": "Developer Portal and Connection Manager", "type": "web-component", "description": "Developer portal with API reference, credentials, webhook subscriptions and sandbox, plus per-tenant connector configuration and health views.", "dependencies": {"modules": [{"moduleId": "module-apip-api", "type": "uses", "description": "Portal calls the gateway management API."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-apip-api", "name": "Open API Gateway", "type": "api", "description": "Versioned public REST API and webhook management with tenant-scoped authentication, rate limiting, schema validation and audit, routing to the owning bricks.", "dependencies": {"modules": [{"moduleId": "module-apip-relay", "type": "delegates", "description": "Gateway hands outbound events to the relay."}, {"moduleId": "module-apip-registry", "type": "delegates", "description": "Gateway reads connection configuration from the registry."}]}}]}, {"layer": "worker", "description": "Background workers, event consumers, daemons, and asynchronous processing modules.", "modules": [{"id": "module-apip-relay", "name": "Event Relay and Webhook Dispatcher", "type": "message-consumer", "description": "Subscribes to domain events from every brick and delivers them to webhook subscribers and connectors with retries and replay.", "dependencies": {"modules": [{"moduleId": "module-apip-registry", "type": "uses", "description": "Relay reads subscriptions from the registry."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-apip-mapping", "name": "Connector Mapping and Transformation Service", "type": "stateless-service", "description": "Transforms platform payloads to and from connector formats using per-tenant field mappings and validation rules."}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-apip-registry", "name": "Integration Connection Registry", "type": "stateful-service", "description": "Owns API credentials, webhook subscriptions, connector configurations, mappings and connection health per tenant."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-apip-connectors", "name": "Certified Connector Pack", "type": "integration", "description": "Connectors for Exact, AFAS, SAP, Twinfield, Salesforce, HubSpot, payment providers, data warehouses and customer energy-management systems.", "dependencies": {"modules": [{"moduleId": "module-apip-mapping", "type": "uses", "description": "Connectors transform payloads through the mapping service."}]}}]}], "dataDependencies": [{"assetId": "integration-connection", "moduleIds": ["module-apip-registry", "module-apip-relay", "module-apip-api"], "role": "own", "description": "System of record for the Integration Connection asset, credentials and subscriptions."}, {"assetId": "customer-account", "moduleIds": ["module-apip-api"], "role": "read", "description": "Serves customer accounts through the open API under tenant entitlements."}, {"assetId": "invoice", "moduleIds": ["module-apip-connectors"], "role": "read", "description": "Posts invoices to accounting connectors."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-apip-api", "type": "identity", "description": "Issues and validates tenant-scoped API credentials and webhook subscriptions, so a partner integration can only read and write the tenant that issued the credential."}, {"targetBrickId": "wflw", "moduleId": "module-wflw-api", "sourceModuleId": "module-apip-api", "type": "workflow", "description": "Raises integration exceptions (delivery failure, retry exhaustion, certificate expiry, schema rejection) with retry and escalation rules instead of silent data loss."}, {"targetBrickId": "cntr", "moduleId": "module-cntr-api", "sourceModuleId": "module-apip-api", "type": "data", "description": "Exposes contracts, connections and customer accounts through the open API."}, {"targetBrickId": "bill", "moduleId": "module-bill-api", "sourceModuleId": "module-apip-api", "type": "data", "description": "Exposes invoices and posts them to accounting connectors."}, {"targetBrickId": "paym", "moduleId": "module-paym-api", "sourceModuleId": "module-apip-api", "type": "payment", "description": "Exposes payment status and relays PSP events."}, {"targetBrickId": "mdat", "moduleId": "module-mdat-api", "sourceModuleId": "module-apip-api", "type": "data", "description": "Exposes readings and validated volumes."}, {"targetBrickId": "nomi", "moduleId": "module-nomi-api", "sourceModuleId": "module-apip-api", "type": "data", "description": "Exposes positions and nominations to portfolio-operator systems."}, {"targetBrickId": "care", "moduleId": "module-care-api", "sourceModuleId": "module-apip-api", "type": "data", "description": "Exposes cases to customer CRM systems."}], "externalSystemsThisBrickDependsOn": [{"system": "Accounting, ERP and CRM systems (Exact, AFAS, SAP, Twinfield, Salesforce, HubSpot)", "type": "integration", "interface": "Connector APIs", "description": "Bidirectional synchronisation of customers, invoices, payments and cases.", "sourceModuleId": "module-apip-connectors"}], "externalSystemsDependingOnThisBrick": [{"system": "Supplier and partner developer teams", "type": "channel-consumer", "interface": "Open API Gateway", "description": "Customers and partners build on the versioned public API and webhooks.", "moduleId": "module-apip-api"}], "domain": "Market and Data Foundation", "group": "Platform Core"}, {"id": "port", "name": "White-Label Customer Portal and App", "type": "full-stack", "status": "invest", "description": "White-label web portal and iOS/Android app that every supplier brand offers its households and business customers, running on the same data as billing and settlement: invoice breakdown, consumption history per day and 15-minute interval, projected annual cost and instalment advice, tariff changes and dynamic-price views, meter-reading submission, payment method and plan changes, move notifications, disputes and service requests. Each tenant brand gets its own theme, domain and feature switches without a separate codebase, which is what lets self-service resolution replace calls.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-port-web", "name": "Customer Portal Web", "type": "web-component", "description": "Responsive white-label portal with dashboard, invoices, consumption, contract, payments, meter readings, requests and messages, themed per tenant brand.", "dependencies": {"modules": [{"moduleId": "module-port-bff", "type": "uses", "description": "Portal calls the Portal BFF."}]}}, {"id": "module-port-mobile", "name": "Customer App (iOS and Android)", "type": "mobile-component", "description": "White-label mobile app with push notifications, consumption and cost insight, dynamic-price alerts, meter-reading capture by camera and quick payment actions.", "dependencies": {"modules": [{"moduleId": "module-port-bff", "type": "uses", "description": "App calls the Portal BFF."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-port-bff", "name": "Portal BFF", "type": "bff", "description": "Aggregates contract, invoice, payment, consumption, case and communication data into portal-shaped views and enforces per-brand feature switches.", "dependencies": {"modules": [{"moduleId": "module-port-api", "type": "uses", "description": "BFF reads portal accounts and preferences through the Portal API."}, {"moduleId": "module-port-projection", "type": "uses", "description": "BFF requests cost projections."}]}}, {"id": "module-port-api", "name": "Portal Account API", "type": "api", "description": "Manages portal accounts, linked customer accounts, preferences, consents and notification settings for portal, app, care and identity.", "dependencies": {"modules": [{"moduleId": "module-port-store", "type": "delegates", "description": "Interface delegates persistence to the portal account store."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-port-projection", "name": "Cost and Consumption Projection Service", "type": "stateless-service", "description": "Projects annual cost, instalment advice and savings scenarios from consumption history, contract tariffs and price curves for households and small businesses."}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-port-store", "name": "Portal Account and Preference Store", "type": "stateful-service", "description": "Owns portal accounts, device registrations, consents, preferences and self-service activity per tenant brand."}]}], "dataDependencies": [{"assetId": "portal-account", "moduleIds": ["module-port-store", "module-port-api"], "role": "own", "description": "System of record for the Portal Account asset and preferences."}, {"assetId": "invoice", "moduleIds": ["module-port-bff"], "role": "read", "description": "Reads invoices for the customer\u2019s invoice views."}, {"assetId": "meter-reading", "moduleIds": ["module-port-bff", "module-port-projection"], "role": "read-write", "description": "Reads consumption history and submits customer readings."}], "brickDependencies": [{"targetBrickId": "iden", "moduleId": "module-iden-api", "sourceModuleId": "module-port-api", "type": "identity", "description": "Authenticates end customers per tenant brand (own domain, theme, MFA policy), resolves which customer accounts, connections and framework contracts a login may see (household, multi-site business user, energy manager, broker mandate) and enforces per-brand feature switches."}, {"targetBrickId": "wflw", "moduleId": "module-wflw-api", "sourceModuleId": "module-port-api", "type": "workflow", "description": "Turns portal requests that cannot complete automatically (a reading outside the expected range, an instalment change beyond bounds, a move notification) into tasks for care without losing the customer's input."}, {"targetBrickId": "bill", "moduleId": "module-bill-api", "sourceModuleId": "module-port-bff", "type": "data", "description": "Reads invoices, lines and breakdowns for the invoice views."}, {"targetBrickId": "cntr", "moduleId": "module-cntr-api", "sourceModuleId": "module-port-bff", "type": "master-data", "description": "Reads contracts, connections and tariff assignments for the contract views."}, {"targetBrickId": "care", "moduleId": "module-care-api", "sourceModuleId": "module-port-bff", "type": "workflow", "description": "Creates and tracks service requests and disputes raised in the portal."}, {"targetBrickId": "mdat", "moduleId": "module-mdat-api", "sourceModuleId": "module-port-bff", "type": "data", "description": "Reads consumption history and submits customer meter readings."}, {"targetBrickId": "paym", "moduleId": "module-paym-api", "sourceModuleId": "module-port-bff", "type": "payment", "description": "Shows payment status and lets customers change payment method or plan."}, {"targetBrickId": "comm", "moduleId": "module-comm-api", "sourceModuleId": "module-port-bff", "type": "documents", "description": "Shows the customer\u2019s messages and documents in the portal inbox."}], "externalSystemsThisBrickDependsOn": [{"system": "Apple App Store and Google Play", "type": "channel", "interface": "App distribution and push", "description": "Distribution of the white-label app per brand and push-notification delivery.", "sourceModuleId": "module-port-mobile"}], "externalSystemsDependingOnThisBrick": [{"system": "End customers of supplier brands", "type": "channel", "interface": "Customer Portal Web and App", "description": "Over 7 million households and 3 million business customers of Dutch supplier clients use the white-label portal and app.", "moduleId": "module-port-web"}], "domain": "Supplier Suite", "group": "Customer Interfacing"}];
+    const linked_products = [];
+    const related_teams = [{"teamId": "contract-and-billing", "teamName": "Contract and Billing", "teamType": "stream-aligned", "groupId": "ssg", "groupName": "Supplier Suite Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "customer-interfacing", "teamName": "Customer Interfacing", "teamType": "stream-aligned", "groupId": "ssg", "groupName": "Supplier Suite Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "customer-trading", "teamName": "Customer Trading", "teamType": "stream-aligned", "groupId": "tpg", "groupName": "Trade and Portfolio Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "forecasting-and-nomination", "teamName": "Forecasting and Nomination", "teamType": "stream-aligned", "groupId": "bsg", "groupName": "Balancing and Shipping Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "meter-data-and-allocation", "teamName": "Meter Data and Allocation", "teamType": "complicated-subsystem", "groupId": "bsg", "groupName": "Balancing and Shipping Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "customer-onboarding", "teamName": "Customer Onboarding", "teamType": "stream-aligned", "groupId": "ssg", "groupName": "Supplier Suite Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "market-communication", "teamName": "Market Communication", "teamType": "complicated-subsystem", "groupId": "mpg", "groupName": "Market and Platform Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "products-and-pricing", "teamName": "Products and Pricing", "teamType": "stream-aligned", "groupId": "ssg", "groupName": "Supplier Suite Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "data-and-insight", "teamName": "Data and Insight", "teamType": "stream-aligned", "groupId": "mpg", "groupName": "Market and Platform Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "intraday-and-settlement", "teamName": "Intraday and Settlement", "teamType": "stream-aligned", "groupId": "bsg", "groupName": "Balancing and Shipping Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "market-enablement-and-brp-services", "teamName": "Market Enablement and BRP Services", "teamType": "enabling", "groupId": "esg", "groupName": "Expertise Services Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "customer-success-and-academy", "teamName": "Customer Success and Academy", "teamType": "enabling", "groupId": "esg", "groupName": "Expertise Services Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "integration-hub", "teamName": "Integration Hub", "teamType": "platform", "groupId": "mpg", "groupName": "Market and Platform Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "platform-core", "teamName": "Platform Core", "teamType": "platform", "groupId": "mpg", "groupName": "Market and Platform Group", "role": "related", "roleLabel": "Related team"}, {"teamId": "sourcing-and-portfolio", "teamName": "Sourcing and Portfolio", "teamType": "stream-aligned", "groupId": "tpg", "groupName": "Trade and Portfolio Group", "role": "related", "roleLabel": "Related team"}];
+    const supported_jobs = [];
+
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        flowchart: {
+            htmlLabels: false
+        }
+    });
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function dedupe(items, keyFn) {
+        const seen = new Set();
+        const ordered = [];
+        items.forEach(item => {
+            const key = keyFn(item);
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            ordered.push(item);
+        });
+        return ordered;
+    }
+
+    function getFlows() {
+        return currentStream.flows || [];
+    }
+
+    function getFlowDependencies(flow) {
+        const dependencyIndex = new Map();
+        (flow.steps || []).forEach(step => {
+            (step.dependencies || []).forEach(dependency => {
+                if ((dependency.type || 'brick') !== 'brick') {
+                    return;
+                }
+                const key = [dependency.type || 'dependency', dependency.id || dependency.name || 'unknown'].join('::');
+                if (!dependencyIndex.has(key)) {
+                    dependencyIndex.set(key, dependency);
+                }
+            });
+        });
+        return Array.from(dependencyIndex.values());
+    }
+
+    function getStepDependency(step, dependency) {
+        return (step.dependencies || []).find(item => (item.type || '') === (dependency.type || '') && (item.id || '') === (dependency.id || '')) || null;
+    }
+
+    function getPrimaryActors() {
+        const streamJobs = currentStream.supportedCustomerJobs || [];
+        const allJobs = streamJobs.length ? streamJobs : supported_jobs;
+        return dedupe(allJobs.map(item => item.customerName || item.customerGroup || '').filter(Boolean), item => item);
+    }
+
+    function summarizeFlow(flow) {
+        const steps = flow.steps || [];
+        const firstStep = steps[0] || {};
+        const lastStep = steps[steps.length - 1] || {};
+        return {
+            actor: flow.primaryActor || firstStep.actor || '',
+            trigger: flow.trigger || firstStep.trigger || '',
+            result: flow.successSignal || flow.outcome || lastStep.successSignal || lastStep.output || ''
+        };
+    }
+
+    function renderStepMeta(label, value) {
+        if (!value) {
+            return '';
+        }
+        return '<div class="flow-step-meta-item"><div class="flow-step-meta-label">' + escapeHtml(label) + '</div><div class="flow-step-copy">' + escapeHtml(value) + '</div></div>';
+    }
+
+    function flowDependencyIconFile(dependency) {
+        const dependencyId = dependency.id || '';
+        const linkedBrick = related_bricks.find(brick => brick.id === dependencyId) || all_bricks.find(brick => brick.id === dependencyId) || {};
+        return dependency.icon || linkedBrick.icon || (dependencyId ? dependencyId + '.png' : 'brick.png');
+    }
+
+    function renderFlowDependencyIcon(dependency, className) {
+        return '<img class="' + escapeHtml(className) + '" src="../icons/' + escapeHtml(flowDependencyIconFile(dependency)) + '" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+    }
+
+    function renderStepDependencyPills(step) {
+        const dependencies = step.dependencies || [];
+        if (!dependencies.length) {
+            return '<div class="muted">No step-specific dependencies listed.</div>';
+        }
+
+        return '<div class="flow-step-dependencies">' + dependencies.map(dep => {
+            const label = dep.name || dep.id || 'Dependency';
+            const kind = 'Brick';
+            return '<span class="flow-cell-brick">' + renderFlowDependencyIcon(dep, 'flow-cell-brick-icon') + '<span>' + escapeHtml(kind + ': ' + label) + '</span></span>';
+        }).join('') + '</div>';
+    }
+
+    function simplifySupportCopy(value) {
+        const text = String(value || '').trim();
+        if (!text) {
+            return '';
+        }
+        const simplified = text.replace(/^Supports .*? by helping users help /i, 'Facilitate ');
+        return simplified;
+    }
+</script>
+
+<div id="Header"></div>
+
+<div class="page">
+    <div class="tab" id="primary_tabs">
+        <button class="tablinks active" id="tab_home" onclick="openTab('home')">Home</button>
+        <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
+        <button class="tablinks" id="tab_links" onclick="openTab('links')">Links</button>
+    </div>
+
+    <div id="tab_content_home" class="tabcontent"></div>
+    <div id="tab_content_flows" class="tabcontent"></div>
+    <div id="tab_content_links" class="tabcontent"></div>
+
+
+</div>
+
+<script>
+    function streamMetaPath(stream) {
+        const parts = [];
+        if (stream.group) {
+            parts.push(stream.group);
+        }
+        if (stream.rootGroup && stream.rootGroup !== stream.group) {
+            parts.push(stream.rootGroup);
+        }
+        if (!parts.length) {
+            parts.push('Stream');
+        }
+        return parts.join(' / ');
+    }
+
+    let headerHtml = '<div class="nav-strip">';
+    allStreams.forEach(item => {
+        headerHtml += '<a class="nav-link" href="' + escapeHtml(item.id) + '.html">';
+        headerHtml += '<img src="../icons/' + escapeHtml(item.icon || 'stream.png') + '" class="' + (item.id === currentStream.id ? 'tab-image-selected' : 'tab-image') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/stream.png\'">';
+        headerHtml += '</a>';
+    });
+    headerHtml += '</div>';
+
+    headerHtml += '<div class="page">';
+    headerHtml += '<div class="header">';
+    headerHtml += '<img class="header-icon" src="../icons/' + escapeHtml(currentStream.icon || 'stream.png') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/stream.png\'">';
+    headerHtml += '<div>';
+    headerHtml += '<div class="header-meta">';
+    headerHtml += '<div class="page-type-badge">Stream</div>';
+    headerHtml += escapeHtml(streamMetaPath(currentStream)) + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentStream.id || '').toUpperCase()) + '</span></div>';
+    headerHtml += '<div class="header-title">' + escapeHtml(currentStream.name || currentStream.id) + '</div>';
+    headerHtml += '<div class="header-copy">' + escapeHtml(currentStream.description || '') + '</div>';
+    headerHtml += '</div></div></div>';
+    document.getElementById('Header').innerHTML = headerHtml;
+
+    function renderHome() {
+        const flows = getFlows();
+        const totalSteps = flows.reduce((count, flow) => count + ((flow.steps || []).length), 0);
+        const primaryActors = getPrimaryActors();
+        let html = '';
+
+        html += '<div class="group"><div class="section-title">Flow Narratives (' + flows.length + ')</div>';
+        if (!flows.length) {
+            html += '<div class="muted">No flows listed for this stream.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            flows.forEach(flow => {
+                const summary = summarizeFlow(flow);
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(streamMetaPath(currentStream)) + '</div>';
+                html += '<div class="card-title">' + escapeHtml(flow.title || flow.id) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(flow.description || '') + '</div>';
+                html += '<div class="muted">' + ((flow.steps || []).length) + ' steps</div>';
+                if (summary.actor) {
+                    html += '<div class="card-copy"><strong>Actor:</strong> ' + escapeHtml(summary.actor) + '</div>';
+                }
+                if (summary.trigger) {
+                    html += '<div class="card-copy"><strong>Trigger:</strong> ' + escapeHtml(summary.trigger) + '</div>';
+                }
+                if (summary.result) {
+                    html += '<div class="card-copy"><strong>Success looks like:</strong> ' + escapeHtml(summary.result) + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Outcomes</div>';
+        if (!(currentStream.outcomes || []).length) {
+            html += '<div class="muted">No outcomes listed for this stream.</div>';
+        } else {
+            html += '<div class="card"><ul class="list">' + currentStream.outcomes.map(outcome => '<li>' + escapeHtml(outcome) + '</li>').join('') + '</ul></div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Supporting Product Bricks</div>';
+        if (!related_bricks.length) {
+            html += '<div class="muted">No linked product bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            related_bricks.forEach(brick => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../landing_pages/' + escapeHtml(brick.id) + '.html">';
+                html += '<div class="card-meta">' + escapeHtml((brick.group || brick.domain || 'Product Brick')) + '</div>';
+                html += '<div class="card-header">';
+                html += '<img class="card-icon" src="../icons/' + escapeHtml(brick.id) + '.png" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+                html += '<div class="card-title">' + escapeHtml(brick.name || brick.id) + '</div>';
+                html += '</div>';
+                html += '<div class="card-copy">' + escapeHtml(brick.description || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Linked Products</div>';
+        if (!linked_products.length) {
+            html += '<div class="muted">No linked products were inferred from the supporting bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            linked_products.forEach(product => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../product-deployments/landing_pages/' + escapeHtml(product.id) + '.html">';
+                html += '<div class="card-meta">' + escapeHtml(product.type || 'Product') + '</div>';
+                html += '<div class="card-header">';
+                html += '<img class="card-icon" src="../../product-deployments/icons/' + escapeHtml(product.icon) + '" alt="" onerror="this.onerror=null;this.src=\'../../product-deployments/icons/product.png\'">';
+                html += '<div class="card-title">' + escapeHtml(product.name || product.id) + '</div>';
+                html += '</div>';
+                html += '<div class="card-copy">' + escapeHtml(product.whyUsed || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Related Teams</div>';
+        if (!related_teams.length) {
+            html += '<div class="muted">No teams were inferred from the supporting bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            related_teams.forEach(team => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHtml(team.teamId) + '.html">';
+                html += '<div class="card-meta">' + escapeHtml(team.roleLabel || team.teamType || 'Team') + '</div>';
+                html += '<div class="card-title">' + escapeHtml(team.teamName || team.teamId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(team.groupName || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Supported Customer Jobs</div>';
+        if (!supported_jobs.length) {
+            html += '<div class="muted">No customer jobs were inferred from the supporting bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            supported_jobs.forEach(job => {
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(job.customerGroup || '') + (job.productName ? ' | ' + escapeHtml(job.productName) : '') + '</div>';
+                html += '<div class="card-title">' + escapeHtml(job.jobName || job.jobId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(job.jobOutcome || job.jobWhatItIs || '') + '</div>';
+                if (job.supportRationale) {
+                    html += '<div class="card-copy"><strong>Why this stream matters here:</strong> ' + escapeHtml(job.supportRationale) + '</div>';
+                }
+                if ((job.usedInSteps || []).length) {
+                    html += '<ul class="list">' + job.usedInSteps.map(step => '<li>' + escapeHtml(step.step || step.description || '') + '</li>').join('') + '</ul>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        document.getElementById('tab_content_home').innerHTML = html;
+    }
+
+    function renderFlows() {
+        const flows = getFlows();
+        const totalSteps = flows.reduce((count, flow) => count + ((flow.steps || []).length), 0);
+        let html = '';
+
+        document.getElementById('tab_flows').innerHTML = 'Flow Narratives (' + flows.length + ')';
+
+        flows.forEach(flow => {
+            const dependenciesInFlow = getFlowDependencies(flow);
+            const summary = summarizeFlow(flow);
+            html += '<div class="group">';
+            html += '<div class="section-title">Flow</div>';
+            html += '<div class="flow-title">' + escapeHtml(flow.title || flow.id) + '</div>';
+            html += '<div class="flow-description">' + escapeHtml(flow.description || '') + '</div>';
+            if (summary.actor || summary.trigger || summary.result) {
+                html += '<div class="card" style="margin-bottom:16px;">';
+                if (summary.actor) {
+                    html += '<div class="card-copy"><strong>Primary actor:</strong> ' + escapeHtml(summary.actor) + '</div>';
+                }
+                if (summary.trigger) {
+                    html += '<div class="card-copy"><strong>Trigger:</strong> ' + escapeHtml(summary.trigger) + '</div>';
+                }
+                if (summary.result) {
+                    html += '<div class="card-copy"><strong>Success looks like:</strong> ' + escapeHtml(summary.result) + '</div>';
+                }
+                html += '</div>';
+            }
+
+            html += '<div class="section-title">Dependency Traceability</div>';
+            html += '<div class="flow-matrix-wrap">';
+            html += '<table class="flow-matrix">';
+            html += '<thead>';
+            html += '<tr><th class="flow-dependency-col"></th>';
+            (flow.steps || []).forEach((step, index) => {
+                html += '<th class="flow-step-col"><div class="flow-step-label">Step ' + (index + 1) + '</div><div class="card-title">' + escapeHtml(step.title || step.id) + '</div></th>';
+            });
+            html += '</tr>';
+
+            html += '<tr class="flow-insight-row"><th style="text-align: right">Key Facts</th>';
+            (flow.steps || []).forEach(step => {
+                html += '<td style="color: darkblue">';
+                if ((step.keyFacts || []).length) {
+                    html += '<ul class="flow-insight-list">' + step.keyFacts.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
+                } else {
+                    html += '<span class="muted">No key facts listed.</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+
+            html += '<tr class="flow-insight-row"><th style="text-align: right; color: darkred">Pain Points</th>';
+            (flow.steps || []).forEach(step => {
+                html += '<td style="color: darkred">';
+                if ((step.painPoints || []).length) {
+                    html += '<ul class="flow-insight-list">' + step.painPoints.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
+                } else {
+                    html += '<span class="muted">No pain points listed.</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+            html += '</thead><tbody>';
+
+            dependenciesInFlow.forEach(dependency => {
+                const dependencyTypeLabel = 'Product Brick';
+                html += '<tr>';
+                html += '<td>';
+                html += '<div class="flow-dependency-header">';
+                html += renderFlowDependencyIcon(dependency, 'flow-dependency-icon');
+                html += '<div>';
+                html += '<a class="flow-dependency-name" href="../landing_pages/' + escapeHtml(dependency.id) + '.html">' + escapeHtml(dependency.name || dependency.id) + '</a>';
+                if (dependency.interface) {
+                    html += '<div class="muted">' + escapeHtml(dependency.interface) + '</div>';
+                }
+                html += '</div>';
+                html += '</div>';
+                html += '</td>';
+                (flow.steps || []).forEach(step => {
+                    const stepDependency = getStepDependency(step, dependency);
+                    if (!stepDependency) {
+                        html += '<td class="flow-cell-empty">-</td>';
+                        return;
+                    }
+                    html += '<td class="flow-cell-active">';
+                    html += '<div class="flow-cell-copy">' + escapeHtml(simplifySupportCopy(stepDependency.how || stepDependency.description || 'Supports this step.')) + '</div>';
+                    html += '</td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += '</div>';
+            html += '</div>';
+        });
+
+        document.getElementById('tab_content_flows').innerHTML = html;
+    }
+
+    function renderLinks() {
+        // Grouped links from config: [{group, description, links: [{label, link,
+        // description, embedLink?, embedHeight?}]}]. embedLink renders an iframe
+        // (default height 400px) while the label still opens `link` directly.
+        const groups = currentStream.links || [];
+        let html = '<div class="page">';
+        let count = 0;
+        if (!groups.length) {
+            html += '<div class="muted">No links are configured for this stream.</div>';
+        }
+        groups.forEach(group => {
+            html += '<div class="links-group">';
+            html += '<div class="links-group-title">' + escapeHtml(group.group || 'Links') + '</div>';
+            if (group.description) {
+                html += '<div class="links-group-description">' + escapeHtml(group.description) + '</div>';
+            }
+            (group.links || []).forEach(link => {
+                count++;
+                html += '<div class="link-entry">';
+                html += '<a class="link-entry-title" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(link.link || '#') + '">'
+                    + escapeHtml(link.label || link.link || 'Reference') + ' &#8599;</a>';
+                if (link.description) {
+                    html += '<div class="link-entry-copy">' + escapeHtml(link.description) + '</div>';
+                }
+                if (link.embedLink) {
+                    const embedHeight = Number(link.embedHeight) || 400;
+                    html += '<iframe class="link-embed" loading="lazy" src="' + escapeHtml(link.embedLink)
+                        + '" style="height: ' + embedHeight + 'px" title="' + escapeHtml(link.label || 'Embedded link') + '"></iframe>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        });
+        html += '</div>';
+        document.getElementById('tab_content_links').innerHTML = html;
+        const linksTab = document.getElementById('tab_links');
+        if (linksTab) {
+            linksTab.textContent = 'Links (' + count + ')';
+        }
+    }
+
+    renderHome();
+    renderFlows();
+    renderLinks();
+</script>
+
+
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "Energy Market Operations Platform Home"
+    },
+    {
+      "link": "../index.html",
+      "label": "Streams Index"
+    },
+    {
+      "label": "Collect and Validate Meter Data"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+
+
+</body>
+</html>

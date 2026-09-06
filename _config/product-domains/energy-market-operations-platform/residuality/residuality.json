@@ -1,0 +1,1408 @@
+{
+  "metadata": {
+    "title": "Energy Market Operations Platform Residuality Stress Test",
+    "description": "How a Dutch energy software and expertise-services group of about 180 people, processing 20 million connections a day for 50+ energy companies and carrying balance responsibility for its customers, must change under ten stressors: a short-notice market-communication change, 15-minute and then 5-minute market granularity, an imbalance-price spike during a BRP-as-a-Service steering failure, a supplier client failing under supplier-of-last-resort rules, the end of net metering and dynamic contracts, an EDSN or meter-data outage on billing day, credential stuffing on a white-label portal, a stalled Nemon integration, a competitor bundling billing for free, and five heritage products that cannot be consolidated before renewals.",
+    "modelVersion": "1.0",
+    "naiveArchitecture": "A supplier or portfolio operator subscribes to the platform. Customers are loaded once with one connection each; a contract holds one tariff with one price per component; EDSN or SIPS messages switch the connection in; the meter-data provider delivers one reading per connection per day; the billing run invoices every contract from validated hourly volumes; direct debit collects; the desk hedges the forecast; the forecasting engine produces one hourly programme per day, nominated to TenneT at gate closure; the steering engine trades the residual on ETPA; allocation and reconciliation arrive months later and settle the imbalance; end customers see invoice and consumption in the white-label portal. Built into this design: market rules change once a year on a planned date; the hour is the unit of price, volume, forecast and settlement; a portfolio has one BRP and one supplier for life; a tenant simply ends when it stops paying; a tariff is a price list with production netted off consumption; EDSN and the meter-data provider are always up; a portal account belongs to one brand; Dutch rules are the only rules; billing is what customers pay for; every heritage customer moves on one date.",
+    "residualArchitecture": "The changed design makes each of those assumptions data. Market rule set, message catalogue and effective date are versioned per market and process, and every switch, allocation or reconciliation is a run that records the version it ran under. Settlement period and interval resolution are properties of every price, volume, forecast, nomination and invoice line. Steering is a session with an operator mode, a signal log, an exposure limit and a kill switch, and imbalance cost is allocated per client per period. Portfolio ownership and BRP mandate have periods, so a supplier-of-last-resort transfer is a cut-off with history intact. Tariffs are compositions of priced components under a regulation version, and contracts are versioned. Readings, messages and forecasts carry source, completeness and estimation state, with queued idempotent replay. A portal account is a brand-scoped relationship with purpose-bound views. Country regime and market adapter, commercial plan and entitlement, and heritage product with migration state and capability parity are explicit per tenant. The result: a market can change its rules or its clock, a portfolio can change owner or BRP mid-year, a steering session can be halted and reconstructed, a failed supplier's connections can move with their history, and a tenant can change country, brand, data source or heritage product without switching systems on one day.",
+    "note": "The stressors come from the Dutch and Iberian energy trade: Allocation 2.0 and the TenneT MMC-Hub, EDSN and the central connection register, the 15-minute day-ahead market, the Besluit leveringszekerheid for supplier failure, the end of the salderingsregeling, dynamic contracts, smart-meter P4 data, the CNMC, ERSE and OMIE rules Nemon works under, and the Vortex buy-and-build thesis. They are not forecasts and carry no likelihood; each asks what must remain after the vendor is pushed into a different attractor. The market-communication, granularity and imbalance-spike residues are recorded as integrated; the supplier failure is the loop that tests whether those residues hold without new structure.",
+    "source": {
+      "title": "Residues: Time, Change, and Uncertainty in Software Architecture",
+      "author": "Barry M. O'Reilly",
+      "year": "2024",
+      "url": "https://leanpub.com/residuality"
+    }
+  },
+  "stressors": [
+    {
+      "id": "mmch",
+      "name": "The regulator and TenneT force a market-communication change on short notice across every tenant",
+      "group": "Market regulation",
+      "detection": "ACM decisions and codebesluiten with effective dates, EDSN release calendars and message-catalogue versions, TenneT MMC-Hub tranche announcements for Allocation 2.0, MFF-BAS (Beheerder Afsprakenstelsel) release and consultation documents, C-AR register changes, market-party test-window invitations, rejected-message rates per message type per tenant, reconciliation deltas after a tranche goes live, and supplier compliance officers asking whether their tenant is ready.",
+      "attractor": "Allocation 2.0 tranche 3 moved reconciliation of SMA and TMT connections to the TenneT MMC-Hub on 1 January 2025 with a hard cut-over, and every tranche before it changed message formats, roles and timing at once for every supplier, BRP and grid operator. When the next change arrives with a compressed test window, every one of 50+ tenants must switch on the same day, messages sent under the old catalogue are rejected, allocation volumes arrive under new rules next to volumes settled under the old ones, and a supplier that misses the date cannot switch customers or settle. The naive design has the message catalogue, the roles and the reconciliation rules hard-coded into the hub and the allocation engine, so the change is a release that every tenant must accept simultaneously and cannot be tested against last year's messages.",
+      "businessReaction": "Model market rule sets and message catalogues as versions with effective dates per market and per process, run old and new catalogues side by side during the transition window, replay historic message streams against the new version in a shadow tenant before go-live, treat every market process (switch, move-in, allocation, reconciliation) as a run with its rule-set version recorded, expose per-tenant readiness and rejection dashboards, coordinate market test windows for all tenants as one programme, publish regulatory change notes to compliance officers, and keep an operator override to hold or re-send messages per tenant when the market itself is not ready.",
+      "residue": "Separate market rule-set version, effective date, message catalogue version, market role, market process run, message version and correlation, rejection reason, replay, shadow tenant, readiness state and operator hold. Compliance with the market becomes a computed property of the message and the run rather than of the release date.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "exec",
+          "effect": "Directors experience a market-communication change as a vendor release note, not as a compliance project of their own."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-2",
+          "effect": "Every market and regulatory change is applied per rule-set version with evidence of which tenant was ready when."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-1",
+          "effect": "Switching keeps flowing through the transition window because old and new message catalogues run side by side."
+        },
+        {
+          "targetType": "job",
+          "targetId": "brpo/jtbd-brpo-3",
+          "effect": "Allocation and reconciliation volumes carry the rule-set version they were settled under, so tranche boundaries do not create disputes."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "exec/co-exec-top",
+          "effect": "Gross margin per connection holds through a tranche cut-over because rejected messages and unsettled volumes are contained per tenant."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "bilo/co-bilo-top",
+          "effect": "Straight-through billing rate is measured per rule-set version so a market change does not hide as a billing regression."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Adds rule-set versioning, readiness dashboards and operator holds to onboarding, switching and billing."
+        },
+        {
+          "targetType": "product",
+          "targetId": "balancing-and-shipping-suite",
+          "effect": "Settles allocation and reconciliation under the version in force per settlement period and replays history against new rules."
+        },
+        {
+          "targetType": "product",
+          "targetId": "open-api-and-integrations",
+          "effect": "Publishes market-connector versions and transition windows as part of the integration contract."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "integrate-market-communication-and-external-systems",
+          "effect": "Treats a catalogue change as a programme with shadow replay, test windows and per-tenant go-live instead of one release."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "settle-allocate-and-reconcile-market-volumes",
+          "effect": "Carries the applicable rule-set version and MMC-Hub exchange state next to every allocation and reconciliation volume."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "onboard-and-switch-customers",
+          "effect": "Keeps switching and move-in alive during the transition window with an operator hold and re-send per tenant."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mcom",
+          "effect": "Runs multiple message-catalogue versions with effective dates, correlation, rejection reasons, replay and shadow tenants."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "allo",
+          "effect": "Allocates and reconciles under versioned rule sets and explains deltas across tranche boundaries."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "swch",
+          "effect": "Records each switch and move-in as a market process run with its catalogue version and operator holds."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "regs",
+          "effect": "Reports readiness, rejection rates and compliance evidence per tenant and per market change."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "wflw",
+          "effect": "Drives the transition programme, test-window tasks and per-tenant go-live checkpoints."
+        },
+        {
+          "targetType": "team",
+          "targetId": "market-communication",
+          "effect": "Builds catalogue versioning, shadow tenants and replay into the messaging hub and runs the transition programme with Meter Data and Allocation, Customer Onboarding and Data and Insight."
+        },
+        {
+          "targetType": "team",
+          "targetId": "meter-data-and-allocation",
+          "effect": "Reconciles under versioned rule sets and explains every delta at a tranche boundary to the BRP before it becomes a dispute."
+        },
+        {
+          "targetType": "team",
+          "targetId": "market-enablement-and-brp-services",
+          "effect": "Runs the market test windows and go-live coordination for the tenants it operates balance responsibility for."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-mmch.jpg",
+          "title": "Residuality stressor illustration: The regulator and TenneT force a market-communication change on short notice across every tenant",
+          "alt": "Illustration of the residuality stressor 'The regulator and TenneT force a market-communication change on short notice across every tenant', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "qtrh",
+      "name": "Day-ahead and intraday markets move to 15-minute and then 5-minute granularity and settlement follows",
+      "group": "Market design",
+      "detection": "EPEX and OMIE market-time-unit announcements, the 30 September 2025 15-minute day-ahead go-live in the Netherlands, ENTSO-E and ACER imbalance-settlement-period harmonisation, TenneT aFRR product changes such as 0.1 MW setpoints and 4-hour capacity auctions, smart-meter interval reading availability per connection type, price-curve vendors changing their resolution, forecast engine run times approaching gate closure, and portfolio managers asking for 15-minute margin per segment.",
+      "attractor": "On 30 September 2025 the Dutch day-ahead market moved from 60 to 15-minute blocks, quadrupling the prices, volumes, forecasts and positions a portfolio carries per day; the imbalance settlement period was already 15 minutes and the next step in Europe is 5-minute intraday products and finer settlement. A platform whose hour is the unit of price, volume, forecast, nomination and invoice line quadruples its data at once and then must do it again, while dynamic contracts must invoice at the market's resolution, forecasting and steering must finish in a fraction of the time, and billing, portal and settlement all disagree on which interval a kilowatt-hour belongs to. The naive design stores one price per hour and one volume per hour and computes everything at the hour, so every granularity step is a rewrite.",
+      "businessReaction": "Make the settlement period and the interval granularity explicit properties of every price, volume, forecast, position, nomination and invoice line, aggregate and disaggregate volumes between resolutions with recorded profiles, version forecast runs and programmes so the steering engine can re-run at finer resolution without losing the coarser history, size the intraday guaranteed cycle for 5-minute products, invoice dynamic contracts from interval prices with the resolution shown on the invoice and in the portal, store meter readings at their native interval and estimate the rest, and report 15-minute margin per segment as the standard financial view.",
+      "residue": "Separate settlement period, interval granularity, price reference and resolution, volume version and source resolution, profile and disaggregation method, forecast run, programme version, nomination version, position snapshot, invoice line resolution and consumption view. The clock of the market becomes data rather than a constant.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "brpo",
+          "effect": "BRP operators forecast, nominate and steer at whatever resolution the market runs on without a re-platform."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "port",
+          "effect": "Portfolio managers see positions, volumes and value per segment at the market's own resolution."
+        },
+        {
+          "targetType": "job",
+          "targetId": "brpo/jtbd-brpo-1",
+          "effect": "Forecasts and nominations are produced per settlement period from versioned runs that finish before gate closure."
+        },
+        {
+          "targetType": "job",
+          "targetId": "port/jtbd-port-2",
+          "effect": "Positions, volumes and value per segment every 15 minutes become the standard view and can move to 5 minutes."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-2",
+          "effect": "Dynamic contracts are billed from interval prices and interval volumes with the resolution shown on the invoice."
+        },
+        {
+          "targetType": "job",
+          "targetId": "endc/jtbd-endc-2",
+          "effect": "Customers see consumption and cost per interval that match the invoice to the same quarter hour."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "brpo/co-brpo-top",
+          "effect": "Imbalance cost per MWh is measured per settlement period so a granularity change does not distort the trend."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "port/co-port-top",
+          "effect": "Portfolio gross margin per MWh is computed from interval prices and volumes rather than hourly averages."
+        },
+        {
+          "targetType": "product",
+          "targetId": "balancing-and-shipping-suite",
+          "effect": "Carries settlement period and resolution through meter data, allocation, forecasting, nomination and settlement."
+        },
+        {
+          "targetType": "product",
+          "targetId": "trade-and-portfolio-suite",
+          "effect": "Prices, hedges and risk views at the market resolution with disaggregation profiles for coarser contracts."
+        },
+        {
+          "targetType": "product",
+          "targetId": "brp-as-a-service",
+          "effect": "Runs the guaranteed intraday cycle sized for 5-minute products and reports margin per 15 minutes per segment."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "forecast-and-nominate-the-portfolio",
+          "effect": "Produces versioned forecast runs and programmes per settlement period with gate-closure timing as a tracked fact."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "steer-intraday-and-optimise-imbalance",
+          "effect": "Steers on interval positions and re-runs at finer resolution without losing the coarser history."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "bill-and-reconcile-customers",
+          "effect": "Invoices dynamic contracts from interval prices and shows the resolution on the invoice."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "collect-and-validate-meter-data",
+          "effect": "Stores readings at native interval and records the estimation profile for the rest."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "fcst",
+          "effect": "Runs forecasts per settlement period as versioned runs with resolution and timing recorded."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "nomi",
+          "effect": "Versions programmes and nominations per settlement period for electricity and gas."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "intr",
+          "effect": "Steers on interval positions with a guaranteed cycle sized for 5-minute products."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "pric",
+          "effect": "Stores price references with their resolution and derives coarser curves from finer ones."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mdat",
+          "effect": "Keeps readings at native interval with source, estimation run and disaggregation profile."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bill",
+          "effect": "Invoices interval-priced contracts with resolution shown per line."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "dash",
+          "effect": "Reports 15-minute financial insight per segment and can step to 5 minutes."
+        },
+        {
+          "targetType": "team",
+          "targetId": "forecasting-and-nomination",
+          "effect": "Makes settlement period and resolution explicit in forecast runs and programmes and agrees the shared position model with Intraday and Settlement, Meter Data and Allocation and Sourcing and Portfolio."
+        },
+        {
+          "targetType": "team",
+          "targetId": "intraday-and-settlement",
+          "effect": "Re-sizes the guaranteed cycle for 5-minute products and steers on interval positions without losing the coarser history."
+        },
+        {
+          "targetType": "team",
+          "targetId": "contract-and-billing",
+          "effect": "Invoices interval-priced contracts with the resolution per line and reconciles them to settlement at the same interval."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-qtrh.jpg",
+          "title": "Residuality stressor illustration: Day-ahead and intraday markets move to 15-minute and then 5-minute granularity and settlement follows",
+          "alt": "Illustration of the residuality stressor 'Day-ahead and intraday markets move to 15-minute and then 5-minute granularity and settlement follows', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "spik",
+      "name": "An imbalance-price spike beyond EUR 1,000/MWh and negative day-ahead prices hit during a BRP-as-a-Service steering failure",
+      "group": "Market volatility and managed-service failure",
+      "detection": "TenneT imbalance prices and aFRR activation, negative day-ahead hours on sunny weekends and their frequency, ETPA order-book depth and rejected orders, steering-engine heartbeat and signal latency, flex-asset acknowledgements, portfolio position drift against programme per settlement period, realised imbalance cost per client per day against the contracted reduction claim, customer escalations from BRP-as-a-Service clients, and the exposure limit per portfolio compared with the vendor's own balance sheet.",
+      "attractor": "The platform operates balance responsibility for portfolios from 40 GWh on a tiered MWh price and promises up to 53% lower imbalance cost. On a sunny Sunday with negative day-ahead prices and a fault on the steering engine or the ETPA connection, solar-heavy portfolios run long against the programme for hours while the imbalance price swings past EUR 1,000/MWh, and the imbalance cost of a single afternoon can exceed the annual service fee of every client at once. The naive design runs steering as a background job with no session identity, no operator mode, no exposure limit and no way to tell which client's position was steered by which signal, so the vendor cannot show what it did, cannot stop the bleeding per portfolio and cannot allocate the loss.",
+      "businessReaction": "Give every steering session an identity with operator mode (automatic, assisted, manual, halted), input snapshot, signal log and acknowledgement per asset, define an exposure limit and a kill switch per portfolio and per client, fall back to conservative programmes and manual ETPA trading when the engine or the market connection degrades, monitor position drift per settlement period with escalation to the operations desk, cap and contractually define the vendor's liability per MWh and per event, allocate realised imbalance cost per client per session with the evidence, run post-event reconstruction from the recorded signals, and report exposure and realised savings against the contracted claim per client per month.",
+      "residue": "Separate steering session, operator mode, input snapshot, steering signal and acknowledgement, exposure limit and kill switch, degraded-mode programme, position drift and escalation, imbalance exposure per client per period, liability clause and cost allocation, and event reconstruction. Steering becomes an accountable operation rather than a background job.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "brpo",
+          "effect": "BRP operators keep control of a portfolio during a spike through explicit operator modes and limits."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "newe",
+          "effect": "New entrants outsource balance responsibility knowing their exposure is limited per event and per portfolio."
+        },
+        {
+          "targetType": "job",
+          "targetId": "brpo/jtbd-brpo-2",
+          "effect": "Intraday steering runs as identified sessions with a kill switch and a degraded-mode programme."
+        },
+        {
+          "targetType": "job",
+          "targetId": "brpo/jtbd-brpo-3",
+          "effect": "Imbalance cost is allocated per client per session from recorded signals, not disputed from the TenneT invoice."
+        },
+        {
+          "targetType": "job",
+          "targetId": "newe/jtbd-newe-3",
+          "effect": "Going live with balance responsibility includes an agreed exposure limit and liability per MWh."
+        },
+        {
+          "targetType": "job",
+          "targetId": "indm/jtbd-indm-3",
+          "effect": "Flexible assets are steered with acknowledgements, so an unanswered signal is seen before it costs money."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "brpo/co-brpo-top",
+          "effect": "Imbalance cost per MWh is reported per session and per operator mode so a failure afternoon is explained, not averaged away."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "newe/co-newe-top",
+          "effect": "Time to first live customer is not delayed by a liability negotiation because exposure terms are standard."
+        },
+        {
+          "targetType": "product",
+          "targetId": "brp-as-a-service",
+          "effect": "Becomes a supervised managed service with exposure limits, kill switches, degraded modes and per-client cost allocation."
+        },
+        {
+          "targetType": "product",
+          "targetId": "balancing-and-shipping-suite",
+          "effect": "Adds session identity, signal logs, acknowledgements and drift monitoring to intraday steering."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "steer-intraday-and-optimise-imbalance",
+          "effect": "Includes operator mode, exposure check, escalation and reconstruction as explicit steps."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "settle-allocate-and-reconcile-market-volumes",
+          "effect": "Allocates realised imbalance cost per client per settlement period with the session evidence."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "enter-and-operate-in-a-new-energy-market",
+          "effect": "Onboards BRP-as-a-Service clients with an exposure limit and liability clause agreed before go-live."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "intr",
+          "effect": "Runs steering as sessions with operator mode, input snapshot, signal log, acknowledgements, exposure limit and kill switch."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "imbs",
+          "effect": "Computes imbalance exposure per client per period and allocates realised cost with session evidence."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "nomi",
+          "effect": "Provides the conservative degraded-mode programme and re-nomination when steering is halted."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "risk",
+          "effect": "Shows exposure against limit per portfolio and the vendor's aggregate exposure across managed clients."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "wflw",
+          "effect": "Escalates drift and degraded modes to the operations desk with acknowledgement tracking."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "dash",
+          "effect": "Reports realised savings against the contracted claim per client per month."
+        },
+        {
+          "targetType": "team",
+          "targetId": "intraday-and-settlement",
+          "effect": "Builds steering sessions, operator modes, exposure limits and the kill switch, and allocates realised imbalance cost per client with the desk's session evidence."
+        },
+        {
+          "targetType": "team",
+          "targetId": "market-enablement-and-brp-services",
+          "effect": "Runs the operations desk that takes over in assisted and manual modes, owns the liability and exposure terms in every BRP-as-a-Service contract and runs the post-event reconstruction."
+        },
+        {
+          "targetType": "team",
+          "targetId": "sourcing-and-portfolio",
+          "effect": "Shows exposure against limit per managed portfolio and the vendor's aggregate exposure across all managed clients in the risk view."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-spik.jpg",
+          "title": "Residuality stressor illustration: An imbalance-price spike beyond EUR 1,000/MWh and negative day-ahead prices hit during a BRP-as-a-Service steering failure",
+          "alt": "Illustration of the residuality stressor 'An imbalance-price spike beyond EUR 1,000/MWh and negative day-ahead prices hit during a BRP-as-a-Service steering failure', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "solr",
+      "name": "A large supplier client fails and its connections move under supplier-of-last-resort rules within days",
+      "group": "Customer failure",
+      "detection": "Subscription arrears and falling switch and billing activity of a supplier tenant, ACM signals on licence conditions and financial guarantees, wholesale price spikes against unhedged retail books, press and court filings such as the Dutch supplier failures of 2021 and 2022, receiver requests for customer, contract and meter data, TenneT and grid operators announcing the supplier-of-last-resort allocation, competing suppliers on the same platform asking to receive the connections, and end customers asking in the portal who now supplies them.",
+      "attractor": "A supplier with 300,000 connections loses its licence. Under the Besluit leveringszekerheid the grid operators and ACM allocate its connections to the remaining suppliers within days, several of them tenants on the same platform; the receiver needs every contract, meter reading, invoice and outstanding balance; the BRP mandate for the portfolio ends at the cut-off and the imbalance up to that moment must still be settled; end customers must see their new supplier, their final invoice and their deposit; and market messages for hundreds of thousands of switches flow at once. Treating the supplier as a tenant that simply ends would lose the data exactly when the receiver, the receiving suppliers, TenneT and the customers need it.",
+      "businessReaction": "Freeze the tenant in a read-only state with scoped access for the receiver and ACM, run the allocation of connections to receiving suppliers as versioned bulk market-process runs with the rule set in force, produce a final invoice and a balance statement per connection at the cut-off, end the BRP mandate with a settlement-period cut-off and settle imbalance up to it per session, transfer connection history to receiving tenants on the same platform as transfer events, re-brand the portal for transferred customers with the new supplier's brand and their final documents, and archive the failed tenant under retention rules.",
+      "residue": "No new structural change is required: the versioned market-process run and operator hold from the market-communication residue, the settlement-period cut-off and volume version from the granularity residue, and the steering session, exposure per client and cost allocation from the imbalance-spike residue already express a portfolio and its connections moving from one supplier and one BRP to others with history, money position and customer relations intact.",
+      "status": "already-survived",
+      "reusesResidueIds": [
+        "mmch",
+        "qtrh",
+        "spik"
+      ],
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "endc",
+          "effect": "Customers keep their consumption history, final invoice and deposit when their supplier fails."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "exec",
+          "effect": "Receiving suppliers absorb allocated connections in days because the platform already models the transfer."
+        },
+        {
+          "targetType": "job",
+          "targetId": "endc/jtbd-endc-1",
+          "effect": "A forced switch to a new supplier arrives with a final invoice and a welcome from the receiving supplier, without a call."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-1",
+          "effect": "Hundreds of thousands of allocated connections are onboarded as bulk market-process runs with the rule set in force."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-3",
+          "effect": "Final invoices, balances and corrections at the cut-off are produced from recorded data rather than reconstructed."
+        },
+        {
+          "targetType": "job",
+          "targetId": "brpo/jtbd-brpo-3",
+          "effect": "Imbalance up to the mandate cut-off is settled per session and allocated to the failed portfolio."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-3",
+          "effect": "A receiving supplier grows by a third overnight on the same platform without disruption to its existing base."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "endc/co-endc-top",
+          "effect": "Bill accuracy rate holds through a supplier-of-last-resort transfer because the final and first invoices come from one volume version."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "bilo/co-bilo-top",
+          "effect": "Straight-through billing rate of the receiving supplier survives the bulk intake because it is a versioned run, not manual re-keying."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Composes tenant freeze, bulk allocation intake, cut-off invoicing and transfer events from existing capabilities."
+        },
+        {
+          "targetType": "product",
+          "targetId": "customer-self-service-portal",
+          "effect": "Re-brands transferred customers to the receiving supplier and keeps their history and final documents visible."
+        },
+        {
+          "targetType": "product",
+          "targetId": "brp-as-a-service",
+          "effect": "Ends the failed supplier's BRP mandate at a settlement-period cut-off and settles up to it."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "onboard-and-switch-customers",
+          "effect": "Onboards allocated connections from a frozen tenant with contracts, readings and balances intact."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "bill-and-reconcile-customers",
+          "effect": "Produces final invoices and balance statements per connection at the cut-off date."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "serve-customers-through-portal-and-care",
+          "effect": "Keeps customer self-service alive while the failed tenant is read-only and the brand changes."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Applies a read-only tenant state with scoped access for the receiver, ACM and receiving suppliers."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "swch",
+          "effect": "Runs the supplier-of-last-resort allocation as bulk market-process runs with operator holds."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "cntr",
+          "effect": "Records the transfer event so a connection keeps its history across suppliers."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bill",
+          "effect": "Invoices the final period at the cut-off from the volume version in force."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "imbs",
+          "effect": "Settles imbalance up to the mandate cut-off and allocates it to the failed portfolio."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "migr",
+          "effect": "Produces per-connection transfer packs and imports them into receiving tenants with reconciliation."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "port",
+          "effect": "Shows transferred customers their new supplier, final invoice and deposit status under the new brand."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-academy",
+          "effect": "Coordinates the tenant freeze, receiver and ACM access and the receiving-supplier intake as one runbook with Platform Core and Customer Onboarding."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Applies the read-only tenant state, scoped access and per-connection transfer packs already built for migrations."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-onboarding",
+          "effect": "Runs the supplier-of-last-resort allocation as bulk market-process runs with operator holds, the same mechanism as a normal switch."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-solr.jpg",
+          "title": "Residuality stressor illustration: A large supplier client fails and its connections move under supplier-of-last-resort rules within days",
+          "alt": "Illustration of the residuality stressor 'A large supplier client fails and its connections move under supplier-of-last-resort rules within days', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "dyna",
+      "name": "The end of net metering and the rise of dynamic contracts multiply tariff variants and rewrite running contracts",
+      "group": "Tariff regulation",
+      "detection": "The Staatsblad decision ending the salderingsregeling on 1 January 2027, ACM rules on a reasonable feed-in compensation and on charges for solar customers, ACM's dynamic-contract disclosure and model-contract requirements, the share of connections with solar, batteries or EV time-of-use in the portfolio, the number of live tariff variants per tenant, invoice-correction rates per contract type, portal questions about feed-in lines on the invoice, and proposition managers asking to launch capacity-linked or battery-bundled products before the deadline.",
+      "attractor": "Net metering ends on 1 January 2027 and every running contract of a solar household must, from that date, separate consumption from feed-in, compensate feed-in at a reasonable rate, and possibly carry a solar surcharge; at the same time dynamic contracts price every quarter hour, EV and battery products price by time of use and capacity, and bundled offers combine energy with hardware and services. A proposition designed to launch in weeks becomes hundreds of variants that each need pricing, invoice lines, portal explanations and regulatory disclosures. The naive design captures a contract with one tariff whose production is subtracted from consumption, so the regulation change is a mass contract edit and every new product is a new invoice template.",
+      "businessReaction": "Model tariff components with price references, applicable-interval rules and effective dates, version contracts so the pre-2027 and post-2027 terms coexist, split consumption and feed-in as separate volume series through meter data, billing and portal, compute the applicable compensation and surcharge from versioned regulation, run mass contract re-rating with review queues and customer letters that cite the legal basis, let the proposition builder compose products from components rather than templates, show the customer a projected cost under the new terms before the change, and report tariff-variant count and correction rate per variant to proposition managers.",
+      "residue": "Separate tariff component, price reference, applicable-interval rule, effective date, regulation version, contract version, volume direction and series, compensation rule, surcharge rule, projected cost, mass re-rating run and customer letter. A product becomes a composition of priced components under a regulation version rather than a template.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "prop",
+          "effect": "Proposition managers launch post-net-metering, dynamic and bundled products from components in weeks."
+        },
+        {
+          "targetType": "job",
+          "targetId": "prop/jtbd-prop-1",
+          "effect": "A new proposition composes tariff components and interval rules instead of starting a new invoice template."
+        },
+        {
+          "targetType": "job",
+          "targetId": "prop/jtbd-prop-2",
+          "effect": "Every variant is priced against portfolio cost per interval and per volume direction."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-2",
+          "effect": "Contracts are billed under the contract version and regulation version in force on each interval."
+        },
+        {
+          "targetType": "job",
+          "targetId": "csrv/jtbd-csrv-3",
+          "effect": "Customers receive the end-of-net-metering change with a projected cost and a letter that cites its basis."
+        },
+        {
+          "targetType": "job",
+          "targetId": "endc/jtbd-endc-2",
+          "effect": "Customers see consumption and feed-in as separate lines with the compensation applied."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "prop/co-prop-top",
+          "effect": "Time to launch a new proposition holds while variants multiply because products are compositions, not templates."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "bilo/co-bilo-top",
+          "effect": "Straight-through billing rate survives the mass re-rating because it is a batch run with review, not contract-by-contract edits."
+        },
+        {
+          "targetType": "product",
+          "targetId": "proposition-launch-studio",
+          "effect": "Composes products from tariff components, interval rules and regulation versions with projected-cost previews."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Adds contract versioning, separate feed-in series, compensation rules and mass re-rating with letters."
+        },
+        {
+          "targetType": "product",
+          "targetId": "customer-self-service-portal",
+          "effect": "Explains feed-in, compensation, surcharge and interval prices on the same data as the invoice."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "launch-energy-propositions-and-tariffs",
+          "effect": "Configures components, interval rules and disclosures that plug into billing automatically."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "bill-and-reconcile-customers",
+          "effect": "Applies the contract and regulation version per interval and corrects earlier runs after a re-rating."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "collect-and-validate-meter-data",
+          "effect": "Delivers consumption and feed-in as separate validated series per interval."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "prod",
+          "effect": "Builds products from tariff components with price references, interval rules and effective dates."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "cntr",
+          "effect": "Versions contracts so pre- and post-2027 terms and a re-rating coexist with the original agreement."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bill",
+          "effect": "Invoices per component, direction and interval under the version in force."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "recn",
+          "effect": "Runs mass re-rating with review queues and corrects earlier invoices as batches."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mdat",
+          "effect": "Separates consumption and feed-in series per connection and interval."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "comm",
+          "effect": "Generates change letters and disclosures that cite the regulation version."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "port",
+          "effect": "Shows projected cost under the new terms and feed-in lines next to consumption."
+        },
+        {
+          "targetType": "team",
+          "targetId": "products-and-pricing",
+          "effect": "Owns component modelling and regulation versions with contract and billing and customer interfacing."
+        },
+        {
+          "targetType": "team",
+          "targetId": "contract-and-billing",
+          "effect": "Owns contract versioning, mass re-rating and batch corrections."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-interfacing",
+          "effect": "Owns the customer explanation of feed-in, compensation and interval pricing."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-dyna.jpg",
+          "title": "Residuality stressor illustration: The end of net metering and the rise of dynamic contracts multiply tariff variants and rewrite running contracts",
+          "alt": "Illustration of the residuality stressor 'The end of net metering and the rise of dynamic contracts multiply tariff variants and rewrite running contracts', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "edsn",
+      "name": "A smart-meter data provider or EDSN goes down on billing-run and nomination day",
+      "group": "Infrastructure dependency",
+      "detection": "EDSN and C-AR status pages and incident bulletins, P4 meter-data delivery completeness per grid operator per day, telemetry gaps per large connection, message queue depth and retry rates on the market hub, allocation and reconciliation files arriving late, forecast runs falling back to profiles, billing-run readiness checks reporting missing readings, portal meter-reading reminders spiking, and grid operators announcing maintenance windows that overlap the monthly billing calendar.",
+      "attractor": "Ninety percent of Dutch consumption data is validated on the platform, and a day of missing P4 data or a multi-day EDSN outage means 20 million connections without readings, switches stuck in flight, allocation files missing for the day-ahead forecast, and monthly billing runs for several tenants due the same week. The naive design assumes the data provider and EDSN are always up, so a billing run either waits indefinitely or invoices from nothing, the forecast silently degrades, in-flight switches are lost or duplicated, and nobody can tell which invoices, forecasts and nominations were produced under degraded data.",
+      "businessReaction": "Make every reading, volume, message and forecast carry its source and its data-quality state, define estimation runs with recorded methods and a re-estimation path when the real data arrives, let the billing run proceed on estimated volumes with a flagged correction when it is worth it and hold when it is not, queue and replay market messages idempotently across an outage, run forecasts on fallback profiles with the fallback recorded, publish data-completeness and outage status per tenant, agree service levels and outage windows with the providers, and add a second telemetry path for large connections.",
+      "residue": "Separate data source, delivery run, completeness state, data-quality state, estimation run and method, re-estimation and correction, message queue and replay, idempotency key, fallback profile, outage window and tenant status. A missing day of data becomes a recorded state rather than a silent gap.",
+      "status": "integrated",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "bilo",
+          "effect": "Billing managers run the calendar through a data outage with estimated volumes they can see and correct."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-2",
+          "effect": "The billing run decides per tenant to proceed on estimates or hold, and flags every estimated invoice."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-3",
+          "effect": "Re-estimation and corrections after the data arrives run as a batch with reconciliation."
+        },
+        {
+          "targetType": "job",
+          "targetId": "brpo/jtbd-brpo-1",
+          "effect": "Forecasts and nominations record the fallback profile used and re-run when real data arrives."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-1",
+          "effect": "In-flight switches survive an EDSN outage through queued, idempotent replay."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "bilo/co-bilo-top",
+          "effect": "Straight-through billing rate is reported with and without outage-estimated invoices so a provider failure is explained."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "brpo/co-brpo-top",
+          "effect": "Imbalance cost per MWh distinguishes days forecast on fallback profiles from days on real data."
+        },
+        {
+          "targetType": "product",
+          "targetId": "balancing-and-shipping-suite",
+          "effect": "Adds data-quality states, estimation runs, fallback profiles and completeness dashboards."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Adds proceed-or-hold decisions and flagged estimated invoices to the billing run."
+        },
+        {
+          "targetType": "product",
+          "targetId": "open-api-and-integrations",
+          "effect": "Adds queued, idempotent replay and provider status to the market and meter-data connectors."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "collect-and-validate-meter-data",
+          "effect": "Treats delivery runs, completeness and estimation as explicit steps with a re-estimation path."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "bill-and-reconcile-customers",
+          "effect": "Includes the proceed-or-hold decision and flagged corrections for estimated volumes."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "integrate-market-communication-and-external-systems",
+          "effect": "Queues and replays messages across provider outages with idempotency."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mdat",
+          "effect": "Records source, delivery run, completeness and data-quality state per reading, with estimation and re-estimation runs."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "mcom",
+          "effect": "Queues, retries and replays market messages idempotently and publishes provider status."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bill",
+          "effect": "Runs on estimated volumes with flagged invoices or holds per tenant."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "recn",
+          "effect": "Corrects estimated invoices as a batch when real readings arrive."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "fcst",
+          "effect": "Falls back to profiles with the fallback recorded and re-runs on real data."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "apip",
+          "effect": "Tracks provider service levels, outage windows and a second telemetry path for large connections."
+        },
+        {
+          "targetType": "team",
+          "targetId": "meter-data-and-allocation",
+          "effect": "Adds source, completeness and data-quality states to every reading and runs estimation and re-estimation as recorded runs that billing can act on."
+        },
+        {
+          "targetType": "team",
+          "targetId": "market-communication",
+          "effect": "Queues and replays EDSN and C-AR messages idempotently across an outage and publishes provider status per tenant."
+        },
+        {
+          "targetType": "team",
+          "targetId": "integration-hub",
+          "effect": "Agrees service levels and outage windows with meter-data providers and adds a second telemetry path for large connections."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-edsn.jpg",
+          "title": "Residuality stressor illustration: A smart-meter data provider or EDSN goes down on billing-run and nomination day",
+          "alt": "Illustration of the residuality stressor 'A smart-meter data provider or EDSN goes down on billing-run and nomination day', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "cybr",
+      "name": "A credential-stuffing attack on a white-label portal exposes end-customer data across several supplier brands",
+      "group": "Security and privacy",
+      "detection": "Anomalous login and bulk-view patterns on portal and app endpoints, leaked-credential feeds, failed-login spikes per brand, customer reports of altered payment details or unknown meter readings, the 72-hour notification duty to the Autoriteit Persoonsgegevens, NIS2 obligations of supplier clients as essential entities, data classes in the portal (address, IBAN, consumption per quarter hour, presence patterns, vulnerable-customer flags), data-processing agreements per tenant, and cyber-insurance conditions.",
+      "attractor": "Seven million households log into portals that share one code base, one identity service and one data model across supplier brands. A credential-stuffing campaign against one brand also succeeds against customers who reuse passwords on another, changes IBANs for direct debit, downloads quarter-hour consumption that reveals when a home is empty, and the incident becomes a multi-tenant notification to the regulator, dozens of suppliers and millions of customers. The naive design treats the portal account as belonging to one brand and the consumption view as a query over the same tables billing uses, so the blast radius of one brand's incident is the whole platform and nobody can say per tenant which customers and attributes were touched.",
+      "businessReaction": "Contain and force re-authentication per brand, determine per tenant which accounts, attributes and views were accessed, notify the regulator and each supplier within the deadline with evidence, scope identity, sessions and rate limits per brand and tenant, add step-up authentication for payment changes and bulk consumption views, minimise the consumption view by purpose and resolution, watermark and log exports, hold suspicious payment-detail changes for confirmation, rehearse the response with suppliers and insurers, and publish security posture per tenant for NIS2 audits.",
+      "residue": "Separate person, portal account, brand, tenant scope, session, authentication level, purpose-bound consumption view and resolution, payment-detail change and confirmation, export event, incident, affected-record set per tenant and notification. A portal account is a scoped relationship with a brand, and a consumption view is a derived, purpose-bound record rather than a query over billing data.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "endc",
+          "effect": "Customers use the portal knowing a breach of another brand cannot reach their account or their consumption pattern."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "csrv",
+          "effect": "Customer service leads keep self-service open during an incident with scoped containment per brand."
+        },
+        {
+          "targetType": "job",
+          "targetId": "endc/jtbd-endc-3",
+          "effect": "Payment-detail changes require step-up authentication and confirmation before direct debit changes."
+        },
+        {
+          "targetType": "job",
+          "targetId": "csrv/jtbd-csrv-1",
+          "effect": "Self-service on the same data as billing is delivered through purpose-bound views, not direct access to billing tables."
+        },
+        {
+          "targetType": "job",
+          "targetId": "csrv/jtbd-csrv-2",
+          "effect": "Agents see per customer which sessions, views and changes an incident touched."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-2",
+          "effect": "NIS2 and privacy obligations are evidenced per tenant from recorded access, incidents and notifications."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "csrv/co-csrv-top",
+          "effect": "Self-service resolution rate holds through an incident because containment is per brand, not a platform-wide lockout."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "endc/co-endc-top",
+          "effect": "Bill accuracy rate is protected because fraudulent payment-detail changes are held before they reach the billing run."
+        },
+        {
+          "targetType": "product",
+          "targetId": "customer-self-service-portal",
+          "effect": "Adds per-brand scoping, step-up authentication, purpose-bound consumption views, export audit and change confirmation."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Holds suspicious payment-detail changes and records affected-record sets per tenant."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "serve-customers-through-portal-and-care",
+          "effect": "Treats a portal account as a scoped brand relationship with authentication levels per action."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "collect-payments-and-manage-debtors",
+          "effect": "Confirms payment-detail changes before the next direct-debit batch."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "port",
+          "effect": "Scopes sessions, rate limits and views per brand with step-up on payment changes and bulk consumption views."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Records account-to-brand relationships, authentication levels, incidents and affected-record sets per tenant."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "paym",
+          "effect": "Holds and confirms IBAN and direct-debit changes flagged by the incident."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "care",
+          "effect": "Gives agents the incident context per customer and drives the customer notification cases."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "comm",
+          "effect": "Sends regulator and customer notifications with the evidence per tenant."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "regs",
+          "effect": "Reports security posture and incident evidence per tenant for NIS2 and privacy audits."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-interfacing",
+          "effect": "Rebuilds portal sessions, rate limits and consumption views as brand-scoped, purpose-bound records with step-up authentication on payment changes."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Runs incident handling: affected-record sets per tenant, per-brand containment and forced re-authentication without a platform-wide lockout."
+        },
+        {
+          "targetType": "team",
+          "targetId": "contract-and-billing",
+          "effect": "Holds suspicious IBAN and direct-debit changes for confirmation before the next SEPA batch."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-cybr.jpg",
+          "title": "Residuality stressor illustration: A credential-stuffing attack on a white-label portal exposes end-customer data across several supplier brands",
+          "alt": "Illustration of the residuality stressor 'A credential-stuffing attack on a white-label portal exposes end-customer data across several supplier brands', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "iber",
+      "name": "The Nemon integration stalls as Spanish and Portuguese market rules diverge from the Dutch data model",
+      "group": "Merger integration and international expansion",
+      "detection": "Integration milestone plan versus actual per quarter, parity gaps between Trade Energy and the unified suites, CNMC and ERSE regulatory changes, SIPS and ATR file-format releases, OMIE and REE settlement rule changes, PVPC and regulated-tariff updates, distributor switching-file rejections per distributor, Iberian customer churn and renewal dates, Nemon specialist attrition, and cross-sell of Dutch modules to the roughly 100 Iberian suppliers stalling.",
+      "attractor": "Nemon brought about 100 supplier customers in Spain and Portugal on a product with its own CRM, billing and SIPS communication. A Spanish contract is not a Dutch contract in another language: access tariffs are set by the CNMC per voltage and period, the regulated PVPC is a market-indexed tariff by law, switching runs through distributor files rather than a central register, settlement runs through OMIE and REE with different periods, and Portugal adds its own regulator and rules. The naive plan of moving Iberian customers onto the Dutch data model forks the code base at the first access-tariff period and turns the acquisition into the largest churn event in the group's history.",
+      "businessReaction": "Introduce the country regime and the market adapter as first-class dimensions: regulator, access-tariff structure, regulated tariffs, switching mechanism, settlement periods and counterparties, tax rules and document language; integrate identity, portal and data model first and migrate capability by capability with parity gates; keep Trade Energy running under the Eneve brand with security and regulatory updates; cross-sell Dutch modules such as forecasting and customer trading into Iberia through the adapter before touching billing; give every Iberian account a named integration owner; and decide any end-of-support date from parity evidence rather than from the acquisition announcement.",
+      "residue": "Separate country regime, regulator and rule version, access-tariff structure and period, regulated tariff, switching mechanism and market adapter, settlement counterparty and period, tax rule, document language, acquired product, tenant migration state, capability parity, migration wave, dry run and reconciliation, and account owner. A contract, a message and a settlement carry the regime they live under, and a second country adds rules and adapters instead of code paths.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "exec",
+          "effect": "Directors of Iberian suppliers experience the acquisition as more capability, not as a forced move to a Dutch system."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "newe",
+          "effect": "New entrants enter Spain or the Netherlands on one platform that speaks each market's rules."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-3",
+          "effect": "Consolidation runs capability by capability with parity gates and dry runs rather than one cut-over."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-1",
+          "effect": "Switching through SIPS, ATR and distributor files runs on the same process model as EDSN switching."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-2",
+          "effect": "Billing applies CNMC access tariffs, PVPC and Portuguese rules as regime-specific components."
+        },
+        {
+          "targetType": "job",
+          "targetId": "newe/jtbd-newe-1",
+          "effect": "The market-entry scan compares regimes from one model instead of two separate playbooks."
+        },
+        {
+          "targetType": "job",
+          "targetId": "port/jtbd-port-1",
+          "effect": "Iberian portfolios are hedged and priced against OMIE with the same sourcing tools as Dutch ones."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "exec/co-exec-top",
+          "effect": "Gross margin per connection is tracked per country and per migration wave so the integration does not hide as lost margin."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "newe/co-newe-top",
+          "effect": "Time to first live customer in Spain uses the adapter rather than a custom project."
+        },
+        {
+          "targetType": "product",
+          "targetId": "iberia-supplier-platform",
+          "effect": "Keeps Trade Energy parity as the bar for any unified release and adds the regime and adapter layer underneath."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Adds the country regime with Spanish and Portuguese tariff, switching, settlement and tax rules."
+        },
+        {
+          "targetType": "product",
+          "targetId": "market-entry-and-expertise-services",
+          "effect": "Runs the Iberian market-entry scan and CNMC licensing support from the shared regime model."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "integrate-market-communication-and-external-systems",
+          "effect": "Adds OMIE, REE, SIPS and distributor adapters as versioned market adapters per regime."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "enter-and-operate-in-a-new-energy-market",
+          "effect": "Onboards Iberian entrants and migrating Nemon customers wave by wave with parity evidence."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "onboard-and-switch-customers",
+          "effect": "Runs distributor-file switching on the same market-process model as central-register switching."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "imcm",
+          "effect": "Implements SIPS, ATR, OMIE, REE and distributor files as versioned adapters under the Iberian regime."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "migr",
+          "effect": "Runs Trade Energy data mapping, dry runs, reconciliation and rollback per tenant and wave."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "prod",
+          "effect": "Supports access-tariff periods, PVPC indexation and Portuguese tariff structures as regime components."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bill",
+          "effect": "Invoices under the regime's tax, tariff and document rules per tenant."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Records country regime, acquired product, migration state and capability entitlement per tenant."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "srcg",
+          "effect": "Hedges and procures against OMIE alongside EPEX with regime-specific counterparties."
+        },
+        {
+          "targetType": "team",
+          "targetId": "market-communication",
+          "effect": "Implements SIPS, ATR, OMIE and REE as versioned adapters under a country regime and keeps Trade Energy's market communication running until parity is proven."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Introduces the country regime and migration state per tenant and unifies identity across Trade Energy and the Dutch platform first."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-academy",
+          "effect": "Gives every Iberian account a named integration owner and runs migration waves from parity evidence, not from the acquisition date."
+        },
+        {
+          "targetType": "team",
+          "targetId": "market-enablement-and-brp-services",
+          "effect": "Runs the Iberian market-entry scan and CNMC licensing support from the shared regime model instead of a separate Spanish playbook."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-iber.jpg",
+          "title": "Residuality stressor illustration: The Nemon integration stalls as Spanish and Portuguese market rules diverge from the Dutch data model",
+          "alt": "Illustration of the residuality stressor 'The Nemon integration stalls as Spanish and Portuguese market rules diverge from the Dutch data model', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "bndl",
+      "name": "A Kraken-style platform or hyperscaler bundles supplier billing free with energy retail, trading or cloud services",
+      "group": "Competitive entry",
+      "detection": "Kraken licensing announcements in the Netherlands, Belgium and Germany, supplier-owned platforms opening to third parties, hyperscaler energy-industry offerings with utility billing accelerators, pricing pages with zero subscription and per-MWh or per-transaction fees, win-loss notes from supplier and BRP demos, prospects asking for total cost per connection including trading spreads, reference customers piloting another platform for one brand, and integration partners being courted by the newcomer.",
+      "attractor": "A well-funded vendor offers the supplier back office at zero subscription and earns on the energy it sources for the client, on the trades it executes or on the cloud consumption underneath, so a supplier with 300,000 connections compares a subscription scaling with connections and modules against free. The naive answer of matching price erodes the subscription model, while the real differences, Dutch and Iberian market-communication depth, validation of 90% of Dutch consumption data, BRP as a Service with a guaranteed cycle and a vendor that does not compete with its clients for energy margin, stay invisible in a feature list.",
+      "businessReaction": "Reposition around the integrated market-operations data model, independence from energy margin and market-communication compliance kept current, publish a total-cost comparison per connection including sourcing spreads and trading fees, package a start offer for small suppliers and entrants with portal and BRP as a Service included, accelerate the proposition builder and portal roadmap where the newcomer is strongest, make switching in either direction measurable through import and export contracts, model commercial plans and entitlements per tenant as versioned policy, and consider value-based pricing only where the platform demonstrably creates the value.",
+      "residue": "Separate commercial plan, module entitlement, per-connection and per-MWh pricing tier, fee schedule, total cost of ownership, packaged offer, switching cost and import-export contract. Pricing becomes a versioned commercial policy per tenant rather than a price list, and the platform can be sold as a start package or an enterprise contract on one code base.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "exec",
+          "effect": "Directors keep choosing the platform for market depth, independence and compliance, not only for its price."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "newe",
+          "effect": "New entrants get a start package with portal and balance responsibility included instead of a free tool plus manual work."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-1",
+          "effect": "Margin per connection is compared on total cost including what a free platform earns on sourcing and trading."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-3",
+          "effect": "Consolidation on one platform is defended with switching transparency rather than lock-in."
+        },
+        {
+          "targetType": "job",
+          "targetId": "prop/jtbd-prop-1",
+          "effect": "Proposition launch speed becomes the visible differentiator against a bundled back office."
+        },
+        {
+          "targetType": "job",
+          "targetId": "newe/jtbd-newe-3",
+          "effect": "Go-live in months is packaged as one offer across software, licensing support and BRP as a Service."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "exec/co-exec-top",
+          "effect": "Gross margin per connection is tracked per commercial plan so start packages do not silently reprice the enterprise base."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "newe/co-newe-top",
+          "effect": "Time to first live customer is the headline metric of the start package."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Adds a packaged start offer for small suppliers with portal and BRP as a Service included."
+        },
+        {
+          "targetType": "product",
+          "targetId": "proposition-launch-studio",
+          "effect": "Becomes the demo-winning differentiator against a bundled back office."
+        },
+        {
+          "targetType": "product",
+          "targetId": "brp-as-a-service",
+          "effect": "Is priced and packaged as part of the start offer for entrants and small suppliers."
+        },
+        {
+          "targetType": "product",
+          "targetId": "open-api-and-integrations",
+          "effect": "Publishes import and export contracts that make switching cost explicit in both directions."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "launch-energy-propositions-and-tariffs",
+          "effect": "Is benchmarked against the newcomer's launch flow and closes the gaps first."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "enter-and-operate-in-a-new-energy-market",
+          "effect": "Delivers the start package as one flow from market-entry scan to live balance responsibility."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "integrate-market-communication-and-external-systems",
+          "effect": "Makes import and export contracts a measurable switching path."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Manages commercial plan, entitlements and fee schedules per tenant as versioned policy."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "prod",
+          "effect": "Matches and exceeds the entrant's proposition-launch experience."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "port",
+          "effect": "Is included in the start package as standard attach."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "apip",
+          "effect": "Publishes import and export contracts that make switching cost explicit."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "migr",
+          "effect": "Onboards small suppliers from the newcomer or a spreadsheet in days as part of the start package."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "dash",
+          "effect": "Shows total cost of ownership per connection including sourcing and trading fees."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-academy",
+          "effect": "Packages the start offer (portal and BRP as a Service included) and runs the total-cost comparison in every entrant and small-supplier sales cycle."
+        },
+        {
+          "targetType": "team",
+          "targetId": "products-and-pricing",
+          "effect": "Prioritises the proposition-builder roadmap against the newcomer's strongest launch features."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Models commercial plan, entitlements and fee schedules per tenant as versioned policy instead of a price list."
+        },
+        {
+          "targetType": "team",
+          "targetId": "market-enablement-and-brp-services",
+          "effect": "Prices and operates the BRP-as-a-Service component of the start package for portfolios below the usual 40 GWh threshold where economics allow."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-bndl.jpg",
+          "title": "Residuality stressor illustration: A Kraken-style platform or hyperscaler bundles supplier billing free with energy retail, trading or cloud services",
+          "alt": "Illustration of the residuality stressor 'A Kraken-style platform or hyperscaler bundles supplier billing free with energy retail, trading or cloud services', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    },
+    {
+      "id": "cons",
+      "name": "Five heritage products cannot be consolidated onto one platform before the largest contracts come up for renewal",
+      "group": "Platform consolidation",
+      "detection": "Consolidation wave plan versus actual per quarter, parity gaps between EBASE, Ecedo, Jules, Gridhub and Trade Energy functions and the unified suites, duplicate capabilities still maintained in two code bases, support ticket volume per heritage product, renewal dates of the largest supplier and BRP contracts, competitor campaigns aimed at heritage customers, heritage-product specialist attrition, migration effort per tenant, reference-customer sentiment, and the number of tenants still on each heritage product at each quarter end.",
+      "attractor": "About 180 people maintain five products that each carry years, and in EBASE's and Ecedo's case decades, of supplier-specific configuration, and the largest supplier and BRP contracts renew within eighteen months. A supplier with millions of connections will not migrate billing in the year its contract renews, competitors promise no migration at all, and the group cannot keep five products alive and build one. The naive plan of migrating tenant by tenant towards one cut-over date makes the consolidation itself the biggest churn event in the group's history and turns Vortex's buy-and-build thesis into a write-down.",
+      "businessReaction": "Keep every heritage product running with security and regulatory updates under the Eneve brand, unify identity, portal, integration and the data model first, migrate capability by capability with parity gates so a tenant can run billing on Ecedo and forecasting on the unified platform, build migration tooling with dry runs and reconciliation reports so a supplier sees its own invoices reproduced to the cent before committing, give every account a named migration owner, keep migration free with academy training included, measure churn and satisfaction per wave, align migration windows with renewal calendars, and decide any end-of-support date from parity evidence rather than from the merger announcement.",
+      "residue": "Separate heritage product, tenant migration state, capability parity, migration wave, data mapping, dry run and reconciliation report, cut-over checkpoint, rollback, account owner, renewal window and support-end policy. A tenant can run on a mix of heritage and unified capabilities, and the brand can change without the supplier changing systems on one day.",
+      "status": "candidate",
+      "impacts": [
+        {
+          "targetType": "vision",
+          "targetId": "exec",
+          "effect": "Directors experience the consolidation as more capability on the same contract, not as a forced migration in a renewal year."
+        },
+        {
+          "targetType": "vision",
+          "targetId": "bilo",
+          "effect": "Billing managers see their invoices reproduced to the cent before any billing migration."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-3",
+          "effect": "Consolidation runs capability by capability with dry runs, reconciliation and rollback per tenant."
+        },
+        {
+          "targetType": "job",
+          "targetId": "exec/jtbd-exec-1",
+          "effect": "Margin growth on the platform survives the platform's own transition."
+        },
+        {
+          "targetType": "job",
+          "targetId": "bilo/jtbd-bilo-2",
+          "effect": "Billing stays on the heritage product until parity is proven, while forecasting or portal move first."
+        },
+        {
+          "targetType": "job",
+          "targetId": "brpo/jtbd-brpo-1",
+          "effect": "EBASE forecasting and nomination history carries across the migration."
+        },
+        {
+          "targetType": "job",
+          "targetId": "csrv/jtbd-csrv-1",
+          "effect": "The portal is unified first so customers see one experience while the back office migrates behind it."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "exec/co-exec-top",
+          "effect": "Gross margin per connection is tracked per migration wave so the consolidation does not hide lost customers."
+        },
+        {
+          "targetType": "kpi",
+          "targetId": "bilo/co-bilo-top",
+          "effect": "Straight-through billing rate is compared heritage against unified per tenant before cut-over."
+        },
+        {
+          "targetType": "product",
+          "targetId": "supplier-suite",
+          "effect": "Is held to Ecedo and Gridhub parity per capability before any tenant is moved."
+        },
+        {
+          "targetType": "product",
+          "targetId": "balancing-and-shipping-suite",
+          "effect": "Is held to EBASE parity for forecasting, nomination and settlement."
+        },
+        {
+          "targetType": "product",
+          "targetId": "trade-and-portfolio-suite",
+          "effect": "Is held to Jules parity for customer trading and forecast management."
+        },
+        {
+          "targetType": "product",
+          "targetId": "customer-self-service-portal",
+          "effect": "Is unified first so the customer experience is one brand while back offices migrate."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "integrate-market-communication-and-external-systems",
+          "effect": "Unifies identity, integration and data model first and lets heritage and unified capabilities interoperate."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "bill-and-reconcile-customers",
+          "effect": "Is the last stream to migrate and the one held to strict parity because it decides retention."
+        },
+        {
+          "targetType": "stream",
+          "targetId": "enter-and-operate-in-a-new-energy-market",
+          "effect": "Carries migration waves, academy training and named ownership as implementation steps."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "migr",
+          "effect": "Runs data mapping, dry runs, reconciliation reports, checkpoints and rollback per tenant and wave."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "iden",
+          "effect": "Records heritage product, migration state, brand and capability entitlement per tenant."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "apip",
+          "effect": "Connects heritage and unified capabilities so a tenant runs on a mix."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "bill",
+          "effect": "Reproduces heritage invoices to the cent in dry runs before cut-over."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "fcst",
+          "effect": "Carries EBASE forecast history and models across the migration."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "ctrd",
+          "effect": "Carries Jules click contracts and trade history across the migration."
+        },
+        {
+          "targetType": "brick",
+          "targetId": "wflw",
+          "effect": "Drives migration tasks, checkpoints and owner follow-up per tenant."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-success-and-academy",
+          "effect": "Assigns a named migration owner per account, runs waves aligned to renewal calendars and measures churn and satisfaction per wave."
+        },
+        {
+          "targetType": "team",
+          "targetId": "platform-core",
+          "effect": "Builds migration tooling with dry runs, reconciliation reports and rollback, and unifies identity before any back office moves."
+        },
+        {
+          "targetType": "team",
+          "targetId": "contract-and-billing",
+          "effect": "Holds billing parity gates against Ecedo and Trade Energy: invoices reproduced to the cent before a tenant's billing moves."
+        },
+        {
+          "targetType": "team",
+          "targetId": "forecasting-and-nomination",
+          "effect": "Holds forecasting and nomination parity gates against EBASE and carries forecast history across the migration."
+        },
+        {
+          "targetType": "team",
+          "targetId": "customer-trading",
+          "effect": "Holds customer-trading parity gates against Jules and carries click-contract and trade history across."
+        }
+      ],
+      "media": [
+        {
+          "type": "image",
+          "src": "media/stressor-cons.jpg",
+          "title": "Residuality stressor illustration: Five heritage products cannot be consolidated onto one platform before the largest contracts come up for renewal",
+          "alt": "Illustration of the residuality stressor 'Five heritage products cannot be consolidated onto one platform before the largest contracts come up for renewal', showing its signal, attractor, business response, and surviving residue."
+        }
+      ]
+    }
+  ]
+}
