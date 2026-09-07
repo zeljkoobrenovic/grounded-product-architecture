@@ -3,16 +3,15 @@ import os
 import shutil
 
 from domain_cli import load_domain_args
-from generator_common import copy_icons, enter_docs_root, today_string
+from generator_common import domain_docs_path, domain_source_path, copy_icons, enter_docs_root, today_string
 
 enter_docs_root()
 
 date_string = today_string()
 
-apps = json.load(open('../../_config/product-domains/start/apps.json'))
+apps = json.load(open('../_config/product-domains/start/apps.json'))
 
-domains_root = '../../_config/product-domains/'
-templates_root = '../../_templates/start/'
+templates_root = '../_templates/start/'
 domain, _ = load_domain_args()
 
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
@@ -21,12 +20,12 @@ tabs_script = open(templates_root + '../_imports/tabs/script.html').read()
 
 
 def create_docs(domain, docs_folder):
+    source_icons = domain_source_path(domain['id'], 'start/icons')
     if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 
-    domain_id = domain['id']
     copy_icons(templates_root + 'icons', docs_folder)
-    copy_icons(domains_root + domain_id + '/start/icons', docs_folder)
+    copy_icons(source_icons, docs_folder)
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()
@@ -42,5 +41,5 @@ def create_docs(domain, docs_folder):
                         .replace('${domain_description}', domain['description']))
 
 
-docs_folder = domain['id'] + '/start/'
+docs_folder = domain_docs_path(domain['id'], 'start') + '/'
 create_docs(domain, docs_folder)

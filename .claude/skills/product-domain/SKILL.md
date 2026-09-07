@@ -12,7 +12,7 @@ loop. For schema, ID rules, and the cross-file reference map, read
 
 ## What this models
 
-Product strategy modeled as structured JSON under `_config/product-domains/<domain>/`,
+Product strategy modeled as structured JSON under `_config/product-domains/<group>/<domain>/`,
 compiled by plain-Python generators in `_wiring/product-domains/` into a static doc
 site under `docs/`. No framework, no build system. Edit JSON in `_config/**`; treat
 `docs/**` as generated output.

@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>TP Model and Data Workspace — Deployment (Transfer Pricing Compliance Platform)</title>
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #5b6472;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;
+    }
+</style>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 8px 28px 28px;
+            color: #202124;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .channel-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+            margin-bottom: 18px;
+        }
+
+        .channel-nav-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #f8fafc;
+        }
+
+        .channel-nav-link.active {
+            border-bottom: 2px solid blue;
+        }
+
+        .channel-nav-icon {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+            padding: 2px;
+        }
+
+        .hero {
+            margin-bottom: 18px;
+        }
+
+        .hero-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 14px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 8px;
+        }
+
+        .hero-title {
+            font-size: 44px;
+            line-height: 1.05;
+            margin-bottom: 4px;
+        }
+
+        .hero-subtitle {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 960px;
+            margin-top: 10px;
+        }
+
+        .deployment-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .deployment-stat {
+            display: inline-block;
+            min-width: 120px;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .deployment-stat-value {
+            font-size: 28px;
+            color: #1d4ed8;
+        }
+
+        .deployment-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .deployment-copy {
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 18px;
+            max-width: 980px;
+        }
+
+        .deployment-section-title {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 20px 0 10px 0;
+        }
+
+        .deployment-environment {
+            padding: 10px 12px;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            background: #eff6ff;
+            margin-bottom: 10px;
+        }
+
+        .deployment-environment-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1d4ed8;
+        }
+
+        .deployment-environment-copy {
+            color: #4b5563;
+            font-size: 13px;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .deployment-link-row {
+            margin-top: 6px;
+        }
+
+        .deployment-link {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #1d4ed8;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .env-brick-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .env-brick-count {
+            color: #9ca3af;
+            font-weight: normal;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chip-icon {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 2px;
+        }
+
+        .chip-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .chip-copy {
+            font-size: 12px;
+            color: #4b5563;
+            line-height: 1.35;
+            display: inline-block;
+        }
+
+        .empty-state {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .bpd-layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .bpd-controls {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            padding: 12px;
+        }
+
+        .bpd-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .pdg-action {
+            border: 1px solid #d1d5db;
+            background-color: white;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .pdg-action:hover {
+            background-color: #eef2f7;
+            border-color: #9ca3af;
+        }
+
+        .bpd-checklist {
+            max-height: 460px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdg-type-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6b7280;
+            margin: 10px 0 2px 0;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .pdg-type-header:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .pdg-check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #374151;
+            padding: 5px 2px;
+            cursor: pointer;
+        }
+
+        .pdg-check-item .label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pdg-swatch {
+            flex: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(17, 24, 39, 0.15);
+        }
+
+        .bpd-graph {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 14px;
+            overflow: auto;
+            min-height: 300px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+</head>
+<body onload="initTab('HomeTab')" onhashchange="initTab('HomeTab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html" class="active">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a><a href="../../residuality/index.html">Stress Test</a></nav>
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        setupTabAccessibility();
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+<script>
+    const products = {"portfolio": {"name": "Reptune Transfer Pricing Compliance Portfolio", "version": "1.0", "products": [{"id": "reptune-net-platform", "name": "Reptune.net Platform", "icon": "reptune-net-platform.png", "type": "B2B Vertical Compliance SaaS", "description": "The Reptune.net subscription that every multinational buys first, sold in three plans that scale with the number of Local Files: Core (up to 25 Local Files), Advanced (up to 50) and Enterprise (50+). Every plan comes with unlimited users, the Automated Report Generator, the dashboard with worldmap, the TP Workflow, AI-assisted writing, the R-AI Onboarding Assistant, country regulations for 170+ countries, report styling in the corporate identity, data exchange and validation, and 2 expert hours per year. Advanced adds SSO, R-AI Country Expert, custom text and 4 hours; Enterprise adds custom user profiles, CbCR, divisions and 8 hours. Machine translation, CbCR, SSO, R-AI Country Expert, custom templates, custom transactional data models and custom development are add-ons. ISO 27001 certified, no installation, up and running in days after a free two-week trial.", "primaryCustomers": [{"id": "htax", "name": "Group Head of Tax / Transfer Pricing Director", "icon": "customer-htax-portrait.jpg"}, {"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}, {"id": "lfin", "name": "Local Finance Controller / Country Tax Contact", "icon": "customer-lfin-portrait.jpg"}]}, {"id": "automated-report-generator", "name": "Automated Report Generator", "icon": "automated-report-generator.png", "type": "B2B SaaS Module", "description": "The rule-based generator that produces Master Files and Local Files for 170+ countries at the press of a button once company types, functional analyses, transfer pricing methods and benchmarks have been configured in the model. Built on an OECD-aligned template structure with best-practice standard templates, localised templates (for example Italy), custom templates and custom text, report styling in the client's corporate identity, draft or final output, built-in validation that flags gaps before generation, and automatic insertion of archived benchmarks, intercompany agreements and structure charts. Exported Word and PDF files need no manual changes, which is where the 50 to 75 percent time and cost savings come from.", "primaryCustomers": [{"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}, {"id": "tadv", "name": "Transfer Pricing Adviser", "icon": "customer-tadv-portrait.jpg"}, {"id": "tpsp", "name": "Reptune Transfer Pricing Specialist", "icon": "customer-tpsp-portrait.jpg"}]}, {"id": "cbcr-and-public-cbcr", "name": "Country-by-Country Reporting and EU Public CbCR", "icon": "cbcr-and-public-cbcr.png", "type": "B2B SaaS Add-on", "description": "Country-by-Country Reporting on the same platform as the Master File and Local Files: CbCR data management with manual or bulk Excel entry per constituent entity, automated validation with an Actions Required page, filing-ready CbCR XML and Excel output, CbCR notifications with auto-calculated deadlines per country, and EU Public CbCR under Directive (EU) 2021/2101 generated in XHTML with inline XBRL from the existing CbCR data. Australian Public CbCR is coming. Included in the Enterprise plan and available as an OECD / EU public CbCR add-on on Core and Advanced; also used for Pillar Two transitional CbCR safe-harbour checks.", "primaryCustomers": [{"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}, {"id": "lfin", "name": "Local Finance Controller / Country Tax Contact", "icon": "customer-lfin-portrait.jpg"}]}, {"id": "compliance-workflow-and-dashboard", "name": "Transfer Pricing Workflow and Dashboard", "icon": "compliance-workflow-and-dashboard.png", "type": "B2B SaaS Module", "description": "The compliance workflow included in every plan: scoping of documentation per entity and country for the fiscal year, task assignment and collaboration with local contacts and advisers, e-mail reminders, automatically calculated deadlines for Master File, Local Files, CbCR and CbCR notifications in every country, and a dashboard with widgets, graphs and a world map that shows real-time compliance status and financial performance across jurisdictions. Gives the group head of tax the status view and the documentation coordinator the control room for a cycle that is never missed.", "primaryCustomers": [{"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}, {"id": "htax", "name": "Group Head of Tax / Transfer Pricing Director", "icon": "customer-htax-portrait.jpg"}, {"id": "lfin", "name": "Local Finance Controller / Country Tax Contact", "icon": "customer-lfin-portrait.jpg"}]}, {"id": "legal-module", "name": "Legal Module", "icon": "legal-module.png", "type": "B2B SaaS Module", "description": "A single source of truth for legal entities, shareholders, directors and authorised signatories, intercompany agreements and corporate documents across jurisdictions, with time-stamped corporate data and history, current and historical legal structure charts on demand, and DocuSign integration to generate, send, store and track e-signatures. Agreements and structure charts maintained here are inserted automatically into the transfer pricing documentation, so the legal counsel and the tax team work from the same entity and agreement records.", "primaryCustomers": [{"id": "lgcn", "name": "Corporate Legal Counsel / Company Secretary", "icon": "customer-lgcn-portrait.jpg"}, {"id": "htax", "name": "Group Head of Tax / Transfer Pricing Director", "icon": "customer-htax-portrait.jpg"}]}, {"id": "benchmark-offerings", "name": "Benchmark Offerings", "icon": "benchmark-offerings.png", "type": "B2B SaaS Module and Services", "description": "Benchmark studies and arm's-length ranges archived in the platform per transaction type and functional profile, inserted automatically into the generated files, and compared against each entity's segmented actual performance so out-of-range results are visible before year end. Available as platform functionality for benchmarks the client or its adviser prepares, and as benchmark studies prepared or refreshed by Reptune specialists as part of a consultation.", "primaryCustomers": [{"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}, {"id": "tadv", "name": "Transfer Pricing Adviser", "icon": "customer-tadv-portrait.jpg"}]}, {"id": "ai-and-machine-translation", "name": "R-AI, AI-assisted Writing and Machine Translation", "icon": "ai-and-machine-translation.png", "type": "AI Add-on", "description": "The platform's AI capabilities: R-AI, Reptune.net's own assistant that answers onboarding and product questions in any language (included in every plan) and, in the R-AI Country Expert mode included from Advanced or as an add-on, local-requirements questions from the country regulations knowledge base; AI-assisted writing and editing available in every text field; and AI-powered machine translation into 28 languages with transfer pricing glossaries and a human-certified translation option, sold as an add-on. Turns localisation from a translation project into a step in the generation flow.", "primaryCustomers": [{"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}, {"id": "lfin", "name": "Local Finance Controller / Country Tax Contact", "icon": "customer-lfin-portrait.jpg"}, {"id": "regr", "name": "Country Regulations and Content Specialist", "icon": "customer-regr-portrait.jpg"}]}, {"id": "country-regulations-and-local-forms", "name": "Country Regulations, Local Forms and Procedures", "icon": "country-regulations-and-local-forms.png", "type": "Content Subscription", "description": "The knowledge base of local transfer pricing content, format, filing, language and threshold requirements for 170+ countries, maintained by Reptune transfer pricing specialists and included in every plan, together with localised templates, deadline rules for Master File, Local Files, CbCR and CbCR notifications, and support with local forms and procedures. Surfaced in the generator, the deadline engine, the dashboard and R-AI's country-expert answers, so a regulatory change becomes a template, a validation and an answer users can act on.", "primaryCustomers": [{"id": "regr", "name": "Country Regulations and Content Specialist", "icon": "customer-regr-portrait.jpg"}, {"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}, {"id": "tadv", "name": "Transfer Pricing Adviser", "icon": "customer-tadv-portrait.jpg"}]}, {"id": "full-service-documentation", "name": "Full Service and Collaborative Documentation Services", "icon": "full-service-documentation.png", "type": "Professional Services", "description": "Documentation prepared by Reptune's transfer pricing specialists on the client's own Reptune.net environment at fixed rates per Local File: in Full Service Reptune coordinates and prepares everything from data processing and drafting to localisation and translation; in Collaborative the client and Reptune split the work; in On Demand the client leads and calls on the included expert hours. Because the platform is already set up, clients switch between service levels at any time without rework, and the client monitors progress in the same workflow while the work is done.", "primaryCustomers": [{"id": "htax", "name": "Group Head of Tax / Transfer Pricing Director", "icon": "customer-htax-portrait.jpg"}, {"id": "tpsp", "name": "Reptune Transfer Pricing Specialist", "icon": "customer-tpsp-portrait.jpg"}]}, {"id": "transfer-pricing-advisory", "name": "Transfer Pricing Consultation, Risk Management and Operational TP Support", "icon": "transfer-pricing-advisory.png", "type": "Advisory Services", "description": "Transfer pricing consultation delivered by Reptune specialists on top of the platform, within the 2, 4 or 8 expert hours included per plan or as separate engagements: value chain analysis, CbCR analysis and Pillar Two transitional safe-harbour checks, functional analysis, transfer pricing model review, policy write-up, controversy and audit defence, business restructurings, Advance Pricing Agreements and Mutual Agreement Procedures, plus risk management and operational transfer pricing support that connects price setting and true-ups to the documentation data. Customers report that this documentation has \"saved the day\" in various tax audits.", "primaryCustomers": [{"id": "htax", "name": "Group Head of Tax / Transfer Pricing Director", "icon": "customer-htax-portrait.jpg"}, {"id": "tpsp", "name": "Reptune Transfer Pricing Specialist", "icon": "customer-tpsp-portrait.jpg"}]}, {"id": "integrations-and-data-exchange", "name": "ERP and Operational TP Integrations, Excel Data Exchange and SSO", "icon": "integrations-and-data-exchange.png", "type": "API and Integration Add-on", "description": "The connectivity layer of Reptune.net: direct ERP integration and connectors to operational transfer pricing solutions that feed segmented financials and transactional data automatically, the Excel interface for mass upload and structured data exchange with validation, DocuSign for e-signatures, and SSO with the client's identity provider with custom user profiles and access rights. SSO is included from Advanced and an add-on on Core; a custom transactional data model and custom development are Advanced and Enterprise add-ons.", "primaryCustomers": [{"id": "lfin", "name": "Local Finance Controller / Country Tax Contact", "icon": "customer-lfin-portrait.jpg"}, {"id": "tpmg", "name": "Transfer Pricing Manager / Documentation Coordinator", "icon": "customer-tpmg-portrait.jpg"}]}], "deploymentModelRef": "deployment.json"}};
+    const deployment = {"metadata": {"title": "Transfer Pricing Compliance Platform Deployment Channels", "description": "Product bricks are deployed to the Reptune.net web application (model and data, report generator, workflow and dashboard, CbCR, legal module, benchmarks, administration), to the document outputs clients and tax authorities receive (Word and PDF Master Files and Local Files, Excel data exchange, CbCR XML, EU Public CbCR XHTML with inline XBRL, structure chart exports), to integrations (ERP, operational transfer pricing, Excel interface, DocuSign, SSO identity providers, e-mail reminders), to the AI runtime (R-AI assistant, AI writing service, machine translation engine) and to internal operations (full-service delivery workspace, country regulations content back office, support and onboarding). ISO 27001-certified SaaS with no installation. Each deployed brick records the products that use it.", "modelVersion": "4.0"}, "channels": [{"groupId": "web-application", "groupName": "Web Application", "groupType": "runtime", "description": "The Reptune.net browser workspace, one sub-channel per functional area: model and data, the report generator, workflow and dashboard, CbCR, the legal module, benchmarks and account administration. No installation; clients are up and running in days; ISO 27001-certified hosting.", "channels": [{"subChannelId": "web-tp-model-and-data", "subChannelName": "TP Model and Data Workspace", "channelType": "web-application", "description": "Where the transfer pricing model is configured once - legal entities, company types, functional analyses, methods and benchmarks - and where intercompany transactions, segmented financials and Excel bulk uploads are maintained and validated.", "deployedBricks": [{"brickId": "tpmd", "brickName": "Transfer Pricing Model, Company Types and Functional Analyses", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "The intelligent transfer pricing data model at the heart of every plan: entities, company types, functional analyses, methods and benchmarks configured once and reused everywhere."}, {"productId": "automated-report-generator", "description": "Supplies the rule-based inputs the generator applies to every entity so no text has to be edited by hand in the exported files."}, {"productId": "benchmark-offerings", "description": "Links each functional profile and transaction type to the benchmark study and range that applies to it."}, {"productId": "transfer-pricing-advisory", "description": "The model that Reptune specialists review, restructure or write up in a policy during consultation engagements."}]}, {"brickId": "ictx", "brickName": "Intercompany Transactions Register", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "The register of in-scope intercompany transactions per entity that scoping, generation, benchmarks and agreements all reference."}, {"productId": "automated-report-generator", "description": "Determines which transactions and counterparties are described in each Local File."}, {"productId": "benchmark-offerings", "description": "Selects the transactions whose segmented results are compared against an arm's-length range."}, {"productId": "integrations-and-data-exchange", "description": "Receives transaction volumes and counterparties from ERP and operational transfer pricing systems."}]}, {"brickId": "segp", "brickName": "Segmented Financials and P&L Segmentation", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Entity financials and P&L segmentation per activity, kept alongside the transactions they belong to."}, {"productId": "benchmark-offerings", "description": "Provides the segmented actual performance that is compared against each benchmark range."}, {"productId": "transfer-pricing-advisory", "description": "Segmented figures used in operational transfer pricing support, year-end checks and risk reviews."}, {"productId": "integrations-and-data-exchange", "description": "Populated from direct ERP integration, operational transfer pricing solutions and Excel mass upload."}]}, {"brickId": "xlio", "brickName": "Excel Templates, Bulk Upload and Data Validation", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Excel templates, bulk entry and built-in validation included in every plan as the data exchange and validation feature."}, {"productId": "cbcr-and-public-cbcr", "description": "Bulk entry of CbCR data per constituent entity through Excel with automated validation."}, {"productId": "full-service-documentation", "description": "The intake route Reptune specialists use to load client data during data processing."}, {"productId": "integrations-and-data-exchange", "description": "The Excel interface for mass upload and structured data exchange with client systems."}]}, {"brickId": "vald", "brickName": "Pre-generation Validation and Actions Required", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "automated-report-generator", "description": "Built-in validation that flags missing data and inconsistencies before a file is generated."}, {"productId": "cbcr-and-public-cbcr", "description": "Automated CbCR validation with an Actions Required page before XML output."}, {"productId": "reptune-net-platform", "description": "Data validation surfaced as actions required across the model and workflow."}]}]}, {"subChannelId": "web-report-generator", "subChannelName": "Automated Report Generator", "channelType": "web-application", "description": "The generation workspace: template selection, custom text, report styling, AI-assisted writing, country content rules, machine translation and draft or final output for Master Files and Local Files.", "deployedBricks": [{"brickId": "gene", "brickName": "Master File and Local File Generator", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "automated-report-generator", "description": "Master Files and Local Files for 170+ countries at the press of a button, in draft or final form."}, {"productId": "reptune-net-platform", "description": "The Automated Report Generator is included in Core, Advanced and Enterprise plans."}, {"productId": "full-service-documentation", "description": "The engine Reptune specialists run to prepare documentation in about 25% of the time of traditional advisers."}, {"productId": "benchmark-offerings", "description": "Inserts archived benchmark studies and ranges automatically into the generated files."}]}, {"brickId": "tmpl", "brickName": "Templates, Report Styling and Custom Text", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "automated-report-generator", "description": "OECD-aligned standard templates, localised templates (for example Italy), custom templates and custom text."}, {"productId": "reptune-net-platform", "description": "Report styling in the client's corporate identity, included in every plan; custom text from Advanced, custom templates as an add-on."}, {"productId": "country-regulations-and-local-forms", "description": "Localised templates maintained per country by the content specialists."}]}, {"brickId": "ctry", "brickName": "Country Regulations, Local Requirements and Local Forms", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "country-regulations-and-local-forms", "description": "Content, format, filing, language and threshold requirements for 170+ countries plus local forms and procedures."}, {"productId": "automated-report-generator", "description": "Applies country content rules so each Local File is locally compliant out of the box."}, {"productId": "ai-and-machine-translation", "description": "The knowledge base behind the R-AI Country Expert (Local Requirements) answers."}, {"productId": "reptune-net-platform", "description": "Country regulations are included in every plan."}]}, {"brickId": "trns", "brickName": "Machine Translation and Glossaries", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "AI-powered machine translation into 28 languages with transfer pricing glossaries and a human-certified option."}, {"productId": "automated-report-generator", "description": "Delivers translated Local Files without losing consistency with the English master."}, {"productId": "full-service-documentation", "description": "Localisation and translation of files delivered by Reptune specialists at a fixed rate."}]}, {"brickId": "aiwr", "brickName": "AI-assisted Writing and Editing", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "AI-assisted writing and editing available in every text field."}, {"productId": "automated-report-generator", "description": "Drafts and refines custom text and functional analyses inside the generator."}, {"productId": "reptune-net-platform", "description": "AI-assisted writing is included in every plan."}]}, {"brickId": "icag", "brickName": "Intercompany Agreement Repository", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "legal-module", "description": "Intercompany agreements per transaction, inserted automatically into the documentation."}, {"productId": "automated-report-generator", "description": "Archived agreements referenced and attached in the generated Local Files."}]}, {"brickId": "lsch", "brickName": "Legal Structure Charts", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "legal-module", "description": "Current and historical legal structure charts produced on demand."}, {"productId": "automated-report-generator", "description": "Structure charts embedded in the Master File."}]}]}, {"subChannelId": "web-workflow-and-dashboard", "subChannelName": "TP Workflow and Dashboard", "channelType": "web-application", "description": "Scoping, task assignment, collaboration, deadline overview, the compliance dashboard with worldmap and risk indicators used by tax teams, local contacts and advisers.", "deployedBricks": [{"brickId": "scop", "brickName": "Documentation Scoping", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "compliance-workflow-and-dashboard", "description": "Scoping of documentation per entity and country for the fiscal year."}, {"productId": "reptune-net-platform", "description": "Scoping is part of the TP Workflow included in every plan."}]}, {"brickId": "task", "brickName": "Task Assignment, Collaboration and Reminders", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "compliance-workflow-and-dashboard", "description": "Task assignment, collaboration and e-mail reminders for local contacts and advisers."}, {"productId": "reptune-net-platform", "description": "Workflow tasks are included in every plan with unlimited users."}, {"productId": "full-service-documentation", "description": "Keeps the client in control and informed while Reptune specialists do the work."}]}, {"brickId": "dead", "brickName": "Deadline Calculation Engine", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "compliance-workflow-and-dashboard", "description": "Automatically calculated deadlines for Master File, Local Files, CbCR and CbCR notifications in every country."}, {"productId": "country-regulations-and-local-forms", "description": "Deadline rules per country and filing type maintained by the content specialists."}, {"productId": "cbcr-and-public-cbcr", "description": "CbCR and notification deadlines per jurisdiction."}]}, {"brickId": "dash", "brickName": "Compliance Dashboard and Worldmap", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "compliance-workflow-and-dashboard", "description": "Dashboard with widgets, graphs and a worldmap showing real-time compliance status and financial performance."}, {"productId": "reptune-net-platform", "description": "The dashboard is included in every plan."}, {"productId": "transfer-pricing-advisory", "description": "Group-wide status used in risk reviews and audit preparation with Reptune specialists."}]}, {"brickId": "rskm", "brickName": "Risk Management and Value Chain Analysis", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "compliance-workflow-and-dashboard", "description": "Risk indicators per entity and country visible in the workflow."}, {"productId": "transfer-pricing-advisory", "description": "Risk management, value chain analysis and audit-readiness reviews delivered as consultation."}]}]}, {"subChannelId": "web-cbcr", "subChannelName": "CbCR Workspace", "channelType": "web-application", "description": "CbCR data entry and bulk upload, validation with the Actions Required page, EU Public CbCR generation and CbCR notifications per country.", "deployedBricks": [{"brickId": "cbcr", "brickName": "CbCR Data Management and XML Output", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "CbCR data management with manual or bulk entry and filing-ready XML and Excel output."}, {"productId": "transfer-pricing-advisory", "description": "CbCR analysis and Pillar Two transitional safe-harbour checks in consultation engagements."}, {"productId": "reptune-net-platform", "description": "CbCR included in the Enterprise plan and available as an add-on on Core and Advanced."}]}, {"brickId": "pcbc", "brickName": "EU Public CbCR (XHTML with inline XBRL)", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "EU Public CbCR under Directive (EU) 2021/2101 generated in XHTML with inline XBRL from existing CbCR data."}]}, {"brickId": "cbcn", "brickName": "CbCR Notifications", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "CbCR notifications per country with auto-calculated deadlines."}, {"productId": "country-regulations-and-local-forms", "description": "Notification rules and formats maintained per country."}]}]}, {"subChannelId": "web-legal-module", "subChannelName": "Legal Module", "channelType": "web-application", "description": "Legal entities, shareholders, directors and signatories, intercompany agreements, corporate documents, structure charts and e-signature tracking for legal counsel and tax.", "deployedBricks": [{"brickId": "lent", "brickName": "Legal Entity Management", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "legal-module", "description": "Time-stamped legal entities, shareholders, directors and authorised signatories with history."}, {"productId": "reptune-net-platform", "description": "Entity master data shared with the transfer pricing model and CbCR."}]}, {"brickId": "icag", "brickName": "Intercompany Agreement Repository", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "legal-module", "description": "Intercompany agreements per transaction, inserted automatically into the documentation."}]}, {"brickId": "cdoc", "brickName": "Corporate Document Repository", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "legal-module", "description": "Corporate document repository across jurisdictions."}]}, {"brickId": "lsch", "brickName": "Legal Structure Charts", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "legal-module", "description": "Current and historical legal structure charts produced on demand."}]}, {"brickId": "esig", "brickName": "E-Signature Integration (DocuSign)", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "legal-module", "description": "DocuSign integration to generate, send, store and track e-signatures on agreements."}]}]}, {"subChannelId": "web-benchmarks", "subChannelName": "Benchmarks Workspace", "channelType": "web-application", "description": "Benchmark studies and arm's-length ranges archived per transaction type and compared against each entity's segmented results.", "deployedBricks": [{"brickId": "bnch", "brickName": "Benchmark Studies, Arm's-Length Ranges and Entity Comparison", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "benchmark-offerings", "description": "Benchmark studies and arm's-length ranges archived in the platform and compared against each entity's segmented results."}, {"productId": "transfer-pricing-advisory", "description": "Benchmarks prepared or refreshed by Reptune specialists as part of a consultation."}]}, {"brickId": "segp", "brickName": "Segmented Financials and P&L Segmentation", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "benchmark-offerings", "description": "Provides the segmented actual performance that is compared against each benchmark range."}, {"productId": "transfer-pricing-advisory", "description": "Segmented figures used in operational transfer pricing support, year-end checks and risk reviews."}]}]}, {"subChannelId": "web-account-admin", "subChannelName": "Account Administration", "channelType": "web-application", "description": "User management, custom user profiles and access rights, divisions and client organisations, audit trail and archive, security settings and the R-AI assistant panel available on every page.", "deployedBricks": [{"brickId": "iden", "brickName": "Identity, SSO, User Profiles and Access Control", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Unlimited users, custom user profiles and access rights such as read-only and location-restricted."}, {"productId": "integrations-and-data-exchange", "description": "SSO with the client's identity provider, included from Advanced and an add-on on Core."}]}, {"brickId": "divs", "brickName": "Divisions and Client Organisations", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Divisions for multi-group structures in the Enterprise plan; client organisations for advisory firms."}]}, {"brickId": "audt", "brickName": "Audit Trail, Versioning and Archive", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Audit trail, versioning and archive of every generated file and data change."}, {"productId": "legal-module", "description": "Time-stamped history of entity and agreement changes."}, {"productId": "automated-report-generator", "description": "Archive of draft and final files per fiscal year."}]}, {"brickId": "secp", "brickName": "Security and ISO 27001 Controls", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "ISO 27001-certified security controls applied to every client environment."}, {"productId": "integrations-and-data-exchange", "description": "Access control and security review of every external connection."}]}, {"brickId": "rai", "brickName": "R-AI Assistant (Onboarding and Country Expert)", "deploymentRole": "Web UI and backing services deployed to the Reptune.net web application.", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "R-AI answers onboarding and product questions in any language and, in Country Expert mode, local requirements questions."}, {"productId": "reptune-net-platform", "description": "R-AI Onboarding Assistant is included in every plan; R-AI Country Expert from Advanced."}, {"productId": "country-regulations-and-local-forms", "description": "Surfaces the country regulations knowledge base as expert answers."}]}]}]}, {"groupId": "document-outputs", "groupName": "Document Outputs", "groupType": "distribution", "description": "The files the platform hands to clients and tax authorities: Word and PDF Master Files and Local Files, Excel data exchange files, CbCR XML, EU Public CbCR XHTML with inline XBRL and structure chart exports. Exported files need no manual changes.", "channels": [{"subChannelId": "docs-master-file-and-local-files", "subChannelName": "Master File and Local Files (Word and PDF)", "channelType": "document-output", "description": "Draft and final Master Files and Local Files rendered in the client's corporate identity, in English or translated, archived per fiscal year.", "deployedBricks": [{"brickId": "gene", "brickName": "Master File and Local File Generator", "deploymentRole": "Document generation, rendering and archiving services producing the Master File and Local File Generator output.", "usedInProducts": [{"productId": "automated-report-generator", "description": "Master Files and Local Files for 170+ countries at the press of a button, in draft or final form."}, {"productId": "reptune-net-platform", "description": "The Automated Report Generator is included in Core, Advanced and Enterprise plans."}, {"productId": "full-service-documentation", "description": "The engine Reptune specialists run to prepare documentation in about 25% of the time of traditional advisers."}]}, {"brickId": "tmpl", "brickName": "Templates, Report Styling and Custom Text", "deploymentRole": "Document generation, rendering and archiving services producing the Templates, Report Styling and Custom Text output.", "usedInProducts": [{"productId": "automated-report-generator", "description": "OECD-aligned standard templates, localised templates (for example Italy), custom templates and custom text."}, {"productId": "reptune-net-platform", "description": "Report styling in the client's corporate identity, included in every plan; custom text from Advanced, custom templates as an add-on."}]}, {"brickId": "trns", "brickName": "Machine Translation and Glossaries", "deploymentRole": "Document generation, rendering and archiving services producing the Machine Translation and Glossaries output.", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "AI-powered machine translation into 28 languages with transfer pricing glossaries and a human-certified option."}, {"productId": "automated-report-generator", "description": "Delivers translated Local Files without losing consistency with the English master."}, {"productId": "full-service-documentation", "description": "Localisation and translation of files delivered by Reptune specialists at a fixed rate."}]}, {"brickId": "docx", "brickName": "Document Rendering and Export", "deploymentRole": "Document generation, rendering and archiving services producing the Document Rendering and Export output.", "usedInProducts": [{"productId": "automated-report-generator", "description": "Renders Word and PDF Master Files and Local Files in the client's corporate identity."}, {"productId": "reptune-net-platform", "description": "Shared rendering and export service for every module."}]}, {"brickId": "audt", "brickName": "Audit Trail, Versioning and Archive", "deploymentRole": "Document generation, rendering and archiving services producing the Audit Trail, Versioning and Archive output.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Audit trail, versioning and archive of every generated file and data change."}, {"productId": "automated-report-generator", "description": "Archive of draft and final files per fiscal year."}]}]}, {"subChannelId": "docs-excel-data-exchange", "subChannelName": "Excel Data Exchange Files", "channelType": "document-output", "description": "Excel templates for bulk entry of entity financials, transactions, segmented P&L and CbCR data, and Excel exports for review and reconciliation.", "deployedBricks": [{"brickId": "xlio", "brickName": "Excel Templates, Bulk Upload and Data Validation", "deploymentRole": "Excel template generation, export and validation services for the Excel Templates, Bulk Upload and Data Validation data.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Excel templates, bulk entry and built-in validation included in every plan as the data exchange and validation feature."}, {"productId": "cbcr-and-public-cbcr", "description": "Bulk entry of CbCR data per constituent entity through Excel with automated validation."}, {"productId": "full-service-documentation", "description": "The intake route Reptune specialists use to load client data during data processing."}, {"productId": "integrations-and-data-exchange", "description": "The Excel interface for mass upload and structured data exchange with client systems."}]}, {"brickId": "segp", "brickName": "Segmented Financials and P&L Segmentation", "deploymentRole": "Excel template generation, export and validation services for the Segmented Financials and P&L Segmentation data.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Entity financials and P&L segmentation per activity, kept alongside the transactions they belong to."}, {"productId": "integrations-and-data-exchange", "description": "Populated from direct ERP integration, operational transfer pricing solutions and Excel mass upload."}]}, {"brickId": "ictx", "brickName": "Intercompany Transactions Register", "deploymentRole": "Excel template generation, export and validation services for the Intercompany Transactions Register data.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "The register of in-scope intercompany transactions per entity that scoping, generation, benchmarks and agreements all reference."}, {"productId": "integrations-and-data-exchange", "description": "Receives transaction volumes and counterparties from ERP and operational transfer pricing systems."}]}, {"brickId": "cbcr", "brickName": "CbCR Data Management and XML Output", "deploymentRole": "Excel template generation, export and validation services for the CbCR Data Management and XML Output data.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "CbCR data management with manual or bulk entry and filing-ready XML and Excel output."}, {"productId": "reptune-net-platform", "description": "CbCR included in the Enterprise plan and available as an add-on on Core and Advanced."}]}]}, {"subChannelId": "docs-cbcr-xml", "subChannelName": "CbCR XML and Notifications", "channelType": "document-output", "description": "Filing-ready OECD CbCR XML and Excel output plus notification letters per country.", "deployedBricks": [{"brickId": "cbcr", "brickName": "CbCR Data Management and XML Output", "deploymentRole": "XML schema generation and validation services producing the CbCR Data Management and XML Output filing output.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "CbCR data management with manual or bulk entry and filing-ready XML and Excel output."}]}, {"brickId": "cbcn", "brickName": "CbCR Notifications", "deploymentRole": "XML schema generation and validation services producing the CbCR Notifications filing output.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "CbCR notifications per country with auto-calculated deadlines."}]}, {"brickId": "docx", "brickName": "Document Rendering and Export", "deploymentRole": "XML schema generation and validation services producing the Document Rendering and Export filing output.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "Produces CbCR XML, Excel and XHTML with inline XBRL outputs."}]}]}, {"subChannelId": "docs-public-cbcr-xhtml", "subChannelName": "EU Public CbCR (XHTML with inline XBRL)", "channelType": "document-output", "description": "EU Public CbCR reports under Directive (EU) 2021/2101 in XHTML with inline XBRL generated from existing CbCR data; Australian Public CbCR coming.", "deployedBricks": [{"brickId": "pcbc", "brickName": "EU Public CbCR (XHTML with inline XBRL)", "deploymentRole": "XHTML and inline XBRL rendering services producing the EU Public CbCR (XHTML with inline XBRL) output.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "EU Public CbCR under Directive (EU) 2021/2101 generated in XHTML with inline XBRL from existing CbCR data."}]}, {"brickId": "docx", "brickName": "Document Rendering and Export", "deploymentRole": "XHTML and inline XBRL rendering services producing the Document Rendering and Export output.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "Produces CbCR XML, Excel and XHTML with inline XBRL outputs."}]}]}, {"subChannelId": "docs-structure-chart-exports", "subChannelName": "Structure Chart and Agreement Exports", "channelType": "document-output", "description": "Current and historical legal structure charts and signed intercompany agreements exported for documentation, auditors and boards.", "deployedBricks": [{"brickId": "lsch", "brickName": "Legal Structure Charts", "deploymentRole": "Chart rendering and document export services producing the Legal Structure Charts output.", "usedInProducts": [{"productId": "legal-module", "description": "Current and historical legal structure charts produced on demand."}, {"productId": "automated-report-generator", "description": "Structure charts embedded in the Master File."}]}, {"brickId": "lent", "brickName": "Legal Entity Management", "deploymentRole": "Chart rendering and document export services producing the Legal Entity Management output.", "usedInProducts": [{"productId": "legal-module", "description": "Time-stamped legal entities, shareholders, directors and authorised signatories with history."}]}, {"brickId": "icag", "brickName": "Intercompany Agreement Repository", "deploymentRole": "Chart rendering and document export services producing the Intercompany Agreement Repository output.", "usedInProducts": [{"productId": "legal-module", "description": "Intercompany agreements per transaction, inserted automatically into the documentation."}, {"productId": "automated-report-generator", "description": "Archived agreements referenced and attached in the generated Local Files."}]}, {"brickId": "docx", "brickName": "Document Rendering and Export", "deploymentRole": "Chart rendering and document export services producing the Document Rendering and Export output.", "usedInProducts": [{"productId": "automated-report-generator", "description": "Renders Word and PDF Master Files and Local Files in the client's corporate identity."}, {"productId": "legal-module", "description": "Exports structure charts and agreement documents."}]}]}]}, {"groupId": "integrations", "groupName": "Integrations", "groupType": "integration", "description": "Machine-to-machine channels: direct ERP integration, operational transfer pricing solutions, the Excel interface, DocuSign, SSO identity providers and e-mail reminders.", "channels": [{"subChannelId": "int-erp-integration", "subChannelName": "ERP Integration", "channelType": "integration", "description": "Direct integration with the client's ERP for entity financials, segmented P&L and intercompany transaction volumes.", "deployedBricks": [{"brickId": "erpi", "brickName": "ERP and Operational Transfer Pricing Integrations", "deploymentRole": "Connector, mapping and scheduled load services deployed to the ERP integration for ERP and Operational Transfer Pricing Integrations.", "usedInProducts": [{"productId": "integrations-and-data-exchange", "description": "Direct ERP integration and connectors to operational transfer pricing solutions that feed segmented financials and transactions automatically."}, {"productId": "transfer-pricing-advisory", "description": "Operational transfer pricing support that connects price setting and true-ups to the documentation data."}]}, {"brickId": "segp", "brickName": "Segmented Financials and P&L Segmentation", "deploymentRole": "Connector, mapping and scheduled load services deployed to the ERP integration for Segmented Financials and P&L Segmentation.", "usedInProducts": [{"productId": "transfer-pricing-advisory", "description": "Segmented figures used in operational transfer pricing support, year-end checks and risk reviews."}, {"productId": "integrations-and-data-exchange", "description": "Populated from direct ERP integration, operational transfer pricing solutions and Excel mass upload."}]}, {"brickId": "ictx", "brickName": "Intercompany Transactions Register", "deploymentRole": "Connector, mapping and scheduled load services deployed to the ERP integration for Intercompany Transactions Register.", "usedInProducts": [{"productId": "integrations-and-data-exchange", "description": "Receives transaction volumes and counterparties from ERP and operational transfer pricing systems."}]}]}, {"subChannelId": "int-operational-tp", "subChannelName": "Operational Transfer Pricing Solutions", "channelType": "integration", "description": "Connectors to operational transfer pricing solutions for price setting, monitoring and true-ups, so segmented results flow into the documentation model.", "deployedBricks": [{"brickId": "erpi", "brickName": "ERP and Operational Transfer Pricing Integrations", "deploymentRole": "Connector and reconciliation services deployed to the operational transfer pricing integration for ERP and Operational Transfer Pricing Integrations.", "usedInProducts": [{"productId": "integrations-and-data-exchange", "description": "Direct ERP integration and connectors to operational transfer pricing solutions that feed segmented financials and transactions automatically."}, {"productId": "transfer-pricing-advisory", "description": "Operational transfer pricing support that connects price setting and true-ups to the documentation data."}]}, {"brickId": "segp", "brickName": "Segmented Financials and P&L Segmentation", "deploymentRole": "Connector and reconciliation services deployed to the operational transfer pricing integration for Segmented Financials and P&L Segmentation.", "usedInProducts": [{"productId": "transfer-pricing-advisory", "description": "Segmented figures used in operational transfer pricing support, year-end checks and risk reviews."}, {"productId": "integrations-and-data-exchange", "description": "Populated from direct ERP integration, operational transfer pricing solutions and Excel mass upload."}]}]}, {"subChannelId": "int-excel-interface", "subChannelName": "Excel Interface", "channelType": "integration", "description": "Structured Excel upload and download with validation for clients that exchange data from spreadsheets and consolidation tools.", "deployedBricks": [{"brickId": "xlio", "brickName": "Excel Templates, Bulk Upload and Data Validation", "deploymentRole": "Upload parsing, validation and error reporting services deployed to the Excel interface for Excel Templates, Bulk Upload and Data Validation.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Excel templates, bulk entry and built-in validation included in every plan as the data exchange and validation feature."}, {"productId": "cbcr-and-public-cbcr", "description": "Bulk entry of CbCR data per constituent entity through Excel with automated validation."}, {"productId": "integrations-and-data-exchange", "description": "The Excel interface for mass upload and structured data exchange with client systems."}]}, {"brickId": "vald", "brickName": "Pre-generation Validation and Actions Required", "deploymentRole": "Upload parsing, validation and error reporting services deployed to the Excel interface for Pre-generation Validation and Actions Required.", "usedInProducts": [{"productId": "cbcr-and-public-cbcr", "description": "Automated CbCR validation with an Actions Required page before XML output."}, {"productId": "reptune-net-platform", "description": "Data validation surfaced as actions required across the model and workflow."}]}]}, {"subChannelId": "int-docusign", "subChannelName": "DocuSign E-Signature", "channelType": "integration", "description": "DocuSign connector that generates, sends, stores and tracks e-signatures on intercompany agreements and corporate documents.", "deployedBricks": [{"brickId": "esig", "brickName": "E-Signature Integration (DocuSign)", "deploymentRole": "Envelope creation, status webhook and signed-document retrieval deployed to the DocuSign integration for E-Signature Integration (DocuSign).", "usedInProducts": [{"productId": "legal-module", "description": "DocuSign integration to generate, send, store and track e-signatures on agreements."}, {"productId": "integrations-and-data-exchange", "description": "The DocuSign connector configured per client organisation."}]}, {"brickId": "icag", "brickName": "Intercompany Agreement Repository", "deploymentRole": "Envelope creation, status webhook and signed-document retrieval deployed to the DocuSign integration for Intercompany Agreement Repository.", "usedInProducts": [{"productId": "legal-module", "description": "Intercompany agreements per transaction, inserted automatically into the documentation."}]}]}, {"subChannelId": "int-sso-identity", "subChannelName": "SSO Identity Providers", "channelType": "integration", "description": "SAML and OpenID Connect single sign-on with the client's identity provider, included from Advanced and an add-on on Core.", "deployedBricks": [{"brickId": "iden", "brickName": "Identity, SSO, User Profiles and Access Control", "deploymentRole": "Federation, provisioning and access-policy services deployed to the SSO integration for Identity, SSO, User Profiles and Access Control.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Unlimited users, custom user profiles and access rights such as read-only and location-restricted."}, {"productId": "integrations-and-data-exchange", "description": "SSO with the client's identity provider, included from Advanced and an add-on on Core."}]}, {"brickId": "secp", "brickName": "Security and ISO 27001 Controls", "deploymentRole": "Federation, provisioning and access-policy services deployed to the SSO integration for Security and ISO 27001 Controls.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "ISO 27001-certified security controls applied to every client environment."}, {"productId": "integrations-and-data-exchange", "description": "Access control and security review of every external connection."}]}]}, {"subChannelId": "int-email-reminders", "subChannelName": "E-mail Reminders and Notifications", "channelType": "integration", "description": "Outbound e-mail for task assignments, deadline reminders and status notifications to tax teams, local contacts and advisers.", "deployedBricks": [{"brickId": "task", "brickName": "Task Assignment, Collaboration and Reminders", "deploymentRole": "Notification scheduling and e-mail delivery services deployed to the messaging integration for Task Assignment, Collaboration and Reminders.", "usedInProducts": [{"productId": "compliance-workflow-and-dashboard", "description": "Task assignment, collaboration and e-mail reminders for local contacts and advisers."}, {"productId": "reptune-net-platform", "description": "Workflow tasks are included in every plan with unlimited users."}, {"productId": "full-service-documentation", "description": "Keeps the client in control and informed while Reptune specialists do the work."}]}, {"brickId": "dead", "brickName": "Deadline Calculation Engine", "deploymentRole": "Notification scheduling and e-mail delivery services deployed to the messaging integration for Deadline Calculation Engine.", "usedInProducts": [{"productId": "compliance-workflow-and-dashboard", "description": "Automatically calculated deadlines for Master File, Local Files, CbCR and CbCR notifications in every country."}]}]}]}, {"groupId": "ai-runtime", "groupName": "AI Runtime", "groupType": "runtime", "description": "The runtime for the platform's AI capabilities: the R-AI assistant, the AI writing service and the machine translation engine, all grounded in the transfer pricing model and the country regulations knowledge base.", "channels": [{"subChannelId": "ai-r-ai-assistant", "subChannelName": "R-AI Assistant", "channelType": "ai-runtime", "description": "The assistant that answers onboarding and product questions in any language and, in Country Expert mode, local-requirements questions from the country regulations knowledge base.", "deployedBricks": [{"brickId": "rai", "brickName": "R-AI Assistant (Onboarding and Country Expert)", "deploymentRole": "Retrieval, prompt orchestration and answer services deployed to the AI runtime for R-AI Assistant (Onboarding and Country Expert).", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "R-AI answers onboarding and product questions in any language and, in Country Expert mode, local requirements questions."}, {"productId": "reptune-net-platform", "description": "R-AI Onboarding Assistant is included in every plan; R-AI Country Expert from Advanced."}, {"productId": "country-regulations-and-local-forms", "description": "Surfaces the country regulations knowledge base as expert answers."}]}, {"brickId": "ctry", "brickName": "Country Regulations, Local Requirements and Local Forms", "deploymentRole": "Retrieval, prompt orchestration and answer services deployed to the AI runtime for Country Regulations, Local Requirements and Local Forms.", "usedInProducts": [{"productId": "country-regulations-and-local-forms", "description": "Content, format, filing, language and threshold requirements for 170+ countries plus local forms and procedures."}, {"productId": "ai-and-machine-translation", "description": "The knowledge base behind the R-AI Country Expert (Local Requirements) answers."}, {"productId": "reptune-net-platform", "description": "Country regulations are included in every plan."}]}, {"brickId": "supp", "brickName": "Expert Support and Advisory Hours", "deploymentRole": "Retrieval, prompt orchestration and answer services deployed to the AI runtime for Expert Support and Advisory Hours.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "The 2, 4 or 8 included expert hours per year for on-demand advice."}]}]}, {"subChannelId": "ai-writing-service", "subChannelName": "AI Writing Service", "channelType": "ai-runtime", "description": "AI-assisted writing and editing inside every text field of the generator and the model.", "deployedBricks": [{"brickId": "aiwr", "brickName": "AI-assisted Writing and Editing", "deploymentRole": "Drafting, rewriting and review services deployed to the AI runtime for AI-assisted Writing and Editing.", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "AI-assisted writing and editing available in every text field."}, {"productId": "automated-report-generator", "description": "Drafts and refines custom text and functional analyses inside the generator."}]}, {"brickId": "gene", "brickName": "Master File and Local File Generator", "deploymentRole": "Drafting, rewriting and review services deployed to the AI runtime for Master File and Local File Generator.", "usedInProducts": [{"productId": "automated-report-generator", "description": "Master Files and Local Files for 170+ countries at the press of a button, in draft or final form."}]}]}, {"subChannelId": "ai-machine-translation", "subChannelName": "Machine Translation Engine", "channelType": "ai-runtime", "description": "AI-powered machine translation into 28 languages with transfer pricing glossaries and a human-certified translation hand-off.", "deployedBricks": [{"brickId": "trns", "brickName": "Machine Translation and Glossaries", "deploymentRole": "Translation, glossary enforcement and certification hand-off services deployed to the AI runtime for Machine Translation and Glossaries.", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "AI-powered machine translation into 28 languages with transfer pricing glossaries and a human-certified option."}, {"productId": "automated-report-generator", "description": "Delivers translated Local Files without losing consistency with the English master."}, {"productId": "full-service-documentation", "description": "Localisation and translation of files delivered by Reptune specialists at a fixed rate."}]}, {"brickId": "ctry", "brickName": "Country Regulations, Local Requirements and Local Forms", "deploymentRole": "Translation, glossary enforcement and certification hand-off services deployed to the AI runtime for Country Regulations, Local Requirements and Local Forms.", "usedInProducts": [{"productId": "automated-report-generator", "description": "Applies country content rules so each Local File is locally compliant out of the box."}, {"productId": "ai-and-machine-translation", "description": "The knowledge base behind the R-AI Country Expert (Local Requirements) answers."}]}]}]}, {"groupId": "internal-operations", "groupName": "Internal Operations", "groupType": "backoffice", "description": "Internal tooling for Reptune's own teams: the full-service delivery workspace used by transfer pricing specialists, the country regulations content back office, and the support and onboarding back office.", "channels": [{"subChannelId": "ops-full-service-workspace", "subChannelName": "Full Service Delivery Workspace", "channelType": "backoffice", "description": "Where Reptune specialists coordinate and prepare documentation for Full Service and Collaborative clients at fixed rates per Local File: engagement queue, data processing, generation, localisation and delivery, with the client watching progress in the workflow.", "deployedBricks": [{"brickId": "fsvc", "brickName": "Full Service Delivery Workspace", "deploymentRole": "Specialist-facing workspace UI and backing services for Full Service Delivery Workspace deployed to the internal operations back office.", "usedInProducts": [{"productId": "full-service-documentation", "description": "The workspace where Reptune specialists coordinate, prepare and deliver documentation for Full Service and Collaborative clients at fixed rates per Local File."}]}, {"brickId": "gene", "brickName": "Master File and Local File Generator", "deploymentRole": "Specialist-facing workspace UI and backing services for Master File and Local File Generator deployed to the internal operations back office.", "usedInProducts": [{"productId": "full-service-documentation", "description": "The engine Reptune specialists run to prepare documentation in about 25% of the time of traditional advisers."}]}, {"brickId": "task", "brickName": "Task Assignment, Collaboration and Reminders", "deploymentRole": "Specialist-facing workspace UI and backing services for Task Assignment, Collaboration and Reminders deployed to the internal operations back office.", "usedInProducts": [{"productId": "full-service-documentation", "description": "Keeps the client in control and informed while Reptune specialists do the work."}]}, {"brickId": "xlio", "brickName": "Excel Templates, Bulk Upload and Data Validation", "deploymentRole": "Specialist-facing workspace UI and backing services for Excel Templates, Bulk Upload and Data Validation deployed to the internal operations back office.", "usedInProducts": [{"productId": "full-service-documentation", "description": "The intake route Reptune specialists use to load client data during data processing."}]}, {"brickId": "trns", "brickName": "Machine Translation and Glossaries", "deploymentRole": "Specialist-facing workspace UI and backing services for Machine Translation and Glossaries deployed to the internal operations back office.", "usedInProducts": [{"productId": "full-service-documentation", "description": "Localisation and translation of files delivered by Reptune specialists at a fixed rate."}]}, {"brickId": "supp", "brickName": "Expert Support and Advisory Hours", "deploymentRole": "Specialist-facing workspace UI and backing services for Expert Support and Advisory Hours deployed to the internal operations back office.", "usedInProducts": [{"productId": "full-service-documentation", "description": "Support and advice around each delivered file."}, {"productId": "transfer-pricing-advisory", "description": "Consultation on value chain analysis, CbCR analysis, functional analysis, model review, policy write-up, controversy, restructurings, APAs and MAPs."}]}, {"brickId": "audt", "brickName": "Audit Trail, Versioning and Archive", "deploymentRole": "Specialist-facing workspace UI and backing services for Audit Trail, Versioning and Archive deployed to the internal operations back office.", "usedInProducts": []}]}, {"subChannelId": "ops-country-regulations-back-office", "subChannelName": "Country Regulations Content Back Office", "channelType": "backoffice", "description": "The content specialists' workspace for maintaining rule sets, thresholds, deadlines, filing formats, language requirements, localised templates, glossaries and the R-AI local-requirements knowledge base for 170+ countries.", "deployedBricks": [{"brickId": "ctry", "brickName": "Country Regulations, Local Requirements and Local Forms", "deploymentRole": "Content authoring, review and publishing UI for Country Regulations, Local Requirements and Local Forms deployed to the internal operations back office.", "usedInProducts": [{"productId": "country-regulations-and-local-forms", "description": "Content, format, filing, language and threshold requirements for 170+ countries plus local forms and procedures."}, {"productId": "ai-and-machine-translation", "description": "The knowledge base behind the R-AI Country Expert (Local Requirements) answers."}]}, {"brickId": "dead", "brickName": "Deadline Calculation Engine", "deploymentRole": "Content authoring, review and publishing UI for Deadline Calculation Engine deployed to the internal operations back office.", "usedInProducts": [{"productId": "country-regulations-and-local-forms", "description": "Deadline rules per country and filing type maintained by the content specialists."}]}, {"brickId": "tmpl", "brickName": "Templates, Report Styling and Custom Text", "deploymentRole": "Content authoring, review and publishing UI for Templates, Report Styling and Custom Text deployed to the internal operations back office.", "usedInProducts": [{"productId": "country-regulations-and-local-forms", "description": "Localised templates maintained per country by the content specialists."}]}, {"brickId": "rai", "brickName": "R-AI Assistant (Onboarding and Country Expert)", "deploymentRole": "Content authoring, review and publishing UI for R-AI Assistant (Onboarding and Country Expert) deployed to the internal operations back office.", "usedInProducts": [{"productId": "ai-and-machine-translation", "description": "R-AI answers onboarding and product questions in any language and, in Country Expert mode, local requirements questions."}, {"productId": "country-regulations-and-local-forms", "description": "Surfaces the country regulations knowledge base as expert answers."}]}, {"brickId": "cbcn", "brickName": "CbCR Notifications", "deploymentRole": "Content authoring, review and publishing UI for CbCR Notifications deployed to the internal operations back office.", "usedInProducts": [{"productId": "country-regulations-and-local-forms", "description": "Notification rules and formats maintained per country."}]}]}, {"subChannelId": "ops-support-and-onboarding", "subChannelName": "Support and Onboarding Back Office", "channelType": "backoffice", "description": "Customer success tooling for the free two-week trial, onboarding in days, client organisation and division set-up, user administration, expert-hour tracking, security reviews and audit-trail investigations.", "deployedBricks": [{"brickId": "supp", "brickName": "Expert Support and Advisory Hours", "deploymentRole": "Operator-side administration UI and services for Expert Support and Advisory Hours deployed to the internal operations back office.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "The 2, 4 or 8 included expert hours per year for on-demand advice."}, {"productId": "transfer-pricing-advisory", "description": "Consultation on value chain analysis, CbCR analysis, functional analysis, model review, policy write-up, controversy, restructurings, APAs and MAPs."}]}, {"brickId": "iden", "brickName": "Identity, SSO, User Profiles and Access Control", "deploymentRole": "Operator-side administration UI and services for Identity, SSO, User Profiles and Access Control deployed to the internal operations back office.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Unlimited users, custom user profiles and access rights such as read-only and location-restricted."}, {"productId": "integrations-and-data-exchange", "description": "SSO with the client's identity provider, included from Advanced and an add-on on Core."}]}, {"brickId": "divs", "brickName": "Divisions and Client Organisations", "deploymentRole": "Operator-side administration UI and services for Divisions and Client Organisations deployed to the internal operations back office.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Divisions for multi-group structures in the Enterprise plan; client organisations for advisory firms."}]}, {"brickId": "secp", "brickName": "Security and ISO 27001 Controls", "deploymentRole": "Operator-side administration UI and services for Security and ISO 27001 Controls deployed to the internal operations back office.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "ISO 27001-certified security controls applied to every client environment."}, {"productId": "integrations-and-data-exchange", "description": "Access control and security review of every external connection."}]}, {"brickId": "audt", "brickName": "Audit Trail, Versioning and Archive", "deploymentRole": "Operator-side administration UI and services for Audit Trail, Versioning and Archive deployed to the internal operations back office.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "Audit trail, versioning and archive of every generated file and data change."}]}, {"brickId": "rai", "brickName": "R-AI Assistant (Onboarding and Country Expert)", "deploymentRole": "Operator-side administration UI and services for R-AI Assistant (Onboarding and Country Expert) deployed to the internal operations back office.", "usedInProducts": [{"productId": "reptune-net-platform", "description": "R-AI Onboarding Assistant is included in every plan; R-AI Country Expert from Advanced."}]}]}]}]};
+    const channelRef = "web-application/web-tp-model-and-data";
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function deploymentIconFile(channel, group) {
+        const text = [
+            group && group.groupId,
+            group && group.groupName,
+            channel && channel.subChannelId,
+            channel && channel.subChannelName,
+            channel && channel.channelType
+        ].join(' ').toLowerCase();
+
+        if (text.includes('ios')) return 'app_store_ios.png';
+        if (text.includes('android') || text.includes('play store') || text.includes('play-store')) return 'app_store_android.png';
+        if (text.includes('private cloud') || text.includes('private-cloud')) return 'private_cloud.png';
+        if (text.includes('cloud') || text.includes('runtime') || text.includes('edge') || text.includes('cdn')) return 'public_cloud.png';
+        if (text.includes('saas') || text.includes('analytics') || text.includes('crm') || text.includes('datadog') || text.includes('snowflake') || text.includes('databricks') || text.includes('salesforce')) return 'saas.png';
+        return 'deployment.png';
+    }
+
+    function interfaceIconFile(iface) {
+        const text = [iface && iface.type, iface && iface.name].join(' ').toLowerCase();
+        if (text.includes('partner_api')) return 'partner_api.png';
+        if (text.includes('public_api') || text.includes('public api')) return 'public_api.png';
+        if (text.includes('api')) return 'api.png';
+        if (text.includes('mobile web')) return 'mobile_web.png';
+        if (text.includes('mobile') || text.includes('app')) return 'mobile_app.png';
+        if (text.includes('dashboard') || text.includes('cockpit')) return 'dashboard.png';
+        if (text.includes('notification')) return 'notification.png';
+        if (text.includes('search')) return 'search_engine.png';
+        if (text.includes('social')) return 'social_media.png';
+        return 'web.png';
+    }
+
+    function buildDeploymentChannelRecords() {
+        const records = [];
+        (deployment.channels || []).forEach(group => {
+            (group.channels || []).forEach(channel => {
+                records.push({
+                    ref: (group.groupId || '') + '/' + (channel.subChannelId || ''),
+                    group: group,
+                    channel: channel
+                });
+            });
+        });
+        return records;
+    }
+
+    function findCurrentRecord() {
+        return buildDeploymentChannelRecords().find(record => record.ref === channelRef) || null;
+    }
+
+    // Bricks live directly on a channel (subchannel): channel.deployedBricks.
+    function channelDeployedBricks(channel) {
+        return (channel && channel.deployedBricks) || [];
+    }
+
+    function buildChannelProductUsage(record) {
+        // Derive products from this channel's deployedBricks[].usedInProducts.
+        const productLookup = {};
+        ((products.portfolio || {}).products || []).forEach(product => {
+            productLookup[product.id] = product;
+        });
+        const byProduct = {};
+        channelDeployedBricks(record.channel).forEach(brick => {
+            (brick.usedInProducts || []).forEach(use => {
+                const pid = use.productId;
+                if (!pid) return;
+                if (!byProduct[pid]) {
+                    const product = productLookup[pid] || {};
+                    byProduct[pid] = {
+                        id: pid,
+                        name: product.name || pid,
+                        icon: product.icon || 'product.png',
+                        brickCount: 0
+                    };
+                }
+                byProduct[pid].brickCount += 1;
+            });
+        });
+        return Object.values(byProduct).sort((left, right) => left.name.localeCompare(right.name));
+    }
+
+    function renderChip(iconPath, fallbackPath, title, copy, href) {
+        let html = '';
+        if (href) html += '<a href="' + href + '" target="_blank">';
+        html += '<div class="chip">';
+        html += '<img class="chip-icon" src="' + iconPath + '" alt="' + escapeHtml(title) + '" onerror="this.onerror=null;this.src=\'' + fallbackPath + '\'">';
+        html += '<div><div class="chip-title">' + escapeHtml(title) + '</div>';
+        if (copy) html += '<div class="chip-copy">' + escapeHtml(copy) + '</div>';
+        html += '</div></div>';
+        if (href) html += '</a>';
+        return html;
+    }
+
+    function renderNavAndHeader() {
+        const current = findCurrentRecord();
+        let navHtml = '<div class="channel-nav">';
+        buildDeploymentChannelRecords().forEach(record => {
+            const fileName = deploymentIconFile(record.channel, record.group);
+            const activeClass = record.ref === channelRef ? ' active' : '';
+            navHtml += '<a class="channel-nav-link' + activeClass + '" href="' + escapeHtml(record.channel.subChannelId || '') + '.html" title="' + escapeHtml(record.channel.subChannelName || record.channel.subChannelId || 'Deployment channel') + '">';
+            navHtml += '<img class="channel-nav-icon" src="../icons/deployment/' + fileName + '" alt="' + escapeHtml(record.channel.subChannelName || record.channel.subChannelId || 'Deployment channel') + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+            navHtml += '</a>';
+        });
+        navHtml += '</div>';
+        document.getElementById('ChannelNav').innerHTML = navHtml;
+
+        if (!current) {
+            document.getElementById('Header').innerHTML = '<div class="empty-state">Deployment channel not found.</div>';
+            return;
+        }
+
+        let header = '<div class="hero-header">';
+        header += '<img class="hero-icon" src="../icons/deployment/' + deploymentIconFile(current.channel, current.group) + '" alt="' + escapeHtml(current.channel.subChannelName || current.channel.subChannelId || 'Deployment channel') + '" onerror="this.onerror=null;this.src=\'../icons/deployment/deployment.png\'">';
+        header += '<div>';
+        header += '<div class="page-type-badge" style="margin-top: 8px;">Deployment Channel</div>';
+        header += '<div class="chip-copy">' + escapeHtml(current.group.groupName || current.group.groupId || '') + ' · ' + escapeHtml(current.channel.channelType || 'channel') + '</div>';
+        header += '<div class="hero-title">' + escapeHtml(current.channel.subChannelName || current.channel.subChannelId || 'Deployment channel') + '</div>';
+        if (current.channel.description) {
+            header += '<div class="hero-subtitle">' + escapeHtml(current.channel.description) + '</div>';
+        }
+        header += '</div>';
+        header += '</div>';
+        document.getElementById('Header').innerHTML = header;
+    }
+
+    function renderHome() {
+        const current = findCurrentRecord();
+        const container = document.getElementById('tab_content_HomeTab');
+        if (!current) {
+            container.innerHTML = '<div class="empty-state">Deployment channel not found.</div>';
+            return;
+        }
+
+        const productUsage = buildChannelProductUsage(current);
+        const deployedBricks = channelDeployedBricks(current.channel);
+
+        let html = '';
+
+        const intro = [deployment.metadata && deployment.metadata.description, current.group.description, current.channel.description].filter(Boolean).join(' ');
+        if (intro) html += '<div class="deployment-copy">' + escapeHtml(intro) + '</div>';
+
+        html += '<div class="deployment-section-title">Deployed Bricks (' + deployedBricks.length + ')</div>';
+        if (deployedBricks.length) {
+            html += '<div class="chip-row">';
+            deployedBricks.forEach(brick => {
+                const productCount = (brick.usedInProducts || []).length;
+                const meta = [brick.deploymentRole || '', productCount ? 'Used in ' + productCount + (productCount === 1 ? ' product' : ' products') : ''].filter(Boolean).join(' · ');
+                html += renderChip('../../product-bricks/icons/' + escapeHtml(brick.brickId) + '.png', '../../product-bricks/icons/logo.png', brick.brickName || brick.brickId || 'Product brick', meta, '../../product-bricks/landing_pages/' + escapeHtml(brick.brickId) + '.html');
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty-state">No bricks deployed in this channel.</div>';
+        }
+
+        html += '<div class="deployment-section-title">Products Using This Channel (' + productUsage.length + ')</div>';
+        if (productUsage.length) {
+            html += '<div class="chip-row">';
+            productUsage.forEach(product => {
+                const meta = product.brickCount + (product.brickCount === 1 ? ' brick' : ' bricks');
+                html += renderChip('../icons/' + escapeHtml(product.icon), '../icons/product.png', product.name, meta, '../landing_pages/' + escapeHtml(product.id) + '.html');
+            });
+            html += '</div>';
+        } else {
+            html += '<div class="empty-state">No products currently reference this channel.</div>';
+        }
+
+        html += '<div class="deployment-section-title">Brick to Product Dependencies</div>';
+        html += '<div class="bpd-layout">';
+        html += '<div class="bpd-controls" id="BpdControls"></div>';
+        html += '<div class="bpd-graph" id="BpdGraph"></div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+        renderBrickProductDependencies(current);
+    }
+
+    // --- Brick -> Product dependency diagram (mermaid) ---
+    let bpdSelected = null; // Set of selected node ids (null = all)
+
+    function bpdNodes(record) {
+        const productLookup = {};
+        ((products.portfolio || {}).products || []).forEach(product => { productLookup[product.id] = product; });
+        const bricks = [];
+        const productMap = {};
+        const edges = [];
+        channelDeployedBricks(record.channel).forEach(brick => {
+            const uses = (brick.usedInProducts || []).filter(use => productLookup[use.productId]);
+            if (!uses.length) return;
+            const brickNodeId = 'brick:' + brick.brickId;
+            bricks.push({id: brickNodeId, name: brick.brickName || brick.brickId, type: 'brick'});
+            uses.forEach(use => {
+                const product = productLookup[use.productId];
+                const productNodeId = 'product:' + product.id;
+                if (!productMap[productNodeId]) {
+                    productMap[productNodeId] = {id: productNodeId, name: product.name || product.id, type: 'product'};
+                }
+                edges.push({source: brickNodeId, target: productNodeId});
+            });
+        });
+        // dedupe brick nodes (a brick appears once)
+        const seen = {};
+        const brickNodes = bricks.filter(n => seen[n.id] ? false : (seen[n.id] = true));
+        return {bricks: brickNodes, products: Object.values(productMap), edges: edges};
+    }
+
+    function bpdAllNodeIds(model) {
+        return model.bricks.concat(model.products).map(n => n.id);
+    }
+
+    function bpdIsSelected(id) {
+        return bpdSelected === null || bpdSelected.has(id);
+    }
+
+    function renderBrickProductDependencies(record) {
+        const model = bpdNodes(record);
+        if (bpdSelected === null) {
+            bpdSelected = new Set(bpdAllNodeIds(model));
+        }
+        renderBpdControls(model);
+        renderBpdGraph(model);
+    }
+
+    function renderBpdControls(model) {
+        const groups = [
+            {label: 'Bricks', color: '#059669', nodes: model.bricks.slice().sort((a, b) => a.name.localeCompare(b.name))},
+            {label: 'Products', color: '#ea580c', nodes: model.products.slice().sort((a, b) => a.name.localeCompare(b.name))}
+        ];
+        let html = '<div class="bpd-actions">' +
+            '<button type="button" class="pdg-action" onclick="setAllBpdNodes(true)">Show all</button>' +
+            '<button type="button" class="pdg-action" onclick="setAllBpdNodes(false)">Hide all</button>' +
+            '</div><div class="bpd-checklist">';
+        groups.forEach(group => {
+            if (!group.nodes.length) return;
+            html += '<div class="pdg-type-header">' + escapeHtml(group.label) + ' (' + group.nodes.length + ')</div>';
+            group.nodes.forEach(node => {
+                html += '<label class="pdg-check-item node" title="' + escapeHtml(node.name) + '">' +
+                    '<input type="checkbox" value="' + escapeHtml(node.id) + '"' + (bpdIsSelected(node.id) ? ' checked' : '') + ' onchange="toggleBpdNode(this.value, this.checked)">' +
+                    '<span class="pdg-swatch" style="background-color:' + group.color + '"></span>' +
+                    '<span class="label">' + escapeHtml(node.name) + '</span>' +
+                    '</label>';
+            });
+        });
+        html += '</div>';
+        document.getElementById('BpdControls').innerHTML = html;
+    }
+
+    function toggleBpdNode(id, checked) {
+        if (bpdSelected === null) {
+            bpdSelected = new Set(bpdAllNodeIds(bpdNodes(findCurrentRecord())));
+        }
+        if (checked) { bpdSelected.add(id); } else { bpdSelected.delete(id); }
+        renderBpdGraph(bpdNodes(findCurrentRecord()));
+    }
+
+    function setAllBpdNodes(selected) {
+        const model = bpdNodes(findCurrentRecord());
+        bpdSelected = selected ? new Set(bpdAllNodeIds(model)) : new Set();
+        renderBpdControls(model);
+        renderBpdGraph(model);
+    }
+
+    function bpdMermaidId(value) {
+        return 'n_' + String(value).replace(/[^a-zA-Z0-9_]/g, '_');
+    }
+
+    function bpdMermaidLabel(value) {
+        return String(value || '')
+            .replaceAll('&', 'and').replaceAll('"', '').replaceAll("'", '')
+            .replaceAll('<', '').replaceAll('>', '')
+            .replaceAll('[', '(').replaceAll(']', ')')
+            .replaceAll('{', '(').replaceAll('}', ')').replaceAll('|', '/');
+    }
+
+    function renderBpdGraph(model) {
+        const container = document.getElementById('BpdGraph');
+        if (!container) return;
+        const bricks = model.bricks.filter(n => bpdIsSelected(n.id));
+        const productsSel = model.products.filter(n => bpdIsSelected(n.id));
+        const visible = new Set(bricks.concat(productsSel).map(n => n.id));
+        const edges = model.edges.filter(e => visible.has(e.source) && visible.has(e.target));
+
+        if (typeof mermaid === 'undefined') {
+            container.innerHTML = '<div class="empty-state">Diagram library failed to load.</div>';
+            return;
+        }
+        if (!bricks.length || !productsSel.length || !edges.length) {
+            container.innerHTML = '<div class="empty-state">Select bricks and products that share dependencies to render the diagram.</div>';
+            return;
+        }
+
+        let chart = 'flowchart LR\n\n';
+        // Bricks grouped in one unnamed subgraph.
+        chart += 'subgraph bpdBricks [" "]\n';
+        bricks.forEach(node => { chart += bpdMermaidId(node.id) + '["' + bpdMermaidLabel(node.name) + '"]\n'; });
+        chart += 'end\n';
+        productsSel.forEach(node => { chart += bpdMermaidId(node.id) + '["' + bpdMermaidLabel(node.name) + '"]\n'; });
+        edges.forEach(edge => { chart += bpdMermaidId(edge.source) + ' --> ' + bpdMermaidId(edge.target) + '\n'; });
+        chart += 'classDef brickCls fill:#dcfce7,stroke:#059669,color:#065f46,stroke-width:2px;\n';
+        chart += 'classDef productCls fill:#ffedd5,stroke:#ea580c,color:#7c2d12,stroke-width:2px;\n';
+        const brickIds = bricks.map(n => bpdMermaidId(n.id));
+        const productIds = productsSel.map(n => bpdMermaidId(n.id));
+        if (brickIds.length) chart += 'class ' + brickIds.join(',') + ' brickCls;\n';
+        if (productIds.length) chart += 'class ' + productIds.join(',') + ' productCls;\n';
+
+        const renderId = 'bpd-mermaid-' + (bpdRenderCounter++);
+        Promise.resolve(mermaid.render(renderId, chart)).then(result => {
+            container.innerHTML = result.svg;
+        }).catch(() => {
+            container.innerHTML = '<div class="empty-state">Unable to render the dependency diagram.</div>';
+        });
+    }
+    let bpdRenderCounter = 0;
+</script>
+<div id="ChannelNav"></div>
+<div class="hero" id="Header"></div>
+<div class="tab">
+    <button class="tablinks active" id="tab_HomeTab" onclick="openTab('HomeTab')">Channel</button>
+</div>
+<div id="tab_content_HomeTab" class="tabcontent"></div>
+<script>
+    if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({startOnLoad: false, securityLevel: 'loose', flowchart: {htmlLabels: false}});
+    }
+    renderNavAndHeader();
+    renderHome();
+</script>
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "Transfer Pricing Compliance Platform Home"
+    },
+    {
+      "link": "../index.html",
+      "label": "Deployment Channels"
+    },
+    {
+      "label": "TP Model and Data Workspace"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+</body>
+</html>

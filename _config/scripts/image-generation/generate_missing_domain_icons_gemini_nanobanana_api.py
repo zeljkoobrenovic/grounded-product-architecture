@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import sys
 import os
 import shutil
 import subprocess
@@ -17,10 +18,14 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from generate_customer_icons_gemini_nanobanana_api import generate_icons_for_file
+
 
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[3]
 PRODUCT_DOMAINS_DIR = REPO_ROOT / "_config" / "product-domains"
+sys.path.insert(0, str(REPO_ROOT / "_wiring"))
+from domain_paths import discover_domain_dirs, resolve_domain_dir
 DEFAULT_MODEL = "gemini-3-pro-image-preview"
 API_URL_TEMPLATE = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
@@ -57,7 +62,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--json-only",
         action="store_true",
-        help="Update customer icon references only, without calling the API.",
+        help="Update icon references only, without calling the API; customer portraits must already exist.",
+    )
+    parser.add_argument(
+        "--skip-customer-icons",
+        action="store_true",
+        help="Leave customer portraits to the dedicated generator; still process customer KPI icons.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Print actions without writing files.")
     parser.add_argument(
@@ -305,10 +315,9 @@ def postprocess_icon_bytes(image_bytes: bytes) -> bytes:
 
 
 def list_domains(domain_filter: str | None) -> list[Path]:
-    domains = sorted(path for path in PRODUCT_DOMAINS_DIR.iterdir() if path.is_dir())
     if domain_filter:
-        domains = [path for path in domains if path.name == domain_filter]
-    return domains
+        return [resolve_domain_dir(domain_filter, PRODUCT_DOMAINS_DIR)]
+    return discover_domain_dirs(PRODUCT_DOMAINS_DIR)
 
 
 def normalize_icon_filename(value: str | None, fallback_stem: str) -> str:
@@ -470,25 +479,6 @@ def call_gemini_nanobanana_api(api_key: str, prompt: str, model: str) -> bytes:
 
     extra = f" Text parts: {' | '.join(text_parts)}" if text_parts else ""
     raise RuntimeError(f"Gemini response did not contain inline image data.{extra} Payload: {payload}")
-
-
-def build_customer_prompt(domain_name: str, domain_description: str, customer: dict[str, Any]) -> str:
-    jobs = customer.get("jobsToBeDone") or []
-    top_jobs = [job.get("name", "") for job in jobs[:3] if isinstance(job, dict)]
-    return f"""
-Create a clean square product-strategy persona icon.
-
-Customer: {customer.get("name", "")}
-
-Icon requirements:
-- A minimalist icon in a clean, professional line-art style, no text. 
-- No text, or labels.
-- No borders or frames. 
-- The design features bold, consistent black outlines with rounded stroke ends. 
-- Use thick, uniform line weights and simple geometric shapes. 
-- No shading, no gradients, and no colors—only high-contrast black and white vector-style graphics. 
-
-""".strip()
 
 
 def build_kpi_prompt(
@@ -668,6 +658,13 @@ def main() -> int:
 
         customers_json_path = domain_dir / "customers" / "customers.json"
         if customers_json_path.exists():
+            customer_json_changed = False
+            if not args.skip_customer_icons:
+                generated, customer_json_changed = generate_icons_for_file(
+                    customers_json_path, args, api_key, total_generated
+                )
+                total_generated += generated
+            # Reload after the portrait generator saves customer icon references.
             payload = load_json(customers_json_path)
             original_text = json.dumps(payload, indent=2, ensure_ascii=False)
             json_changed = False
@@ -679,23 +676,6 @@ def main() -> int:
                         if not isinstance(customer, dict):
                             continue
                         customer_id = str(customer.get("id") or "customer")
-                        filename = normalize_icon_filename(customer.get("icon"), customer_id)
-                        if customer.get("icon") != filename:
-                            customer["icon"] = filename
-                            json_changed = True
-                        icon_path = customers_json_path.parent / "icons" / filename
-                        if icon_path not in processed_icon_paths:
-                            processed_icon_paths.add(icon_path)
-                            prompt = build_customer_prompt(domain_name, domain_description, customer)
-                            if generate_icon(
-                                api_key=api_key,
-                                prompt=prompt,
-                                path=icon_path,
-                                args=args,
-                                generated_count=total_generated,
-                            ):
-                                total_generated += 1
-
                         for kpi_scope, kpi_node in iter_kpi_nodes(customer):
                             kpi_id = str(kpi_node.get("id") or slugify(str(kpi_node.get("name") or "kpi")))
                             filename = normalize_icon_filename(
@@ -727,7 +707,8 @@ def main() -> int:
             updated_text = json.dumps(payload, indent=2, ensure_ascii=False)
             if json_changed or updated_text != original_text:
                 dump_json(customers_json_path, payload, args.dry_run)
-                total_json_updates += 1
+                customer_json_changed = True
+            total_json_updates += int(customer_json_changed)
 
         product_bricks_path = domain_dir / "product-bricks" / "product-bricks.json"
         if product_bricks_path.exists():

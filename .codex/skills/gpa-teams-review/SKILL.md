@@ -7,20 +7,22 @@ description: "Use in the Productscape project when reviewing `_config/product-do
 
 ## Purpose
 
-Review the operating model for a Productscape product domain. The goal is to identify ownership gaps, unrealistic team design, staffing imbalance, weak charters, and broken cross-model relationships in `_config/product-domains/<domain>/REVIEW.md` before an editing pass changes `_config/product-domains/<domain>/teams/teams.json`.
+Review the operating model for a Productscape product domain. The goal is to identify ownership gaps, unrealistic team design, staffing imbalance, weak charters, and broken cross-model relationships in `_config/product-domains/<group>/<domain>/REVIEW.md` before an editing pass changes `_config/product-domains/<group>/<domain>/teams/teams.json`.
+
+Resolve the domain ID with `_wiring/domain_paths.py` to find its current group. Group names can change; keep reviews in the resolved domain folder.
 
 ## Source Files
 
 Read these files before forming conclusions:
 
-- `_config/product-domains/<domain>/teams/teams.json`.
-- `_config/product-domains/<domain>/product-bricks/product-bricks.json`.
-- `_config/product-domains/<domain>/product-bricks/product-stream.json`.
-- `_config/product-domains/<domain>/customers/customers.json`.
-- `_config/product-domains/<domain>/customers/insights.json` when present.
-- `_config/product-domains/<domain>/customers/links.json` when present.
-- `_config/product-domains/<domain>/product-deployments/*.json` when present.
-- `_config/product-domains/<domain>/data/data-assets.json` when team ownership or stewardship is modeled.
+- `_config/product-domains/<group>/<domain>/teams/teams.json`.
+- `_config/product-domains/<group>/<domain>/product-bricks/product-bricks.json`.
+- `_config/product-domains/<group>/<domain>/product-bricks/product-stream.json`.
+- `_config/product-domains/<group>/<domain>/customers/customers.json`.
+- `_config/product-domains/<group>/<domain>/customers/insights.json` when present.
+- `_config/product-domains/<group>/<domain>/customers/links.json` when present.
+- `_config/product-domains/<group>/<domain>/product-deployments/*.json` when present.
+- `_config/product-domains/<group>/<domain>/data/data-assets.json` when team ownership or stewardship is modeled.
 
 Use `scripts/validate-domain-model.py <domain>` for deterministic reference checks when useful, but do not limit the review to validator output.
 
@@ -33,11 +35,11 @@ Do not review product-brick or stream `*-evidence.json` files in this skill.
 3. Cross-check team missions against customer groups, KPIs, streams, product deployments, data assets, and strategy priorities.
 4. Review team topology and staffing for realism: a team should be able to own, evolve, and operate its surfaces.
 5. Produce edit-ready feedback without changing source files except `REVIEW.md` unless explicitly asked.
-6. Write the review to `_config/product-domains/<domain>/REVIEW.md` under a `## Teams Review` section.
+6. Write the review to `_config/product-domains/<group>/<domain>/REVIEW.md` under a `## Teams Review` section.
 
 ## Review Storage
 
-- Create `_config/product-domains/<domain>/REVIEW.md` if it does not exist.
+- Create `_config/product-domains/<group>/<domain>/REVIEW.md` if it does not exist.
 - If the file exists, update only the `## Teams Review` section and preserve other sections, especially `## Product Domain Review` and `## Product Bricks Review`.
 - If the file has no title, add `# <domain-id> Review` at the top.
 - Include an `Updated: YYYY-MM-DD` line inside the `## Teams Review` section.
@@ -98,7 +100,7 @@ Do not review product-brick or stream `*-evidence.json` files in this skill.
 
 ## Output Format
 
-Write the review to `_config/product-domains/<domain>/REVIEW.md`:
+Write the review to `_config/product-domains/<group>/<domain>/REVIEW.md`:
 
 1. `Operating-model assessment`: 3-6 bullets on realism, clarity, and biggest risks.
 2. `Ownership findings`: orphaned, overloaded, duplicated, or poorly matched ownership.

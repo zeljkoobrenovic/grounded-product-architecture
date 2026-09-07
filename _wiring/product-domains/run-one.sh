@@ -9,7 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 domain_id="${1:?Usage: ./run-one.sh <domain-id>}"
-config="../../_config/product-domains/${domain_id}/start/config.json"
+domain_dir="$(python3 ../domain_paths.py resolve "$domain_id")"
+config="$domain_dir/start/config.json"
 
 if [[ ! -f "$config" ]]; then
   echo "No such domain config: $config" >&2

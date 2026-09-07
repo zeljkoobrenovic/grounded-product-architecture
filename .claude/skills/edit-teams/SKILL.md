@@ -1,6 +1,6 @@
 ---
 name: edit-teams
-description: "Create or edit the team and org model for a product domain: org design, team groups, individual teams, team types (stream-aligned/platform/enabling/complicated-subsystem/other), team descriptions, customer/stream/brick/team dependencies, and headcount in _config/product-domains/<domain>/teams/teams.json. Use when adding a team, restructuring org groups, wiring brick/customer dependencies, or sizing teams. Keeps team IDs consistent with brick ownership and data-asset ownership."
+description: "Create or edit the team and org model for a product domain: org design, team groups, individual teams, team types (stream-aligned/platform/enabling/complicated-subsystem/other), team descriptions, customer/stream/brick/team dependencies, and headcount in _config/product-domains/<group>/<domain>/teams/teams.json. Use when adding a team, restructuring org groups, wiring brick/customer dependencies, or sizing teams. Keeps team IDs consistent with brick ownership and data-asset ownership."
 ---
 
 # Edit Teams

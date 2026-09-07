@@ -1,6 +1,6 @@
 ---
 name: edit-competition
-description: "Create or edit the competitive landscape for a product domain: competitor players, their category, HQ, regions, descriptions, sourced business stats with official URLs, and official links in _config/product-domains/<domain>/business/competition.json. Use when adding a competitor, updating market positioning, or refreshing business metrics. Every business stat must carry an official source URL and reported scope — no invented metrics."
+description: "Create or edit the competitive landscape for a product domain: competitor players, their category, HQ, regions, descriptions, sourced business stats with official URLs, and official links in _config/product-domains/<group>/<domain>/business/competition.json. Use when adding a competitor, updating market positioning, or refreshing business metrics. Every business stat must carry an official source URL and reported scope — no invented metrics."
 ---
 
 # Edit Competition

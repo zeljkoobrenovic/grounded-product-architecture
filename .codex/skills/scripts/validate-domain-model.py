@@ -5,6 +5,10 @@ import re
 import sys
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO_ROOT / '_wiring'))
+from domain_paths import discover_domain_dirs, resolve_domain_dir
+
 
 LOWER_ID_RE = re.compile(r'^[a-z0-9][a-z0-9._:-]*$')
 PRODUCT_BRICK_LAYER_IDS = {'ui', 'interfaces', 'worker', 'stateless-service', 'service', 'integration'}
@@ -384,14 +388,15 @@ def main():
     parser.add_argument('domains', nargs='*', help='Domain IDs to validate.')
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parents[3]
-    domains_root = repo_root / '_config' / 'product-domains'
-    if args.domains:
-        domain_dirs = [domains_root / domain for domain in args.domains]
-    elif args.all:
-        domain_dirs = sorted(path for path in domains_root.iterdir() if path.is_dir() and not path.name.startswith('_') and any(path.rglob('*.json')))
-    else:
-        parser.error('pass one or more domain IDs, or use --all for a full repository scan')
+    try:
+        if args.domains:
+            domain_dirs = [resolve_domain_dir(domain) for domain in args.domains]
+        elif args.all:
+            domain_dirs = discover_domain_dirs()
+        else:
+            parser.error('pass one or more domain IDs, or use --all for a full repository scan')
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
 
     all_errors = []
     summaries = []

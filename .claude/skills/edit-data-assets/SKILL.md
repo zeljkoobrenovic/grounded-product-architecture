@@ -1,6 +1,6 @@
 ---
 name: edit-data-assets
-description: "Create or edit data assets for a product domain: logical data objects, their classification, personal-data level, legal tags, security criticality, governance (retention/residency/sharing), backing stores, interfaces, and team ownership in _config/product-domains/<domain>/data/data-assets.json. Use when adding a data asset, setting data governance/classification, defining stores, or wiring asset ownership and derivations. Keeps asset IDs consistent with product-brick dataDependencies."
+description: "Create or edit data assets for a product domain: logical data objects, their classification, personal-data level, legal tags, security criticality, governance (retention/residency/sharing), backing stores, interfaces, and team ownership in _config/product-domains/<group>/<domain>/data/data-assets.json. Use when adding a data asset, setting data governance/classification, defining stores, or wiring asset ownership and derivations. Keeps asset IDs consistent with product-brick dataDependencies."
 ---
 
 # Edit Data Assets

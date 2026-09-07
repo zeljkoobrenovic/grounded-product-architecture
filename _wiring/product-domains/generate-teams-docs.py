@@ -4,6 +4,8 @@ import shutil
 
 from domain_cli import load_domain_args
 from generator_common import (
+    domain_docs_path,
+    domain_source_path,
     build_customers_lookup,
     copy_icons,
     enter_docs_root,
@@ -24,8 +26,7 @@ enter_docs_root()
 
 date_string = today_string()
 
-domains_root = '../../_config/product-domains/'
-templates_root = '../../_templates/teams/'
+templates_root = '../_templates/teams/'
 domain, _ = load_domain_args()
 
 common_style = open(templates_root + '../_imports/common/style.html').read()
@@ -229,16 +230,16 @@ def create_landing_pages(domain, docs_folder, teams_payload):
 
 
 domain_id = domain['id']
-teams_path = domains_root + domain_id + '/teams/teams.json'
+teams_path = domain_source_path(domain_id, 'teams/teams.json')
 if not os.path.exists(teams_path):
     raise SystemExit(f"Missing teams config for domain '{domain_id}'")
 
 teams_payload = json.load(open(teams_path))
 org_design = apply_shared_defaults(teams_payload.setdefault('orgDesign', {}), 'team-model.json', ('teamTypes', 'teamDependencyTypes'))
 
-customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
-bricks = load_product_bricks_payload(domains_root + domain_id + '/product-bricks/product-bricks.json')
-streams_payload = load_product_streams_payload(domains_root + domain_id + '/product-bricks/product-stream.json')
+customers = load_json_if_exists(domain_source_path(domain_id, 'customers/customers.json'), [])
+bricks = load_product_bricks_payload(domain_source_path(domain_id, 'product-bricks/product-bricks.json'))
+streams_payload = load_product_streams_payload(domain_source_path(domain_id, 'product-bricks/product-stream.json'))
 
 customers_lookup, _ = build_customers_lookup(customers)
 bricks_lookup = build_bricks_lookup(bricks)
@@ -261,6 +262,6 @@ enriched_payload = {
     ),
 }
 
-docs_folder = domain_id + '/teams/'
+docs_folder = domain_docs_path(domain_id, 'teams') + '/'
 create_overview_docs(domain, docs_folder, enriched_payload)
 create_landing_pages(domain, docs_folder, enriched_payload)

@@ -167,14 +167,14 @@
             padding: 12px;
             background-color: white;
             box-shadow: rgba(0, 0, 0, 0.05) 0 1px 3px;
-            width: 290px;
+            width: 320px;
             text-align: left;
         }
 
         .customer-card-photo {
             display: block;
-            width: 120px;
-            height: 120px;
+            width: 290px;
+            height: 290px;
             object-fit: contain;
             margin: 4px auto 10px;
         }
@@ -204,7 +204,7 @@
         }
 
         .customer-attribute-body {
-            border-left: 1px dashed #d1d5db;
+            min-width: 0;
             padding-left: 6px;
         }
 
@@ -217,10 +217,106 @@
         }
 
         .customer-attribute-item {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            overflow-wrap: anywhere;
             font-size: 13px;
             color: #374151;
             margin-top: 3px;
-            margin-bottom: 3px;
+            margin-bottom: 13px;
+        }
+
+        .visual-overview-wrap {
+            margin: 12px;
+            overflow-x: auto;
+        }
+
+        .visual-overview-table {
+            width: 100%;
+            min-width: 720px;
+            table-layout: fixed;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .visual-overview-table th,
+        .visual-overview-table td {
+            padding: 14px;
+            border: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+
+        .visual-overview-table thead th {
+            background: var(--surface);
+        }
+
+        .visual-overview-table thead th:first-child {
+            width: 20%;
+        }
+
+        .visual-overview-table tbody th a {
+            color: var(--accent-ink);
+        }
+
+        .visual-overview-customer-icon {
+            display: block;
+            width: 164px;
+            height: 164px;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+
+        .visual-overview-table a:hover,
+        .visual-overview-table a:focus-visible {
+            text-decoration: underline;
+        }
+
+        .visual-overview-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .visual-overview-item {
+            flex: 0 1 168px;
+            min-width: 0;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .visual-overview-item-name {
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .visual-overview-image-link {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .visual-overview-image {
+            display: block;
+            width: 100%;
+            height: 112px;
+            box-sizing: border-box;
+            object-fit: contain;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--panel);
+        }
+
+        .visual-overview-image-link:hover .visual-overview-image,
+        .visual-overview-image-link:focus-visible .visual-overview-image {
+            border-color: var(--accent-ink);
+        }
+
+        .visual-overview-empty {
+            color: var(--muted);
+            font-size: 13px;
         }
 
         .insight-grid {
@@ -412,6 +508,7 @@
 
 <div class="tab">
     <button class="tablinks active" id="tab_customers" onclick="openTab('customers')">Customers</button>
+    <button class="tablinks" id="tab_visual-overview" onclick="openTab('visual-overview')">Visual Overview</button>
     <button class="tablinks" id="tab_relations" onclick="openTab('relations')">Relations</button>
     <button class="tablinks" id="tab_insights" onclick="openTab('insights')">Insights</button>
     <button class="tablinks" id="tab_links" onclick="openTab('links')">Links</button>
@@ -426,6 +523,7 @@
         </div>
         <div id="CustomerCards"></div>
     </div>
+    <div id="tab_content_visual-overview" class="tabcontent"></div>
     <div id="tab_content_relations" class="tabcontent"></div>
     <div id="tab_content_insights" class="tabcontent"></div>
     <div id="tab_content_links" class="tabcontent"></div>
@@ -553,11 +651,10 @@
     function renderAttribute(iconFile, label, items) {
         if (!items || !items.length) return '';
         let html = '<div class="customer-attribute">';
-        html += '<img class="customer-attribute-icon" src="icons/' + escapeHtml(iconFile) + '" onerror="this.onerror=null;this.src=\'icons/logo.png\'">';
         html += '<div class="customer-attribute-body">';
         html += '<div class="customer-attribute-label">' + escapeHtml(label) + '</div>';
         items.forEach(item => {
-            html += '<div class="customer-attribute-item">' + escapeHtml(item) + '</div>';
+            html += '<div class="customer-attribute-item" title="' + escapeHtml(item) + '">' + escapeHtml(item) + '</div>';
         });
         html += '</div></div>';
         return html;
@@ -610,8 +707,6 @@
                     html += '</div>';
                 }
                 html += renderAttribute('care.png', 'Care about', customer.careAbout);
-                html += renderAttribute('win.png', 'Wins them', customer.winsThem);
-                html += renderAttribute('fear.png', 'Their fear', customer.theirFear);
                 html += '</div></a>';
             });
             html += '</div>';
@@ -630,6 +725,54 @@
 
     function update() {
         renderCustomers();
+    }
+
+    function renderOverviewItems(items, emptyMessage) {
+        if (!items || !items.length) {
+            return '<div class="visual-overview-empty">' + escapeHtml(emptyMessage) + '</div>';
+        }
+        let html = '<div class="visual-overview-items">';
+        items.forEach(item => {
+            const name = item.name || item.id || '';
+            // Summary images belong to the job or journey itself, not its steps or stages.
+            const images = (item.media || []).filter(media => media && media.type === 'image' && media.src);
+            html += '<div class="visual-overview-item">';
+            html += '<div class="visual-overview-item-name">' + escapeHtml(name) + '</div>';
+            images.forEach(media => {
+                const src = escapeHtml(media.src);
+                const label = 'Open summary image for ' + name + ' in a new tab';
+                html += '<a class="visual-overview-image-link" href="' + src + '" target="_blank" rel="noopener noreferrer"' +
+                    ' aria-label="' + escapeHtml(label) + '" title="' + escapeHtml(media.title || label) + '">';
+                html += '<img class="visual-overview-image" src="' + src + '" alt="' + escapeHtml(media.alt || name + ' summary') +
+                    '" loading="lazy" decoding="async"></a>';
+            });
+            if (!images.length) {
+                html += '<div class="visual-overview-empty">No summary image available.</div>';
+            }
+            html += '</div>';
+        });
+        return html + '</div>';
+    }
+
+    function renderVisualOverview() {
+        const container = document.getElementById('tab_content_visual-overview');
+        if (!customerCount) {
+            container.innerHTML = '<div class="customer-search-empty">No customers defined for this domain yet.</div>';
+            return;
+        }
+        let html = '<div class="visual-overview-wrap"><table class="visual-overview-table" aria-label="Customer jobs and journey visual overview">';
+        html += '<thead><tr><th scope="col">Customer</th><th scope="col">Jobs to be done</th><th scope="col">Customer journeys</th></tr></thead><tbody>';
+        customers.forEach(group => {
+            (group.customers || []).forEach(customer => {
+                html += '<tr><th scope="row"><a href="landing_pages/' + escapeHtml(customer.id) + '.html">';
+                html += '<img class="visual-overview-customer-icon" src="icons/' + escapeHtml(customer.icon || 'customer.png') +
+                    '" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'icons/customer.png\'">';
+                html += escapeHtml(customer.name) + '</a></th>';
+                html += '<td>' + renderOverviewItems(customer.jobsToBeDone, 'No jobs to be done defined.') + '</td>';
+                html += '<td>' + renderOverviewItems(customer.customerJourneyStories, 'No customer journeys defined.') + '</td></tr>';
+            });
+        });
+        container.innerHTML = html + '</tbody></table></div>';
     }
 
     function renderInsights() {
@@ -896,6 +1039,7 @@
     }
 
     update();
+    renderVisualOverview();
     renderRelations();
     renderInsights();
     renderLinks();

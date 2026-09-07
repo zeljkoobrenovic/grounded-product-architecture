@@ -1,6 +1,6 @@
 Use `<DOMAIN-LINK>` as the target company, organization, product, or source link for the domain-definition task. Infer the most suitable product domain from that target and from public evidence.
 
-Create a new product domain under `_config/product-domains/` for a business domain in which `<DOMAIN-LINK>` operates.
+Create a new product domain under `_config/product-domains/<group>/<domain-id>/` for a business domain in which `<DOMAIN-LINK>` operates. Choose an appropriate existing group or create a new group; never put a domain directly under `_config/product-domains/`. Group names can change, while domain IDs must remain globally unique across groups.
 
 ## Skill-Driven Workflow
 
@@ -113,7 +113,7 @@ Before calling the work complete:
 
 ## Expected Output
 
-- A new folder in `_config/product-domains/<new-domain-id>/`.
+- A new folder in `_config/product-domains/<group>/<new-domain-id>/`.
 - All appropriate subfolders and source files expected for a mature domain of this type.
 - Realistic seed data across relevant JSON files.
 - A sourced `business/competition.json` file for the domain.

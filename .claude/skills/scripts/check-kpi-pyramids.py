@@ -12,9 +12,14 @@ Verifies, for every persona's customerOutcomes/businessOutcomes pyramid:
 Exit code 0 = clean, 1 = problems (printed).
 """
 import json, sys, os
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO_ROOT / '_wiring'))
+from domain_paths import resolve_domain_dir
 
 def main(dom):
-    base = os.path.join('_config', 'product-domains', dom, 'customers')
+    base = resolve_domain_dir(dom) / 'customers'
     d = json.load(open(os.path.join(base, 'customers.json')))
     ins_path = os.path.join(base, 'insights.json')
     ins = json.load(open(ins_path)) if os.path.exists(ins_path) else {'items': []}

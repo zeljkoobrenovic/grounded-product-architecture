@@ -5,6 +5,8 @@ from pathlib import Path
 import sys
 import os as _os
 sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'product-domains'))
+sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..'))
+from domain_paths import list_domain_files
 from product_bricks_support import normalize_product_brick_metadata, normalize_product_brick_root_groups
 
 
@@ -30,7 +32,7 @@ def migrate_payload(payload):
 
 def main():
     updated = 0
-    for path in sorted(PRODUCT_BRICKS_ROOT.glob('*/product-bricks/product-bricks.json')):
+    for path in list_domain_files('product-bricks/product-bricks.json', domains_root=PRODUCT_BRICKS_ROOT):
         payload = json.loads(path.read_text())
         migrated = migrate_payload(payload)
         migrated_text = json.dumps(migrated, indent=2) + '\n'

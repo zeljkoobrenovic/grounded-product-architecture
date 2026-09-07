@@ -1,17 +1,19 @@
 """Shared helpers for the product-domain doc generators.
 
-Every generator chdirs into docs/product-domains (enter_docs_root) and works
-with repo-relative paths from there. Helpers here are extracted verbatim from
-the generators; keep them behavior-identical unless fixing a real bug, since
+Every generator chdirs into docs/ (enter_docs_root) and works
+with repo-relative template paths from there. Source-domain paths are resolved
+through the shared group discovery helper. Keep rendering behavior stable since
 generated output is diffed against the committed docs tree.
 """
 import datetime
 import json
 import os
 import shutil
+import sys
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-DOMAINS_ROOT = '../../_config/product-domains/'
+sys.path.insert(0, os.path.join(REPO_ROOT, '_wiring'))
+from domain_paths import domain_docs_path, domain_source_path
 
 CUSTOMER_ICON_MAP = {
     'house-search': 'seeker.png',
@@ -21,7 +23,9 @@ CUSTOMER_ICON_MAP = {
 
 
 def enter_docs_root():
-    os.chdir(os.path.join(REPO_ROOT, 'docs', 'product-domains'))
+    docs_root = os.path.join(REPO_ROOT, 'docs')
+    os.makedirs(docs_root, exist_ok=True)
+    os.chdir(docs_root)
 
 
 def today_string():

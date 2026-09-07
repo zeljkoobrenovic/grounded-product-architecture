@@ -14,7 +14,7 @@ _config/**  (JSON source of truth)  +  _templates/**  (HTML)  --Python in _wirin
 
 ## Generating the site
 
-All product-domain generators run from `_wiring/product-domains/` and take three positional args (`domain_id`, `domain_name`, `domain_description`). The wrapper script discovers every domain from `_config/product-domains/*/start/config.json` and defines the generator order:
+All product-domain generators run from `_wiring/product-domains/` and take three positional args (`domain_id`, `domain_name`, `domain_description`). The wrapper script discovers every domain from `_config/product-domains/*/*/start/config.json` and defines the generator order:
 
 ```bash
 cd _wiring/product-domains
@@ -28,13 +28,13 @@ cd _wiring/product-domains
 python3 generate-customers-docs.py ride-sharing-marketplace "Ride Sharing Marketplace" "Description..."
 ```
 
-Generator order matters and is fixed in `run.sh`: `generate-start-docs` -> `customers` -> `products` -> `product-bricks` -> `teams` -> `competition`. Each generator `chdir`s into `docs/product-domains/` and resolves config/template paths relative to the repo root via `domain_cli.load_domain_args()`.
+Generator order matters and is fixed in `run.sh`: `generate-start-docs` -> `customers` -> `products` -> `product-bricks` -> `teams` -> `competition`. Each generator `chdir`s into `docs/` and resolves config/template paths relative to the repo root via `domain_cli.load_domain_args()`.
 
 There is no test suite, linter config, or package manifest. Validation is: run the generator and inspect the produced HTML under `docs/`.
 
 ## Generating product-domain images
 
-Source image generators live under `_config/scripts/image-generation/`. Unlike the static-site generators, they write images into the relevant `_config/product-domains/<domain>/.../media/` folders and may update source JSON `media` references; they do not regenerate `docs/`.
+Source image generators live under `_config/scripts/image-generation/`. Unlike the static-site generators, they write images into the relevant `_config/product-domains/<group>/<domain>/.../media/` folders and may update source JSON `media` references; they do not regenerate `docs/`.
 
 The domain wrapper uses Gemini for JTBD, journey, customer-relation, domain-icon, and residuality images:
 
@@ -53,7 +53,9 @@ Prefer an individual generator with `--dry-run` when validating scope. See `_con
 
 ## Adding or registering a domain
 
-1. Create `_config/product-domains/<lowercase-slug>/` following an existing domain (use `ride-sharing-marketplace` as the structural reference).
+Always create domains inside a group. Group names are discovered dynamically; adding or renaming a group requires no script changes. Domain IDs must be globally unique across groups. The root-level `_config/product-domains/start/` folder holds shared navigation and is excluded from domain discovery. Generated pages follow their source group under `docs/<group>/<domain-id>/`, and commands continue to take the bare domain ID.
+
+1. Create `_config/product-domains/<group>/<lowercase-slug>/` following an existing domain (use `ride-sharing-marketplace` as the structural reference).
 2. Create `start/config.json` with `id`, `name`, and `description` — that registers the domain; `run.sh` discovers every domain from the config tree (use `./run-one.sh <domain-id>` to regenerate just one).
 3. Regenerate from `_wiring/product-domains/`.
 
@@ -61,7 +63,7 @@ The prompt scaffold for a new domain lives at `_config/_prompts/customers/NEW-DO
 
 ## Domain config layout
 
-Inside `_config/product-domains/<domain>/`:
+Inside `_config/product-domains/<group>/<domain>/`:
 
 - `_domain/DOMAIN.md` — narrative domain brief
 - `customers/customers.json` — customer groups, personas, JTBDs, KPI pyramids, strategy horizons (+ `insights.json`, optional `links.json` external reference links, `icons/`, `media/`)
@@ -75,13 +77,17 @@ Inside `_config/product-domains/<domain>/`:
 
 ## Generator architecture
 
+`_wiring/domain_paths.py` is the shared source discovery and resolution helper. Use `discover_domain_dirs()`, `resolve_domain_dir(domain_id)`, or `list_domain_files(relative_path, domain_filter)` for grouped sources; do not assemble source paths by appending a domain ID to the root. Its CLI supports `python3 _wiring/domain_paths.py list` and `python3 _wiring/domain_paths.py resolve <domain-id>`.
+
+Use `domain_docs_path(domain_id, ...)` for paths relative to `docs/`. After changing source groups, regenerate the domain pages and run `python3 _wiring/generate-start-apps-docs.py` to update package launchers. Source app links and icons are package-relative (`../../<group>/<domain-id>/...`); the package generator resolves the domain's current group.
+
 Shared Python modules in `_wiring/product-domains/` (import these rather than re-implementing):
 
 - `domain_cli.py` — arg parsing; every generator calls `load_domain_args()`
 - `product_bricks_support.py` — product-brick layer model (`PRODUCT_BRICK_LAYER_ORDER`: ui → interfaces → worker → stateless-service → service → integration) and labels/descriptions
 - `generator_common.py` — shared generator helpers: `enter_docs_root()`, JSON loading, icon/media copying, breadcrumb rendering, `normalize_icon_name`, group-tree iteration, customers/KPI lookups. Import these rather than re-implementing per generator.
 
-Templates live in `_templates/<area>/` with shared partials under `_templates/_imports/` (e.g. `tabs/`, `breadcrumbs/`, `common/`). Generators read template HTML and substitute `${key}` placeholders. Output for each area is fully rebuilt: generators `shutil.rmtree` the target docs folder before regenerating, so do not hand-edit files under `docs/product-domains/`.
+Templates live in `_templates/<area>/` with shared partials under `_templates/_imports/` (e.g. `tabs/`, `breadcrumbs/`, `common/`). Generators read template HTML and substitute `${key}` placeholders. Output for each area is fully rebuilt: generators `shutil.rmtree` the target docs folder before regenerating, so do not hand-edit files under `docs/<group>/<domain-id>/`.
 
 ## Evidence database & explorer
 

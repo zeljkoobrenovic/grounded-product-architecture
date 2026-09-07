@@ -2,9 +2,11 @@
 
 This folder contains source-first scripts that scan product-domain models, generate supporting imagery, save files beside the relevant source JSON, and update media references when needed.
 
+Sources live in `_config/product-domains/<group>/<domain-id>/`. All image scripts discover groups through `_wiring/domain_paths.py`; group names can change without script edits. `--domain` and the wrapper take the bare domain ID, for example `--domain ride-sharing-marketplace`. Domain IDs must be unique across groups. The shared root-level `start/` folder is excluded from discovery.
+
 ## What It Does
 
-- finds every `_config/product-domains/<domain-id>/customers/customers.json`
+- finds every `_config/product-domains/<group>/<domain-id>/customers/customers.json`
 - reads every customer plus:
   - `jobsToBeDone` and their steps
   - `customerJourneyStories` and their stages
@@ -17,6 +19,7 @@ This folder contains source-first scripts that scan product-domain models, gener
 - writes image files into `customers/media/`
 - patches `media` entries in JSON if missing or stale
 - supports `--lightweight` JTBD and journey runs that create only job/journey overviews, without creating step/stage targets or media references
+- generates one rich, square customer-role portrait per customer in the same colored cartoon style as the customer-relations overview, saves it in `customers/icons/`, and updates the existing `icon` field
 - generates one Gemini Nano Banana illustration for every residuality stressor, writes it into `residuality/media/`, and patches the stressor's `media` entry
 
 ## Requirements
@@ -26,11 +29,28 @@ This folder contains source-first scripts that scan product-domain models, gener
 - `GEMINI_API_KEY` or `GOOGLE_API_KEY` for the Gemini Nano Banana script
 - outbound network access when you actually run the script
 
-The script uses only Python's standard library. No extra package install is required.
+The API scripts use only Python's standard library. The general missing-domain-icon generator also needs `ffmpeg` and `ffprobe` for monochrome icon post-processing. The dedicated customer portrait generator preserves the returned image directly and does not need those tools.
 
 ## Usage
 
 From the repository root:
+
+Rich customer icons via Gemini Nano Banana API:
+
+```bash
+export GEMINI_API_KEY=...
+python3 _config/scripts/image-generation/generate_customer_icons_gemini_nanobanana_api.py --domain ride-sharing-marketplace --dry-run
+python3 _config/scripts/image-generation/generate_customer_icons_gemini_nanobanana_api.py --domain ride-sharing-marketplace --limit 2
+python3 _config/scripts/image-generation/generate_customer_icons_gemini_nanobanana_api.py --domain ride-sharing-marketplace --customer drvu
+python3 _config/scripts/image-generation/generate_customer_icons_gemini_nanobanana_api.py --domain ride-sharing-marketplace --overwrite
+python3 _config/scripts/image-generation/generate_customer_icons_gemini_nanobanana_api.py --domain ride-sharing-marketplace --json-only
+```
+
+Each portrait uses the domain and customer descriptions, customer group, priorities, jobs, and any customer relations to depict a recognizable role with clothing, props, and a compact setting. The composition is square, with friendly characters, crisp outlines, blue/teal/green/orange accents, generous margins, and no text. It matches the character style described by the relations generator; it does not extract characters from an existing relations image.
+
+Files are named `customers/icons/customer-<customer-id>-portrait.<format>` (PNG, JPEG, or WebP as returned by Gemini). This gives customers distinct images even when they previously shared `customer.png`. Existing line-art files are preserved, and the customer's `icon` switches to the portrait filename only after a nonempty image exists. The existing page templates and docs generator already support these icon references.
+
+The default run creates missing portraits and upgrades legacy icon references. `--skip-existing` refers to the new portrait files, so an existing legacy icon does not prevent an upgrade. `--overwrite` regenerates portraits; `--json-only` links portraits already on disk without creating references to missing files. `--limit` caps API calls across all selected domains. `--customer` selects one customer id, normally together with `--domain`.
 
 JTBD images via OpenAI Images API:
 
@@ -69,6 +89,8 @@ Run all image generators for a domain, using lightweight JTBD and journey genera
 _config/scripts/image-generation/run.sh food-and-nutrition-product-platform --lightweight
 ```
 
+The wrapper runs customer portraits first, then JTBD, journeys, relations, remaining domain icons, and residuality images. Lightweight mode still includes one portrait per customer. The general `generate_missing_domain_icons_gemini_nanobanana_api.py` script delegates customer work to the same portrait generator when run directly; the wrapper passes `--skip-customer-icons` to avoid repeating that work. KPI, start-page, brick, and capability icons retain their existing monochrome style.
+
 Residuality stressor images via Gemini Nano Banana API:
 
 ```bash
@@ -100,6 +122,10 @@ Useful flags:
     (saved as `customers/media/relations-overview.png`, referenced via a top-level
     `media` entry in `relations.json` and shown at the top of the Relations tab;
     the reference is only written once the image exists)
+- `generate_customer_icons_gemini_nanobanana_api.py` creates:
+  - one square role illustration per customer, referenced through `customer.icon`
+  - files in `customers/icons/`, preserving colors, filled whites, and margins
+  - no customer `media` entries or changes to JTBD/journey media
 - `generate_residuality_images_gemini_nanobanana_api.py` creates:
   - one landscape illustration per `stressors[]` item
   - files named `residuality/media/stressor-<stressor-id>.<format>` using the image format returned by Gemini
@@ -112,3 +138,12 @@ Useful flags:
 - Lightweight runs preserve any existing step/stage images and media references; omitting `--lightweight` retains full overview plus detail generation.
 - Existing user changes elsewhere in the worktree are untouched.
 - A safe first run is `--dry-run` or `--json-only` on one domain before doing full image generation.
+- Customer portrait generation retries transient failures (including HTTP 429), saves each completed icon reference before moving to the next customer, and recognizes existing portraits in every supported image format.
+
+## Offline Verification
+
+The customer portrait checks use temporary domain fixtures and simulated API responses; they do not generate paid images or edit product-domain data:
+
+```bash
+python3 -B -m unittest discover -s _config/scripts/image-generation -p 'test_*.py'
+```

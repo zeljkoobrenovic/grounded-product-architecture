@@ -4,6 +4,8 @@ import shutil
 
 from domain_cli import load_domain_args
 from generator_common import (
+    domain_docs_path,
+    domain_source_path,
     copy_files_into,
     enter_docs_root,
     render_breadcrumbs as render_breadcrumbs_from,
@@ -11,8 +13,7 @@ from generator_common import (
 
 enter_docs_root()
 
-domains_root = '../../_config/product-domains/'
-templates_root = '../../_templates/competition/'
+templates_root = '../_templates/competition/'
 
 tabs_style = open(os.path.join(templates_root, '../_imports/tabs/style.html')).read()
 tokens_style = open(os.path.join(templates_root, '../_imports/tokens/style.html')).read()
@@ -84,13 +85,13 @@ def enrich_players(players, logos_root):
 
 
 def create_overview_docs(domain_config, competition_payload, players):
-    docs_folder = os.path.join(domain_config['id'], 'competition')
+    docs_folder = domain_docs_path(domain_config['id'], 'competition')
     if os.path.exists(docs_folder):
         shutil.rmtree(docs_folder)
 
     os.makedirs(docs_folder, exist_ok=True)
     copy_folder_files(os.path.join(templates_root, 'icons'), os.path.join(docs_folder, 'icons'))
-    copy_folder_files(os.path.join(domains_root, domain_config['id'], 'business', 'logos'), os.path.join(docs_folder, 'logos'))
+    copy_folder_files(domain_source_path(domain_config['id'], 'business', 'logos'), os.path.join(docs_folder, 'logos'))
 
     template = open(os.path.join(templates_root, 'index.html')).read()
     payload = dict(competition_payload)
@@ -141,11 +142,11 @@ def create_landing_pages(domain_config, docs_folder, competition_scope, players)
             )
 
 
-competition_path = os.path.join(domains_root, domain['id'], 'business', 'competition.json')
+competition_path = domain_source_path(domain['id'], 'business', 'competition.json')
 if not os.path.exists(competition_path):
     raise SystemExit(0)
 
 competition = json.load(open(competition_path))
-players = enrich_players(competition.get('players', []), os.path.join(domains_root, domain['id'], 'business', 'logos'))
+players = enrich_players(competition.get('players', []), domain_source_path(domain['id'], 'business', 'logos'))
 docs_folder = create_overview_docs(domain, competition, players)
 create_landing_pages(domain, docs_folder, competition.get('scope', {}), players)

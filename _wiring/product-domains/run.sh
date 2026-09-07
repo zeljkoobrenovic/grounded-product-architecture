@@ -4,7 +4,7 @@ set -uo pipefail
 # Regenerate docs for every registered product domain.
 #
 # The domain registry is the config tree itself: every
-# _config/product-domains/<id>/start/config.json (with id/name/description)
+# _config/product-domains/<group>/<id>/start/config.json (with id/name/description)
 # is a registered domain. To add a domain, create its config folder — there
 # is no separate list to maintain here.
 #
@@ -24,12 +24,18 @@ scripts=(
   "generate-residuality-docs.py"
 )
 
-domains_root="../../_config/product-domains"
 failures=()
 
-for config in "$domains_root"/*/start/config.json; do
-  [ -f "$config" ] || continue
-  domain_id="$(basename "$(dirname "$(dirname "$config")")")"
+# Resolve through the shared registry so changing groups needs no script edits.
+domain_ids="$(python3 ../domain_paths.py list)" || exit 1
+if [[ -z "$domain_ids" ]]; then
+  echo "No registered product domains found in the source groups." >&2
+  exit 1
+fi
+
+for domain_id in "${(@f)domain_ids}"; do
+  domain_dir="$(python3 ../domain_paths.py resolve "$domain_id")" || exit 1
+  config="$domain_dir/start/config.json"
   domain_name="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['name'])" "$config")"
   domain_description="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['description'])" "$config")"
 

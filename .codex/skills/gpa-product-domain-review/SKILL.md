@@ -7,20 +7,22 @@ description: "Use in the Productscape project when reviewing `_config/product-do
 
 ## Purpose
 
-Review the strategic and customer-facing quality of a Productscape product domain. The goal is not to rewrite the domain during the review; it is to produce specific, grounded feedback in `_config/product-domains/<domain>/REVIEW.md` that a later editing skill can use to improve the domain safely.
+Review the strategic and customer-facing quality of a Productscape product domain. The goal is not to rewrite the domain during the review; it is to produce specific, grounded feedback in `_config/product-domains/<group>/<domain>/REVIEW.md` that a later editing skill can use to improve the domain safely.
+
+Resolve the domain ID with `_wiring/domain_paths.py` to find its current group. Group names can change; keep reviews in the resolved domain folder.
 
 ## Source Files
 
 Read the source model first:
 
-- `_config/product-domains/<domain>/_domain/DOMAIN.md` when present.
-- `_config/product-domains/<domain>/customers/customers.json`.
-- `_config/product-domains/<domain>/customers/insights.json` when present.
-- `_config/product-domains/<domain>/customers/links.json` when present.
-- `_config/product-domains/<domain>/business/competition.json` when present.
-- `_config/product-domains/<domain>/product-bricks/product-stream.json`.
-- `_config/product-domains/<domain>/product-bricks/product-bricks.json`.
-- `_config/product-domains/<domain>/product-deployments/*.json`.
+- `_config/product-domains/<group>/<domain>/_domain/DOMAIN.md` when present.
+- `_config/product-domains/<group>/<domain>/customers/customers.json`.
+- `_config/product-domains/<group>/<domain>/customers/insights.json` when present.
+- `_config/product-domains/<group>/<domain>/customers/links.json` when present.
+- `_config/product-domains/<group>/<domain>/business/competition.json` when present.
+- `_config/product-domains/<group>/<domain>/product-bricks/product-stream.json`.
+- `_config/product-domains/<group>/<domain>/product-bricks/product-bricks.json`.
+- `_config/product-domains/<group>/<domain>/product-deployments/*.json`.
 
 Treat generated `docs/**` as reference output only. Do not patch generated files during a review.
 
@@ -33,11 +35,11 @@ Do not review product-brick or stream `*-evidence.json` files in this skill. Res
 3. Check realism, specificity, and balance before checking syntax. A syntactically valid model can still be strategically weak.
 4. Separate findings into defects, gaps, weak assumptions, and improvement opportunities.
 5. Include exact source-file references and enough context for an editor to fix the issue without rediscovering it.
-6. Write the review to `_config/product-domains/<domain>/REVIEW.md` under a `## Product Domain Review` section.
+6. Write the review to `_config/product-domains/<group>/<domain>/REVIEW.md` under a `## Product Domain Review` section.
 
 ## Review Storage
 
-- Create `_config/product-domains/<domain>/REVIEW.md` if it does not exist.
+- Create `_config/product-domains/<group>/<domain>/REVIEW.md` if it does not exist.
 - If the file exists, update only the `## Product Domain Review` section and preserve other sections, especially `## Teams Review` and `## Product Bricks Review`.
 - If the file has no title, add `# <domain-id> Review` at the top.
 - Include an `Updated: YYYY-MM-DD` line inside the `## Product Domain Review` section.
@@ -106,7 +108,7 @@ Do not review product-brick or stream `*-evidence.json` files in this skill. Res
 
 ## Output Format
 
-Write a concise but deep review to `_config/product-domains/<domain>/REVIEW.md`:
+Write a concise but deep review to `_config/product-domains/<group>/<domain>/REVIEW.md`:
 
 1. `Executive assessment`: 3-6 bullets on overall realism, completeness, balance, and readiness for editing.
 2. `High-priority findings`: concrete issues that materially weaken the domain model.

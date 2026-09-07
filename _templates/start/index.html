@@ -34,7 +34,7 @@
             box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
             display: inline-block;
             height: 320px;
-            width: 220px;
+            width: 230px;
             object-fit: cover;
             text-align: center;
             vertical-align: top;
@@ -65,6 +65,34 @@
             line-height: 21px;
             padding-left: 8px;
             padding-right: 8px;
+        }
+
+        .domain-intro {
+            max-width: 1024px;
+            margin: 10px auto 36px;
+        }
+
+        .domain-description {
+            font-size: 20px;
+            line-height: 1.5;
+            color: #8c8c8c;
+            overflow-wrap: anywhere;
+        }
+
+        .domain-description-toggle {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: var(--accent-ink);
+            font: inherit;
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 90%;
+        }
+
+        .domain-description-toggle:hover,
+        .domain-description-toggle:focus-visible {
+            text-decoration: underline;
         }
 
         a {
@@ -134,8 +162,12 @@
 <div style="margin: 40px">
     <div style="margin-top: 10px"><img src="icons/logo.png" style="height: 164px; border: 1px solid lightgrey; border-radius: 20px; padding: 12px; margin: 8px;"></div>
     <div style="margin: 8px; margin-top: 0; font-size: 52px; color: #8c8c8c">${domain_name}</div>
-    <div style="text-align: center">
-        <div style="margin-left: auto; margin-right: auto; max-width: 1024px; margin-bottom: 36px; margin-top: 10px; font-size: 20px; color: #8c8c8c">${domain_description}</div>
+    <div class="domain-intro">
+        <div class="domain-description">
+            <span id="domain-description">${domain_description}</span>
+            <button id="domain-description-toggle" class="domain-description-toggle" type="button"
+                    aria-expanded="false" aria-controls="domain-description" hidden>...</button>
+        </div>
     </div>
     <div style="margin: -10px; padding: 6px" id="search_container">
         <div style="margin-bottom: 30px; color: grey">
@@ -268,6 +300,72 @@
         }
 
         renderTabs();
+    </script>
+
+    <script>
+        const domainDescription = document.getElementById('domain-description');
+        const domainDescriptionToggle = document.getElementById('domain-description-toggle');
+        const descriptionContainer = domainDescription.parentElement;
+        const fullDomainDescription = domainDescription.cloneNode(true);
+        const fullDescriptionText = fullDomainDescription.textContent;
+
+        function showDescriptionPrefix(length) {
+            // Keep links and formatting when shortening the description.
+            const range = document.createRange();
+            range.selectNodeContents(fullDomainDescription);
+            const walker = document.createTreeWalker(fullDomainDescription, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode())) {
+                if (length <= node.length) {
+                    range.setEnd(node, length);
+                    break;
+                }
+                length -= node.length;
+            }
+            domainDescription.replaceChildren(range.cloneContents());
+        }
+
+        function updateDescriptionToggle() {
+            const wasExpanded = domainDescriptionToggle.getAttribute('aria-expanded') === 'true';
+            const maxHeight = 2 * parseFloat(getComputedStyle(descriptionContainer).lineHeight);
+            showDescriptionPrefix(fullDescriptionText.length);
+            domainDescriptionToggle.hidden = true;
+            const overflows = descriptionContainer.scrollHeight > maxHeight + 1;
+            domainDescriptionToggle.hidden = !overflows;
+            const expanded = wasExpanded && overflows;
+            domainDescriptionToggle.setAttribute('aria-expanded', String(expanded));
+            domainDescriptionToggle.textContent = expanded ? '<<' : '...';
+            if (!overflows || expanded) return;
+
+            // Find the longest prefix that leaves room for the inline button on line two.
+            let low = 0;
+            let high = fullDescriptionText.length;
+            while (low < high) {
+                const middle = Math.ceil((low + high) / 2);
+                showDescriptionPrefix(middle);
+                if (descriptionContainer.scrollHeight <= maxHeight + 1) {
+                    low = middle;
+                } else {
+                    high = middle - 1;
+                }
+            }
+            // Prefer ending at a whole word when the next character continues it.
+            let prefix = fullDescriptionText.slice(0, low);
+            if (/\S/.test(fullDescriptionText.charAt(low))) {
+                const wordBoundary = prefix.search(/\s+\S*$/);
+                if (wordBoundary > 0) prefix = prefix.slice(0, wordBoundary);
+            }1
+            showDescriptionPrefix(prefix.trimEnd().length);
+        }
+
+        domainDescriptionToggle.addEventListener('click', () => {
+            const expanded = domainDescriptionToggle.getAttribute('aria-expanded') === 'true';
+            domainDescriptionToggle.setAttribute('aria-expanded', String(!expanded));
+            updateDescriptionToggle();
+        });
+        window.addEventListener('resize', updateDescriptionToggle);
+        updateDescriptionToggle();
+        if (document.fonts) document.fonts.ready.then(updateDescriptionToggle);
     </script>
 </div>
 </body>

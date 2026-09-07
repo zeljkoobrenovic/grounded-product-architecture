@@ -27,6 +27,8 @@ from typing import Any
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[3]
 PRODUCT_DOMAINS_DIR = REPO_ROOT / "_config" / "product-domains"
+sys.path.insert(0, str(REPO_ROOT / "_wiring"))
+from domain_paths import list_domain_files
 PROMPT_INSPIRATION_PATHS = [
     REPO_ROOT / "_prompts" / "customers" / "customer-journeys.md",
     SCRIPT_PATH.parent / "customer-journeys.md",
@@ -90,10 +92,7 @@ def load_prompt_inspiration() -> str:
 
 
 def list_relations_files(domain_filter: str | None) -> list[Path]:
-    if domain_filter:
-        candidate = PRODUCT_DOMAINS_DIR / domain_filter / "customers" / "relations.json"
-        return [candidate] if candidate.exists() else []
-    return sorted(PRODUCT_DOMAINS_DIR.glob("*/customers/relations.json"))
+    return list_domain_files("customers/relations.json", domain_filter, PRODUCT_DOMAINS_DIR)
 
 
 def load_json(path: Path) -> Any:

@@ -1,6 +1,6 @@
 ---
 name: edit-products
-description: "Create or edit products and the deployment model for a product domain: the product portfolio (id, name, type, primary customers) and the deployment.json channel groups, sub-channels, and deployed bricks with the products that use them. Use when adding a product, wiring products to customers, or editing runtime/app-store/dashboard channels and deployed bricks in _config/product-domains/<domain>/product-deployments/."
+description: "Create or edit products and the deployment model for a product domain: the product portfolio (id, name, type, primary customers) and the deployment.json channel groups, sub-channels, and deployed bricks with the products that use them. Use when adding a product, wiring products to customers, or editing runtime/app-store/dashboard channels and deployed bricks in _config/product-domains/<group>/<domain>/product-deployments/."
 ---
 
 # Edit Products & Deployment

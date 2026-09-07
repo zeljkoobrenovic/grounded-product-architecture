@@ -84,7 +84,9 @@ Quick shape check (run against the domain's `customers.json`):
 ```bash
 python3 - "$DOMAIN" <<'PY'
 import json,sys
-d=json.load(open(f'_config/product-domains/{sys.argv[1]}/customers/customers.json'))
+sys.path.insert(0, '_wiring')
+from domain_paths import resolve_domain_dir
+d=json.load(open(resolve_domain_dir(sys.argv[1]) / 'customers' / 'customers.json'))
 def walk(n,path,bad):
     k=len(n.get('children',[]))
     if k==1: bad.append(' > '.join(path+[n['name']]))

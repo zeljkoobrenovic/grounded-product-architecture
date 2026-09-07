@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Use this folder-level guide when creating or extending any product domain under `_config/product-domains/<domain-id>/`.
+Use this folder-level guide when creating or extending any product domain under `_config/product-domains/<group>/<domain-id>/`.
 
 Product-domain source should stay customer-centered and implementation-aware:
 
-- define the strategic model in `_config/product-domains/<domain-id>/`
+- define the strategic model in `_config/product-domains/<group>/<domain-id>/`
 - keep strategy grounded in customers, JTBD, KPIs, product deployments, product bricks, data assets, teams, competition, and research/source context
-- generate the matching static documentation in `docs/product-domains/<domain-id>/`
+- generate the matching static documentation in `docs/<group>/<domain-id>/`
 
 Prefer evolving the existing model and generator conventions over inventing a parallel schema.
 
@@ -44,11 +44,15 @@ Do not start from pages or visuals. Start from the source model.
 ## Source-First Rule
 
 - Treat `_config/product-domains/**` as the source of truth.
-- Treat `docs/product-domains/**` as generated output.
+- Treat `docs/<group>/<domain-id>/**` as generated output.
 - Only patch generated docs directly if the user explicitly asks for that.
 - If presentation needs to change for all domains, patch the generators or templates instead of hand-editing generated HTML.
 
 ## Current Source Tree
+
+Every domain must be placed in a group: `_config/product-domains/<group>/<domain-id>/`. Current groups are `other`, `platforms`, `food-and-health`, `enterprise`, `marketplaces`, `mobility`, and `vortexcp`; discover them from the filesystem because they can change. Never create a domain directly in this folder. Keep domain IDs globally unique across groups so CLI arguments remain stable when domains move. Generated URLs include the current group.
+
+The root-level `start/` directory contains shared navigation assets, not a product domain or group. `_wiring/domain_paths.py` excludes it when discovering domains and provides `resolve_domain_dir()` and `list_domain_files()` for scripts that need source paths.
 
 A mature domain normally contains:
 
@@ -94,11 +98,11 @@ Capture enough context to define:
 
 ### 2. Register The Domain
 
-Update the domain list used by `_wiring/product-domains/run.sh` before generating docs. Keep the domain id lowercase and aligned with folder names.
+Choose an existing group or create an appropriate new group, then add `<group>/<domain-id>/start/config.json` with `id`, `name`, and `description`. `_wiring/product-domains/run.sh` discovers these files automatically. Keep the domain ID lowercase, globally unique across groups, and aligned with the domain folder name.
 
 ### 3. Create The Base Source Tree
 
-Create the minimum source package under `_config/product-domains/<domain-id>/`:
+Create the minimum source package under `_config/product-domains/<group>/<domain-id>/`:
 
 - `start/config.json`
 - `customers/customers.json`
@@ -296,16 +300,16 @@ When the domain includes linked objects across files, also validate cross-file r
 
 ## Scoped Generation Workflow
 
-Generators typically iterate the domain list in `_wiring/product-domains/run.sh`. Do not blindly regenerate everything in a dirty worktree if the task is only about one domain.
+`_wiring/product-domains/run.sh` discovers registered domains across all groups. Do not blindly regenerate everything in a dirty worktree if the task is only about one domain.
 
-Creating or extending source data under `_config/product-domains/<domain-id>/` does not by itself imply regenerating `docs/`. Regenerate documentation only when the user asks for it or when the task explicitly requires generated output verification.
+Creating or extending source data under `_config/product-domains/<group>/<domain-id>/` does not by itself imply regenerating `docs/`. Regenerate documentation only when the user asks for it or when the task explicitly requires generated output verification.
 
 Use a scoped workflow:
 
-1. Read and preserve the domain definitions embedded in `_wiring/product-domains/run.sh`
-2. Temporarily rewrite it to include only the target domain
-3. Run the needed generator scripts
-4. Restore the original config in a `finally` block
+1. Resolve the source folder with `python3 _wiring/domain_paths.py resolve <domain-id>`.
+2. Inspect existing changes in the source and generated output.
+3. Run `_wiring/product-domains/run-one.sh <domain-id>` for all domain pages, or only the needed generator with `<domain-id> "<name>" "<description>"` from its `start/config.json`.
+4. Verify the output under `docs/<group>/<domain-id>/`. Do not edit `run.sh` to scope a build.
 
 ## Source Image Generation
 
@@ -330,13 +334,13 @@ See `_config/scripts/image-generation/README.md` for provider-specific commands 
 
 From `_wiring/product-domains/`:
 
-- `python3 generate-start-docs.py`
-- `python3 generate-customers-docs.py`
-- `python3 generate-products-docs.py`
-- `python3 generate-product-bricks-docs.py`
-- `python3 generate-teams-docs.py`
-- `python3 generate-competition-docs.py`
-- `python3 generate-residuality-docs.py`
+- `python3 generate-start-docs.py <domain-id> "<name>" "<description>"`
+- `python3 generate-customers-docs.py <domain-id> "<name>" "<description>"`
+- `python3 generate-products-docs.py <domain-id> "<name>" "<description>"`
+- `python3 generate-product-bricks-docs.py <domain-id> "<name>" "<description>"`
+- `python3 generate-teams-docs.py <domain-id> "<name>" "<description>"`
+- `python3 generate-competition-docs.py <domain-id> "<name>" "<description>"`
+- `python3 generate-residuality-docs.py <domain-id> "<name>" "<description>"`
 
 Run only the generators relevant to the files you changed.
 
@@ -382,13 +386,13 @@ And all key references resolve across:
 
 And the generated docs exist under:
 
-- `docs/product-domains/<domain-id>/start/`
-- `docs/product-domains/<domain-id>/customers/`
-- `docs/product-domains/<domain-id>/product-deployments/`
-- `docs/product-domains/<domain-id>/product-bricks/`
-- `docs/product-domains/<domain-id>/teams/`
-- `docs/product-domains/<domain-id>/business/`
-- `docs/product-domains/<domain-id>/residuality/`
+- `docs/<group>/<domain-id>/start/`
+- `docs/<group>/<domain-id>/customers/`
+- `docs/<group>/<domain-id>/product-deployments/`
+- `docs/<group>/<domain-id>/product-bricks/`
+- `docs/<group>/<domain-id>/teams/`
+- `docs/<group>/<domain-id>/competition/`
+- `docs/<group>/<domain-id>/residuality/`
 
 ## Biases To Keep
 

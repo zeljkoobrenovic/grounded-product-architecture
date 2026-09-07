@@ -21,6 +21,8 @@ from typing import Any
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[3]
 PRODUCT_DOMAINS_DIR = REPO_ROOT / "_config" / "product-domains"
+sys.path.insert(0, str(REPO_ROOT / "_wiring"))
+from domain_paths import list_domain_files
 PROMPT_INSPIRATION_PATH = REPO_ROOT / "_prompts" / "customers" / "customer-journeys.md"
 DEFAULT_MODEL = "gemini-3-pro-image-preview"
 DEFAULT_QUALITY = "low"
@@ -127,10 +129,7 @@ def load_prompt_inspiration() -> str:
 
 
 def list_customer_files(domain_filter: str | None) -> list[Path]:
-    files = sorted(PRODUCT_DOMAINS_DIR.glob("*/customers/customers.json"))
-    if domain_filter:
-        files = [path for path in files if path.parent.parent.name == domain_filter]
-    return files
+    return list_domain_files("customers/customers.json", domain_filter, PRODUCT_DOMAINS_DIR)
 
 
 def load_json(path: Path) -> Any:

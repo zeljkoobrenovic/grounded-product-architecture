@@ -4,6 +4,8 @@ import shutil
 import datetime
 from domain_cli import load_domain_args
 from generator_common import (
+    domain_docs_path,
+    domain_source_path,
     copy_files_into,
     enter_docs_root,
     render_breadcrumbs as render_breadcrumbs_from,
@@ -14,8 +16,7 @@ enter_docs_root()
 
 date_string = today_string()
 
-domains_root = '../../_config/product-domains/'
-templates_root = '../../_templates/customers/'
+templates_root = '../_templates/customers/'
 domain, site_config = load_domain_args()
 
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
@@ -31,7 +32,7 @@ def render_breadcrumbs(template_name, replacements):
 
 
 def load_insights(domain_id):
-    insights_file_path = domains_root + domain_id + '/customers/insights.json'
+    insights_file_path = domain_source_path(domain_id, 'customers/insights.json')
     if not os.path.exists(insights_file_path):
         return {"items": []}
     insights = json.load(open(insights_file_path))
@@ -47,14 +48,14 @@ def load_insights(domain_id):
 
 
 def load_links(domain_id):
-    links_file_path = domains_root + domain_id + '/customers/links.json'
+    links_file_path = domain_source_path(domain_id, 'customers/links.json')
     if not os.path.exists(links_file_path):
         return {"groups": []}
     return json.load(open(links_file_path))
 
 
 def load_relations(domain_id):
-    relations_file_path = domains_root + domain_id + '/customers/relations.json'
+    relations_file_path = domain_source_path(domain_id, 'customers/relations.json')
     if not os.path.exists(relations_file_path):
         return {"relationTypes": [], "relations": []}
     return json.load(open(relations_file_path))
@@ -80,13 +81,13 @@ def load_stream_brick_kinds(domain_id):
             for child in node:
                 walk(child, key, out)
 
-    bricks_path = domains_root + domain_id + '/product-bricks/product-bricks.json'
+    bricks_path = domain_source_path(domain_id, 'product-bricks/product-bricks.json')
     if os.path.exists(bricks_path):
         ids = []
         walk(json.load(open(bricks_path)), 'bricks', ids)
         for brick_id in ids:
             kinds[brick_id] = 'brick'
-    streams_path = domains_root + domain_id + '/product-bricks/product-stream.json'
+    streams_path = domain_source_path(domain_id, 'product-bricks/product-stream.json')
     if os.path.exists(streams_path):
         ids = []
         walk(json.load(open(streams_path)), 'streams', ids)
@@ -101,8 +102,8 @@ def create_overview_docs(domain, docs_folder, customers, insights, links, relati
     os.makedirs(os.path.join(docs_folder, 'media'), exist_ok=True)
 
     copy_media(templates_root + 'icons', docs_folder + 'icons')
-    copy_media(domains_root + domain['id'] + '/customers/icons', docs_folder + 'icons')
-    copy_media(domains_root + domain['id'] + '/customers/media', docs_folder + 'media')
+    copy_media(domain_source_path(domain['id'], 'customers/icons'), docs_folder + 'icons')
+    copy_media(domain_source_path(domain['id'], 'customers/media'), docs_folder + 'media')
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         template = open(templates_root + 'index.html').read()
@@ -183,7 +184,7 @@ def create_landing_pages(customers, docs_folder, insights):
                                 .replace('${customer_insights}', json.dumps(customer_insights)))
 
 domain_id = domain['id']
-customers_file_path = domains_root + domain_id + '/customers/customers.json'
+customers_file_path = domain_source_path(domain_id, 'customers/customers.json')
 if not os.path.exists(customers_file_path):
     raise SystemExit(f"Missing customers config for domain '{domain_id}'")
 
@@ -193,6 +194,6 @@ links = load_links(domain_id)
 relations = load_relations(domain_id)
 stream_brick_kinds = load_stream_brick_kinds(domain_id)
 
-docs_folder = domain_id + '/customers/'
+docs_folder = domain_docs_path(domain_id, 'customers') + '/'
 create_overview_docs(domain, docs_folder, customers, insights, links, relations)
 create_landing_pages(customers, docs_folder, insights)

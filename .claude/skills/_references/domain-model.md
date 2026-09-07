@@ -8,11 +8,16 @@ editing any artifact.
 ## Repository shape
 
 ```
-_config/product-domains/<domain>/   JSON source of truth (edit here)
+_config/product-domains/<group>/<domain>/   JSON source of truth (edit here)
 _templates/<area>/                   HTML templates (presentation only)
 _wiring/product-domains/             Python generators (logic; do not edit for content)
-docs/product-domains/<domain>/       Generated output (never hand-edit)
+docs/<group>/<domain>/       Generated output (never hand-edit)
 ```
+
+Always put domains in a group. Groups are discovered dynamically and may change;
+domain IDs must remain globally unique. `_config/product-domains/start/` contains
+shared navigation and is excluded from discovery. Use `_wiring/domain_paths.py`
+to resolve source folders and published paths. CLI arguments use the bare domain ID; published URLs include the current group.
 
 Pipeline is one-directional: `_config + _templates --(Python in _wiring)--> docs`.
 No framework, no build system, no npm. Generators `shutil.rmtree` their target

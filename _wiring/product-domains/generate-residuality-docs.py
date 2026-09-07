@@ -4,6 +4,8 @@ import re
 
 from domain_cli import load_domain_args
 from generator_common import (
+    domain_docs_path,
+    domain_source_path,
     copy_files_into,
     copy_icons,
     enter_docs_root,
@@ -14,8 +16,7 @@ from generator_common import (
     today_string,
 )
 
-DOMAINS_ROOT = '../../_config/product-domains/'
-TEMPLATES_ROOT = '../../_templates/residuality/'
+TEMPLATES_ROOT = '../_templates/residuality/'
 
 TARGET_TYPES = {
     'vision',
@@ -38,7 +39,7 @@ def slugify(value):
 
 
 def load_domain_json(domain_id, relative_path, default_value):
-    return load_json_if_exists(os.path.join(DOMAINS_ROOT, domain_id, relative_path), default_value)
+    return load_json_if_exists(domain_source_path(domain_id, relative_path), default_value)
 
 
 def add_catalog_item(items, target_type, target_id, name, description='', href='', context=''):
@@ -400,11 +401,11 @@ def create_docs(domain):
     catalog = build_catalog(customers, products, bricks, streams, teams, competition)
     validate_model(model, catalog)
 
-    docs_folder = domain_id + '/residuality/'
+    docs_folder = domain_docs_path(domain_id, 'residuality') + '/'
     reset_output_folder(docs_folder, 'icons', 'media')
     copy_icons(TEMPLATES_ROOT + 'icons', docs_folder)
     copy_files_into(
-        os.path.join(DOMAINS_ROOT, domain_id, 'residuality', 'media'),
+        domain_source_path(domain_id, 'residuality', 'media'),
         os.path.join(docs_folder, 'media'),
     )
 

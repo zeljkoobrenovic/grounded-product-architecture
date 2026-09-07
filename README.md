@@ -1,4 +1,12 @@
-# Productscape
+# Productscape archived
+
+This repository preserves the original combined Productscape project and its history.
+The maintained repositories are:
+
+- [productscape](https://github.com/zeljkoobrenovic/productscape): reusable domain-authoring skills, schemas, templates, and scripts.
+- [productscape-examples](https://github.com/zeljkoobrenovic/productscape-examples): example domains built with the toolkit.
+
+The documentation below describes this original combined repository.
 
 **Deep research. Curated structure. Visual landscape.**
 
@@ -6,7 +14,7 @@ Productscape is a toolset for AI-powered deep research into a product domain, cu
 
 The generated documentation is published via GitHub Pages at:
 
-https://zeljkoobrenovic.github.io/productscape/
+https://zeljkoobrenovic.github.io/productscape-archived/
 
 The core idea is to describe product strategy from a customer-centric perspective and connect it to:
 
@@ -49,7 +57,13 @@ There is no frontend framework, build system, or external JavaScript runtime dep
 
 ### Product Domains
 
-`_wiring/product-domains/run.sh` defines the modeled domains and invokes the product-domain generators with explicit domain parameters.
+Every domain lives in `_config/product-domains/<group>/<domain-id>/`. Always choose a group when creating a domain; never place a domain directly under `_config/product-domains/`. The current groups are `other`, `platforms`, `food-and-health`, `enterprise`, `marketplaces`, `mobility`, and `vortexcp`. Groups can be added, renamed, or reorganized without editing scripts.
+
+`_wiring/domain_paths.py` discovers the groups and resolves domains by their globally unique, lowercase domain IDs. `_wiring/product-domains/run.sh` generates every domain with a `<group>/<domain-id>/start/config.json`; there is no hardcoded domain or group list. `_config/product-domains/start/` holds shared navigation assets and is excluded from discovery.
+
+Generated pages live under `docs/<group>/<domain-id>/`, for example `docs/vortexcp/bi-dashboard-extensions-platform/start/index.html`. Moving a domain to another source group changes its published path; CLI arguments continue to use the bare domain ID. The start-package generator resolves app links and icons against the current source group.
+
+Start-package app links and icons in `_config/start-packages/*/apps.json` are relative to their generated package page, for example `../../vortexcp/bi-dashboard-extensions-platform/start/index.html`. After changing source groups, regenerate the domains and run `python3 _wiring/generate-start-apps-docs.py` from the repository root to refresh the package launchers.
 
 Each domain typically contains:
 
@@ -82,7 +96,7 @@ The simplest way to create a new domain is to start from the prompt template at 
 
 Recommended flow:
 
-1. Choose a clear domain and a lowercase slug such as `travel-accommodations-marketplace`.
+1. Choose a group and a globally unique lowercase domain slug, such as `marketplaces/travel-accommodations-marketplace`.
 2. Open `_config/_prompts/customers/NEW-DOMAIN-PROMPT.md`.
 3. Replace the placeholders such as `<DOMAIN-LINK>` and `<webbsite-link>` with the company, product, or business area you want to model.
 4. Add source links that give the model enough grounding to produce realistic content. Good inputs usually include:
@@ -92,10 +106,10 @@ Recommended flow:
    - investor or annual-report pages
    - architecture, engineering, or trust-and-safety writeups
    - app store pages or onboarding flows
-5. Ask the model to create a new folder under `_config/product-domains/<new-domain>/` by following the same structure and naming patterns used by current domains such as:
-   - `_config/product-domains/ride-sharing-marketplace/`
-   - `_config/product-domains/online-retail-marketplace/`
-   - `_config/product-domains/premium-long-haul-airline/`
+5. Ask the model to create a new folder under `_config/product-domains/<group>/<new-domain>/` by following the same structure and naming patterns used by current domains such as:
+   - `_config/product-domains/marketplaces/ride-sharing-marketplace/`
+   - `_config/product-domains/marketplaces/online-retail-marketplace/`
+   - `_config/product-domains/mobility/premium-long-haul-airline/`
 6. Refine the generated content until it matches the repository conventions:
    - IDs stay lowercase
    - terminology stays aligned with customers, product deployments, teams, product bricks, data assets, and evidence
@@ -126,12 +140,12 @@ Use these grounding links:
 - https://developer.example.com/
 - https://investors.example.com/
 
-Create the new domain under _config/product-domains/example-domain/.
+Create the new domain under _config/product-domains/other/example-domain/.
 Use ride-sharing-marketplace and online-retail-marketplace as structural references.
 Keep all ids lowercase and reuse the repository's existing JSON schemas and naming patterns.
 ```
 
-After the new domain exists in `_config/product-domains/<new-domain>/`, generate the site pages by adding it to `_wiring/product-domains/run.sh` and running the generators.
+After the new domain has a `start/config.json` in `_config/product-domains/<group>/<new-domain>/`, generate its pages with `_wiring/product-domains/run-one.sh <new-domain>`. Registration is automatic.
 
 ### Data And Evidence
 
@@ -150,7 +164,7 @@ Product bricks connect strategy to execution. They bridge customer and business 
 
 ### Residuality Stress Test
 
-Every generated productscape includes a Residuality Stress Test. It asks a practical question: if customers, markets, regulation, operations, or competitors changed unexpectedly, what would the business do and what would need to change in the product? Domains without authored tests show an empty starting state plus an explanation of the method; add `_config/product-domains/<domain-id>/residuality/residuality.json` to populate it. The eMobility domain is the flagship example, adapted from the EV-charging example in Barry M. O'Reilly's *Residues: Time, Change, and Uncertainty in Software Architecture* (2024).
+Every generated productscape includes a Residuality Stress Test. It asks a practical question: if customers, markets, regulation, operations, or competitors changed unexpectedly, what would the business do and what would need to change in the product? Domains without authored tests show an empty starting state plus an explanation of the method; add `_config/product-domains/<group>/<domain-id>/residuality/residuality.json` to populate it. The eMobility domain is the flagship example, adapted from the EV-charging example in Barry M. O'Reilly's *Residues: Time, Change, and Uncertainty in Software Architecture* (2024).
 
 Each test records what outside change occurs, what would reveal it, the new situation the business enters, how the business responds, and the exact product or architecture change required. Residuality Theory calls the outside change a *stressor*, the recurring business situation an *attractor*, and the resulting design change a *residue*, but the app presents the plain-language explanation first. Every change is linked to existing vision, JTBD, journey, KPI, competitor, product, product-stream, product-brick, and team ids, grouped as Strategy & Vision, Implementation, and Organization. The shared-impact matrix then makes it clear when one outside change requires coordinated changes across several parts of the productscape.
 
@@ -175,6 +189,21 @@ cd _wiring/product-domains
 ./run.sh
 ```
 
+For a single domain, run this from the repository root, passing its ID without the group:
+
+```bash
+_wiring/product-domains/run-one.sh ride-sharing-marketplace
+```
+
+From the repository root, inspect discovery or resolve a source folder with:
+
+```bash
+python3 _wiring/domain_paths.py list
+python3 _wiring/domain_paths.py resolve ride-sharing-marketplace
+```
+
+From `_wiring/product-domains/`, individual generators take the same three arguments:
+
 ```bash
 python3 generate-start-docs.py <domain_id> <domain_name> <domain_description>
 python3 generate-customers-docs.py <domain_id> <domain_name> <domain_description>
@@ -189,6 +218,13 @@ Other generators live under:
 
 - `_wiring/evidence-explorer/generate-evidence-explorer-docs.py` (run via `_evidence/run.sh`)
 - `_wiring/generate-start-apps-docs.py`
+
+Offline checks for grouped discovery and both domain wrappers:
+
+```bash
+python3 -B -m unittest discover -s _wiring -p 'test_*.py'
+python3 .claude/skills/scripts/validate-domain-model.py --all
+```
 
 ### Product-Domain Images
 

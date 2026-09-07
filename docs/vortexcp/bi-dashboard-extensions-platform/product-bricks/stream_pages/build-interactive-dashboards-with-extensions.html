@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Build Interactive Dashboards With Extensions — Stream (BI Dashboard Extensions Platform)</title>
+
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #5b6472;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;
+    }
+</style>
+
+    <style>
+
+        .links-group {
+            margin-bottom: 20px;
+            padding: 16px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .links-group-title {
+            font-size: 12px;
+            color: #1d4ed8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+
+        .links-group-description {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .link-entry { margin-bottom: 16px; }
+        .link-entry:last-child { margin-bottom: 0; }
+
+        .link-entry-title {
+            color: #1d4ed8;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .link-entry-title:hover { text-decoration: underline; }
+
+        .link-entry-copy {
+            color: #4b5563;
+            font-size: 13px;
+            margin: 4px 0 8px;
+            line-height: 1.45;
+        }
+
+        .link-embed {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            margin-top: 4px;
+        }
+
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .page {
+            margin: 20px;
+        }
+
+        .nav-strip {
+            margin: 2px 20px 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+
+        .nav-link {
+            padding: 2px;
+            font-size: 12px;
+        }
+
+        .nav-link.active {
+            border-bottom: 4px solid blue;
+        }
+
+        .tab-image {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+        }
+
+        .tab-image-selected {
+            width: 24px;
+            margin: 2px;
+            padding: 2px;
+            border-bottom: 4px solid blue;
+        }
+
+        .header {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .header-icon {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+        }
+
+        .header-meta {
+            font-size: 90%;
+            color: grey;
+        }
+
+        .header-title {
+            font-size: 50px;
+            line-height: 1.05;
+        }
+
+        .header-copy {
+            font-size: 16px;
+            color: grey;
+            margin-top: 6px;
+            max-width: 950px;
+        }
+
+        .activity-summary {
+            margin: 0;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+
+        .activity-stat {
+            display: inline-block;
+            margin-right: 18px;
+            min-width: 110px;
+        }
+
+        .activity-stat-value {
+            font-size: 30px;
+            color: #1d4ed8;
+        }
+
+        .activity-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .group {
+            margin-top: 2px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+            overflow: hidden;
+            border: 1px solid lightgrey;
+            background: #fff;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: blue;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            background: #fff;
+            color: inherit;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card-icon {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid #dbe2ea;
+            padding: 4px;
+            flex: 0 0 auto;
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #315b7c;
+            line-height: 1.4;
+        }
+
+        .card-meta {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        .card-copy {
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+
+        .list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .list li {
+            margin-bottom: 6px;
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 8px 8px 0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+            color: #374151;
+            font-size: 12px;
+        }
+
+        .pill img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 90%;
+        }
+
+        .dependency-diagram {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+            overflow-x: auto;
+        }
+
+        .flow-title {
+            font-size: 24px;
+            color: #315b7c;
+            margin-bottom: 6px;
+        }
+
+        .flow-description {
+            color: #6b7280;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .flow-timeline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .flow-step-card {
+            border: 1px solid #dbe2ea;
+            border-radius: 10px;
+            padding: 12px 14px;
+            background: #fbfdff;
+        }
+
+        .flow-step-number {
+            font-size: 11px;
+            color: #1d4ed8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .flow-step-title {
+            font-size: 18px;
+            color: #315b7c;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .flow-step-copy {
+            color: #4b5563;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+
+        .flow-step-meta {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .flow-step-meta-item {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+        }
+
+        .flow-step-meta-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 3px;
+        }
+
+        .flow-step-dependencies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .flow-matrix-wrap {
+            overflow-x: auto;
+        }
+
+        .flow-matrix {
+            width: 100%;
+            min-width: 1080px;
+            border-collapse: collapse;
+            background: #fff;
+            font-size: 90%;
+        }
+
+        .flow-matrix th,
+        .flow-matrix td {
+            border: 1px solid #dbe2ea;
+            vertical-align: top;
+            padding: 10px 12px;
+        }
+
+        .flow-matrix th {
+            background: #f8fafc;
+            text-align: left;
+        }
+
+        .flow-dependency-col {
+            min-width: 250px;
+            width: 250px;
+        }
+
+        .flow-dependency-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .flow-dependency-icon {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            flex: 0 0 auto;
+            border: 1px solid #dbe2ea;
+            border-radius: 8px;
+            background: white;
+            padding: 4px;
+        }
+
+        .flow-step-col {
+            min-width: 220px;
+        }
+
+        .flow-step-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .flow-dependency-name {
+            font-weight: bold;
+            color: #315b7c;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .flow-insight-row th {
+            background: #f1f5f9;
+            color: #315b7c;
+        }
+
+        .flow-insight-row td {
+            background: #f8fafc;
+        }
+
+        .flow-insight-list {
+            margin: 0;
+            padding-left: 16px;
+            line-height: 1.45;
+        }
+
+        .flow-insight-list li {
+            margin-bottom: 5px;
+        }
+
+        .flow-cell-empty {
+            background: #fbfdff;
+            color: #9ca3af;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .flow-cell-active {
+            background: #eef6ff;
+        }
+
+        .flow-cell-copy {
+            color: #374151;
+            line-height: 1.45;
+            margin-bottom: 8px;
+        }
+
+        .flow-cell-copy:last-child {
+            margin-bottom: 0;
+        }
+
+        .flow-cell-bricks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .flow-cell-brick {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 11px;
+        }
+
+        .flow-cell-brick-icon {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            flex: 0 0 auto;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+
+    <script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        setupTabAccessibility();
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+
+</head>
+
+<body onload="initTab('home')" onhashchange="initTab()">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html" class="active">Bricks &amp; Streams</a><a href="../../teams/index.html">Teams</a><a href="../../competition/index.html">Competition</a><a href="../../residuality/index.html">Stress Test</a></nav>
+
+<div id="breadcrumbs" style="margin-left: 20px"></div>
+
+<script src="../shared_data.js"></script>
+<script>
+    const config = {"domains": [{"id": "bi-dashboard-extensions-platform", "name": "BI Dashboard Extensions Platform", "description": "Covers the business of a premium extensions vendor for business-intelligence platforms, modeled on Infotopics | Apps for Tableau: write-back and planning inside dashboards (WriteBackExtreme, InputTables, FinanceTables), Excel-like self-service tables and discovery (SuperTables, DrillDownTree, ProcessMining, HierarchyFilter), visual storytelling extensions (ShowMeMore, PowerKPIs, PictureThis, VizSlides), scheduled report distribution (MailScheduler), dashboard guidance and usage analytics, the shared extension runtime, SaaS and on-premises enterprise deployment with licensing and usage metering, security and compliance evidence, a consulting and reseller partner network, and the expansion of the same extensions to Power BI and Looker Studio."}]};
+    const all_bricks = window.SHARED_DOMAIN_DATA.allBricks;
+    const allStreams = window.SHARED_DOMAIN_DATA.allStreams;
+    const currentStream = {"id": "build-interactive-dashboards-with-extensions", "name": "Build Interactive Dashboards With Extensions", "icon": "build-interactive-dashboards-with-extensions.png", "type": "outcome-based-stream", "description": "Take a dashboard creator from a business requirement \u2014 an Excel-minded team asking for one more variant of the same dashboard \u2014 to a published, governed dashboard in Tableau Cloud, Tableau Server, Power BI or Looker Studio with configured SuperTables, ShowMeMore charts, PowerKPIs, PictureThis, HierarchyFilter and design helpers, so that one dashboard satisfies many audiences.", "group": "Acquisition and Building Journeys", "rootGroup": "Acquisition and Building Journeys", "flows": [{"id": "configure-supertables-and-publish-to-tableau-cloud", "title": "Configure SuperTables in Desktop and Publish to Tableau Cloud", "description": "A creator turns a request for 'the dashboard but in Excel' into a SuperTables-based dashboard, configures it in Tableau Desktop and publishes it to a Tableau Cloud site where the extension is safelisted.", "primaryActor": "Dashboard Creator", "trigger": "A finance team asks for the fourth variant of a sales dashboard with different columns, subtotals and an export button.", "successSignal": "The published dashboard is opened by the requesting team on Tableau Cloud and they pivot, group and export without a new request.", "steps": [{"id": "capture-requirement", "title": "Capture the requirement as one interactive table instead of variants", "actor": "Dashboard Creator", "keyFacts": ["Typical asks are column choice, subtotals, conditional formatting, formulas and Excel export \u2014 all things a SuperTable exposes to the viewer at runtime.", "A Post Holdings senior director with 1,000+ Tableau users described SuperTables as making Tableau accessible to people used to Excel."], "painPoints": ["Creators default to building another worksheet per request because that is what Tableau natively supports.", "Business users describe the need as 'just export to Excel', hiding the real need to explore."], "dependencies": [{"type": "brick", "id": "sptb", "name": "SuperTables Interactive Grid", "description": "Excel-like grid with pivot, grouping, conditional formatting, formulas, saved views and Excel export.", "how": "Provides the runtime pivot, grouping and export the requirement calls for."}, {"type": "brick", "id": "drdt", "name": "DrillDownTree Hierarchy Explorer", "description": "Tree view that lets viewers expand and collapse hierarchies level by level.", "how": "Adds level-by-level hierarchy exploration when the request involves drilling."}]}, {"id": "add-extension-in-desktop", "title": "Add the extension object and connect it to a worksheet", "actor": "Dashboard Creator", "keyFacts": ["The extension is added as a dashboard object from the .trex manifest or the Exchange; the data connector reads a hidden or visible worksheet and syncs its filters and parameters.", "The server-side row model handles millions of rows by paging and aggregating on the server instead of the browser."], "painPoints": ["Worksheet field naming and hidden-sheet conventions differ per creator, making configurations hard to hand over.", "Large worksheets time out in the browser when the creator forgets to enable the server-side row model."], "dependencies": [{"type": "brick", "id": "xfrm", "name": "Extension Framework and Shared UI Kit", "description": "Shared dashboard and viz extension shells on the Tableau Extensions API with settings persistence and theming.", "how": "Renders the extension shell in the dashboard and persists settings in the workbook."}, {"type": "brick", "id": "dcon", "name": "Dashboard Data Connector", "description": "Worksheet data fetch, filter and parameter synchronisation and the server-side row model.", "how": "Fetches worksheet data and synchronises filters and parameters."}]}, {"id": "configure-columns-and-formatting", "title": "Configure columns, formulas, conditional formatting and defaults", "actor": "Dashboard Creator", "keyFacts": ["Configuration covers column order, aggregation, number formats, conditional formatting, formulas and which viewer actions are allowed.", "EasyDesigns applies a consistent style across all extensions in the workbook so tables match the corporate dashboard theme."], "painPoints": ["Creators over-configure and lock down the very features viewers wanted.", "Theme changes in the workbook are not reflected until each extension is reopened."], "dependencies": [{"type": "brick", "id": "sptb", "name": "SuperTables Interactive Grid", "description": "Excel-like grid with pivot, grouping, conditional formatting, formulas, saved views and Excel export.", "how": "Stores the column, formula and formatting configuration."}, {"type": "brick", "id": "xdsg", "name": "MarginalHistogram and EasyDesigns Helpers", "description": "Design helpers that add marginal distributions and consistent styling to dashboards.", "how": "Applies consistent styling and design helpers across extensions."}]}, {"id": "add-charts-kpis-and-images", "title": "Add ShowMeMore charts, PowerKPIs and PictureThis where the table is not enough", "actor": "Dashboard Creator", "keyFacts": ["ShowMeMore \u2014 the first product, shown in the Tableau Conference 2018 keynote \u2014 adds chart types without calculated fields; PowerKPIs gives the dashboard a KPI entry point; PictureThis renders product or people images in tables.", "A HierarchyFilter drives the whole dashboard from a multi-level selection."], "painPoints": ["Each additional extension is another safelist entry and another thing to explain to the platform lead.", "Mixing native and extension visuals raises consistency questions about colours and fonts."], "dependencies": [{"type": "brick", "id": "smmr", "name": "ShowMeMore Chart Library", "description": "Additional chart types beyond the native Show Me palette, configured without calculated fields.", "how": "Adds the required chart types to the dashboard."}, {"type": "brick", "id": "pkpi", "name": "PowerKPIs KPI Hub", "description": "Central KPI entry point with status, trend and drill-through to detail dashboards.", "how": "Provides the KPI overview tiles with drill-through."}, {"type": "brick", "id": "pict", "name": "PictureThis Image Tables", "description": "Tables and cards that render images, logos and icons next to dashboard data.", "how": "Renders images alongside data rows."}, {"type": "brick", "id": "hrfl", "name": "HierarchyFilter", "description": "Hierarchical filter control that drives worksheets through multi-level selections.", "how": "Adds the hierarchical filter that drives the other objects."}]}, {"id": "publish-to-tableau-cloud", "title": "Publish the workbook to Tableau Cloud", "actor": "Dashboard Creator", "keyFacts": ["Published workbooks reference the hosted extension URL; on Tableau Cloud and Server the site administrator must safelist that URL and allow full data access before it renders.", "Extension settings travel with the workbook, so the published dashboard behaves exactly as in Desktop."], "painPoints": ["Publishing succeeds but the extension shows a blocked message when the URL is not safelisted, which is the number one support question.", "Creators cannot see the safelist status themselves and wait for the platform lead."], "dependencies": [{"type": "brick", "id": "xfrm", "name": "Extension Framework and Shared UI Kit", "description": "Shared dashboard and viz extension shells on the Tableau Extensions API with settings persistence and theming.", "how": "Carries the extension settings inside the published workbook."}]}, {"id": "verify-with-requesting-team", "title": "Verify with the requesting team and hand over", "actor": "Dashboard Creator", "keyFacts": ["The team checks pivots, totals and the Excel export against their old spreadsheet before retiring it.", "A short DashboardGuide overlay reduces the number of 'how do I' questions in the first weeks."], "painPoints": ["Reconciling totals between the old spreadsheet and the live data exposes data-quality issues the creator did not cause but must explain.", "Adoption drops when the first version lacks a feature the team relied on in Excel."], "dependencies": [{"type": "brick", "id": "sptb", "name": "SuperTables Interactive Grid", "description": "Excel-like grid with pivot, grouping, conditional formatting, formulas, saved views and Excel export.", "how": "Delivers the runtime interactions the team verifies."}, {"type": "brick", "id": "dcon", "name": "Dashboard Data Connector", "description": "Worksheet data fetch, filter and parameter synchronisation and the server-side row model.", "how": "Reloads the published worksheet data on Tableau Cloud for the verification."}]}]}, {"id": "port-a-dashboard-to-power-bi", "title": "Port the Same Table to Power BI", "description": "A creator in an organisation that runs both Tableau and Power BI reuses the SuperTables configuration in a Power BI report through the Apps for Power BI custom visual.", "primaryActor": "Dashboard Creator", "trigger": "A business unit on Power BI asks for the same interactive table its sister unit has in Tableau.", "successSignal": "The Power BI report renders the same table with the same behaviour and counts against the same organisation licence.", "steps": [{"id": "import-visual-from-appsource", "title": "Import the SuperTables visual from AppSource", "actor": "Dashboard Creator", "keyFacts": ["Apps for Power BI was established in 2022 with SuperTables, PictureThis, InputTables and WriteBackExtreme; visuals are installed from Microsoft AppSource or as a tenant-approved custom visual.", "Power BI tenant administrators control which custom visuals are allowed, the equivalent of the Tableau safelist."], "painPoints": ["Certified visual constraints limit some features compared to the Tableau extension.", "Organisations expect a single licence to cover both platforms and are confused when tokens are reported separately."], "dependencies": [{"type": "brick", "id": "mpad", "name": "Multi-Platform Adapters", "description": "Adapters that carry the extensions to Power BI custom visuals and Looker Studio community visualizations.", "how": "Packages the extension as a Power BI custom visual."}]}, {"id": "bind-fields-and-reuse-config", "title": "Bind report fields and reuse the table configuration", "actor": "Dashboard Creator", "keyFacts": ["Field wells replace the Tableau worksheet, but the column, formatting and formula configuration follows the same model.", "Configuration is stored in the report so it publishes with the .pbix."], "painPoints": ["Field naming differs between the two platforms, so formulas need review.", "Creators expect drag-and-drop parity with Tableau's worksheet approach."], "dependencies": [{"type": "brick", "id": "mpad", "name": "Multi-Platform Adapters", "description": "Adapters that carry the extensions to Power BI custom visuals and Looker Studio community visualizations.", "how": "Maps Power BI field wells to the shared data model."}, {"type": "brick", "id": "sptb", "name": "SuperTables Interactive Grid", "description": "Excel-like grid with pivot, grouping, conditional formatting, formulas, saved views and Excel export.", "how": "Applies the shared column and formatting configuration."}, {"type": "brick", "id": "xfrm", "name": "Extension Framework and Shared UI Kit", "description": "Shared dashboard and viz extension shells on the Tableau Extensions API with settings persistence and theming.", "how": "Reuses the shared UI kit and settings persistence."}]}, {"id": "publish-to-power-bi-service", "title": "Publish to the Power BI service and enable for viewers", "actor": "Dashboard Creator", "keyFacts": ["The report is published to a workspace; the visual is licensed against the same organisation account through the license service.", "Viewers on Power BI interact exactly as Tableau viewers do: pivot, group, filter and export."], "painPoints": ["Tenant custom-visual policies are managed by a different admin team than the Tableau site.", "Licence usage from two platforms must be visible in one place for the platform lead."], "dependencies": [{"type": "brick", "id": "dcon", "name": "Dashboard Data Connector", "description": "Worksheet data fetch, filter and parameter synchronisation and the server-side row model.", "how": "Provides the server-side row model for the Power BI dataset."}, {"type": "brick", "id": "mpad", "name": "Multi-Platform Adapters", "description": "Adapters that carry the extensions to Power BI custom visuals and Looker Studio community visualizations.", "how": "Runs the visual in the Power BI service."}]}, {"id": "validate-cross-platform-parity", "title": "Validate parity with the Tableau version", "actor": "Dashboard Creator", "keyFacts": ["Feature parity of the core products across Tableau, Power BI and Looker Studio on one runtime and one licence is the stated three-year strategy.", "Differences are logged as feature requests, which Enterprise customers have prioritised."], "painPoints": ["Parity gaps become support tickets rather than roadmap input unless captured deliberately.", "Two creators maintain two configurations when parity is incomplete."], "dependencies": [{"type": "brick", "id": "mpad", "name": "Multi-Platform Adapters", "description": "Adapters that carry the extensions to Power BI custom visuals and Looker Studio community visualizations.", "how": "Exposes the feature matrix per platform."}, {"type": "brick", "id": "xfrm", "name": "Extension Framework and Shared UI Kit", "description": "Shared dashboard and viz extension shells on the Tableau Extensions API with settings persistence and theming.", "how": "Shares one settings model so both platforms hold one configuration."}]}, {"id": "hand-over-to-viewers", "title": "Hand over to Power BI viewers", "actor": "Dashboard Creator", "keyFacts": ["The same onboarding material applies, with a short note on the differences in the Power BI toolbar.", "Usage is reported alongside the Tableau dashboards for the platform lead."], "painPoints": ["Viewers on both platforms compare screenshots and raise every visual difference as a defect.", "Documentation is platform-specific and viewers do not know which one applies."], "dependencies": [{"type": "brick", "id": "sptb", "name": "SuperTables Interactive Grid", "description": "Excel-like grid with pivot, grouping, conditional formatting, formulas, saved views and Excel export.", "how": "Delivers the same runtime interactions to Power BI viewers."}, {"type": "brick", "id": "pict", "name": "PictureThis Image Tables", "description": "Tables and cards that render images, logos and icons next to dashboard data.", "how": "Renders the same image tables in the Power BI report."}]}]}], "outcomes": ["One interactive dashboard replaces the five to ten static variants a creator used to maintain for different audiences", "Extension configuration is done in the dashboard and persisted in the workbook, so no separate admin tool or code is needed", "Dashboards survive publishing: the same extension works in Desktop, on Tableau Cloud and on a safelisted Tableau Server", "The same configuration model carries to Power BI and Looker Studio, so multi-platform organisations do not rebuild"], "brickDependencies": [{"targetBrickId": "sptb", "type": "composition"}, {"targetBrickId": "smmr", "type": "composition"}, {"targetBrickId": "pkpi", "type": "composition"}, {"targetBrickId": "pict", "type": "composition"}, {"targetBrickId": "hrfl", "type": "composition"}, {"targetBrickId": "xdsg", "type": "composition"}, {"targetBrickId": "drdt", "type": "composition"}, {"targetBrickId": "xfrm", "type": "composition"}, {"targetBrickId": "dcon", "type": "composition"}, {"targetBrickId": "mpad", "type": "composition"}], "externalSystemsThisStreamDependsOn": [{"system": "Tableau Desktop", "type": "bi-authoring-tool", "interface": "Extension objects and .trex manifests in the dashboard", "description": "The authoring tool in which creators add and configure extensions before publishing."}, {"system": "Tableau Cloud and Tableau Server", "type": "bi-platform", "interface": "Tableau Extensions API, safelist settings and workbook publishing", "description": "The BI platform that hosts the workbooks and runs dashboard and viz extensions from safelisted URLs."}, {"system": "Microsoft AppSource and Power BI Service", "type": "marketplace", "interface": "Certified custom visual listing and tenant admin settings", "description": "The Power BI marketplace and service where the Apps for Power BI visuals are listed and enabled per tenant."}], "externalSystemsDependingOnThisStream": [], "owningTeams": []};
+    const related_bricks = [{"id": "sptb", "name": "SuperTables Interactive Grid", "type": "full-stack", "status": "invest", "description": "The most widely deployed extension: an Excel-like grid inside Tableau, Power BI and Looker Studio that lets viewers pivot, group, sort, filter, resize and reorder columns, apply conditional formatting, add formulas and totals, export to Excel and save personalised views, all without asking for a new dashboard. A server-side row model streams millions of rows on demand so the grid stays responsive where a native table would not, and generative fill lets users describe a new column in plain language. A Post Holdings senior director with 1,000+ Tableau users says SuperTables made Tableau much more accessible to people used to Excel. SuperTables is also the host for InputTables and FinanceTables.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-sptb-grid", "name": "SuperTables Grid", "type": "web-component", "description": "Grid front-end with pivot, grouping, sorting, filtering, column chooser, conditional formatting, formulas, totals, theming and Excel export, running as a Tableau dashboard and viz extension and as a Power BI visual.", "dependencies": {"modules": [{"moduleId": "module-sptb-bff", "type": "uses", "description": "Grid loads configuration, row pages and saved views through the BFF."}, {"moduleId": "module-sptb-formulas", "type": "uses", "description": "Grid evaluates formulas and conditional formatting through the formula engine."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-sptb-bff", "name": "SuperTables BFF", "type": "bff", "description": "Serves grid configuration, paged and aggregated row requests for the server-side row model, saved views and export jobs to the grid.", "dependencies": {"modules": [{"moduleId": "module-sptb-views", "type": "delegates", "description": "BFF delegates saved-view persistence to the saved view service."}, {"moduleId": "module-sptb-export", "type": "uses", "description": "BFF invokes the export builder for Excel downloads."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-sptb-formulas", "name": "Formula and Formatting Engine", "type": "stateless-service", "description": "Evaluates user formulas, calculated columns, conditional formatting rules and totals against the current row set without owning state."}, {"id": "module-sptb-export", "name": "Excel Export Builder", "type": "stateless-service", "description": "Builds formatted Excel workbooks from the current grid state, including pivots, groups, formatting and totals, streaming large exports from the row model."}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-sptb-views", "name": "Saved View Service", "type": "stateful-service", "description": "Owns personalised saved views (column layout, pivot, filters, formatting) per user and shared views per dashboard, keyed by the anonymous user token."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-sptb-bff", "module-sptb-grid"], "role": "read-write", "description": "Reads and writes the grid configuration the creator stored in the workbook."}, {"assetId": "dashboard-data-snapshot", "moduleIds": ["module-sptb-bff", "module-sptb-export"], "role": "read", "description": "Reads worksheet rows for display and export."}, {"assetId": "saved-view", "moduleIds": ["module-sptb-views"], "role": "own", "description": "System of record for personalised and shared saved views."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-sptb-grid", "type": "runtime", "description": "Runs inside the shared extension framework and uses the extension shell, settings persistence, theming and Tableau Extensions API bindings."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-sptb-bff", "type": "data", "description": "Streams worksheet rows through the server-side row model with paging, grouping and aggregation for millions of rows."}, {"targetBrickId": "aiin", "moduleId": "module-aiin-api", "sourceModuleId": "module-sptb-grid", "type": "ai", "description": "Generative fill: turns a plain-language column description into a formula or lookup column."}, {"targetBrickId": "mpad", "moduleId": "module-mpad-api", "sourceModuleId": "module-sptb-grid", "type": "runtime", "description": "Runs the same grid as a Power BI custom visual and a Looker Studio community visualization through the platform adapters."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-sptb-grid", "type": "licensing", "description": "On every extension load checks the organisation's plan and records the anonymous unique user token that meters active users over a rolling 12 months."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud, Tableau Server, Tableau Desktop, Power BI and Looker Studio", "type": "channel", "interface": "Tableau Extensions API, Viz Extensions, Power BI visuals API, Looker Studio community visualizations", "description": "Hosts the grid in dashboards and reports across the three BI platforms.", "sourceModuleId": "module-sptb-grid"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Products", "group": "Self-Service Tables and Discovery"}, {"id": "smmr", "name": "ShowMeMore Chart Library", "type": "full-stack", "status": "sustaining", "description": "The company's first product, demonstrated in the Tableau Conference 2018 keynote weeks after dashboard extensions shipped in Tableau 2018.2 and winner of the Tableau Innovative Solution Award 2018. ShowMeMore adds chart types Tableau does not draw natively (sunburst, sankey, chord, radar, funnel, gauge, network, calendar heatmap, word cloud, treemap variants and more) as a configurable extension driven by a worksheet, with interactive tooltips, selection back to the dashboard and creator-defined styling. It is the generic visual escape hatch for creators who would otherwise need custom SDK development.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-smmr-viz", "name": "ShowMeMore Visualization", "type": "web-component", "description": "Chart canvas that renders the configured chart type from worksheet data with tooltips, legends, selection and responsive layout, including the Viz Extension variant that appears in Tableau's Marks card.", "dependencies": {"modules": [{"moduleId": "module-smmr-bff", "type": "uses", "description": "Visualization loads chart templates and prepared series through the BFF."}, {"moduleId": "module-smmr-chart-engine", "type": "uses", "description": "Visualization renders through the chart engine."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-smmr-bff", "name": "ShowMeMore BFF", "type": "bff", "description": "Serves chart templates, prepared series and style presets to the visualization.", "dependencies": {"modules": [{"moduleId": "module-smmr-templates", "type": "delegates", "description": "BFF delegates template persistence to the template store."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-smmr-chart-engine", "name": "Chart Type Engine", "type": "stateless-service", "description": "Implements the library of chart types and their data shaping (hierarchies, flows, distributions) without owning state."}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-smmr-templates", "name": "Chart Template Store", "type": "stateful-service", "description": "Owns reusable chart templates and style presets that creators share across workbooks."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-smmr-bff", "module-smmr-viz", "module-smmr-templates"], "role": "read-write", "description": "Stores chart type, field mapping and styling per dashboard."}, {"assetId": "dashboard-data-snapshot", "moduleIds": ["module-smmr-chart-engine"], "role": "read", "description": "Reads worksheet data to draw the chart."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-smmr-viz", "type": "runtime", "description": "Runs inside the shared extension framework and uses the extension shell, settings persistence, theming and Tableau Extensions API bindings."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-smmr-bff", "type": "data", "description": "Reads the worksheet summary data that drives the chart, and pushes chart selections back as filters through the Dashboard Data Connector instead of talking to Tableau directly."}, {"targetBrickId": "gall", "moduleId": "module-gall-api", "sourceModuleId": "module-smmr-bff", "type": "documents", "description": "Publishes example chart templates to the gallery and demo workbooks."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-smmr-viz", "type": "licensing", "description": "On every extension load checks the organisation's plan and records the anonymous unique user token that meters active users over a rolling 12 months."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud, Tableau Server and Tableau Desktop", "type": "channel", "interface": "Tableau Extensions API and Viz Extensions", "description": "Hosts the chart as a dashboard extension or a viz extension on the Marks card.", "sourceModuleId": "module-smmr-viz"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Products", "group": "Visual Storytelling"}, {"id": "pkpi", "name": "PowerKPIs KPI Hub", "type": "full-stack", "status": "invest", "description": "A central KPI entry point for executives and managers: tiles with current value, target, variance, trend sparkline and status colour, arranged in groups, with thresholds and drill links that jump to the underlying dashboard only when something is off. PowerKPIs replaces hand-built KPI dashboards that break whenever a metric is added, gives the same look across the organisation and, with AI insight services, adds a one-line narrative per KPI. It is the landing page of many enterprise Tableau sites and a key surface for the executive report recipient persona.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-pkpi-viz", "name": "PowerKPIs Visualization", "type": "web-component", "description": "KPI tile grid with targets, variances, sparklines, status colours, grouping and click-through navigation to detail dashboards.", "dependencies": {"modules": [{"moduleId": "module-pkpi-bff", "type": "uses", "description": "Tiles load computed KPI values and navigation targets through the BFF."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-pkpi-bff", "name": "PowerKPIs BFF", "type": "bff", "description": "Serves computed KPI values, thresholds, narratives and navigation configuration to the tiles.", "dependencies": {"modules": [{"moduleId": "module-pkpi-kpi-engine", "type": "delegates", "description": "BFF delegates KPI computation to the KPI engine."}, {"moduleId": "module-pkpi-nav", "type": "uses", "description": "BFF resolves drill targets from the navigation service."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-pkpi-kpi-engine", "name": "KPI Calculation Engine", "type": "stateless-service", "description": "Computes current, previous, target, variance, trend and status per KPI from worksheet rows and threshold rules without owning state."}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-pkpi-nav", "name": "KPI Navigation Service", "type": "service", "description": "Owns the mapping of KPI tiles to target dashboards, sheets and filter contexts so a click lands on the right drill-down view."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-pkpi-bff", "module-pkpi-viz", "module-pkpi-nav"], "role": "read-write", "description": "Stores KPI definitions, thresholds, layout and drill targets."}, {"assetId": "dashboard-data-snapshot", "moduleIds": ["module-pkpi-kpi-engine"], "role": "read", "description": "Reads measure rows to compute KPI values."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-pkpi-viz", "type": "runtime", "description": "Runs inside the shared extension framework and uses the extension shell, settings persistence, theming and Tableau Extensions API bindings."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-pkpi-bff", "type": "data", "description": "Reads the measures, periods and targets per KPI through the Dashboard Data Connector instead of talking to Tableau directly."}, {"targetBrickId": "aiin", "moduleId": "module-aiin-api", "sourceModuleId": "module-pkpi-bff", "type": "ai", "description": "Generates a short narrative explanation of the variance behind each KPI tile."}, {"targetBrickId": "mlsc", "moduleId": "module-mlsc-api", "sourceModuleId": "module-pkpi-nav", "type": "notification", "description": "Lets users subscribe to a scheduled KPI snapshot delivered by MailScheduler."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-pkpi-viz", "type": "licensing", "description": "On every extension load checks the organisation's plan and records the anonymous unique user token that meters active users over a rolling 12 months."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud, Tableau Server and Tableau Desktop", "type": "channel", "interface": "Tableau Extensions API", "description": "Hosts the KPI hub and navigates to target dashboards.", "sourceModuleId": "module-pkpi-viz"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Products", "group": "Visual Storytelling"}, {"id": "pict", "name": "PictureThis Image Tables", "type": "full-stack", "status": "sustaining", "description": "Tables and cards with images: product photos, employee portraits, property pictures, logos or QR codes shown next to the numbers, loaded from URLs or image fields in the data. PictureThis solves a frequent retail, HR, real-estate and marketing request that Tableau's native image handling makes awkward, with lazy loading, caching, aspect-ratio control and lightbox zoom, and is available for Tableau and Power BI.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-pict-viz", "name": "PictureThis Visualization", "type": "web-component", "description": "Image table and card layouts with lazy loading, lightbox, captions, sorting and selection broadcast to the dashboard.", "dependencies": {"modules": [{"moduleId": "module-pict-bff", "type": "uses", "description": "Visualization fetches rows and proxied images through the BFF."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-pict-bff", "name": "PictureThis BFF", "type": "bff", "description": "Serves row data joined with resolved image references and layout settings.", "dependencies": {"modules": [{"moduleId": "module-pict-image-proxy", "type": "uses", "description": "BFF resolves image URLs through the image proxy."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-pict-image-proxy", "name": "Image Proxy and Cache", "type": "stateless-service", "description": "Fetches, resizes and caches images from customer image sources so the dashboard stays fast and browsers are not blocked by mixed-content rules.", "dependencies": {"modules": [{"moduleId": "module-pict-sources", "type": "uses", "description": "Proxy pulls images from the configured image sources."}]}}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-pict-sources", "name": "Image Source Connector", "type": "integration", "description": "Connector to customer image stores such as SharePoint, Amazon S3, Azure Blob Storage, CDNs and DAM systems."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-pict-bff", "module-pict-viz"], "role": "read-write", "description": "Stores image field mapping and layout settings."}, {"assetId": "dashboard-data-snapshot", "moduleIds": ["module-pict-bff"], "role": "read", "description": "Reads rows and image references."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-pict-viz", "type": "runtime", "description": "Runs inside the shared extension framework and uses the extension shell, settings persistence, theming and Tableau Extensions API bindings."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-pict-bff", "type": "data", "description": "Reads the rows and image URL fields to display through the Dashboard Data Connector instead of talking to Tableau directly."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-pict-viz", "type": "licensing", "description": "On every extension load checks the organisation's plan and records the anonymous unique user token that meters active users over a rolling 12 months."}], "externalSystemsThisBrickDependsOn": [{"system": "Customer image stores (SharePoint, Amazon S3, Azure Blob Storage, CDNs)", "type": "data", "interface": "HTTPS image URLs", "description": "Images referenced from the data are fetched from the customer's stores.", "sourceModuleId": "module-pict-sources"}, {"system": "Tableau Cloud, Tableau Server, Tableau Desktop and Power BI", "type": "channel", "interface": "Tableau Extensions API and Power BI visuals API", "description": "Hosts the image table in dashboards and reports.", "sourceModuleId": "module-pict-viz"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Products", "group": "Visual Storytelling"}, {"id": "hrfl", "name": "HierarchyFilter", "type": "full-stack", "status": "sustaining", "description": "A single compact filter for multi-level hierarchies: instead of one quick filter per level, users browse an expandable tree of, for example, country > region > store or company > department > team, tick nodes at any level and the extension applies the corresponding filter to every worksheet on the dashboard. HierarchyFilter handles ragged and deep hierarchies, search, select-all-below and remembers the last selection per user, which frees creators from building cascading filters and saves dashboard space.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-hrfl-viz", "name": "HierarchyFilter Visualization", "type": "web-component", "description": "Tree-style filter front-end with search, multi-select at any level, select-all-below and remembered selections.", "dependencies": {"modules": [{"moduleId": "module-hrfl-bff", "type": "uses", "description": "Filter loads hierarchy nodes and persists selections through the BFF."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-hrfl-bff", "name": "HierarchyFilter BFF", "type": "bff", "description": "Serves hierarchy nodes lazily and translates tree selections into filter values per level.", "dependencies": {"modules": [{"moduleId": "module-hrfl-hierarchy", "type": "delegates", "description": "BFF delegates hierarchy construction to the hierarchy service."}, {"moduleId": "module-hrfl-filter-sync", "type": "uses", "description": "BFF applies the resulting filters through the filter synchroniser."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-hrfl-hierarchy", "name": "Hierarchy Construction Service", "type": "stateless-service", "description": "Derives the hierarchy tree from flat worksheet rows, handling ragged levels, duplicates and sorting without owning state."}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-hrfl-filter-sync", "name": "Dashboard Filter Synchroniser", "type": "service", "description": "Applies the selected nodes as worksheet filters and parameters and listens for external filter changes to keep the tree in sync."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-hrfl-bff", "module-hrfl-viz"], "role": "read-write", "description": "Stores level fields, target worksheets and default selections."}, {"assetId": "dashboard-data-snapshot", "moduleIds": ["module-hrfl-hierarchy"], "role": "read", "description": "Reads hierarchy field values from the worksheet."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-hrfl-viz", "type": "runtime", "description": "Runs inside the shared extension framework and uses the extension shell, settings persistence, theming and Tableau Extensions API bindings."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-hrfl-filter-sync", "type": "data", "description": "Reads hierarchy field values, and applies the selected nodes as filters to the target worksheets through the Dashboard Data Connector instead of talking to Tableau directly."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-hrfl-viz", "type": "licensing", "description": "On every extension load checks the organisation's plan and records the anonymous unique user token that meters active users over a rolling 12 months."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud, Tableau Server and Tableau Desktop", "type": "channel", "interface": "Tableau Extensions API", "description": "Hosts the filter and applies selections to worksheets.", "sourceModuleId": "module-hrfl-viz"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Products", "group": "Self-Service Tables and Discovery"}, {"id": "xdsg", "name": "MarginalHistogram and EasyDesigns Helpers", "type": "full-stack", "status": "sustaining", "description": "Two small design helpers from the 30+ extension catalogue: MarginalHistogram adds distribution histograms on the margins of a scatter plot so analysts see the spread behind the points, and EasyDesigns offers ready-made layout, colour and container designs that a creator applies to a dashboard in seconds instead of hand-formatting every object. Both share the extension framework and illustrate the long tail of low-effort extensions that keep the catalogue attractive on the Tableau Exchange.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-xdsg-marginal", "name": "MarginalHistogram Visualization", "type": "web-component", "description": "Scatter plot with synchronised marginal histograms, bin controls and brushing that filters the dashboard.", "dependencies": {"modules": [{"moduleId": "module-xdsg-bff", "type": "uses", "description": "Visualization loads binned distributions through the BFF."}]}}, {"id": "module-xdsg-easydesigns", "name": "EasyDesigns Layout Picker", "type": "web-component", "description": "Design gallery that applies layout, colour palette and container styles to the dashboard through the extension settings.", "dependencies": {"modules": [{"moduleId": "module-xdsg-bff", "type": "uses", "description": "Picker loads design presets through the BFF."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-xdsg-bff", "name": "Design Helpers BFF", "type": "bff", "description": "Serves binned distributions for the histogram and design presets for EasyDesigns.", "dependencies": {"modules": [{"moduleId": "module-xdsg-layout", "type": "delegates", "description": "BFF delegates binning and preset resolution to the layout service."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-xdsg-layout", "name": "Binning and Preset Service", "type": "stateless-service", "description": "Computes histogram bins from worksheet rows and resolves design presets into concrete style settings without owning state."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-xdsg-bff", "module-xdsg-easydesigns", "module-xdsg-marginal"], "role": "read-write", "description": "Stores histogram settings and the applied design preset."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-xdsg-marginal", "type": "runtime", "description": "Runs inside the shared extension framework and uses the extension shell, settings persistence, theming and Tableau Extensions API bindings."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-xdsg-bff", "type": "data", "description": "Reads the scatter measures to bin through the Dashboard Data Connector instead of talking to Tableau directly."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-xdsg-marginal", "type": "licensing", "description": "On every extension load checks the organisation's plan and records the anonymous unique user token that meters active users over a rolling 12 months."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud, Tableau Server and Tableau Desktop", "type": "channel", "interface": "Tableau Extensions API", "description": "Hosts both helpers in dashboards.", "sourceModuleId": "module-xdsg-marginal"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Products", "group": "Visual Storytelling"}, {"id": "drdt", "name": "DrillDownTree Hierarchy Explorer", "type": "full-stack", "status": "sustaining", "description": "An expandable tree visualisation that lets a viewer drill from a total down through any hierarchy (region, product group, cost centre, account) node by node, seeing values, shares and variances at each level while the rest of the dashboard follows the selection. DrillDownTree answers the question behind the number without a new sheet per level; creators configure the levels and measures once and users choose their own path. Part of the Discovery Extensions product together with HierarchyFilter and ProcessMining.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-drdt-viz", "name": "DrillDownTree Visualization", "type": "web-component", "description": "Tree front-end with expand and collapse, breadcrumb path, value and share bars, search and selection broadcast to the dashboard.", "dependencies": {"modules": [{"moduleId": "module-drdt-bff", "type": "uses", "description": "Visualization fetches tree levels and node aggregates through the BFF."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-drdt-bff", "name": "DrillDownTree BFF", "type": "bff", "description": "Serves the configured hierarchy levels and node aggregates on demand so large hierarchies open lazily.", "dependencies": {"modules": [{"moduleId": "module-drdt-tree", "type": "delegates", "description": "BFF delegates hierarchy building and aggregation to the tree service."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-drdt-tree", "name": "Hierarchy Tree Builder", "type": "stateless-service", "description": "Builds tree nodes and aggregates (sum, share, variance) from flat worksheet rows for the requested path without owning state."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-drdt-bff", "module-drdt-viz"], "role": "read-write", "description": "Stores the configured levels, measures and display options."}, {"assetId": "dashboard-data-snapshot", "moduleIds": ["module-drdt-tree"], "role": "read", "description": "Reads worksheet rows to build the tree."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-drdt-viz", "type": "runtime", "description": "Runs inside the shared extension framework and uses the extension shell, settings persistence, theming and Tableau Extensions API bindings."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-drdt-bff", "type": "data", "description": "Reads the worksheet rows and hierarchy fields that the tree aggregates, and pushes node selections back as filters through the Dashboard Data Connector instead of talking to Tableau directly."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-drdt-viz", "type": "licensing", "description": "On every extension load checks the organisation's plan and records the anonymous unique user token that meters active users over a rolling 12 months."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud, Tableau Server and Tableau Desktop", "type": "channel", "interface": "Tableau Extensions API", "description": "Hosts the tree in dashboards and applies node selections as dashboard filters.", "sourceModuleId": "module-drdt-viz"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Products", "group": "Self-Service Tables and Discovery"}, {"id": "xfrm", "name": "Extension Framework and Shared UI Kit", "type": "service", "status": "invest", "description": "The shared runtime every extension is built on: dashboard-extension and viz-extension shells over the Tableau Extensions API, a configuration dialog framework, settings persistence in the workbook (with a server-side store for large configurations and shared templates), theming aligned with the dashboard, localisation, telemetry hooks, error reporting, and the .trex manifest generation and safelisting metadata that Tableau Server administrators need. One framework across 30+ extensions is the reason a 30-person company can maintain the catalogue, port products to Power BI and Looker Studio and roll AI features out everywhere at once.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-xfrm-shell", "name": "Extension Shell", "type": "web-component", "description": "Bootstraps a dashboard or viz extension, initialises the Tableau Extensions API, handles configure and load lifecycles, theming, localisation and error surfaces.", "dependencies": {"modules": [{"moduleId": "module-xfrm-settings-api", "type": "uses", "description": "Shell loads and saves extension settings through the settings API."}, {"moduleId": "module-xfrm-tableau-sdk", "type": "uses", "description": "Shell talks to Tableau through the Extensions API adapter."}]}}, {"id": "module-xfrm-uikit", "name": "Shared UI Kit", "type": "web-component", "description": "Component library (configuration dialogs, field pickers, formatting controls, grids, dialogs) used by all extension front-ends for a consistent look."}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-xfrm-settings-api", "name": "Extension Settings API", "type": "api", "description": "API for reading and writing extension configuration, shared templates and feature flags, layered over workbook-embedded settings.", "dependencies": {"modules": [{"moduleId": "module-xfrm-config-store", "type": "delegates", "description": "API delegates server-side configuration persistence to the configuration store."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-xfrm-config-store", "name": "Extension Configuration Store", "type": "stateful-service", "description": "Owns server-side extension configurations, shared templates, feature flags and versioned settings schemas for SaaS and Enterprise deployments."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-xfrm-tableau-sdk", "name": "Tableau Extensions API Adapter", "type": "integration", "description": "Wraps the Tableau Extensions API and Viz Extensions API (dashboard content, settings, filters, parameters, events, .trex manifests) and isolates extensions from Tableau version differences."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-xfrm-config-store", "module-xfrm-settings-api"], "role": "own", "description": "System of record for extension configuration stored outside the workbook."}], "brickDependencies": [{"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-xfrm-shell", "type": "licensing", "description": "Performs the license check and active-user token registration on every extension load."}, {"targetBrickId": "saas", "moduleId": "module-saas-api", "sourceModuleId": "module-xfrm-shell", "type": "runtime", "description": "Resolves which extension version and manifest to load for the tenant."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud, Tableau Server and Tableau Desktop", "type": "channel", "interface": "Tableau Extensions API and Viz Extensions API", "description": "The host platform that loads extensions from a safelisted URL and exposes dashboard content.", "sourceModuleId": "module-xfrm-tableau-sdk"}], "externalSystemsDependingOnThisBrick": [{"system": "Tableau Server administrators", "type": "channel-consumer", "interface": ".trex manifests and safelisting metadata", "description": "Administrators safelist extension URLs and permissions on Tableau Server using the manifests the framework produces.", "moduleId": "module-xfrm-tableau-sdk"}], "domain": "Extension Runtime and Platform Services", "group": "Extension Runtime"}, {"id": "dcon", "name": "Dashboard Data Connector", "type": "service", "status": "invest", "description": "The data path between extensions and the host dashboard: fetches worksheet summary and underlying data, subscribes to filter, parameter and selection changes, applies filters back, and implements the server-side row model that pages, groups and aggregates millions of rows for SuperTables and other heavy extensions. It keeps a short-lived snapshot per session so repeated interactions do not re-query Tableau, respects the user's row-level security because it only sees what the dashboard already shows, and hides platform differences so the same product works on Tableau, Power BI and Looker Studio data views.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-dcon-api", "name": "Dashboard Data API", "type": "api", "description": "API used by extension back-ends to request rows, aggregates, filter state and to push filters and parameters back to the dashboard.", "dependencies": {"modules": [{"moduleId": "module-dcon-fetch", "type": "delegates", "description": "API delegates data fetches and filter sync to the fetch orchestrator."}, {"moduleId": "module-dcon-rowmodel", "type": "uses", "description": "API serves paged and grouped requests through the row model."}]}}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-dcon-fetch", "name": "Data Fetch and Filter Sync Orchestrator", "type": "stateless-service", "description": "Coordinates worksheet data retrieval, incremental refresh on filter and parameter events and filter application without owning state.", "dependencies": {"modules": [{"moduleId": "module-dcon-tableau-data", "type": "uses", "description": "Orchestrator reads worksheet data and events through the Tableau data adapter."}, {"moduleId": "module-dcon-cache", "type": "uses", "description": "Orchestrator stores fetched rows in the snapshot cache."}]}}]}, {"layer": "service", "description": "Stateful services and domain service modules that own behavior, policy, workflow, data, or operations.", "modules": [{"id": "module-dcon-rowmodel", "name": "Server-side Row Model", "type": "service", "description": "Paging, sorting, grouping, pivoting and aggregation engine over cached snapshots that streams only the rows a grid needs.", "dependencies": {"modules": [{"moduleId": "module-dcon-cache", "type": "uses", "description": "Row model reads snapshots from the cache."}]}}, {"id": "module-dcon-cache", "name": "Session Snapshot Cache", "type": "stateful-service", "description": "Short-lived, per-session store of worksheet snapshots keyed by dashboard, sheet and filter context, kept inside the customer's environment for Enterprise deployments."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-dcon-tableau-data", "name": "Tableau Worksheet Data Adapter", "type": "integration", "description": "Connector to the Tableau Extensions API data methods (summary and underlying data, data sources, filters, parameters) and Tableau REST view data endpoints."}]}], "dataDependencies": [{"assetId": "dashboard-data-snapshot", "moduleIds": ["module-dcon-cache", "module-dcon-rowmodel", "module-dcon-fetch"], "role": "own", "description": "Owns the short-lived worksheet snapshots served to extensions."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-dcon-fetch", "type": "runtime", "description": "Uses the framework's Tableau session and settings to know which sheets and fields to read."}, {"targetBrickId": "mpad", "moduleId": "module-mpad-api", "sourceModuleId": "module-dcon-fetch", "type": "integration", "description": "Receives normalised data views from the Power BI and Looker Studio adapters through the same interface."}], "externalSystemsThisBrickDependsOn": [{"system": "Tableau Cloud and Tableau Server", "type": "data", "interface": "Tableau Extensions API data methods and REST API", "description": "Source of worksheet rows, filters and parameters.", "sourceModuleId": "module-dcon-tableau-data"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Runtime and Platform Services", "group": "Extension Runtime"}, {"id": "mpad", "name": "Multi-Platform Adapters", "type": "integration", "status": "invest", "description": "Carries the same extension code to Power BI and Looker Studio: a Power BI custom visual host packaged and certified for Microsoft AppSource (SuperTables, PictureThis, InputTables and WriteBackExtreme since 2022), and a Looker Studio community visualization host, each translating the platform's data view, selection, formatting pane and theming into the framework's abstractions so the product teams write features once. This brick underpins the three-year goal of feature parity across BI platforms on one runtime and one licence, and reduces the risk of depending on a single platform vendor.", "links": [{"group": "Evidence", "description": "Real-world evidence related to this product brick.", "links": [{"label": "Evidence Explorer", "link": "../../../../evidence-explorer/index.html", "description": "Search evidence \u2014 source repositories, cloud resources, and contacts. Refine with ?q=<query> to pre-filter for this product brick.", "embedLink": "../../../../evidence-explorer/index.html?embed=1"}]}], "layers": [{"layer": "ui", "description": "User-facing web, mobile, backoffice, and operator experience modules.", "modules": [{"id": "module-mpad-powerbi", "name": "Power BI Visual Host", "type": "web-component", "description": "Custom visual shell for Power BI (visuals API, formatting pane, selection manager, dataView mapping) that hosts extension front-ends as certified AppSource visuals.", "dependencies": {"modules": [{"moduleId": "module-mpad-api", "type": "uses", "description": "Host exposes platform capabilities through the adapter API."}, {"moduleId": "module-mpad-data-adapter", "type": "uses", "description": "Host normalises dataView rows through the data adapter."}]}}, {"id": "module-mpad-looker", "name": "Looker Studio Visualization Host", "type": "web-component", "description": "Community visualization shell for Looker Studio (dscc data and style bindings, theming) that hosts extension front-ends.", "dependencies": {"modules": [{"moduleId": "module-mpad-api", "type": "uses", "description": "Host exposes platform capabilities through the adapter API."}, {"moduleId": "module-mpad-data-adapter", "type": "uses", "description": "Host normalises data rows through the data adapter."}]}}]}, {"layer": "interfaces", "description": "APIs, BFFs, and explicit service boundary interfaces exposed to clients or other systems.", "modules": [{"id": "module-mpad-api", "name": "Platform Adapter API", "type": "bff", "description": "Uniform capability interface (data, selection, settings, theme, export) that extension front-ends call regardless of host platform."}]}, {"layer": "stateless-service", "description": "Stateless orchestration services that aggregate other services without owning durable state.", "modules": [{"id": "module-mpad-data-adapter", "name": "Data View Normaliser", "type": "stateless-service", "description": "Maps Power BI dataViews and Looker Studio data tables into the connector's row and field model without owning state."}]}, {"layer": "integration", "description": "Connectors, adapters, and integration modules for external systems, devices, or partner platforms.", "modules": [{"id": "module-mpad-listings", "name": "AppSource and Looker Packaging Connector", "type": "integration", "description": "Packages, signs and submits visuals to Microsoft AppSource certification and Looker Studio community visualization listings, tracking review status."}]}], "dataDependencies": [{"assetId": "extension-configuration", "moduleIds": ["module-mpad-api", "module-mpad-powerbi", "module-mpad-looker"], "role": "read-write", "description": "Stores extension settings in the Power BI or Looker Studio report."}, {"assetId": "dashboard-data-snapshot", "moduleIds": ["module-mpad-data-adapter"], "role": "read", "description": "Reads platform data views to normalise."}], "brickDependencies": [{"targetBrickId": "xfrm", "moduleId": "module-xfrm-settings-api", "sourceModuleId": "module-mpad-api", "type": "runtime", "description": "Reuses the framework's settings model and UI kit inside Power BI and Looker Studio hosts."}, {"targetBrickId": "dcon", "moduleId": "module-dcon-api", "sourceModuleId": "module-mpad-data-adapter", "type": "data", "description": "Feeds normalised data views into the Dashboard Data Connector."}, {"targetBrickId": "saas", "moduleId": "module-saas-api", "sourceModuleId": "module-mpad-listings", "type": "runtime", "description": "Pulls release builds from the release pipeline for packaging and listing."}, {"targetBrickId": "lics", "moduleId": "module-lics-api", "sourceModuleId": "module-mpad-powerbi", "type": "licensing", "description": "Applies the same license and active-user metering on Power BI and Looker Studio."}], "externalSystemsThisBrickDependsOn": [{"system": "Power BI and Microsoft AppSource", "type": "channel", "interface": "Power BI visuals API and AppSource certification", "description": "Hosts the visuals and distributes certified packages.", "sourceModuleId": "module-mpad-powerbi"}, {"system": "Looker Studio", "type": "channel", "interface": "Community visualizations API", "description": "Hosts the visualizations in Looker Studio reports.", "sourceModuleId": "module-mpad-looker"}], "externalSystemsDependingOnThisBrick": [], "domain": "Extension Runtime and Platform Services", "group": "Extension Runtime"}];
+    const linked_products = [{"id": "supertables", "name": "SuperTables", "icon": "supertables.png", "type": "B2B Dashboard Extension", "whyUsed": "The interactive grid itself: pivot, group, format, formulas, saved views and Excel export."}, {"id": "financetables", "name": "FinanceTables", "icon": "financetables.png", "type": "B2B Dashboard Extension", "whyUsed": "Hosts FinanceTables layouts and InputTables entry on the same grid engine."}, {"id": "apps-for-power-bi-and-looker-studio", "name": "Apps for Power BI and Looker Studio", "icon": "apps-for-power-bi-and-looker-studio.png", "type": "B2B Custom Visuals", "whyUsed": "The Excel-like grid as a Power BI custom visual and Looker Studio visualization."}, {"id": "visual-storytelling-extensions", "name": "Visual Storytelling Extensions", "icon": "visual-storytelling-extensions.png", "type": "B2B Dashboard Extension Bundle", "whyUsed": "Chart types Tableau lacks natively, the original Apps for Tableau product."}, {"id": "discovery-extensions", "name": "Discovery Extensions", "icon": "discovery-extensions.png", "type": "B2B Dashboard Extension Bundle", "whyUsed": "Filters a dashboard through a collapsible hierarchy tree."}, {"id": "writebackextreme", "name": "WriteBackExtreme and InputTables", "icon": "writebackextreme.png", "type": "B2B Enterprise Extension Suite", "whyUsed": "Extension shell and settings persistence for the write-back forms."}, {"id": "dashboard-workflow-tools", "name": "Dashboard Workflow Tools", "icon": "dashboard-workflow-tools.png", "type": "B2B Platform Governance Tools", "whyUsed": "Extension shell for DashboardGuide and DashboardUsage."}, {"id": "enterprise-deployment", "name": "Enterprise Deployment", "icon": "enterprise-deployment.png", "type": "B2B Enterprise Subscription and Services", "whyUsed": "Ships in the self-hosted package so every extension runs offline."}];
+    const related_teams = [{"teamId": "ai-enablement", "teamName": "AI Enablement", "teamType": "enabling", "groupId": "pltf", "groupName": "Platform and Enablement Teams", "role": "related", "roleLabel": "Related team"}, {"teamId": "tables-and-discovery", "teamName": "Tables and Discovery", "teamType": "stream-aligned", "groupId": "xprd", "groupName": "Extension Product Teams", "role": "related", "roleLabel": "Related team"}, {"teamId": "write-back-and-planning", "teamName": "Write-back and Planning", "teamType": "stream-aligned", "groupId": "xprd", "groupName": "Extension Product Teams", "role": "related", "roleLabel": "Related team"}, {"teamId": "visual-storytelling", "teamName": "Visual Storytelling", "teamType": "stream-aligned", "groupId": "xprd", "groupName": "Extension Product Teams", "role": "related", "roleLabel": "Related team"}, {"teamId": "deployment-and-licensing", "teamName": "Deployment and Licensing", "teamType": "platform", "groupId": "pltf", "groupName": "Platform and Enablement Teams", "role": "related", "roleLabel": "Related team"}, {"teamId": "distribution-and-adoption", "teamName": "Distribution and Adoption", "teamType": "stream-aligned", "groupId": "xprd", "groupName": "Extension Product Teams", "role": "related", "roleLabel": "Related team"}, {"teamId": "extension-runtime", "teamName": "Extension Runtime", "teamType": "platform", "groupId": "pltf", "groupName": "Platform and Enablement Teams", "role": "related", "roleLabel": "Related team"}];
+    const supported_jobs = [{"customerId": "bviw", "customerName": "Business Dashboard Viewer", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-bviw-portrait.jpg", "productId": "supertables", "productName": "SuperTables", "productIcon": "supertables.png", "jobId": "jtbd-bviw-1", "jobName": "Answer my own question from the dashboard without asking for a new one", "jobWhatItIs": "When the published dashboard does not show the cut the viewer needs, by customer group, by plant, by month with subtotals, reshape the data inside the dashboard: pivot, group, filter, drill down, add a calculated column and format the result, then save that view for next time, instead of filing a request with the BI team or exporting raw rows into Excel and rebuilding the pivot there.", "jobOutcome": "The viewer has the answer within the same session, in a table whose totals match the dashboard, and the dashboard creator's request queue shrinks because one dashboard now serves many questions.", "supportRationale": "Runs pivot, grouping, sorting, filtering and formatting in the grid on the full row set through the server-side row model.", "usedInSteps": [{"step": "Pivot, group and filter to the cut I need", "description": "Drag a dimension to rows or columns, group by region or product family, add subtotals and grand totals, sort, narrow the scope with HierarchyFilter and apply conditional formatting so variances stand out.", "howItSupports": "Runs pivot, grouping, sorting, filtering and formatting in the grid on the full row set through the server-side row model.", "media": []}, {"step": "Pivot, group and filter to the cut I need", "description": "Drag a dimension to rows or columns, group by region or product family, add subtotals and grand totals, sort, narrow the scope with HierarchyFilter and apply conditional formatting so variances stand out.", "howItSupports": "Determines which columns, features and hierarchies the creator configured for viewers to use.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "supertables", "productName": "SuperTables", "productIcon": "supertables.png", "jobId": "jtbd-dcre-1", "jobName": "Deliver an Excel-friendly interactive dashboard without building ten variants", "jobWhatItIs": "Take a business request such as 'a sales dashboard by region, product and month that people can slice as they like' and deliver one published dashboard on Tableau Cloud, Tableau Server or Power BI in which viewers can pivot, group, filter, drill, format, save their own view and export to Excel, using SuperTables, ShowMeMore, PowerKPIs, HierarchyFilter and DrillDownTree instead of building a separate worksheet for every column combination.", "jobOutcome": "The requesting team adopts one dashboard for their recurring questions, the creator's backlog of variant requests for that subject shrinks to near zero, and the dashboard stays maintainable because layout, formatting and drill paths are configuration in the workbook rather than duplicated worksheets.", "supportRationale": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "usedInSteps": [{"step": "Capture the requirement and choose the extension pattern", "description": "Sit with the requesting team, list the questions they ask each week and the Excel workbook they currently maintain, and decide which pattern fits: a SuperTable for grid-heavy analysis, a PowerKPIs entry point with drill-through for executives, a DrillDownTree or HierarchyFilter for organisational hierarchies, or ShowMeMore for chart types Tableau lacks. Check the gallery and documentation for a demo workbook that is close.", "howItSupports": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "media": []}, {"step": "Add the extension to the dashboard and connect worksheet data", "description": "Drag the extension object onto the dashboard in Tableau Desktop or the web authoring client, select the worksheet whose data it should read, and confirm that filters, parameters and actions on the dashboard flow into the extension. On Tableau Server or Cloud verify that the extension URL is safelisted; on Power BI import the custom visual from AppSource.", "howItSupports": "Connects the extension to worksheet data through the dashboard data connector and keeps filters and parameters in sync.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Stores the SuperTables configuration in the workbook so it publishes with the dashboard and survives version upgrades.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Delivers the pivot, group, filter, saved-view and Excel-export experience that viewers use once the dashboard is published.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Provides ShowMeMore, PowerKPIs, PictureThis and DashboardGuide as configurable extensions on the same runtime and data connector.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Publishes the dashboard with its extension configuration and verifies rendering on the target platform version.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Adds onboarding overlays that teach the interactive features so users self-serve instead of asking for changes.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Shows with DashboardUsage whether the new dashboard replaces the old variants before they are retired.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "supertables", "productName": "SuperTables", "productIcon": "supertables.png", "jobId": "jtbd-dcre-3", "jobName": "Guide users through a dashboard and prove it is used", "jobWhatItIs": "After publishing, make sure the intended audience finds, understands and returns to the dashboard: add DashboardGuide onboarding overlays, measure views, interactions and drop-off with DashboardUsage, deliver the same content to people who never open Tableau through MailScheduler, and report adoption back to the BI platform lead so the dashboard earns its place in the portfolio.", "jobOutcome": "New users complete their first session without asking the creator for help, usage data shows which dashboards and views are alive and which can be retired, and the creator can show the BI platform lead evidence of adoption instead of anecdotes.", "supportRationale": "Places the guide extension on the dashboard and links it to the objects it explains.", "usedInSteps": [{"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Places the guide extension on the dashboard and links it to the objects it explains.", "media": []}, {"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "media": []}]}, {"customerId": "plnr", "customerName": "Planning and Finance Contributor", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-plnr-portrait.jpg", "productId": "financetables", "productName": "FinanceTables", "productIcon": "financetables.png", "jobId": "jtbd-plnr-3", "jobName": "Produce P&Ls and management statements from the dashboard data", "jobWhatItIs": "At month-end, turn the actuals and the submitted forecast into the P&L, budget-versus-actual report and management statement the leadership team expects, with the account hierarchy, subtotals, sign conventions and comparison columns, and get it into the board deck and the mailbox without rebuilding it in Excel.", "jobOutcome": "A finance statement produced from the same governed data in minutes, consistent across dashboard, deck and email, and reused every month without manual rework.", "supportRationale": "Renders the account hierarchy as a P&L or management statement with the configured layout.", "usedInSteps": [{"step": "Configure the statement layout", "description": "Map the chart of accounts to a FinanceTables layout with subtotals, sign flips, currency and comparison columns for actual, budget, forecast and variance, and save it as the monthly template.", "howItSupports": "Renders the account hierarchy as a P&L or management statement with the configured layout.", "media": []}, {"step": "Configure the statement layout", "description": "Map the chart of accounts to a FinanceTables layout with subtotals, sign flips, currency and comparison columns for actual, budget, forecast and variance, and save it as the monthly template.", "howItSupports": "Lets the creator or controller configure the FinanceTables extension on the dashboard.", "media": []}]}, {"customerId": "exec", "customerName": "Executive Report Recipient", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-exec-portrait.jpg", "productId": "financetables", "productName": "FinanceTables", "productIcon": "financetables.png", "jobId": "jtbd-exec-1", "jobName": "Receive the right report at the right time where I work", "jobWhatItIs": "Get the weekly and monthly KPI reports and month-end statements automatically, filtered to the executive's own scope, in the format they use, PDF for reading and Excel for the finance meeting, in their mailbox or Teams channel before the meeting, with certainty that a failed delivery is noticed and retried rather than silently missing.", "jobOutcome": "The executive opens the report on time in the channel they already use, with the right scope and numbers that match the dashboard, and never chases the analytics team for it.", "supportRationale": "Provides the dashboards and KPI pages that the deliveries render.", "usedInSteps": [{"step": "Agree the report, scope and rhythm", "description": "Tell the dashboard creator or BI lead which dashboards, which filters such as region or business unit, which format and which schedule are needed, and keep the recipient list current as the team changes.", "howItSupports": "Provides the dashboards and KPI pages that the deliveries render.", "media": []}, {"step": "Agree the report, scope and rhythm", "description": "Tell the dashboard creator or BI lead which dashboards, which filters such as region or business unit, which format and which schedule are needed, and keep the recipient list current as the team changes.", "howItSupports": "Captures the schedule, recipient list, per-recipient filters and output formats.", "media": []}]}, {"customerId": "exec", "customerName": "Executive Report Recipient", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-exec-portrait.jpg", "productId": "financetables", "productName": "FinanceTables", "productIcon": "financetables.png", "jobId": "jtbd-exec-2", "jobName": "See the KPIs that matter and drill only when something is off", "jobWhatItIs": "Open one KPI page, in the delivered report or in the dashboard, that shows the handful of measures the executive owns with status against target and trend, defined the same way across the organisation, and go from a red KPI to the explaining detail in one or two clicks or to a precise question for the analyst, rather than reading fourteen dashboards to find the problem.", "jobOutcome": "The executive spends minutes rather than hours on the KPI review, catches deviations early, and the follow-up questions to the analytics team are specific and answerable.", "supportRationale": "Provides the PowerKPIs hub configured with consistent definitions and thresholds.", "usedInSteps": [{"step": "Open the KPI entry point", "description": "Open the PowerKPIs page in the dashboard or the delivered report and see KPI tiles with status, trend and target, with the same definition wherever the KPI appears.", "howItSupports": "Provides the PowerKPIs hub configured with consistent definitions and thresholds.", "media": []}, {"step": "Open the KPI entry point", "description": "Open the PowerKPIs page in the dashboard or the delivered report and see KPI tiles with status, trend and target, with the same definition wherever the KPI appears.", "howItSupports": "Renders the KPI tiles and their trends from the dashboard data.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "apps-for-power-bi-and-looker-studio", "productName": "Apps for Power BI and Looker Studio", "productIcon": "apps-for-power-bi-and-looker-studio.png", "jobId": "jtbd-dcre-1", "jobName": "Deliver an Excel-friendly interactive dashboard without building ten variants", "jobWhatItIs": "Take a business request such as 'a sales dashboard by region, product and month that people can slice as they like' and deliver one published dashboard on Tableau Cloud, Tableau Server or Power BI in which viewers can pivot, group, filter, drill, format, save their own view and export to Excel, using SuperTables, ShowMeMore, PowerKPIs, HierarchyFilter and DrillDownTree instead of building a separate worksheet for every column combination.", "jobOutcome": "The requesting team adopts one dashboard for their recurring questions, the creator's backlog of variant requests for that subject shrinks to near zero, and the dashboard stays maintainable because layout, formatting and drill paths are configuration in the workbook rather than duplicated worksheets.", "supportRationale": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "usedInSteps": [{"step": "Capture the requirement and choose the extension pattern", "description": "Sit with the requesting team, list the questions they ask each week and the Excel workbook they currently maintain, and decide which pattern fits: a SuperTable for grid-heavy analysis, a PowerKPIs entry point with drill-through for executives, a DrillDownTree or HierarchyFilter for organisational hierarchies, or ShowMeMore for chart types Tableau lacks. Check the gallery and documentation for a demo workbook that is close.", "howItSupports": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "media": []}, {"step": "Add the extension to the dashboard and connect worksheet data", "description": "Drag the extension object onto the dashboard in Tableau Desktop or the web authoring client, select the worksheet whose data it should read, and confirm that filters, parameters and actions on the dashboard flow into the extension. On Tableau Server or Cloud verify that the extension URL is safelisted; on Power BI import the custom visual from AppSource.", "howItSupports": "Connects the extension to worksheet data through the dashboard data connector and keeps filters and parameters in sync.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Stores the SuperTables configuration in the workbook so it publishes with the dashboard and survives version upgrades.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Delivers the pivot, group, filter, saved-view and Excel-export experience that viewers use once the dashboard is published.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Provides ShowMeMore, PowerKPIs, PictureThis and DashboardGuide as configurable extensions on the same runtime and data connector.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Publishes the dashboard with its extension configuration and verifies rendering on the target platform version.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Adds onboarding overlays that teach the interactive features so users self-serve instead of asking for changes.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Shows with DashboardUsage whether the new dashboard replaces the old variants before they are retired.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "apps-for-power-bi-and-looker-studio", "productName": "Apps for Power BI and Looker Studio", "productIcon": "apps-for-power-bi-and-looker-studio.png", "jobId": "jtbd-dcre-3", "jobName": "Guide users through a dashboard and prove it is used", "jobWhatItIs": "After publishing, make sure the intended audience finds, understands and returns to the dashboard: add DashboardGuide onboarding overlays, measure views, interactions and drop-off with DashboardUsage, deliver the same content to people who never open Tableau through MailScheduler, and report adoption back to the BI platform lead so the dashboard earns its place in the portfolio.", "jobOutcome": "New users complete their first session without asking the creator for help, usage data shows which dashboards and views are alive and which can be retired, and the creator can show the BI platform lead evidence of adoption instead of anecdotes.", "supportRationale": "Places the guide extension on the dashboard and links it to the objects it explains.", "usedInSteps": [{"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Places the guide extension on the dashboard and links it to the objects it explains.", "media": []}, {"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "media": []}]}, {"customerId": "plnr", "customerName": "Planning and Finance Contributor", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-plnr-portrait.jpg", "productId": "apps-for-power-bi-and-looker-studio", "productName": "Apps for Power BI and Looker Studio", "productIcon": "apps-for-power-bi-and-looker-studio.png", "jobId": "jtbd-plnr-3", "jobName": "Produce P&Ls and management statements from the dashboard data", "jobWhatItIs": "At month-end, turn the actuals and the submitted forecast into the P&L, budget-versus-actual report and management statement the leadership team expects, with the account hierarchy, subtotals, sign conventions and comparison columns, and get it into the board deck and the mailbox without rebuilding it in Excel.", "jobOutcome": "A finance statement produced from the same governed data in minutes, consistent across dashboard, deck and email, and reused every month without manual rework.", "supportRationale": "Renders the account hierarchy as a P&L or management statement with the configured layout.", "usedInSteps": [{"step": "Configure the statement layout", "description": "Map the chart of accounts to a FinanceTables layout with subtotals, sign flips, currency and comparison columns for actual, budget, forecast and variance, and save it as the monthly template.", "howItSupports": "Renders the account hierarchy as a P&L or management statement with the configured layout.", "media": []}, {"step": "Configure the statement layout", "description": "Map the chart of accounts to a FinanceTables layout with subtotals, sign flips, currency and comparison columns for actual, budget, forecast and variance, and save it as the monthly template.", "howItSupports": "Lets the creator or controller configure the FinanceTables extension on the dashboard.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "visual-storytelling-extensions", "productName": "Visual Storytelling Extensions", "productIcon": "visual-storytelling-extensions.png", "jobId": "jtbd-dcre-1", "jobName": "Deliver an Excel-friendly interactive dashboard without building ten variants", "jobWhatItIs": "Take a business request such as 'a sales dashboard by region, product and month that people can slice as they like' and deliver one published dashboard on Tableau Cloud, Tableau Server or Power BI in which viewers can pivot, group, filter, drill, format, save their own view and export to Excel, using SuperTables, ShowMeMore, PowerKPIs, HierarchyFilter and DrillDownTree instead of building a separate worksheet for every column combination.", "jobOutcome": "The requesting team adopts one dashboard for their recurring questions, the creator's backlog of variant requests for that subject shrinks to near zero, and the dashboard stays maintainable because layout, formatting and drill paths are configuration in the workbook rather than duplicated worksheets.", "supportRationale": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "usedInSteps": [{"step": "Capture the requirement and choose the extension pattern", "description": "Sit with the requesting team, list the questions they ask each week and the Excel workbook they currently maintain, and decide which pattern fits: a SuperTable for grid-heavy analysis, a PowerKPIs entry point with drill-through for executives, a DrillDownTree or HierarchyFilter for organisational hierarchies, or ShowMeMore for chart types Tableau lacks. Check the gallery and documentation for a demo workbook that is close.", "howItSupports": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "media": []}, {"step": "Add the extension to the dashboard and connect worksheet data", "description": "Drag the extension object onto the dashboard in Tableau Desktop or the web authoring client, select the worksheet whose data it should read, and confirm that filters, parameters and actions on the dashboard flow into the extension. On Tableau Server or Cloud verify that the extension URL is safelisted; on Power BI import the custom visual from AppSource.", "howItSupports": "Connects the extension to worksheet data through the dashboard data connector and keeps filters and parameters in sync.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Stores the SuperTables configuration in the workbook so it publishes with the dashboard and survives version upgrades.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Provides ShowMeMore, PowerKPIs, PictureThis and DashboardGuide as configurable extensions on the same runtime and data connector.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Publishes the dashboard with its extension configuration and verifies rendering on the target platform version.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Adds onboarding overlays that teach the interactive features so users self-serve instead of asking for changes.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Shows with DashboardUsage whether the new dashboard replaces the old variants before they are retired.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Delivers the pivot, group, filter, saved-view and Excel-export experience that viewers use once the dashboard is published.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "visual-storytelling-extensions", "productName": "Visual Storytelling Extensions", "productIcon": "visual-storytelling-extensions.png", "jobId": "jtbd-dcre-3", "jobName": "Guide users through a dashboard and prove it is used", "jobWhatItIs": "After publishing, make sure the intended audience finds, understands and returns to the dashboard: add DashboardGuide onboarding overlays, measure views, interactions and drop-off with DashboardUsage, deliver the same content to people who never open Tableau through MailScheduler, and report adoption back to the BI platform lead so the dashboard earns its place in the portfolio.", "jobOutcome": "New users complete their first session without asking the creator for help, usage data shows which dashboards and views are alive and which can be retired, and the creator can show the BI platform lead evidence of adoption instead of anecdotes.", "supportRationale": "Places the guide extension on the dashboard and links it to the objects it explains.", "usedInSteps": [{"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Places the guide extension on the dashboard and links it to the objects it explains.", "media": []}, {"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "media": []}]}, {"customerId": "exec", "customerName": "Executive Report Recipient", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-exec-portrait.jpg", "productId": "visual-storytelling-extensions", "productName": "Visual Storytelling Extensions", "productIcon": "visual-storytelling-extensions.png", "jobId": "jtbd-exec-1", "jobName": "Receive the right report at the right time where I work", "jobWhatItIs": "Get the weekly and monthly KPI reports and month-end statements automatically, filtered to the executive's own scope, in the format they use, PDF for reading and Excel for the finance meeting, in their mailbox or Teams channel before the meeting, with certainty that a failed delivery is noticed and retried rather than silently missing.", "jobOutcome": "The executive opens the report on time in the channel they already use, with the right scope and numbers that match the dashboard, and never chases the analytics team for it.", "supportRationale": "Provides the dashboards and KPI pages that the deliveries render.", "usedInSteps": [{"step": "Agree the report, scope and rhythm", "description": "Tell the dashboard creator or BI lead which dashboards, which filters such as region or business unit, which format and which schedule are needed, and keep the recipient list current as the team changes.", "howItSupports": "Provides the dashboards and KPI pages that the deliveries render.", "media": []}, {"step": "Agree the report, scope and rhythm", "description": "Tell the dashboard creator or BI lead which dashboards, which filters such as region or business unit, which format and which schedule are needed, and keep the recipient list current as the team changes.", "howItSupports": "Captures the schedule, recipient list, per-recipient filters and output formats.", "media": []}]}, {"customerId": "exec", "customerName": "Executive Report Recipient", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-exec-portrait.jpg", "productId": "visual-storytelling-extensions", "productName": "Visual Storytelling Extensions", "productIcon": "visual-storytelling-extensions.png", "jobId": "jtbd-exec-2", "jobName": "See the KPIs that matter and drill only when something is off", "jobWhatItIs": "Open one KPI page, in the delivered report or in the dashboard, that shows the handful of measures the executive owns with status against target and trend, defined the same way across the organisation, and go from a red KPI to the explaining detail in one or two clicks or to a precise question for the analyst, rather than reading fourteen dashboards to find the problem.", "jobOutcome": "The executive spends minutes rather than hours on the KPI review, catches deviations early, and the follow-up questions to the analytics team are specific and answerable.", "supportRationale": "Provides the PowerKPIs hub configured with consistent definitions and thresholds.", "usedInSteps": [{"step": "Open the KPI entry point", "description": "Open the PowerKPIs page in the dashboard or the delivered report and see KPI tiles with status, trend and target, with the same definition wherever the KPI appears.", "howItSupports": "Provides the PowerKPIs hub configured with consistent definitions and thresholds.", "media": []}, {"step": "Open the KPI entry point", "description": "Open the PowerKPIs page in the dashboard or the delivered report and see KPI tiles with status, trend and target, with the same definition wherever the KPI appears.", "howItSupports": "Renders the KPI tiles and their trends from the dashboard data.", "media": []}]}, {"customerId": "bviw", "customerName": "Business Dashboard Viewer", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-bviw-portrait.jpg", "productId": "discovery-extensions", "productName": "Discovery Extensions", "productIcon": "discovery-extensions.png", "jobId": "jtbd-bviw-1", "jobName": "Answer my own question from the dashboard without asking for a new one", "jobWhatItIs": "When the published dashboard does not show the cut the viewer needs, by customer group, by plant, by month with subtotals, reshape the data inside the dashboard: pivot, group, filter, drill down, add a calculated column and format the result, then save that view for next time, instead of filing a request with the BI team or exporting raw rows into Excel and rebuilding the pivot there.", "jobOutcome": "The viewer has the answer within the same session, in a table whose totals match the dashboard, and the dashboard creator's request queue shrinks because one dashboard now serves many questions.", "supportRationale": "Runs pivot, grouping, sorting, filtering and formatting in the grid on the full row set through the server-side row model.", "usedInSteps": [{"step": "Pivot, group and filter to the cut I need", "description": "Drag a dimension to rows or columns, group by region or product family, add subtotals and grand totals, sort, narrow the scope with HierarchyFilter and apply conditional formatting so variances stand out.", "howItSupports": "Runs pivot, grouping, sorting, filtering and formatting in the grid on the full row set through the server-side row model.", "media": []}, {"step": "Pivot, group and filter to the cut I need", "description": "Drag a dimension to rows or columns, group by region or product family, add subtotals and grand totals, sort, narrow the scope with HierarchyFilter and apply conditional formatting so variances stand out.", "howItSupports": "Determines which columns, features and hierarchies the creator configured for viewers to use.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "discovery-extensions", "productName": "Discovery Extensions", "productIcon": "discovery-extensions.png", "jobId": "jtbd-dcre-1", "jobName": "Deliver an Excel-friendly interactive dashboard without building ten variants", "jobWhatItIs": "Take a business request such as 'a sales dashboard by region, product and month that people can slice as they like' and deliver one published dashboard on Tableau Cloud, Tableau Server or Power BI in which viewers can pivot, group, filter, drill, format, save their own view and export to Excel, using SuperTables, ShowMeMore, PowerKPIs, HierarchyFilter and DrillDownTree instead of building a separate worksheet for every column combination.", "jobOutcome": "The requesting team adopts one dashboard for their recurring questions, the creator's backlog of variant requests for that subject shrinks to near zero, and the dashboard stays maintainable because layout, formatting and drill paths are configuration in the workbook rather than duplicated worksheets.", "supportRationale": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "usedInSteps": [{"step": "Capture the requirement and choose the extension pattern", "description": "Sit with the requesting team, list the questions they ask each week and the Excel workbook they currently maintain, and decide which pattern fits: a SuperTable for grid-heavy analysis, a PowerKPIs entry point with drill-through for executives, a DrillDownTree or HierarchyFilter for organisational hierarchies, or ShowMeMore for chart types Tableau lacks. Check the gallery and documentation for a demo workbook that is close.", "howItSupports": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "media": []}, {"step": "Add the extension to the dashboard and connect worksheet data", "description": "Drag the extension object onto the dashboard in Tableau Desktop or the web authoring client, select the worksheet whose data it should read, and confirm that filters, parameters and actions on the dashboard flow into the extension. On Tableau Server or Cloud verify that the extension URL is safelisted; on Power BI import the custom visual from AppSource.", "howItSupports": "Connects the extension to worksheet data through the dashboard data connector and keeps filters and parameters in sync.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Stores the SuperTables configuration in the workbook so it publishes with the dashboard and survives version upgrades.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Delivers the pivot, group, filter, saved-view and Excel-export experience that viewers use once the dashboard is published.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Provides ShowMeMore, PowerKPIs, PictureThis and DashboardGuide as configurable extensions on the same runtime and data connector.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Publishes the dashboard with its extension configuration and verifies rendering on the target platform version.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Adds onboarding overlays that teach the interactive features so users self-serve instead of asking for changes.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Shows with DashboardUsage whether the new dashboard replaces the old variants before they are retired.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "discovery-extensions", "productName": "Discovery Extensions", "productIcon": "discovery-extensions.png", "jobId": "jtbd-dcre-3", "jobName": "Guide users through a dashboard and prove it is used", "jobWhatItIs": "After publishing, make sure the intended audience finds, understands and returns to the dashboard: add DashboardGuide onboarding overlays, measure views, interactions and drop-off with DashboardUsage, deliver the same content to people who never open Tableau through MailScheduler, and report adoption back to the BI platform lead so the dashboard earns its place in the portfolio.", "jobOutcome": "New users complete their first session without asking the creator for help, usage data shows which dashboards and views are alive and which can be retired, and the creator can show the BI platform lead evidence of adoption instead of anecdotes.", "supportRationale": "Places the guide extension on the dashboard and links it to the objects it explains.", "usedInSteps": [{"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Places the guide extension on the dashboard and links it to the objects it explains.", "media": []}, {"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "media": []}]}, {"customerId": "plnr", "customerName": "Planning and Finance Contributor", "customerGroup": "Business Users and Decision Makers", "customerIcon": "customer-plnr-portrait.jpg", "productId": "writebackextreme", "productName": "WriteBackExtreme and InputTables", "productIcon": "writebackextreme.png", "jobId": "jtbd-plnr-3", "jobName": "Produce P&Ls and management statements from the dashboard data", "jobWhatItIs": "At month-end, turn the actuals and the submitted forecast into the P&L, budget-versus-actual report and management statement the leadership team expects, with the account hierarchy, subtotals, sign conventions and comparison columns, and get it into the board deck and the mailbox without rebuilding it in Excel.", "jobOutcome": "A finance statement produced from the same governed data in minutes, consistent across dashboard, deck and email, and reused every month without manual rework.", "supportRationale": "Renders the account hierarchy as a P&L or management statement with the configured layout.", "usedInSteps": [{"step": "Configure the statement layout", "description": "Map the chart of accounts to a FinanceTables layout with subtotals, sign flips, currency and comparison columns for actual, budget, forecast and variance, and save it as the monthly template.", "howItSupports": "Renders the account hierarchy as a P&L or management statement with the configured layout.", "media": []}, {"step": "Configure the statement layout", "description": "Map the chart of accounts to a FinanceTables layout with subtotals, sign flips, currency and comparison columns for actual, budget, forecast and variance, and save it as the monthly template.", "howItSupports": "Lets the creator or controller configure the FinanceTables extension on the dashboard.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "writebackextreme", "productName": "WriteBackExtreme and InputTables", "productIcon": "writebackextreme.png", "jobId": "jtbd-dcre-1", "jobName": "Deliver an Excel-friendly interactive dashboard without building ten variants", "jobWhatItIs": "Take a business request such as 'a sales dashboard by region, product and month that people can slice as they like' and deliver one published dashboard on Tableau Cloud, Tableau Server or Power BI in which viewers can pivot, group, filter, drill, format, save their own view and export to Excel, using SuperTables, ShowMeMore, PowerKPIs, HierarchyFilter and DrillDownTree instead of building a separate worksheet for every column combination.", "jobOutcome": "The requesting team adopts one dashboard for their recurring questions, the creator's backlog of variant requests for that subject shrinks to near zero, and the dashboard stays maintainable because layout, formatting and drill paths are configuration in the workbook rather than duplicated worksheets.", "supportRationale": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "usedInSteps": [{"step": "Capture the requirement and choose the extension pattern", "description": "Sit with the requesting team, list the questions they ask each week and the Excel workbook they currently maintain, and decide which pattern fits: a SuperTable for grid-heavy analysis, a PowerKPIs entry point with drill-through for executives, a DrillDownTree or HierarchyFilter for organisational hierarchies, or ShowMeMore for chart types Tableau lacks. Check the gallery and documentation for a demo workbook that is close.", "howItSupports": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "media": []}, {"step": "Add the extension to the dashboard and connect worksheet data", "description": "Drag the extension object onto the dashboard in Tableau Desktop or the web authoring client, select the worksheet whose data it should read, and confirm that filters, parameters and actions on the dashboard flow into the extension. On Tableau Server or Cloud verify that the extension URL is safelisted; on Power BI import the custom visual from AppSource.", "howItSupports": "Connects the extension to worksheet data through the dashboard data connector and keeps filters and parameters in sync.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Stores the SuperTables configuration in the workbook so it publishes with the dashboard and survives version upgrades.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Delivers the pivot, group, filter, saved-view and Excel-export experience that viewers use once the dashboard is published.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Provides ShowMeMore, PowerKPIs, PictureThis and DashboardGuide as configurable extensions on the same runtime and data connector.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Adds onboarding overlays that teach the interactive features so users self-serve instead of asking for changes.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Publishes the dashboard with its extension configuration and verifies rendering on the target platform version.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Shows with DashboardUsage whether the new dashboard replaces the old variants before they are retired.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "writebackextreme", "productName": "WriteBackExtreme and InputTables", "productIcon": "writebackextreme.png", "jobId": "jtbd-dcre-3", "jobName": "Guide users through a dashboard and prove it is used", "jobWhatItIs": "After publishing, make sure the intended audience finds, understands and returns to the dashboard: add DashboardGuide onboarding overlays, measure views, interactions and drop-off with DashboardUsage, deliver the same content to people who never open Tableau through MailScheduler, and report adoption back to the BI platform lead so the dashboard earns its place in the portfolio.", "jobOutcome": "New users complete their first session without asking the creator for help, usage data shows which dashboards and views are alive and which can be retired, and the creator can show the BI platform lead evidence of adoption instead of anecdotes.", "supportRationale": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "usedInSteps": [{"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "media": []}, {"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Places the guide extension on the dashboard and links it to the objects it explains.", "media": []}]}, {"customerId": "itad", "customerName": "IT Administrator", "customerGroup": "IT, Security and Procurement", "customerIcon": "customer-itad-portrait.jpg", "productId": "writebackextreme", "productName": "WriteBackExtreme and InputTables", "productIcon": "writebackextreme.png", "jobId": "jtbd-itad-2", "jobName": "Connect the extensions to our identity provider, databases and network safely", "jobWhatItIs": "Wire the self-hosted extensions into the organisation's SSO, map roles to Tableau groups, create the write-back database connections and service accounts with least privilege, and open exactly the network paths and certificates the extensions need between the browser, Tableau Server, the extension server and the databases.", "jobOutcome": "Users sign in with their corporate identity, write-back reaches only the schemas it should, all traffic is encrypted over approved ports, and the security reviewer signs off the configuration without exceptions.", "supportRationale": "Supplies the test workbook in which the creator exercises the connected extension.", "usedInSteps": [{"step": "Validate with the dashboard creator and security", "description": "Run an end-to-end test with a dashboard creator: sign in through SSO, write a value back to the test schema, check the audit record, and walk the security reviewer through the resulting configuration.", "howItSupports": "Supplies the test workbook in which the creator exercises the connected extension.", "media": []}]}, {"customerId": "itad", "customerName": "IT Administrator", "customerGroup": "IT, Security and Procurement", "customerIcon": "customer-itad-portrait.jpg", "productId": "writebackextreme", "productName": "WriteBackExtreme and InputTables", "productIcon": "writebackextreme.png", "jobId": "jtbd-itad-3", "jobName": "Keep every workbook pointing at the right extension version and URL", "jobWhatItIs": "Know which of the organisation's workbooks use which extension, keep them on supported versions, and change the extension URL in all of them at once when Tableau Server is migrated, a hostname changes or an extension moves from SaaS-hosted to self-hosted.", "jobOutcome": "No workbook silently breaks after a migration or upgrade, unsupported versions disappear from the estate, and licence usage and renewals are tracked from the same inventory.", "supportRationale": "Keeps the extension settings persisted in the workbook valid after the URL change.", "usedInSteps": [{"step": "Replace extension URLs with TrexReplacer during migrations", "description": "When a server, hostname or hosting model changes, run TrexReplacer against the affected workbooks to rewrite the extension URLs in bulk, re-publish them and confirm the extensions load with settings intact.", "howItSupports": "Keeps the extension settings persisted in the workbook valid after the URL change.", "media": []}]}, {"customerId": "bilr", "customerName": "BI Platform Lead", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-bilr-portrait.jpg", "productId": "dashboard-workflow-tools", "productName": "Dashboard Workflow Tools", "productIcon": "dashboard-workflow-tools.png", "jobId": "jtbd-bilr-1", "jobName": "Grow dashboard adoption across creators, explorers and viewers", "jobWhatItIs": "Run the analytics centre of excellence's adoption programme: understand why licensed users do not open dashboards or export everything to Excel, equip creators with a standard interactive toolkit (SuperTables, PowerKPIs, DashboardGuide, ShowMeMore), reach non-Tableau stakeholders through scheduled delivery, and manage adoption as a monthly metric per business unit rather than as anecdotes.", "jobOutcome": "Monthly active dashboard users grow across all three roles, Excel exports and shadow spreadsheets decline, and the platform lead can show the steering committee that the BI investment, including the extensions, is used by the people it was bought for.", "supportRationale": "Provides the extension set, templates and configuration patterns the toolkit standardises.", "usedInSteps": [{"step": "Standardise an interactive toolkit for creators", "description": "Define the approved extension set per use case (SuperTables for grids, PowerKPIs for entry points, DashboardGuide for onboarding, ShowMeMore for missing chart types, HierarchyFilter for organisations), publish templates and design standards, and make the toolkit part of the dashboard review checklist.", "howItSupports": "Provides the extension set, templates and configuration patterns the toolkit standardises.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "dashboard-workflow-tools", "productName": "Dashboard Workflow Tools", "productIcon": "dashboard-workflow-tools.png", "jobId": "jtbd-dcre-1", "jobName": "Deliver an Excel-friendly interactive dashboard without building ten variants", "jobWhatItIs": "Take a business request such as 'a sales dashboard by region, product and month that people can slice as they like' and deliver one published dashboard on Tableau Cloud, Tableau Server or Power BI in which viewers can pivot, group, filter, drill, format, save their own view and export to Excel, using SuperTables, ShowMeMore, PowerKPIs, HierarchyFilter and DrillDownTree instead of building a separate worksheet for every column combination.", "jobOutcome": "The requesting team adopts one dashboard for their recurring questions, the creator's backlog of variant requests for that subject shrinks to near zero, and the dashboard stays maintainable because layout, formatting and drill paths are configuration in the workbook rather than duplicated worksheets.", "supportRationale": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "usedInSteps": [{"step": "Capture the requirement and choose the extension pattern", "description": "Sit with the requesting team, list the questions they ask each week and the Excel workbook they currently maintain, and decide which pattern fits: a SuperTable for grid-heavy analysis, a PowerKPIs entry point with drill-through for executives, a DrillDownTree or HierarchyFilter for organisational hierarchies, or ShowMeMore for chart types Tableau lacks. Check the gallery and documentation for a demo workbook that is close.", "howItSupports": "Provides the extension catalogue, design patterns and demo workbooks that map a business question to an extension configuration.", "media": []}, {"step": "Add the extension to the dashboard and connect worksheet data", "description": "Drag the extension object onto the dashboard in Tableau Desktop or the web authoring client, select the worksheet whose data it should read, and confirm that filters, parameters and actions on the dashboard flow into the extension. On Tableau Server or Cloud verify that the extension URL is safelisted; on Power BI import the custom visual from AppSource.", "howItSupports": "Connects the extension to worksheet data through the dashboard data connector and keeps filters and parameters in sync.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Stores the SuperTables configuration in the workbook so it publishes with the dashboard and survives version upgrades.", "media": []}, {"step": "Configure the SuperTable for self-service", "description": "Set up the grid: default columns and pivots, grouping and subtotals, conditional formatting and sparklines, calculated columns and formulas, number formats per column, row limits and server-side row model for large data, and allow viewers to save personalised views and export to Excel with formatting preserved.", "howItSupports": "Delivers the pivot, group, filter, saved-view and Excel-export experience that viewers use once the dashboard is published.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Provides ShowMeMore, PowerKPIs, PictureThis and DashboardGuide as configurable extensions on the same runtime and data connector.", "media": []}, {"step": "Add charts, KPI tiles and guidance the platform lacks", "description": "Complement the grid with ShowMeMore chart types such as Sankey, bullet or radar, a PowerKPIs tile row as the entry point with sparklines and drill-through, PictureThis for product images, and a short DashboardGuide tour that explains how to pivot and export, so the first session does not end with a request for a new variant.", "howItSupports": "Adds onboarding overlays that teach the interactive features so users self-serve instead of asking for changes.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Publishes the dashboard with its extension configuration and verifies rendering on the target platform version.", "media": []}, {"step": "Publish, verify with users and retire the variants", "description": "Publish to the production project on Tableau Server or Cloud, walk the requesting team through the dashboard, check that saved views and Excel export behave as expected for explorers and viewers, and then archive the older worksheet variants and the Excel workbook the team used to maintain.", "howItSupports": "Shows with DashboardUsage whether the new dashboard replaces the old variants before they are retired.", "media": []}]}, {"customerId": "dcre", "customerName": "Dashboard Creator", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-dcre-portrait.jpg", "productId": "dashboard-workflow-tools", "productName": "Dashboard Workflow Tools", "productIcon": "dashboard-workflow-tools.png", "jobId": "jtbd-dcre-3", "jobName": "Guide users through a dashboard and prove it is used", "jobWhatItIs": "After publishing, make sure the intended audience finds, understands and returns to the dashboard: add DashboardGuide onboarding overlays, measure views, interactions and drop-off with DashboardUsage, deliver the same content to people who never open Tableau through MailScheduler, and report adoption back to the BI platform lead so the dashboard earns its place in the portfolio.", "jobOutcome": "New users complete their first session without asking the creator for help, usage data shows which dashboards and views are alive and which can be retired, and the creator can show the BI platform lead evidence of adoption instead of anecdotes.", "supportRationale": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "usedInSteps": [{"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Provides DashboardGuide steps, tooltips and first-visit rules stored with the workbook.", "media": []}, {"step": "Add onboarding overlays to the published dashboard", "description": "Configure a DashboardGuide tour with step markers on the filters, the SuperTable pivot controls and the export button, add contextual help for KPI definitions, and set the tour to run on first visit and on demand thereafter.", "howItSupports": "Places the guide extension on the dashboard and links it to the objects it explains.", "media": []}]}, {"customerId": "itad", "customerName": "IT Administrator", "customerGroup": "IT, Security and Procurement", "customerIcon": "customer-itad-portrait.jpg", "productId": "enterprise-deployment", "productName": "Enterprise Deployment", "productIcon": "enterprise-deployment.png", "jobId": "jtbd-itad-2", "jobName": "Connect the extensions to our identity provider, databases and network safely", "jobWhatItIs": "Wire the self-hosted extensions into the organisation's SSO, map roles to Tableau groups, create the write-back database connections and service accounts with least privilege, and open exactly the network paths and certificates the extensions need between the browser, Tableau Server, the extension server and the databases.", "jobOutcome": "Users sign in with their corporate identity, write-back reaches only the schemas it should, all traffic is encrypted over approved ports, and the security reviewer signs off the configuration without exceptions.", "supportRationale": "Supplies the test workbook in which the creator exercises the connected extension.", "usedInSteps": [{"step": "Validate with the dashboard creator and security", "description": "Run an end-to-end test with a dashboard creator: sign in through SSO, write a value back to the test schema, check the audit record, and walk the security reviewer through the resulting configuration.", "howItSupports": "Supplies the test workbook in which the creator exercises the connected extension.", "media": []}]}, {"customerId": "itad", "customerName": "IT Administrator", "customerGroup": "IT, Security and Procurement", "customerIcon": "customer-itad-portrait.jpg", "productId": "enterprise-deployment", "productName": "Enterprise Deployment", "productIcon": "enterprise-deployment.png", "jobId": "jtbd-itad-3", "jobName": "Keep every workbook pointing at the right extension version and URL", "jobWhatItIs": "Know which of the organisation's workbooks use which extension, keep them on supported versions, and change the extension URL in all of them at once when Tableau Server is migrated, a hostname changes or an extension moves from SaaS-hosted to self-hosted.", "jobOutcome": "No workbook silently breaks after a migration or upgrade, unsupported versions disappear from the estate, and licence usage and renewals are tracked from the same inventory.", "supportRationale": "Keeps the extension settings persisted in the workbook valid after the URL change.", "usedInSteps": [{"step": "Replace extension URLs with TrexReplacer during migrations", "description": "When a server, hostname or hosting model changes, run TrexReplacer against the affected workbooks to rewrite the extension URLs in bulk, re-publish them and confirm the extensions load with settings intact.", "howItSupports": "Keeps the extension settings persisted in the workbook valid after the URL change.", "media": []}]}, {"customerId": "bilr", "customerName": "BI Platform Lead", "customerGroup": "Dashboard Builders and BI Platform Teams", "customerIcon": "customer-bilr-portrait.jpg", "productId": "enterprise-deployment", "productName": "Enterprise Deployment", "productIcon": "enterprise-deployment.png", "jobId": "jtbd-bilr-1", "jobName": "Grow dashboard adoption across creators, explorers and viewers", "jobWhatItIs": "Run the analytics centre of excellence's adoption programme: understand why licensed users do not open dashboards or export everything to Excel, equip creators with a standard interactive toolkit (SuperTables, PowerKPIs, DashboardGuide, ShowMeMore), reach non-Tableau stakeholders through scheduled delivery, and manage adoption as a monthly metric per business unit rather than as anecdotes.", "jobOutcome": "Monthly active dashboard users grow across all three roles, Excel exports and shadow spreadsheets decline, and the platform lead can show the steering committee that the BI investment, including the extensions, is used by the people it was bought for.", "supportRationale": "Provides the extension set, templates and configuration patterns the toolkit standardises.", "usedInSteps": [{"step": "Standardise an interactive toolkit for creators", "description": "Define the approved extension set per use case (SuperTables for grids, PowerKPIs for entry points, DashboardGuide for onboarding, ShowMeMore for missing chart types, HierarchyFilter for organisations), publish templates and design standards, and make the toolkit part of the dashboard review checklist.", "howItSupports": "Provides the extension set, templates and configuration patterns the toolkit standardises.", "media": []}]}];
+
+    mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        flowchart: {
+            htmlLabels: false
+        }
+    });
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function dedupe(items, keyFn) {
+        const seen = new Set();
+        const ordered = [];
+        items.forEach(item => {
+            const key = keyFn(item);
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            ordered.push(item);
+        });
+        return ordered;
+    }
+
+    function getFlows() {
+        return currentStream.flows || [];
+    }
+
+    function getFlowDependencies(flow) {
+        const dependencyIndex = new Map();
+        (flow.steps || []).forEach(step => {
+            (step.dependencies || []).forEach(dependency => {
+                if ((dependency.type || 'brick') !== 'brick') {
+                    return;
+                }
+                const key = [dependency.type || 'dependency', dependency.id || dependency.name || 'unknown'].join('::');
+                if (!dependencyIndex.has(key)) {
+                    dependencyIndex.set(key, dependency);
+                }
+            });
+        });
+        return Array.from(dependencyIndex.values());
+    }
+
+    function getStepDependency(step, dependency) {
+        return (step.dependencies || []).find(item => (item.type || '') === (dependency.type || '') && (item.id || '') === (dependency.id || '')) || null;
+    }
+
+    function getPrimaryActors() {
+        const streamJobs = currentStream.supportedCustomerJobs || [];
+        const allJobs = streamJobs.length ? streamJobs : supported_jobs;
+        return dedupe(allJobs.map(item => item.customerName || item.customerGroup || '').filter(Boolean), item => item);
+    }
+
+    function summarizeFlow(flow) {
+        const steps = flow.steps || [];
+        const firstStep = steps[0] || {};
+        const lastStep = steps[steps.length - 1] || {};
+        return {
+            actor: flow.primaryActor || firstStep.actor || '',
+            trigger: flow.trigger || firstStep.trigger || '',
+            result: flow.successSignal || flow.outcome || lastStep.successSignal || lastStep.output || ''
+        };
+    }
+
+    function renderStepMeta(label, value) {
+        if (!value) {
+            return '';
+        }
+        return '<div class="flow-step-meta-item"><div class="flow-step-meta-label">' + escapeHtml(label) + '</div><div class="flow-step-copy">' + escapeHtml(value) + '</div></div>';
+    }
+
+    function flowDependencyIconFile(dependency) {
+        const dependencyId = dependency.id || '';
+        const linkedBrick = related_bricks.find(brick => brick.id === dependencyId) || all_bricks.find(brick => brick.id === dependencyId) || {};
+        return dependency.icon || linkedBrick.icon || (dependencyId ? dependencyId + '.png' : 'brick.png');
+    }
+
+    function renderFlowDependencyIcon(dependency, className) {
+        return '<img class="' + escapeHtml(className) + '" src="../icons/' + escapeHtml(flowDependencyIconFile(dependency)) + '" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+    }
+
+    function renderStepDependencyPills(step) {
+        const dependencies = step.dependencies || [];
+        if (!dependencies.length) {
+            return '<div class="muted">No step-specific dependencies listed.</div>';
+        }
+
+        return '<div class="flow-step-dependencies">' + dependencies.map(dep => {
+            const label = dep.name || dep.id || 'Dependency';
+            const kind = 'Brick';
+            return '<span class="flow-cell-brick">' + renderFlowDependencyIcon(dep, 'flow-cell-brick-icon') + '<span>' + escapeHtml(kind + ': ' + label) + '</span></span>';
+        }).join('') + '</div>';
+    }
+
+    function simplifySupportCopy(value) {
+        const text = String(value || '').trim();
+        if (!text) {
+            return '';
+        }
+        const simplified = text.replace(/^Supports .*? by helping users help /i, 'Facilitate ');
+        return simplified;
+    }
+</script>
+
+<div id="Header"></div>
+
+<div class="page">
+    <div class="tab" id="primary_tabs">
+        <button class="tablinks active" id="tab_home" onclick="openTab('home')">Home</button>
+        <button class="tablinks" id="tab_flows" onclick="openTab('flows')">Flows Narratives (0)</button>
+        <button class="tablinks" id="tab_links" onclick="openTab('links')">Links</button>
+    </div>
+
+    <div id="tab_content_home" class="tabcontent"></div>
+    <div id="tab_content_flows" class="tabcontent"></div>
+    <div id="tab_content_links" class="tabcontent"></div>
+
+
+</div>
+
+<script>
+    function streamMetaPath(stream) {
+        const parts = [];
+        if (stream.group) {
+            parts.push(stream.group);
+        }
+        if (stream.rootGroup && stream.rootGroup !== stream.group) {
+            parts.push(stream.rootGroup);
+        }
+        if (!parts.length) {
+            parts.push('Stream');
+        }
+        return parts.join(' / ');
+    }
+
+    let headerHtml = '<div class="nav-strip">';
+    allStreams.forEach(item => {
+        headerHtml += '<a class="nav-link" href="' + escapeHtml(item.id) + '.html">';
+        headerHtml += '<img src="../icons/' + escapeHtml(item.icon || 'stream.png') + '" class="' + (item.id === currentStream.id ? 'tab-image-selected' : 'tab-image') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/stream.png\'">';
+        headerHtml += '</a>';
+    });
+    headerHtml += '</div>';
+
+    headerHtml += '<div class="page">';
+    headerHtml += '<div class="header">';
+    headerHtml += '<img class="header-icon" src="../icons/' + escapeHtml(currentStream.icon || 'stream.png') + '" alt="" onerror="this.onerror=null;this.src=\'../icons/stream.png\'">';
+    headerHtml += '<div>';
+    headerHtml += '<div class="header-meta">';
+    headerHtml += '<div class="page-type-badge">Stream</div>';
+    headerHtml += escapeHtml(streamMetaPath(currentStream)) + ' / <span style="color:blue;font-weight:bold;">' + escapeHtml((currentStream.id || '').toUpperCase()) + '</span></div>';
+    headerHtml += '<div class="header-title">' + escapeHtml(currentStream.name || currentStream.id) + '</div>';
+    headerHtml += '<div class="header-copy">' + escapeHtml(currentStream.description || '') + '</div>';
+    headerHtml += '</div></div></div>';
+    document.getElementById('Header').innerHTML = headerHtml;
+
+    function renderHome() {
+        const flows = getFlows();
+        const totalSteps = flows.reduce((count, flow) => count + ((flow.steps || []).length), 0);
+        const primaryActors = getPrimaryActors();
+        let html = '';
+
+        html += '<div class="group"><div class="section-title">Flow Narratives (' + flows.length + ')</div>';
+        if (!flows.length) {
+            html += '<div class="muted">No flows listed for this stream.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            flows.forEach(flow => {
+                const summary = summarizeFlow(flow);
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(streamMetaPath(currentStream)) + '</div>';
+                html += '<div class="card-title">' + escapeHtml(flow.title || flow.id) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(flow.description || '') + '</div>';
+                html += '<div class="muted">' + ((flow.steps || []).length) + ' steps</div>';
+                if (summary.actor) {
+                    html += '<div class="card-copy"><strong>Actor:</strong> ' + escapeHtml(summary.actor) + '</div>';
+                }
+                if (summary.trigger) {
+                    html += '<div class="card-copy"><strong>Trigger:</strong> ' + escapeHtml(summary.trigger) + '</div>';
+                }
+                if (summary.result) {
+                    html += '<div class="card-copy"><strong>Success looks like:</strong> ' + escapeHtml(summary.result) + '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Outcomes</div>';
+        if (!(currentStream.outcomes || []).length) {
+            html += '<div class="muted">No outcomes listed for this stream.</div>';
+        } else {
+            html += '<div class="card"><ul class="list">' + currentStream.outcomes.map(outcome => '<li>' + escapeHtml(outcome) + '</li>').join('') + '</ul></div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Supporting Product Bricks</div>';
+        if (!related_bricks.length) {
+            html += '<div class="muted">No linked product bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            related_bricks.forEach(brick => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../landing_pages/' + escapeHtml(brick.id) + '.html">';
+                html += '<div class="card-meta">' + escapeHtml((brick.group || brick.domain || 'Product Brick')) + '</div>';
+                html += '<div class="card-header">';
+                html += '<img class="card-icon" src="../icons/' + escapeHtml(brick.id) + '.png" alt="" onerror="this.onerror=null;this.src=\'../icons/brick.png\'">';
+                html += '<div class="card-title">' + escapeHtml(brick.name || brick.id) + '</div>';
+                html += '</div>';
+                html += '<div class="card-copy">' + escapeHtml(brick.description || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Linked Products</div>';
+        if (!linked_products.length) {
+            html += '<div class="muted">No linked products were inferred from the supporting bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            linked_products.forEach(product => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../product-deployments/landing_pages/' + escapeHtml(product.id) + '.html">';
+                html += '<div class="card-meta">' + escapeHtml(product.type || 'Product') + '</div>';
+                html += '<div class="card-header">';
+                html += '<img class="card-icon" src="../../product-deployments/icons/' + escapeHtml(product.icon) + '" alt="" onerror="this.onerror=null;this.src=\'../../product-deployments/icons/product.png\'">';
+                html += '<div class="card-title">' + escapeHtml(product.name || product.id) + '</div>';
+                html += '</div>';
+                html += '<div class="card-copy">' + escapeHtml(product.whyUsed || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Related Teams</div>';
+        if (!related_teams.length) {
+            html += '<div class="muted">No teams were inferred from the supporting bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            related_teams.forEach(team => {
+                html += '<a class="card" target="_blank" rel="noopener noreferrer" href="../../teams/landing_pages/' + escapeHtml(team.teamId) + '.html">';
+                html += '<div class="card-meta">' + escapeHtml(team.roleLabel || team.teamType || 'Team') + '</div>';
+                html += '<div class="card-title">' + escapeHtml(team.teamName || team.teamId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(team.groupName || '') + '</div>';
+                html += '</a>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        html += '<div class="group"><div class="section-title">Supported Customer Jobs</div>';
+        if (!supported_jobs.length) {
+            html += '<div class="muted">No customer jobs were inferred from the supporting bricks.</div>';
+        } else {
+            html += '<div class="card-grid">';
+            supported_jobs.forEach(job => {
+                html += '<div class="card">';
+                html += '<div class="card-meta">' + escapeHtml(job.customerGroup || '') + (job.productName ? ' | ' + escapeHtml(job.productName) : '') + '</div>';
+                html += '<div class="card-title">' + escapeHtml(job.jobName || job.jobId) + '</div>';
+                html += '<div class="card-copy">' + escapeHtml(job.jobOutcome || job.jobWhatItIs || '') + '</div>';
+                if (job.supportRationale) {
+                    html += '<div class="card-copy"><strong>Why this stream matters here:</strong> ' + escapeHtml(job.supportRationale) + '</div>';
+                }
+                if ((job.usedInSteps || []).length) {
+                    html += '<ul class="list">' + job.usedInSteps.map(step => '<li>' + escapeHtml(step.step || step.description || '') + '</li>').join('') + '</ul>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+
+        document.getElementById('tab_content_home').innerHTML = html;
+    }
+
+    function renderFlows() {
+        const flows = getFlows();
+        const totalSteps = flows.reduce((count, flow) => count + ((flow.steps || []).length), 0);
+        let html = '';
+
+        document.getElementById('tab_flows').innerHTML = 'Flow Narratives (' + flows.length + ')';
+
+        flows.forEach(flow => {
+            const dependenciesInFlow = getFlowDependencies(flow);
+            const summary = summarizeFlow(flow);
+            html += '<div class="group">';
+            html += '<div class="section-title">Flow</div>';
+            html += '<div class="flow-title">' + escapeHtml(flow.title || flow.id) + '</div>';
+            html += '<div class="flow-description">' + escapeHtml(flow.description || '') + '</div>';
+            if (summary.actor || summary.trigger || summary.result) {
+                html += '<div class="card" style="margin-bottom:16px;">';
+                if (summary.actor) {
+                    html += '<div class="card-copy"><strong>Primary actor:</strong> ' + escapeHtml(summary.actor) + '</div>';
+                }
+                if (summary.trigger) {
+                    html += '<div class="card-copy"><strong>Trigger:</strong> ' + escapeHtml(summary.trigger) + '</div>';
+                }
+                if (summary.result) {
+                    html += '<div class="card-copy"><strong>Success looks like:</strong> ' + escapeHtml(summary.result) + '</div>';
+                }
+                html += '</div>';
+            }
+
+            html += '<div class="section-title">Dependency Traceability</div>';
+            html += '<div class="flow-matrix-wrap">';
+            html += '<table class="flow-matrix">';
+            html += '<thead>';
+            html += '<tr><th class="flow-dependency-col"></th>';
+            (flow.steps || []).forEach((step, index) => {
+                html += '<th class="flow-step-col"><div class="flow-step-label">Step ' + (index + 1) + '</div><div class="card-title">' + escapeHtml(step.title || step.id) + '</div></th>';
+            });
+            html += '</tr>';
+
+            html += '<tr class="flow-insight-row"><th style="text-align: right">Key Facts</th>';
+            (flow.steps || []).forEach(step => {
+                html += '<td style="color: darkblue">';
+                if ((step.keyFacts || []).length) {
+                    html += '<ul class="flow-insight-list">' + step.keyFacts.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
+                } else {
+                    html += '<span class="muted">No key facts listed.</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+
+            html += '<tr class="flow-insight-row"><th style="text-align: right; color: darkred">Pain Points</th>';
+            (flow.steps || []).forEach(step => {
+                html += '<td style="color: darkred">';
+                if ((step.painPoints || []).length) {
+                    html += '<ul class="flow-insight-list">' + step.painPoints.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>';
+                } else {
+                    html += '<span class="muted">No pain points listed.</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+            html += '</thead><tbody>';
+
+            dependenciesInFlow.forEach(dependency => {
+                const dependencyTypeLabel = 'Product Brick';
+                html += '<tr>';
+                html += '<td>';
+                html += '<div class="flow-dependency-header">';
+                html += renderFlowDependencyIcon(dependency, 'flow-dependency-icon');
+                html += '<div>';
+                html += '<a class="flow-dependency-name" href="../landing_pages/' + escapeHtml(dependency.id) + '.html">' + escapeHtml(dependency.name || dependency.id) + '</a>';
+                if (dependency.interface) {
+                    html += '<div class="muted">' + escapeHtml(dependency.interface) + '</div>';
+                }
+                html += '</div>';
+                html += '</div>';
+                html += '</td>';
+                (flow.steps || []).forEach(step => {
+                    const stepDependency = getStepDependency(step, dependency);
+                    if (!stepDependency) {
+                        html += '<td class="flow-cell-empty">-</td>';
+                        return;
+                    }
+                    html += '<td class="flow-cell-active">';
+                    html += '<div class="flow-cell-copy">' + escapeHtml(simplifySupportCopy(stepDependency.how || stepDependency.description || 'Supports this step.')) + '</div>';
+                    html += '</td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += '</div>';
+            html += '</div>';
+        });
+
+        document.getElementById('tab_content_flows').innerHTML = html;
+    }
+
+    function renderLinks() {
+        // Grouped links from config: [{group, description, links: [{label, link,
+        // description, embedLink?, embedHeight?}]}]. embedLink renders an iframe
+        // (default height 400px) while the label still opens `link` directly.
+        const groups = currentStream.links || [];
+        let html = '<div class="page">';
+        let count = 0;
+        if (!groups.length) {
+            html += '<div class="muted">No links are configured for this stream.</div>';
+        }
+        groups.forEach(group => {
+            html += '<div class="links-group">';
+            html += '<div class="links-group-title">' + escapeHtml(group.group || 'Links') + '</div>';
+            if (group.description) {
+                html += '<div class="links-group-description">' + escapeHtml(group.description) + '</div>';
+            }
+            (group.links || []).forEach(link => {
+                count++;
+                html += '<div class="link-entry">';
+                html += '<a class="link-entry-title" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(link.link || '#') + '">'
+                    + escapeHtml(link.label || link.link || 'Reference') + ' &#8599;</a>';
+                if (link.description) {
+                    html += '<div class="link-entry-copy">' + escapeHtml(link.description) + '</div>';
+                }
+                if (link.embedLink) {
+                    const embedHeight = Number(link.embedHeight) || 400;
+                    html += '<iframe class="link-embed" loading="lazy" src="' + escapeHtml(link.embedLink)
+                        + '" style="height: ' + embedHeight + 'px" title="' + escapeHtml(link.label || 'Embedded link') + '"></iframe>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        });
+        html += '</div>';
+        document.getElementById('tab_content_links').innerHTML = html;
+        const linksTab = document.getElementById('tab_links');
+        if (linksTab) {
+            linksTab.textContent = 'Links (' + count + ')';
+        }
+    }
+
+    renderHome();
+    renderFlows();
+    renderLinks();
+</script>
+
+
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "BI Dashboard Extensions Platform Home"
+    },
+    {
+      "link": "../index.html",
+      "label": "Streams Index"
+    },
+    {
+      "label": "Build Interactive Dashboards With Extensions"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+
+
+</body>
+</html>

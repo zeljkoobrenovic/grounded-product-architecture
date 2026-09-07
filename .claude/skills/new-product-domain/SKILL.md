@@ -1,6 +1,6 @@
 ---
 name: new-product-domain
-description: "Author a complete, balanced, realistic product domain from scratch under _config/product-domains/<domain>/ — framing, customers, strategy, products/deployment, product bricks, streams, data assets, teams, competition, and evidence — in the right dependency order, with cross-file references kept consistent and docs regenerated. Use when creating a brand-new domain end-to-end, not editing one artifact. Orchestrates the edit-* skills and the validate/audit gates."
+description: "Author a complete, balanced, realistic product domain from scratch under _config/product-domains/<group>/<domain>/ — framing, customers, strategy, products/deployment, product bricks, streams, data assets, teams, competition, and evidence — in the right dependency order, with cross-file references kept consistent and docs regenerated. Use when creating a brand-new domain end-to-end, not editing one artifact. Orchestrates the edit-* skills and the validate/audit gates."
 ---
 
 # New Product Domain (orchestrator)
@@ -29,6 +29,9 @@ Author top-to-bottom; later artifacts reference earlier IDs, so this order keeps
 references resolvable.
 
 1. **Frame & register** → `set-domain-strategy`
+   - Choose an existing group or create an appropriate new group, and place the
+     domain in `_config/product-domains/<group>/<domain-id>/`. Never create a domain
+     directly in the source root. Keep its lowercase ID unique across all groups.
    - `_domain/DOMAIN.md`, `start/config.json` (creating `start/config.json`
      registers the domain — `run.sh` discovers domains from the config tree).
      Decide scope, value exchange, vision, 1/3/5-year horizons.

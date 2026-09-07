@@ -1,6 +1,6 @@
 ---
 name: edit-product-bricks
-description: "Create or edit product bricks for a product domain: root groups, subgroups, bricks, their layered modules (ui/interfaces/worker/stateless-service/service/integration), brick-to-brick dependencies, data dependencies, and external-system dependencies in _config/product-domains/<domain>/product-bricks/product-bricks.json. Use when adding a brick, restructuring brick groups, adding/moving modules across layers, wiring module or brick dependencies, or linking bricks to data assets. Keeps brick and module IDs consistent across products, deployment, streams, teams, evidence, and data assets."
+description: "Create or edit product bricks for a product domain: root groups, subgroups, bricks, their layered modules (ui/interfaces/worker/stateless-service/service/integration), brick-to-brick dependencies, data dependencies, and external-system dependencies in _config/product-domains/<group>/<domain>/product-bricks/product-bricks.json. Use when adding a brick, restructuring brick groups, adding/moving modules across layers, wiring module or brick dependencies, or linking bricks to data assets. Keeps brick and module IDs consistent across products, deployment, streams, teams, evidence, and data assets."
 ---
 
 # Edit Product Bricks

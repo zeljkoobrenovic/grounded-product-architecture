@@ -51,7 +51,9 @@ All generated HTML files are intended to be self-contained and easy to publish a
 
 ### 1. Product domains
 
-`_wiring/product-domains/run.sh` defines the set of modeled domains and invokes the product-domain generators with explicit domain parameters.
+Product domains live in `_config/product-domains/<group>/<domain-id>/`; never create a domain directly under `_config/product-domains/`. Group names are discovered from the filesystem and can change. Keep domain IDs globally unique across groups and lowercase.
+
+`_wiring/domain_paths.py` provides shared discovery and domain-ID resolution for generators, image scripts, maintenance tools, and validators. `_wiring/product-domains/run.sh` discovers registered domains through `*/*/start/config.json`; there is no hardcoded domain or group list. The root-level `start/` folder contains shared navigation and is excluded from discovery. Generated pages mirror source groups under `docs/<group>/<domain-id>/`.
 
 Each domain typically contains:
 
@@ -133,8 +135,9 @@ The domain wrapper accepts `_config/scripts/image-generation/run.sh <domain-id> 
 - If the user asks to change strategic content, start in `_config/product-domains/**`.
 - If the user asks to change presentation or navigation, start in `_templates/**`.
 - If the user asks to regenerate the website, run the relevant Python generators from `_wiring/**`.
-- Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first. Generators `shutil.rmtree` their target docs folder before rebuilding, so never hand-edit files under `docs/product-domains/`.
+- Do not blindly overwrite generated `docs/` content if the worktree is dirty; inspect current changes first. Generators `shutil.rmtree` their target docs folder before rebuilding, so never hand-edit files under `docs/<group>/<domain-id>/`.
 - Before regenerating, verify the current generator expects the same source file names present in the domain folder; the per-domain layout has evolved (e.g. `product-deployments/`, `product-bricks/product-stream.json`) and older domains may lag.
+- Use `_wiring/product-domains/run-one.sh <domain-id>` for scoped generation. Resolve source paths with `_wiring/domain_paths.py` instead of concatenating a domain ID directly onto the source root or hardcoding group names.
 - Before calling image APIs, use the relevant generator's `--dry-run` when scope or cost is uncertain. Use `--lightweight` when the requested output is limited to JTBD and journey overview images.
 
 ## Practical Mental Model

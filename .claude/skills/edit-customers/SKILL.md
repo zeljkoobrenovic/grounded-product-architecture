@@ -1,6 +1,6 @@
 ---
 name: edit-customers
-description: "Create or edit customer data for a product domain: customer groups, personas, jobs-to-be-done (JTBD), customer journey stories, KPI pyramids, per-customer product strategy, customer insights, and external reference links. Use when adding a customer segment, refining a persona, writing JTBD/journeys, building KPI pyramids, adding sourced insights, or curating external links in _config/product-domains/<domain>/customers/customers.json, insights.json, and links.json. Keeps customer IDs consistent across products, teams, and insights."
+description: "Create or edit customer data for a product domain: customer groups, personas, jobs-to-be-done (JTBD), customer journey stories, KPI pyramids, per-customer product strategy, customer insights, and external reference links. Use when adding a customer segment, refining a persona, writing JTBD/journeys, building KPI pyramids, adding sourced insights, or curating external links in _config/product-domains/<group>/<domain>/customers/customers.json, insights.json, and links.json. Keeps customer IDs consistent across products, teams, and insights."
 ---
 
 # Edit Customers
@@ -10,9 +10,9 @@ the customer-modeling methodology with this repo's exact schema, ID wiring, and 
 validate→regenerate loop. Read `.claude/skills/_references/domain-model.md` first.
 
 Target files (per domain):
-- `_config/product-domains/<domain>/customers/customers.json`
-- `_config/product-domains/<domain>/customers/insights.json`
-- `_config/product-domains/<domain>/customers/links.json` (optional — external reference links)
+- `_config/product-domains/<group>/<domain>/customers/customers.json`
+- `_config/product-domains/<group>/<domain>/customers/insights.json`
+- `_config/product-domains/<group>/<domain>/customers/links.json` (optional — external reference links)
 - icons in `customers/icons/`, media in `customers/media/`
 
 **Always read the existing files and a reference domain

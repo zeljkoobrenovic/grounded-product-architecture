@@ -3,6 +3,8 @@ import os
 import shutil
 from domain_cli import load_domain_args
 from generator_common import (
+    domain_docs_path,
+    domain_source_path,
     copy_icons,
     enter_docs_root,
     load_json_if_exists,
@@ -21,8 +23,7 @@ enter_docs_root()
 
 date_string = today_string()
 
-domains_root = '../../_config/product-domains/'
-root_templates = '../../_templates/product-bricks/'
+root_templates = '../_templates/product-bricks/'
 domain, site_config = load_domain_args()
 
 common_style = open(root_templates + '../_imports/common/style.html').read()
@@ -46,7 +47,7 @@ def build_customer_lookup(customers):
     return lookup
 
 
-def build_brick_context(brick, products, customers):
+def build_brick_context(brick, products, customers, deployment_payload=None, streams=None, required_stream_id=None):
     customer_lookup = build_customer_lookup(customers)
     linked_products = []
     supported_jobs = []
@@ -54,11 +55,34 @@ def build_brick_context(brick, products, customers):
 
     brick_id = str(brick.get('id', '')).strip().lower()
     brick_name = str(brick.get('name', '')).strip().lower()
+    composing_stream_ids = {
+        str(stream.get('id', '')).strip().lower()
+        for stream in streams or []
+        if any(str(dep.get('targetBrickId', '')).strip().lower() == brick_id
+               for dep in stream.get('brickDependencies', []))
+    }
+    deployed_products = {}
+
+    def collect_deployments(channels):
+        for channel in channels or []:
+            for deployed in channel.get('deployedBricks', []):
+                if str(deployed.get('brickId', '')).strip().lower() != brick_id:
+                    continue
+                for usage in deployed.get('usedInProducts', []):
+                    product_id = str(usage.get('productId', '')).strip()
+                    if product_id:
+                        reasons = deployed_products.setdefault(product_id, [])
+                        reason = usage.get('description') or deployed.get('deploymentRole', '')
+                        if reason and reason not in reasons:
+                            reasons.append(reason)
+            collect_deployments(channel.get('channels', []))
+
+    collect_deployments((deployment_payload or {}).get('channels', []))
 
     def stream_matches(stream):
         stream_code = str(stream.get('id', stream.get('streamCode', ''))).strip().lower()
         stream_name = str(stream.get('name', stream.get('streamName', ''))).strip().lower()
-        return stream_code == brick_id or stream_name == brick_name
+        return stream_code == brick_id or stream_name == brick_name or stream_code in composing_stream_ids
 
     def append_supported_job(customer, primary_customer, product, job, step, stream, matched_stream):
         item_key = (
@@ -101,9 +125,36 @@ def build_brick_context(brick, products, customers):
                 matched_stream = stream
                 break
 
-        if not matched_stream:
+        # Current portfolios connect products to bricks through deployment.json.
+        # Keep the legacy neededStreams path for older domain source packages.
+        product_id = str(product.get('id', '')).strip()
+        if product_id in deployed_products:
+            matched_stream = {'whyNeeded': ' '.join(deployed_products[product_id])}
+
+        if matched_stream is None:
             continue
 
+        previous_job_count = len(supported_jobs)
+        for primary_customer in product.get('primaryCustomers', []):
+            customer = customer_lookup.get(primary_customer.get('id', ''), {})
+            for job in customer.get('jobsToBeDone', []):
+                for step in job.get('steps', []):
+                    if required_stream_id and not any(
+                        str(ref.get('id', ref.get('streamCode', ''))).strip() == required_stream_id
+                        for ref in step.get('streamsNeeded', [])
+                    ):
+                        continue
+                    # streamsNeeded references product streams; bricksNeeded carries the
+                    # lower-level brick implementation dependencies. Match against both so a
+                    # brick page surfaces the jobs it supports directly or via a stream.
+                    for stream in step.get('streamsNeeded', []) + step.get('bricksNeeded', []):
+                        if stream_matches(stream):
+                            append_supported_job(customer, primary_customer, product, job, step, stream, matched_stream)
+
+        # A shared foundation alone does not imply that every consuming product
+        # supports every stream. Stream pages require a matching customer step.
+        if required_stream_id and len(supported_jobs) == previous_job_count:
+            continue
         linked_products.append({
             'id': product.get('id', ''),
             'name': product.get('name', ''),
@@ -111,17 +162,6 @@ def build_brick_context(brick, products, customers):
             'type': product.get('type', ''),
             'whyUsed': matched_stream.get('whyNeeded', '')
         })
-
-        for primary_customer in product.get('primaryCustomers', []):
-            customer = customer_lookup.get(primary_customer.get('id', ''), {})
-            for job in customer.get('jobsToBeDone', []):
-                for step in job.get('steps', []):
-                    # streamsNeeded references product streams; bricksNeeded carries the
-                    # lower-level brick implementation dependencies. Match against both so a
-                    # brick page surfaces the jobs it supports directly or via a stream.
-                    for stream in step.get('streamsNeeded', []) + step.get('bricksNeeded', []):
-                        if stream_matches(stream):
-                            append_supported_job(customer, primary_customer, product, job, step, stream, matched_stream)
 
     return linked_products, supported_jobs
 
@@ -288,13 +328,13 @@ def merge_named_records(items, id_field, list_fields=None):
     return ordered
 
 
-def create_landing_pages(bricks, products, customers, teams_payload):
+def create_landing_pages(bricks, products, customers, teams_payload, deployment_payload=None, streams=None):
     landing_page_template = open(root_templates + 'brick_landing_page.html').read();
     breadcrumbs = open(root_templates + 'brick_landing_page_breadcrumbs.json').read();
 
     for brick in bricks:
         name = brick['name']
-        linked_products, supported_jobs = build_brick_context(brick, products, customers)
+        linked_products, supported_jobs = build_brick_context(brick, products, customers, deployment_payload, streams)
         related_teams = build_brick_team_context(brick, teams_payload)
 
         htmlFile = docs_folder + 'landing_pages/' + str(brick['id']) + '.html'
@@ -317,7 +357,7 @@ def create_landing_pages(bricks, products, customers, teams_payload):
                             .replace('${supported_jobs}', json.dumps(supported_jobs)))
 
 
-def create_stream_landing_pages(streams, bricks, products, customers, teams_payload):
+def create_stream_landing_pages(streams, bricks, products, customers, teams_payload, deployment_payload=None):
     landing_page_template = open(root_templates + 'stream_landing_page.html').read();
     brick_lookup = {brick['id']: brick for brick in bricks}
     breadcrumbs = open(root_templates + 'stream_landing_page_breadcrumbs.json').read();
@@ -334,7 +374,9 @@ def create_stream_landing_pages(streams, bricks, products, customers, teams_payl
                 continue
             brick = brick_lookup[brick_id]
             related_bricks.append(brick)
-            brick_linked_products, brick_supported_jobs = build_brick_context(brick, products, customers)
+            brick_linked_products, brick_supported_jobs = build_brick_context(
+                brick, products, customers, deployment_payload, streams, required_stream_id=stream.get('id')
+            )
             linked_products.extend(brick_linked_products)
             supported_jobs.extend(brick_supported_jobs)
             related_teams.extend(build_brick_team_context(brick, teams_payload))
@@ -415,11 +457,11 @@ def create_data_asset_landing_pages(data_assets_payload, bricks, teams_payload):
 
 
 domain_id = domain['id']
-docs_folder = domain_id + '/product-bricks/'
-root_domain = domains_root + docs_folder
+docs_folder = domain_docs_path(domain_id, 'product-bricks') + '/'
+root_domain = domain_source_path(domain_id, 'product-bricks') + '/'
 product_bricks_config_path = root_domain + 'product-bricks.json'
 product_streams_config_path = root_domain + 'product-stream.json'
-data_assets_config_path = domains_root + domain_id + '/data/data-assets.json'
+data_assets_config_path = domain_source_path(domain_id, 'data/data-assets.json')
 
 if not os.path.exists(product_bricks_config_path):
     raise SystemExit(f"Missing product bricks config for domain '{domain_id}'")
@@ -433,9 +475,10 @@ flat_bricks = flatten_product_bricks(data)
 streams_payload = load_product_streams_payload(product_streams_config_path)
 flat_streams = flatten_product_streams(streams_payload)
 data_assets_payload = load_data_assets_payload(data_assets_config_path)
-products = load_json_if_exists(domains_root + domain_id + '/product-deployments/products.json', {'portfolio': {'products': []}})
-customers = load_json_if_exists(domains_root + domain_id + '/customers/customers.json', [])
-teams_payload = load_json_if_exists(domains_root + domain_id + '/teams/teams.json', {'groups': []})
+products = load_json_if_exists(domain_source_path(domain_id, 'product-deployments/products.json'), {'portfolio': {'products': []}})
+deployment_payload = load_json_if_exists(domain_source_path(domain_id, 'product-deployments/deployment.json'), {'channels': []})
+customers = load_json_if_exists(domain_source_path(domain_id, 'customers/customers.json'), [])
+teams_payload = load_json_if_exists(domain_source_path(domain_id, 'teams/teams.json'), {'groups': []})
 
 if os.path.exists(docs_folder): shutil.rmtree(docs_folder)
 os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
@@ -444,7 +487,7 @@ os.makedirs(os.path.join(docs_folder, 'stream_pages'), exist_ok=True)
 os.makedirs(os.path.join(docs_folder, 'data_pages'), exist_ok=True)
 
 copy_icons(root_templates + 'icons', docs_folder)
-copy_icons(domains_root + domain_id + '/product-bricks/icons', docs_folder)
+copy_icons(domain_source_path(domain_id, 'product-bricks/icons'), docs_folder)
 
 with open(docs_folder + 'index.html', 'w') as html_file:
     template = open(root_templates + 'index.html').read()
@@ -486,6 +529,6 @@ shared_domain_data = {
 with open(docs_folder + 'shared_data.js', 'w') as shared_file:
     shared_file.write('window.SHARED_DOMAIN_DATA = ' + json.dumps(shared_domain_data, ensure_ascii=False) + ';\n')
 
-create_landing_pages(flat_bricks, products, customers, teams_payload)
-create_stream_landing_pages(flat_streams, flat_bricks, products, customers, teams_payload)
+create_landing_pages(flat_bricks, products, customers, teams_payload, deployment_payload, flat_streams)
+create_stream_landing_pages(flat_streams, flat_bricks, products, customers, teams_payload, deployment_payload)
 create_data_asset_landing_pages(data_assets_payload, flat_bricks, teams_payload)

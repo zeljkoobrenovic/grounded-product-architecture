@@ -7,20 +7,22 @@ description: "Use in the Productscape project when reviewing `_config/product-do
 
 ## Purpose
 
-Review the implementation-facing product architecture of a Productscape domain. The goal is to find gaps in product bricks, streams, modules, dependencies, data assets, and ownership in `_config/product-domains/<domain>/REVIEW.md` so a later editing pass can improve `_config/product-domains/<domain>/product-bricks/` and related source files.
+Review the implementation-facing product architecture of a Productscape domain. The goal is to find gaps in product bricks, streams, modules, dependencies, data assets, and ownership in `_config/product-domains/<group>/<domain>/REVIEW.md` so a later editing pass can improve `_config/product-domains/<group>/<domain>/product-bricks/` and related source files.
+
+Resolve the domain ID with `_wiring/domain_paths.py` to find its current group. Group names can change; keep reviews in the resolved domain folder.
 
 ## Source Files
 
 Read these files before reviewing:
 
-- `_config/product-domains/<domain>/product-bricks/product-bricks.json`.
-- `_config/product-domains/<domain>/product-bricks/product-stream.json`.
-- `_config/product-domains/<domain>/data/data-assets.json`.
-- `_config/product-domains/<domain>/teams/teams.json`.
-- `_config/product-domains/<domain>/customers/customers.json`.
-- `_config/product-domains/<domain>/customers/insights.json` when present.
-- `_config/product-domains/<domain>/customers/links.json` when present.
-- `_config/product-domains/<domain>/product-deployments/*.json`.
+- `_config/product-domains/<group>/<domain>/product-bricks/product-bricks.json`.
+- `_config/product-domains/<group>/<domain>/product-bricks/product-stream.json`.
+- `_config/product-domains/<group>/<domain>/data/data-assets.json`.
+- `_config/product-domains/<group>/<domain>/teams/teams.json`.
+- `_config/product-domains/<group>/<domain>/customers/customers.json`.
+- `_config/product-domains/<group>/<domain>/customers/insights.json` when present.
+- `_config/product-domains/<group>/<domain>/customers/links.json` when present.
+- `_config/product-domains/<group>/<domain>/product-deployments/*.json`.
 
 Run `scripts/validate-domain-model.py <domain>` when useful to catch deterministic reference issues, then continue with qualitative architecture review.
 
@@ -33,11 +35,11 @@ Do not review product-brick or stream `*-evidence.json` files in this skill. Kee
 3. Trace important customer jobs and product streams to the bricks, modules, data assets, teams, and external systems needed to deliver them.
 4. Review data ownership and dependency realism, especially for regulated, financial, safety, marketplace, identity, analytics, and operational data.
 5. Return edit-ready findings with affected IDs and suggested modeling direction.
-6. Write the review to `_config/product-domains/<domain>/REVIEW.md` under a `## Product Bricks Review` section.
+6. Write the review to `_config/product-domains/<group>/<domain>/REVIEW.md` under a `## Product Bricks Review` section.
 
 ## Review Storage
 
-- Create `_config/product-domains/<domain>/REVIEW.md` if it does not exist.
+- Create `_config/product-domains/<group>/<domain>/REVIEW.md` if it does not exist.
 - If the file exists, update only the `## Product Bricks Review` section and preserve other sections, especially `## Product Domain Review` and `## Teams Review`.
 - If the file has no title, add `# <domain-id> Review` at the top.
 - Include an `Updated: YYYY-MM-DD` line inside the `## Product Bricks Review` section.
@@ -101,7 +103,7 @@ Do not review product-brick or stream `*-evidence.json` files in this skill. Kee
 
 ## Output Format
 
-Write the review to `_config/product-domains/<domain>/REVIEW.md`:
+Write the review to `_config/product-domains/<group>/<domain>/REVIEW.md`:
 
 1. `Architecture assessment`: 3-6 bullets on brick realism, stream coherence, data quality, and implementation readiness.
 2. `Critical findings`: issues that block reliable editing, generation, or coherent architecture.

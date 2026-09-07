@@ -6,6 +6,8 @@ from functools import partial
 
 from domain_cli import load_domain_args
 from generator_common import (
+    domain_docs_path,
+    domain_source_path,
     build_customers_lookup as build_customers_and_kpi_lookup,
     copy_icons as copy_icons_common,
     enter_docs_root,
@@ -17,8 +19,7 @@ enter_docs_root()
 
 date_string = today_string()
 
-domains_root = '../../_config/product-domains/'
-templates_root = '../../_templates/product-deployments/'
+templates_root = '../_templates/product-deployments/'
 domain, site_config = load_domain_args()
 common_style = open(templates_root + '../_imports/common/style.html').read()
 tabs_style = open(templates_root + '../_imports/tabs/style.html').read()
@@ -59,7 +60,7 @@ def enrich_products_with_customers(products, customers_lookup):
 def load_brick_names(domain_id):
     """brick id -> display name, resolved from the brick catalog (the source
     of truth) so deployment.json does not need to duplicate brick names."""
-    path = domains_root + domain_id + '/product-bricks/product-bricks.json'
+    path = domain_source_path(domain_id, 'product-bricks/product-bricks.json')
     if not os.path.exists(path):
         return {}
     payload = json.load(open(path))
@@ -84,7 +85,7 @@ def load_brick_names(domain_id):
 def load_deployment(domain_id):
     """Load deployment.json and enrich deployedBricks with brickName from the
     brick catalog (brickName is derived, not stored)."""
-    path = domains_root + domain_id + '/product-deployments/deployment.json'
+    path = domain_source_path(domain_id, 'product-deployments/deployment.json')
     deployment = json.load(open(path)) if os.path.exists(path) else {'metadata': {}, 'channels': []}
     brick_names = load_brick_names(domain_id)
     for group in deployment.get('channels', []) or []:
@@ -115,7 +116,7 @@ def create_overview_docs(domain, docs_folder):
     os.makedirs(os.path.join(docs_folder, 'icons'), exist_ok=True)
 
     copy_icons(templates_root + 'icons', docs_folder)
-    copy_icons(domains_root + domain['id'] + '/product-deployments/icons', docs_folder)
+    copy_icons(domain_source_path(domain['id'], 'product-deployments/icons'), docs_folder)
 
     with open(os.path.join(docs_folder, 'index.html'), 'w') as html_file:
         html_file.write(template
@@ -204,21 +205,21 @@ def create_deployment_landing_pages(domain, products, docs_folder):
                                 .replace('${channel_ref}', json.dumps(channel_ref)))
 
 domain_id = domain['id']
-products_file_path = domains_root + domain_id + '/product-deployments/products.json'
+products_file_path = domain_source_path(domain_id, 'product-deployments/products.json')
 print(products_file_path)
 if not os.path.exists(products_file_path):
     raise SystemExit(f"Missing products config for domain '{domain_id}'")
 
-customers_path = domains_root + domain_id + '/customers/customers.json'
+customers_path = domain_source_path(domain_id, 'customers/customers.json')
 if not os.path.exists(customers_path):
-    customers_path = domains_root + domain_id + '/product/customers.json'
+    customers_path = domain_source_path(domain_id, 'product/customers.json')
 
 customers = json.load(open(customers_path)) if os.path.exists(customers_path) else []
 customers_lookup = build_customers_lookup(customers)
 
 products = enrich_products_with_customers(json.load(open(products_file_path)), customers_lookup)
 
-docs_folder = domain_id + '/product-deployments/'
+docs_folder = domain_docs_path(domain_id, 'product-deployments') + '/'
 create_overview_docs(domain, docs_folder)
 create_landing_pages(products, docs_folder)
 create_deployment_landing_pages(domain, products, docs_folder)

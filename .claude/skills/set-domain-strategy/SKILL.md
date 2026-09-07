@@ -63,7 +63,7 @@ generating. Keep the name/description identical to `start/config.json`.
 ## Working the strategy across artifacts
 
 Because strategy is distributed, setting it means coordinated edits:
-1. Frame the domain (`_domain/DOMAIN.md`, `start/config.json`, register in run.sh).
+1. Frame the domain under `_config/product-domains/<group>/<domain-id>/` (`_domain/DOMAIN.md` and `start/config.json`). The config file registers it automatically; group names are discovered from the filesystem.
 2. Set per-customer vision/horizons and KPI pyramids via `edit-customers`.
 3. Align team charter metrics via `edit-teams` and insights via `edit-customers`.
 4. Verify horizons sequence and KPI names match everywhere (use `audit-domain-balance`

@@ -5,6 +5,8 @@ import shutil
 from pathlib import Path
 from urllib.parse import urlparse
 
+from domain_paths import discover_domain_dirs, domain_docs_path
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 DATE_STRING = datetime.date.today().strftime('%Y-%m-%d')
@@ -41,11 +43,25 @@ def rebase_start_apps_url(value):
     if not isinstance(value, str) or is_external_url(value):
         return value
 
-    # Existing start-app configs were authored one level higher at docs/start-apps.
-    if value.startswith('../product-domains/'):
-        return '../' + value
+    parsed = urlparse(value)
+    parts = parsed.path.split('/')
+    domains = {domain.name for domain in discover_domain_dirs()}
 
-    return value
+    # Resolve both historical flat links and current package-relative group links.
+    # Looking up the domain ID also repairs links after its source group changes.
+    if parts[:2] == ['..', 'product-domains']:
+        domain_index = 2
+    elif parts[:3] == ['..', '..', 'product-domains']:
+        domain_index = 3
+    elif parts[:2] == ['..', '..'] and len(parts) > 3 and parts[3] in domains:
+        domain_index = 3
+    else:
+        return value
+
+    if len(parts) <= domain_index:
+        return value
+    published_path = domain_docs_path(parts[domain_index], *parts[domain_index + 1:])
+    return parsed._replace(path='../../' + published_path).geturl()
 
 
 def rebase_app_links(apps):
@@ -103,6 +119,9 @@ def render_package(package_folder, template):
     with (package_folder / 'apps.json').open(encoding='utf-8') as apps_file:
         apps = json.load(apps_file)
 
+    rendered_apps = rebase_app_links(apps)
+    config = package_config(apps, package_name)
+
     output_folder = DOCS_PACKAGES_ROOT / package_name
     if output_folder.exists():
         shutil.rmtree(output_folder)
@@ -110,9 +129,6 @@ def render_package(package_folder, template):
 
     copy_icons(TEMPLATES_ROOT / 'icons', output_folder)
     copy_icons(package_folder / 'icons', output_folder)
-
-    rendered_apps = rebase_app_links(apps)
-    config = package_config(apps, package_name)
 
     with (output_folder / 'index.html').open('w', encoding='utf-8') as html_file:
         html_file.write(

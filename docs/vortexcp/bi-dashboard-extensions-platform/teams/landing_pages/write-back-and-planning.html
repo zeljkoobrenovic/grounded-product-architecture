@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d4ed8'/><rect x='18' y='22' width='30' height='24' rx='4' fill='white'/><rect x='52' y='22' width='30' height='24' rx='4' fill='%2393c5fd'/><rect x='18' y='54' width='64' height='24' rx='4' fill='%23dbeafe'/></svg>">
+    <title>Write-back and Planning — Team (BI Dashboard Extensions Platform)</title>
+    <style>
+    .page-type-badge {
+        display: inline-block;
+        padding: 2px 5px;
+        border-radius: 999px;
+        border: 1px dashed #989898;
+        text-transform: uppercase;
+        margin-right: 6px;
+        color: #8c8c8c;
+        font-size: 11px;
+    }
+</style>
+    <style>
+    /* Shared design tokens for all generated pages.
+       Canonical palette promoted from the evidence-explorer page, plus the
+       de-facto grays/blues already used across templates. New CSS should use
+       these instead of hex literals; existing literals migrate opportunistically. */
+    :root {
+        /* surfaces */
+        --bg: #f6f8fb;
+        --panel: #ffffff;
+        --surface: #f8fafc;
+        --surface-muted: #eef2f7;
+        --surface-fallback: #f8fafc;
+
+        /* text */
+        --ink: #1f2430;
+        --ink-soft: #5b6472;
+        --muted: #6b7280;
+        --muted-strong: #8a94a6;
+
+        /* lines and borders */
+        --line: #e5e7eb;
+        --line-strong: #d1d5db;
+        --group-border: #d8e0ea;
+
+        /* accent */
+        --accent: #2563eb;
+        --accent-ink: #1d4ed8;
+        --accent-soft: #eff4ff;
+        --accent-line: #c9dbff;
+        --highlight-color: #dbeafe;
+
+        /* shape and depth */
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 18px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 2px 6px rgba(16, 24, 40, 0.08), 0 14px 30px rgba(16, 24, 40, 0.12);
+        --card-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+    }
+</style>
+
+    <style>
+    .tab {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 4px;
+    }
+
+    .tab button {
+        position: relative;
+        background-color: transparent;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: -1px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        border-radius: 8px 8px 0 0;
+        transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .tab button:hover {
+        color: #1f2937;
+        background-color: #f3f4f6;
+    }
+
+    .tab button:focus-visible {
+        outline: 2px solid #1d4ed8;
+        outline-offset: -2px;
+    }
+
+    .tab button.active {
+        color: #1d4ed8;
+        border-bottom-color: #1d4ed8;
+    }
+
+    .tabcontent {
+        display: none;
+        padding: 2px 2px;
+        animation: tabContentFade 0.2s ease;
+    }
+
+    @keyframes tabContentFade {
+        from {
+            opacity: 0;
+            transform: translateY(3px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 720px) {
+        .tab {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tab button {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0;
+        }
+
+        .tab button.active {
+            border-bottom-color: #1d4ed8;
+        }
+    }
+</style>
+
+    <style>
+    .breadcrumbs-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0;
+        padding: 6px 4px;
+        font-size: 80%;
+        color: #5b6472;
+    }
+
+    .breadcrumb {
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: #343434;
+    }
+</style>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 8px 28px 28px;
+            color: #202124;
+            max-width: 1100px;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 11px;
+            border-radius: 999px;
+            color: white;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 36px;
+            line-height: 1.2;
+            margin: 0 0 8px 0;
+        }
+
+        .meta {
+            color: #6b7280;
+            margin-bottom: 18px;
+        }
+
+        .description {
+            font-size: 18px;
+            line-height: 1.55;
+            margin-bottom: 22px;
+            max-width: 880px;
+        }
+
+        .stat-note {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        .hc-dots {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .hc-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(17, 24, 39, 0.12);
+        }
+
+        .section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 14px;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .link-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: white;
+            padding: 10px 12px;
+            transition: 0.15s;
+        }
+
+        .link-card:hover {
+            border-color: #9ca3af;
+            box-shadow: rgba(0, 0, 0, 0.08) 0 1px 4px;
+        }
+
+        .link-card.team {
+            border-left-width: 4px;
+        }
+
+        .link-icon {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #d7dce1;
+            background-color: white;
+            flex: none;
+        }
+
+        .link-icon.round {
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .link-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex: none;
+            margin: 0 9px;
+            border: 1px solid rgba(17, 24, 39, 0.12);
+        }
+
+        .link-body {
+            min-width: 0;
+        }
+
+        .link-name {
+            color: #1f2937;
+            font-size: 15px;
+            line-height: 1.25;
+        }
+
+        .link-card:hover .link-name {
+            color: #1d4ed8;
+        }
+
+        .link-meta {
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .empty-state {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .dep-type-group {
+            margin-bottom: 16px;
+        }
+
+        .dep-type-label {
+            display: inline-block;
+            font-size: 12px;
+            color: #4b5563;
+            margin-bottom: 8px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background-color: #eef2f6;
+        }
+
+        .doc-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0 8px 8px 0;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background-color: #f8fafc;
+            font-size: 13px;
+            color: #1d4ed8;
+        }
+
+        .doc-link:hover {
+            background-color: #eef2f7;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+</head>
+<body onload="initTab('home-tab')" onhashchange="initTab('home-tab')">
+<style>
+    .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        align-items: center;
+        margin: 2px 0 10px 0;
+        padding: 4px 0;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: Ubuntu, Optima, Segoe, sans-serif;
+        font-size: 13px;
+    }
+    .site-nav a {
+        color: #6b7280;
+        text-decoration: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .site-nav a:hover { color: #1d4ed8; background: #eff6ff; }
+    .site-nav a.active { color: #1d4ed8; font-weight: 600; background: #dbeafe; }
+</style>
+<nav class="site-nav"><a href="../../start/index.html">Home</a><a href="../../customers/index.html">Customers</a><a href="../../product-deployments/index.html">Products</a><a href="../../product-bricks/index.html">Bricks &amp; Streams</a><a href="../../teams/index.html" class="active">Teams</a><a href="../../competition/index.html">Competition</a><a href="../../residuality/index.html">Stress Test</a></nav>
+<div id="breadcrumbs"></div>
+<script>
+    function resolveHashTabName() {
+        if (window.location.hash) {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById('tab_' + hash) && document.getElementById('tab_content_' + hash)) {
+                return hash;
+            }
+        }
+
+        return '';
+    }
+
+    function resolveFallbackTabName(tabName) {
+        if (tabName && document.getElementById('tab_' + tabName) && document.getElementById('tab_content_' + tabName)) {
+            return tabName;
+        }
+
+        const firstTab = document.querySelector('.tablinks[id^="tab_"]');
+        if (firstTab) {
+            return firstTab.id.substring(4);
+        }
+
+        return '';
+    }
+
+    function initTab(tabName) {
+        setupTabAccessibility();
+        const resolvedTabName = resolveHashTabName() || resolveFallbackTabName(tabName);
+        openTab(resolvedTabName, { updateHistory: false });
+    }
+
+    // WAI-ARIA tab pattern: roles, aria-selected, and arrow-key navigation.
+    // Applied once; safe to call repeatedly.
+    function setupTabAccessibility() {
+        document.querySelectorAll('.tab').forEach(bar => {
+            if (bar.dataset.a11yReady) return;
+            bar.dataset.a11yReady = '1';
+            bar.setAttribute('role', 'tablist');
+            const buttons = Array.from(bar.querySelectorAll('.tablinks'));
+            buttons.forEach(btn => {
+                btn.setAttribute('role', 'tab');
+                const name = btn.id && btn.id.startsWith('tab_') ? btn.id.substring(4) : '';
+                if (name && document.getElementById('tab_content_' + name)) {
+                    btn.setAttribute('aria-controls', 'tab_content_' + name);
+                    const panel = document.getElementById('tab_content_' + name);
+                    panel.setAttribute('role', 'tabpanel');
+                }
+            });
+            bar.addEventListener('keydown', event => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                const current = buttons.indexOf(document.activeElement);
+                if (current === -1) return;
+                event.preventDefault();
+                const offset = event.key === 'ArrowRight' ? 1 : -1;
+                const next = buttons[(current + offset + buttons.length) % buttons.length];
+                next.focus();
+                next.click();
+            });
+        });
+    }
+
+    function openTab(tabName, options) {
+        const resolvedTabName = resolveFallbackTabName(tabName);
+        if (!resolvedTabName) {
+            return '';
+        }
+
+        const tabcontent = document.getElementsByClassName('tabcontent');
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = 'none';
+        }
+        const tablinks = document.getElementsByClassName('tablinks');
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(' active', '');
+            tablinks[i].setAttribute('aria-selected', 'false');
+        }
+
+        const shouldUpdateHistory = !options || options.updateHistory !== false;
+        if (shouldUpdateHistory && window.location.hash !== '#' + resolvedTabName) {
+            history.pushState({}, '', '#' + resolvedTabName);
+        }
+
+        document.getElementById('tab_content_' + resolvedTabName).style.display = 'block';
+        const activeTab = document.getElementById('tab_' + resolvedTabName);
+        activeTab.className += ' active';
+        activeTab.setAttribute('aria-selected', 'true');
+        if (typeof window.afterOpenTab === 'function') {
+            window.afterOpenTab(resolvedTabName);
+        }
+
+        return resolvedTabName;
+    }
+</script>
+
+<table style="margin-top: 10px">
+    <tr>
+        <td style="vertical-align: top; padding-top: 0">
+            <img src="../icons/logo.png" style="width:96px; height:96px; margin-right:12px" alt="Team">
+        </td>
+        <td>
+            <div id="TypeBadge"></div>
+            <h1 id="Title"></h1>
+            <div id="Meta" class="meta"></div>
+        </td>
+    </tr>
+</table>
+
+<div class="tab">
+    <button class="tablinks" id="tab_home-tab" onclick="openTab('home-tab')">Overview</button>
+</div>
+<div id="tab_content_home-tab" class="tabcontent"></div>
+
+<script>
+    const team = {"id": "write-back-and-planning", "name": "Write-back and Planning", "type": "stream-aligned", "description": "Own the Enterprise-only write-back suite that lets business users enter forecasts, budgets, targets, comments, corrections and approvals inside a dashboard and store them in the customer's own governed database: WriteBackExtreme (write-back forms, rollback, role management, SSO, one-click Windows and Linux installers, REST API), InputTables (Excel-like cell-level input, comments and dynamic columns inside a SuperTable) and FinanceTables (P&Ls, budget reports and management statements from account hierarchies). Also owns the write-back backend: data store and database connectors, workflow, approvals and the audit trail that security reviewers and auditors rely on. Steward of the write-back-record, write-back-schema, write-back-audit-log, comment-and-annotation and financial-statement-model data assets, all of which live in the customer's databases in Enterprise deployments.", "mission": "Replace the spreadsheet round-trip: a planner sees a number, changes it in the dashboard, and the governed value with its audit trail is in the customer's database before the meeting ends.", "teamHeadcount": {"headcount": 4, "description": "Product owner with planning and FP&A background, two full-stack engineers on the WriteBackExtreme and InputTables extensions, one backend engineer on database connectors, workflow, approvals and audit trail."}, "documentLinks": [], "charter": {"metrics": [{"name": "Planning cycle time", "description": "The Planning and Finance Contributor's north star: write-back inside the dashboard exists to shorten the forecast, budget and target cycle."}, {"name": "Write-back error rate", "description": "Validation, schema control and rollback keep entered values correct; the team's primary quality signal."}, {"name": "Spreadsheet round-trips per cycle", "description": "Every round-trip removed is a planning workflow captured in WriteBackExtreme or InputTables."}, {"name": "Dashboard requests delivered per month", "description": "Dashboard Creators deliver planning dashboards faster when write-back is a configured form rather than a bespoke build."}, {"name": "Extension upgrade lead time", "description": "WriteBackExtreme is self-hosted; IT Administrators upgrade it on their own infrastructure, so backward-compatible releases matter."}]}, "customerDependencies": [{"customerId": "plnr", "name": "Planning and Finance Contributor", "icon": "customer-plnr-portrait.jpg", "href": "../customers/landing_pages/plnr.html", "description": "Planning and Finance Contributors enter forecasts, budgets, targets, comments and corrections through WriteBackExtreme, InputTables and FinanceTables."}, {"customerId": "dcre", "name": "Dashboard Creator", "icon": "customer-dcre-portrait.jpg", "href": "../customers/landing_pages/dcre.html", "description": "Dashboard Creators configure write-back forms, input grids and financial statements the governed way instead of building bespoke planning tools."}, {"customerId": "itad", "name": "IT Administrator", "icon": "customer-itad-portrait.jpg", "href": "../customers/landing_pages/itad.html", "description": "IT Administrators install WriteBackExtreme on Windows or Linux, connect it to databases and SSO, and upgrade it without downtime."}], "streamDependencies": [{"streamId": "write-back-plan-and-collaborate-in-dashboards", "name": "Write Back, Plan and Collaborate in Dashboards", "icon": "write-back-plan-and-collaborate-in-dashboards.png", "href": "../product-bricks/stream_pages/write-back-plan-and-collaborate-in-dashboards.html", "description": "Primary stream: from a viewed number to an entered forecast, comment, correction or approval stored with an audit trail."}, {"streamId": "report-finance-from-dashboard-data", "name": "Report Finance From Dashboard Data", "icon": "report-finance-from-dashboard-data.png", "href": "../product-bricks/stream_pages/report-finance-from-dashboard-data.html", "description": "FinanceTables turns dashboard data and account hierarchies into P&Ls, budget reports and management statements."}, {"streamId": "build-interactive-dashboards-with-extensions", "name": "Build Interactive Dashboards With Extensions", "icon": "build-interactive-dashboards-with-extensions.png", "href": "../product-bricks/stream_pages/build-interactive-dashboards-with-extensions.html", "description": "Write-back forms and input grids are configured by creators as part of building an interactive dashboard."}], "brickDependencies": [{"brickId": "wbxt", "name": "WriteBackExtreme Write-back Extension", "icon": "wbxt.png", "href": "../product-bricks/landing_pages/wbxt.html", "description": "Owns WriteBackExtreme Write-back Extension: forms, rollback, role management, what-if scenarios, surveys, task lists and approvals."}, {"brickId": "inpt", "name": "InputTables Data Entry Grid", "icon": "inpt.png", "href": "../product-bricks/landing_pages/inpt.html", "description": "Owns InputTables Data Entry Grid: Excel-like cell-level input, comments and dynamic columns inside a SuperTable."}, {"brickId": "fint", "name": "FinanceTables Financial Statements", "icon": "fint.png", "href": "../product-bricks/landing_pages/fint.html", "description": "Owns FinanceTables Financial Statements: P&Ls, budget reports and management statements from account hierarchies."}, {"brickId": "wbdb", "name": "Write-back Data Store and Database Connectors", "icon": "wbdb.png", "href": "../product-bricks/landing_pages/wbdb.html", "description": "Owns the Write-back Data Store and Database Connectors that persist entered values in the customer's SQL Server, PostgreSQL, Snowflake or other databases."}, {"brickId": "wbwf", "name": "Write-back Workflow, Approvals and Audit Trail", "icon": "wbwf.png", "href": "../product-bricks/landing_pages/wbwf.html", "description": "Owns Write-back Workflow, Approvals and Audit Trail: who changed which number when, approval routing and rollback."}, {"brickId": "xfrm", "name": "Extension Framework and Shared UI Kit", "icon": "xfrm.png", "href": "../product-bricks/landing_pages/xfrm.html", "description": "Builds every write-back extension on the shared extension framework and UI kit."}, {"brickId": "dcon", "name": "Dashboard Data Connector", "icon": "dcon.png", "href": "../product-bricks/landing_pages/dcon.html", "description": "Reads worksheet data, filters and parameters through the dashboard data connector before values are written back."}, {"brickId": "sptb", "name": "SuperTables Interactive Grid", "icon": "sptb.png", "href": "../product-bricks/landing_pages/sptb.html", "description": "InputTables runs inside a SuperTable grid owned by tables-and-discovery."}, {"brickId": "idnt", "name": "Identity, SSO and Role Management", "icon": "idnt.png", "href": "../product-bricks/landing_pages/idnt.html", "description": "Uses identity, SSO and role management to decide who may enter, comment on or approve a number."}, {"brickId": "xmgr", "name": "ExtensionsManager, Installers and TrexReplacer", "icon": "xmgr.png", "href": "../product-bricks/landing_pages/xmgr.html", "description": "Ships the WriteBackExtreme server through the ExtensionsManager installers and admin console."}, {"brickId": "lics", "name": "License Service, Usage Metering and Billing", "icon": "lics.png", "href": "../product-bricks/landing_pages/lics.html", "description": "Enterprise-only entitlement and the 30-day trial are enforced by the license service."}], "otherTeamDependencies": [{"teamId": "extension-runtime", "name": "Extension Runtime", "type": "platform", "groupName": "Platform and Enablement Teams", "href": "landing_pages/extension-runtime.html", "dependencyType": "x-as-a-service", "dependencyTypeName": "X-as-a-Service", "description": "Consumes the extension framework, data connector and Power BI adapter for WriteBackExtreme and InputTables."}, {"teamId": "deployment-and-licensing", "name": "Deployment and Licensing", "type": "platform", "groupName": "Platform and Enablement Teams", "href": "landing_pages/deployment-and-licensing.html", "dependencyType": "x-as-a-service", "dependencyTypeName": "X-as-a-Service", "description": "Consumes installers, ExtensionsManager packaging, identity and SSO, license keys and the Enterprise Customer Portal downloads."}, {"teamId": "tables-and-discovery", "name": "Tables and Discovery", "type": "stream-aligned", "groupName": "Extension Product Teams", "href": "landing_pages/tables-and-discovery.html", "dependencyType": "collaboration", "dependencyTypeName": "Collaboration", "description": "InputTables lives inside SuperTables; the two teams share a grid contract and release together."}, {"teamId": "security-and-compliance", "name": "Security and Compliance", "type": "enabling", "groupName": "Platform and Enablement Teams", "href": "landing_pages/security-and-compliance.html", "dependencyType": "collaboration", "dependencyTypeName": "Collaboration", "description": "Audit-trail design, data-flow documentation and role model are written together so vendor assessments pass."}, {"teamId": "ai-enablement", "name": "AI Enablement", "type": "enabling", "groupName": "Platform and Enablement Teams", "href": "landing_pages/ai-enablement.html", "dependencyType": "facilitating", "dependencyTypeName": "Facilitating", "description": "Is helped to add AI-assisted write-back validation and plan drafting to the write-back forms."}], "groupId": "xprd", "groupName": "Extension Product Teams"};
+    const domainName = 'BI Dashboard Extensions Platform';
+    const orgDesign = team.__orgDesign || {};
+
+    const TEAM_TYPE_LABELS = {
+        'stream-aligned': 'Stream-aligned',
+        'platform': 'Platform',
+        'enabling': 'Enabling',
+        'complicated-subsystem': 'Complicated subsystem',
+        'other': 'Other'
+    };
+    const TEAM_TYPE_COLORS = {
+        'stream-aligned': '#2563eb',
+        'platform': '#0891b2',
+        'enabling': '#16a34a',
+        'complicated-subsystem': '#9333ea',
+        'other': '#6b7280'
+    };
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function typeColor(typeId) {
+        return TEAM_TYPE_COLORS[typeId] || '#6b7280';
+    }
+
+    function typeLabel(typeId) {
+        return TEAM_TYPE_LABELS[typeId] || typeId || 'team';
+    }
+
+    // The generator builds hrefs relative to teams/index.html. Landing pages live one
+    // level deeper (teams/landing_pages/), so adjust the prefix accordingly.
+    function relink(href) {
+        if (!href) return '#';
+        if (href.indexOf('landing_pages/') === 0) {
+            // sibling team page: landing_pages/<id>.html -> <id>.html
+            return href.substring('landing_pages/'.length);
+        }
+        if (href.indexOf('../') === 0) {
+            // ../customers/... or ../product-bricks/... -> ../../...
+            return '../' + href;
+        }
+        return href;
+    }
+
+    function renderLinkCards(items, iconBase, options) {
+        options = options || {};
+        if (!items || !items.length) {
+            return '<div class="empty-state">' + escapeHtml(options.empty || 'None linked.') + '</div>';
+        }
+        let html = '<div class="link-grid">';
+        items.forEach(item => {
+            const extraClass = options.team ? ' team' : '';
+            const style = options.team ? ' style="border-left-color:' + typeColor(item.type) + '"' : '';
+            html += '<a class="link-card' + extraClass + '"' + style + ' target="_blank" href="' + escapeHtml(relink(item.href)) + '">';
+            if (options.noIcon) {
+                // internal teams have no icon; show a type-colored dot instead of a broken image
+                html += '<span class="link-dot" style="background-color:' + typeColor(item.type) + '"></span>';
+            } else {
+                const iconClass = 'link-icon' + (options.round ? ' round' : '');
+                const fallback = iconBase + (options.fallbackIcon || 'logo.png');
+                html += '<img class="' + iconClass + '" src="' + escapeHtml(iconBase + (item.icon || '')) + '" onerror="this.onerror=null;this.src=\'' + fallback + '\'">';
+            }
+            html += '<div class="link-body">';
+            html += '<div class="link-name">' + escapeHtml(item.name) + '</div>';
+            const meta = options.metaBuilder ? options.metaBuilder(item) : (item.description || '');
+            if (meta) {
+                html += '<div class="link-meta">' + escapeHtml(meta) + '</div>';
+            }
+            html += '</div></a>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderSection(title, body) {
+        return '<div class="section"><div class="section-title">' + escapeHtml(title) + '</div>' + body + '</div>';
+    }
+
+    function renderTeamDependencies(items) {
+        if (!items || !items.length) {
+            return '<div class="empty-state">No related teams.</div>';
+        }
+        const byType = {};
+        const order = [];
+        items.forEach(item => {
+            const key = item.dependencyTypeName || item.dependencyType || 'Related';
+            if (!byType[key]) { byType[key] = []; order.push(key); }
+            byType[key].push(item);
+        });
+        let html = '';
+        order.forEach(key => {
+            html += '<div class="dep-type-group">';
+            html += '<div class="dep-type-label">' + escapeHtml(key) + '</div>';
+            html += renderLinkCards(byType[key], '', {
+                team: true,
+                noIcon: true,
+                metaBuilder: item => [item.groupName || '', typeLabel(item.type)].filter(Boolean).join(' | ')
+            });
+            html += '</div>';
+        });
+        return html;
+    }
+
+    // header
+    document.getElementById('TypeBadge').innerHTML =
+        '<span class="type-badge" style="background-color:' + typeColor(team.type) + '">' + escapeHtml(typeLabel(team.type)) + '</span>';
+    document.getElementById('Title').innerHTML = escapeHtml(team.name || 'Team');
+    document.getElementById('Meta').innerHTML =
+        escapeHtml(domainName) + ' | ' + escapeHtml(team.groupName || '');
+
+    const hc = (team.teamHeadcount || {});
+    let html = '';
+
+    if (team.description) {
+        html += '<div class="description">' + escapeHtml(team.description) + '</div>';
+    }
+
+    const headcount = Math.max(Number(hc.headcount) || 0, 0);
+    let sizeBody = '';
+    if (headcount) {
+        let dots = '';
+        for (let i = 0; i < headcount; i++) {
+            dots += '<span class="hc-dot" style="background-color:' + typeColor(team.type) + '"></span>';
+        }
+        sizeBody += '<div class="hc-dots">' + dots + '</div>';
+    } else {
+        sizeBody += '<div class="empty-state">Headcount not set.</div>';
+    }
+    if (hc.description) {
+        sizeBody += '<div class="stat-note">' + escapeHtml(hc.description) + '</div>';
+    }
+    html += renderSection('Team Size (' + escapeHtml(String(headcount)) + ' FTE)', sizeBody);
+
+    html += renderSection('Customers (' + (team.customerDependencies || []).length + ')',
+        renderLinkCards(team.customerDependencies || [], '../../customers/icons/', {
+            round: true, fallbackIcon: 'customer.png', empty: 'No customers linked.'
+        }));
+
+    html += renderSection('Product Streams (' + (team.streamDependencies || []).length + ')',
+        renderLinkCards(team.streamDependencies || [], '../../product-bricks/icons/', {
+            fallbackIcon: 'brick.png', empty: 'No streams linked.'
+        }));
+
+    html += renderSection('Product Bricks (' + (team.brickDependencies || []).length + ')',
+        renderLinkCards(team.brickDependencies || [], '../../product-bricks/icons/', {
+            fallbackIcon: 'brick.png', empty: 'No product bricks linked.'
+        }));
+
+    html += renderSection('Related Teams (' + (team.otherTeamDependencies || []).length + ')',
+        renderTeamDependencies(team.otherTeamDependencies || []));
+
+    if ((team.documentLinks || []).length) {
+        let docs = '';
+        (team.documentLinks || []).forEach(doc => {
+            docs += '<a class="doc-link" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(doc.url || '#') + '">&#128279; ' + escapeHtml(doc.title || doc.url || 'Document') + '</a>';
+        });
+        html += renderSection('Documents (' + (team.documentLinks || []).length + ')', docs);
+    }
+
+    document.getElementById('tab_content_home-tab').innerHTML = html;
+</script>
+<script>
+    const breadcrumbs_context = {
+  "breadcrumbs": [
+    {
+      "link": "../../start/index.html",
+      "label": "BI Dashboard Extensions Platform Home"
+    },
+    {
+      "link": "../index.html",
+      "label": "Teams"
+    },
+    {
+      "label": "Write-back and Planning"
+    }
+  ]
+}
+;
+    const divId = "breadcrumbs";
+
+    function renderBreadcrumbs() {
+        const container = document.getElementById(divId);
+        if (!container) {
+            console.log('Breadcrumbs container with id "' + divId + '" not found.');
+            return;
+        }
+        container.innerHTML = '';
+        let html = '';
+        html += '<div class="breadcrumbs-container">';
+        if (breadcrumbs_context && breadcrumbs_context.breadcrumbs && breadcrumbs_context.breadcrumbs.length) {
+            breadcrumbs_context.breadcrumbs.forEach((crumb, index) => {
+                html += '<div class="breadcrumb">';
+                let suffix = index < breadcrumbs_context.breadcrumbs.length - 1 ? '&nbsp;&nbsp;>&nbsp;&nbsp;' : '';
+                if (crumb.link) {
+                    html += '<a href="' + crumb.link + '">' + crumb.label + '</a>';
+                } else {
+                    html += '<span>' + crumb.label + '</span>';
+                }
+                html += '<span>' + suffix + '</span>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    renderBreadcrumbs();
+</script>
+
+</body>
+</html>

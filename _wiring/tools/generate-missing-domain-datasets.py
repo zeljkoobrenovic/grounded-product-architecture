@@ -2,6 +2,12 @@ import copy
 import datetime
 import json
 import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from domain_paths import list_domain_files, resolve_domain_dir
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'product-domains'))
+from product_bricks_support import flatten_product_bricks
 
 
 TODAY = datetime.date.today()
@@ -183,7 +189,8 @@ def normalize_bricks(domain_name, product_bricks_data, customers_data):
 
 def brick_lookup(product_bricks_data):
     lookup = {}
-    for item in product_bricks_data:
+    items = flatten_product_bricks(product_bricks_data) if isinstance(product_bricks_data, dict) else product_bricks_data
+    for item in items:
         lookup[str(item['id'])] = item
     return lookup
 
@@ -227,11 +234,11 @@ def to_interfaces_from_channels(product):
 
 
 def normalize_products(domain, customers_by_id, bricks):
-    products_path = os.path.join(ROOT, domain['id'], 'product', 'products.json')
+    products_path = resolve_domain_dir(domain['id'], ROOT) / 'product-deployments' / 'products.json'
     if os.path.exists(products_path):
         return load_json(products_path)
 
-    delivery_path = os.path.join(ROOT, domain['id'], 'product', 'delivery.json')
+    delivery_path = resolve_domain_dir(domain['id'], ROOT) / 'product-deployments' / 'deployment.json'
     if os.path.exists(delivery_path):
         delivery = load_json(delivery_path)
         if 'portfolio' in delivery and 'products' in delivery['portfolio']:
@@ -484,8 +491,8 @@ def generate_time_series(domain, products_data, product_bricks_data, customers_f
 
 
 def ensure_domain_data(domain):
-    domain_root = os.path.join(ROOT, domain['id'])
-    customers_path = os.path.join(domain_root, 'product', 'customers.json')
+    domain_root = resolve_domain_dir(domain['id'], ROOT)
+    customers_path = os.path.join(domain_root, 'customers', 'customers.json')
     customers_data = load_json(customers_path)
     customers_flat, customers_by_id = gather_customers(customers_data)
 
@@ -497,7 +504,7 @@ def ensure_domain_data(domain):
 
     bricks = brick_lookup(normalized_bricks)
     products_data = normalize_products(domain, customers_by_id, bricks)
-    products_path = os.path.join(domain_root, 'product', 'products.json')
+    products_path = os.path.join(domain_root, 'product-deployments', 'products.json')
     if not os.path.exists(products_path):
         save_json(products_path, products_data)
 
@@ -513,8 +520,10 @@ def ensure_domain_data(domain):
 
 
 def main():
-    config = load_json(os.path.join(ROOT, 'config.json'))
-    for domain in config.get('domains', []):
+    for config_path in list_domain_files('start/config.json', domains_root=ROOT):
+        domain = load_json(config_path)
+        # Like the docs wrappers, use the folder ID even if old metadata differs.
+        domain['id'] = config_path.parent.parent.name
         ensure_domain_data(domain)
 
 

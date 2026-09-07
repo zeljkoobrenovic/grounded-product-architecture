@@ -3,6 +3,8 @@ import os
 import sys
 import os as _os
 sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'product-domains'))
+sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..'))
+from domain_paths import list_domain_files, resolve_domain_dir
 from product_bricks_support import (
     flatten_data_asset_groups,
     flatten_product_bricks,
@@ -535,7 +537,7 @@ def enrich_payload_with_data_dependencies(payload, assets):
 
 
 def build_data_assets_payload(domain_id):
-    domain_root = os.path.join(DOMAINS_ROOT, domain_id)
+    domain_root = resolve_domain_dir(domain_id, DOMAINS_ROOT)
     product_bricks_path = os.path.join(domain_root, 'product-bricks', 'product-bricks.json')
     teams_path = os.path.join(domain_root, 'teams', 'teams.json')
     bricks_payload = load_product_bricks_payload(product_bricks_path)
@@ -607,7 +609,7 @@ def build_data_assets_payload(domain_id):
 
 
 def enrich_domain_bricks_with_data_dependencies(domain_id):
-    domain_root = os.path.join(DOMAINS_ROOT, domain_id)
+    domain_root = resolve_domain_dir(domain_id, DOMAINS_ROOT)
     product_bricks_path = os.path.join(domain_root, 'product-bricks', 'product-bricks.json')
     data_assets_path = os.path.join(domain_root, 'data', 'data-assets.json')
     if not os.path.exists(product_bricks_path) or not os.path.exists(data_assets_path):
@@ -626,17 +628,15 @@ def enrich_domain_bricks_with_data_dependencies(domain_id):
 
 
 def main():
-    domains = []
-    for domain_id in sorted(os.listdir(DOMAINS_ROOT)):
-        product_bricks_path = os.path.join(DOMAINS_ROOT, domain_id, 'product-bricks', 'product-bricks.json')
-        if os.path.exists(product_bricks_path):
-            domains.append(domain_id)
+    domains = [path.parent.parent.name for path in list_domain_files(
+        'product-bricks/product-bricks.json', domains_root=DOMAINS_ROOT
+    )]
 
     created = []
     skipped = []
     enriched = []
     for domain_id in domains:
-        output_path = os.path.join(DOMAINS_ROOT, domain_id, 'data', 'data-assets.json')
+        output_path = resolve_domain_dir(domain_id, DOMAINS_ROOT) / 'data' / 'data-assets.json'
         if os.path.exists(output_path):
             skipped.append(domain_id)
         else:
